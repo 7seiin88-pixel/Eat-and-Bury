@@ -80,7 +80,7 @@ setInterval(() => { for (const c of clients.values()) { if (!c.alive) { c.socket
 const rooms = new Map();
 const clean = s => String(s || '').replace(/[<>]/g, '').trim().slice(0, 16) || 'لاعب';
 function newCode() { let c; do { c = Math.random().toString(36).slice(2, 7).toUpperCase(); } while (rooms.has(c)); return c; }
-const pub = r => ({ code: r.code, host: r.host, started: r.started, members: r.members.map(m => ({ sid: m.sid, name: m.name, seat: m.seat, mic: m.mic, away: !!m.away })) });
+const pub = r => ({ code: r.code, host: r.host, started: r.started, members: r.members.map(m => ({ sid: m.sid, name: m.name, seat: m.seat, mic: m.mic, away: !!m.away, watch: !!m.watch, prof: m.prof || null })) });
 const GRACE = 3 * 60 * 1000; // keep a player's seat this long after they lose connection
 const token = () => crypto.randomBytes(12).toString('hex');
 const toRoom = (r, type, data) => r.members.forEach(m => send(clients.get(m.sid), type, data));
@@ -98,8 +98,14 @@ function onMessage(c, { type, data = {}, rid }) {
     case 'join': {
       const room = rooms.get(String(data.code || '').toUpperCase().trim());
       if (!room) return reply({ ok: false, err: 'notfound' });
-      if (room.started) return reply({ ok: false, err: 'started' });
-      if (room.members.length >= 6) return reply({ ok: false, err: 'full' });
+      const players = room.members.filter(m => !m.watch).length;
+      if (room.started || players >= 6 || data.watch) { // watch the game instead of playing
+        if (room.members.filter(m => m.watch).length >= 30) return reply({ ok: false, err: 'full' });
+        const tw = token();
+        room.members.push({ sid: c.id, name: clean(data.name), seat: 99, watch: true, mic: false, token: tw }); c.room = room.code;
+        reply({ ok: true, room: pub(room), me: c.id, token: tw, watch: true });
+        return toRoom(room, 'room', pub(room));
+      }
       const used = new Set(room.members.map(m => m.seat)); let seat = 1; while (used.has(seat)) seat++;
       const tk = token();
       room.members.push({ sid: c.id, name: clean(data.name), seat, mic: false, token: tk }); c.room = room.code;
@@ -120,6 +126,7 @@ function onMessage(c, { type, data = {}, rid }) {
       return;
     case 'act': { // a player's move goes to the host
       if (!r) return; const m = r.members.find(x => x.sid === c.id); if (!m || m.sid === r.host) return;
+      if (m.watch) return;
       return send(clients.get(r.host), 'act', { ...data, seat: m.seat });
     }
     case 'mic': { if (!r) return; const m = r.members.find(x => x.sid === c.id); if (m) { m.mic = !!data.on; toRoom(r, 'room', pub(r)); } return; }
@@ -135,10 +142,20 @@ function onMessage(c, { type, data = {}, rid }) {
       const oc = clients.get(old); if (oc && oc !== c) { oc.room = null; try { oc.socket.destroy(); } catch (e) {} clients.delete(old); }
       m.sid = c.id; m.away = false; m.mic = false; c.room = room.code;
       if (room.host === old) room.host = c.id;
-      reply({ ok: true, room: pub(room), me: c.id });
+      reply({ ok: true, room: pub(room), me: c.id, watch: !!m.watch });
       toRoom(room, 'room', pub(room));
       if (room.host !== c.id) send(clients.get(room.host), 'back', { seat: m.seat, sid: c.id, old });
       return;
+    }
+    case 'prof': { // player profile: name, picture, flag, frame, level and a few stats
+      if (!r) return; const m = r.members.find(x => x.sid === c.id); if (!m) return;
+      const p = data || {}, av = String(p.av || '');
+      if (av.length > 40000 || !(/^p:\d{1,2}$/.test(av) || av.startsWith('data:image/jpeg;base64,'))) return;
+      const short = (v, n) => String(v || '').replace(/[<>"]/g, '').slice(0, n);
+      const num = v => Math.max(0, Math.min(1e7, Math.floor(+v || 0)));
+      m.prof = { av, flag: short(p.flag, 8), frame: short(p.frame, 16), level: num(p.level), games: num(p.games), wins: num(p.wins), wars: num(p.wars) };
+      if (p.name) m.name = clean(p.name);
+      return toRoom(r, 'room', pub(r));
     }
     case 'leave': return drop(c, true, true);
   }
