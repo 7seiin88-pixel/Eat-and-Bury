@@ -14,8 +14,10 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '
 const server = http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
   if (url === '/health') { res.end('ok'); return; }
-  const file = path.normalize(path.join(PUBLIC, url === '/' ? 'index.html' : url));
+  let file = path.normalize(path.join(PUBLIC, url === '/' ? 'index.html' : url));
   if (!file.startsWith(PUBLIC)) { res.writeHead(403); res.end(); return; }
+  // The game page can also sit next to server.js (easier to upload from a phone or iPad)
+  if ((url === '/' || url === '/index.html') && !fs.existsSync(file)) file = path.join(__dirname, 'index.html');
   fs.readFile(file, (err, data) => {
     if (err) { res.writeHead(404); res.end('Not found'); return; }
     res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-cache' });
@@ -78,7 +80,9 @@ setInterval(() => { for (const c of clients.values()) { if (!c.alive) { c.socket
 const rooms = new Map();
 const clean = s => String(s || '').replace(/[<>]/g, '').trim().slice(0, 16) || 'لاعب';
 function newCode() { let c; do { c = Math.random().toString(36).slice(2, 7).toUpperCase(); } while (rooms.has(c)); return c; }
-const pub = r => ({ code: r.code, host: r.host, started: r.started, members: r.members.map(m => ({ sid: m.sid, name: m.name, seat: m.seat, mic: m.mic })) });
+const pub = r => ({ code: r.code, host: r.host, started: r.started, members: r.members.map(m => ({ sid: m.sid, name: m.name, seat: m.seat, mic: m.mic, away: !!m.away })) });
+const GRACE = 3 * 60 * 1000; // keep a player's seat this long after they lose connection
+const token = () => crypto.randomBytes(12).toString('hex');
 const toRoom = (r, type, data) => r.members.forEach(m => send(clients.get(m.sid), type, data));
 
 function onMessage(c, { type, data = {}, rid }) {
@@ -86,9 +90,10 @@ function onMessage(c, { type, data = {}, rid }) {
   const r = rooms.get(c.room);
   switch (type) {
     case 'create': {
-      const room = { code: newCode(), host: c.id, started: false, members: [{ sid: c.id, name: clean(data.name), seat: 0, mic: false }] };
+      const tk = token();
+      const room = { code: newCode(), host: c.id, started: false, members: [{ sid: c.id, name: clean(data.name), seat: 0, mic: false, token: tk }] };
       rooms.set(room.code, room); c.room = room.code;
-      return reply({ ok: true, room: pub(room), me: c.id });
+      return reply({ ok: true, room: pub(room), me: c.id, token: tk });
     }
     case 'join': {
       const room = rooms.get(String(data.code || '').toUpperCase().trim());
@@ -96,8 +101,9 @@ function onMessage(c, { type, data = {}, rid }) {
       if (room.started) return reply({ ok: false, err: 'started' });
       if (room.members.length >= 6) return reply({ ok: false, err: 'full' });
       const used = new Set(room.members.map(m => m.seat)); let seat = 1; while (used.has(seat)) seat++;
-      room.members.push({ sid: c.id, name: clean(data.name), seat, mic: false }); c.room = room.code;
-      reply({ ok: true, room: pub(room), me: c.id });
+      const tk = token();
+      room.members.push({ sid: c.id, name: clean(data.name), seat, mic: false, token: tk }); c.room = room.code;
+      reply({ ok: true, room: pub(room), me: c.id, token: tk });
       return toRoom(room, 'room', pub(room));
     }
     case 'swap': { // host moves players between seats in the lobby
@@ -120,19 +126,42 @@ function onMessage(c, { type, data = {}, rid }) {
     case 'rtc': // voice chat signalling
       if (!r || !r.members.some(m => m.sid === data.to)) return;
       return send(clients.get(data.to), 'rtc', { from: c.id, data: data.data });
-    case 'leave': return drop(c, true);
+    case 'resume': { // come back after leaving the page (sharing on WhatsApp, a call, the screen locking)
+      const room = rooms.get(String(data.code || '').toUpperCase().trim());
+      const m = room && room.members.find(x => x.token && x.token === data.token);
+      if (!m) return reply({ ok: false, err: 'gone' });
+      const old = m.sid;
+      if (m.timer) { clearTimeout(m.timer); m.timer = null; }
+      const oc = clients.get(old); if (oc && oc !== c) { oc.room = null; try { oc.socket.destroy(); } catch (e) {} clients.delete(old); }
+      m.sid = c.id; m.away = false; m.mic = false; c.room = room.code;
+      if (room.host === old) room.host = c.id;
+      reply({ ok: true, room: pub(room), me: c.id });
+      toRoom(room, 'room', pub(room));
+      if (room.host !== c.id) send(clients.get(room.host), 'back', { seat: m.seat, sid: c.id, old });
+      return;
+    }
+    case 'leave': return drop(c, true, true);
   }
 }
 
-function drop(c, keepSocket) {
-  if (!clients.has(c.id) && !c.room) return;
+function drop(c, keepSocket, now) {
   const r = rooms.get(c.room); c.room = null;
   if (!keepSocket) clients.delete(c.id);
   if (!r) return;
-  if (r.host === c.id) { toRoom(r, 'ended', {}); rooms.delete(r.code); return; }
-  const m = r.members.find(x => x.sid === c.id);
-  r.members = r.members.filter(x => x.sid !== c.id);
-  if (m) send(clients.get(r.host), 'left', { seat: m.seat, sid: m.sid });
+  const m = r.members.find(x => x.sid === c.id); if (!m) return;
+  if (!now) { // lost connection: hold the seat for a while so they can come back
+    m.away = true; m.mic = false;
+    m.timer = setTimeout(() => remove(r, m), GRACE);
+    return toRoom(r, 'room', pub(r));
+  }
+  remove(r, m);
+}
+function remove(r, m) {
+  if (m.timer) { clearTimeout(m.timer); m.timer = null; }
+  if (!rooms.has(r.code)) return;
+  if (r.host === m.sid) { toRoom(r, 'ended', {}); rooms.delete(r.code); return; }
+  r.members = r.members.filter(x => x !== m);
+  send(clients.get(r.host), 'left', { seat: m.seat, sid: m.sid });
   toRoom(r, 'room', pub(r));
 }
 
