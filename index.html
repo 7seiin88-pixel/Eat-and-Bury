@@ -3623,7 +3623,7 @@ html body .stage .td-carkeys.nB,html body .stage .td-carkeys.nN,html body .stage
 (function fonts(){if(document.querySelector('link[data-ebfont]'))return;const l=document.createElement('link');l.rel='stylesheet';l.dataset.ebfont=1;
   l.href='https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Reem+Kufi:wght@500;700&family=Cairo:wght@400;600;700;800;900&family=Orbitron:wght@700&display=swap';document.head.appendChild(l)})();
 document.title='حفر ودفن';
-const LOGO=(sub=true)=>`<div class="eblogo"><span class="ebl-main">حفر ودفن</span>${sub?`<span class="ebl-sub">${L('The Kuwaiti card game','لعبة الورق الكويتية')}</span>`:''}</div>`;
+const LOGO=(sub=true)=>`<div class="eblogo"><span class="ebl-main">حفر ودفن</span></div>`;
 // setup screen: logo instead of the old English title, and a way back home
 const _rsL=renderSetup;renderSetup=function(){_rsL();const f=$('setupForm');if(!f)return;const h=f.querySelector('h2');if(h&&!h.classList.contains('done')){h.classList.add('done');h.innerHTML=LOGO(false)}
   const hl=f.querySelector('.hello');if(hl)hl.remove();
@@ -3648,7 +3648,7 @@ function renderHome(){const h=$('homeIn');if(!h)return;h.dir=LANG==='ar'?'rtl':'
         <button type="button" class="hm-sq" data-hm="prof"><span>👤</span>${L('Profile','ملفي')}</button>
         <button type="button" class="hm-sq" data-hm="lang"><span>🌐</span>${LANG==='ar'?'English':'العربية'}</button>
       </div></div>
-    <div class="hm-foot">${L('Hafr w Dafn','حفر ودفن')} · ${L('made in Kuwait','صنع في الكويت')} 🇰🇼</div>`}
+    `}
 function showHome(user){renderHome();const h=$('home');h.hidden=false;h.dataset.user=user?1:'';$('setup').hidden=true}
 function hideHome(){$('home').hidden=true}
 document.addEventListener('click',e=>{const t=e.target.closest('[data-hm],#homeBack');if(!t)return;
