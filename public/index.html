@@ -1560,7 +1560,7 @@ const rot=(i,k)=>(i-k+nPl())%nPl();
 
 // ---------- Host side ----------
 function fxPush(e){if(!(NET.on&&NET.host))return;NET.fx.push(e);upSoon()}
-function upSoon(){if(!NET.upT)NET.upT=setTimeout(flushUp,40)}
+function upSoon(){if(!NET.upT)NET.upT=setTimeout(flushUp,12)}
 function viewFor(k){const n=nPl(),r=i=>(i-k+n)%n,me=S.players[k],myTeam=me.team,solo=S.cfg.mode==='solo';
   const tm=t=>solo?(t-k+n)%n:(t-myTeam+2)%2;const players=[];
   S.players.forEach((p,i)=>{players[r(i)]={name:p.name,f:p.f,team:tm(p.team),human:i===k,pile:p.pile,hand:i===k?p.hand:p.hand.map(()=>({id:-1,r:'?',s:''}))}});
@@ -1570,7 +1570,7 @@ function viewFor(k){const n=nPl(),r=i=>(i-k+n)%n,me=S.players[k],myTeam=me.team,
   const stats=S.stats?S.players.map((_,j)=>S.stats[(j+k)%n]):undefined;
   return {cfg:S.cfg,players,teams,drawN:S.draw.length,ground:S.ground,turn:r(S.turn),phase:S.phase,war:w,log:S.log,passes:S.passes,lone:S.lone,wasLone:S.wasLone,chain:S.chain,moves:S.moves,decor,stats,turnLeft:turnDeadline?Math.max(0,turnDeadline-performance.now()):0}}
 function rotFx(e,k){const n=nPl(),r=i=>(i-k+n)%n,o={...e};['s','f','to'].forEach(f=>{if(typeof o[f]==='number')o[f]=r(o[f])});return o}
-function flushUp(){NET.upT=0;if(!(NET.on&&NET.host&&S))return;try{if(!S.war&&S.phase!=='war')localStorage.setItem(SESS+'-S',JSON.stringify({...S,aiTimers:[],sel:null}))}catch(e){}const fx=NET.fx.splice(0);
+function flushUp(){NET.upT=0;if(!(NET.on&&NET.host&&S))return;if(!S.war&&S.phase!=='war'&&performance.now()-(NET.savedAt||0)>4000){NET.savedAt=performance.now();try{localStorage.setItem(SESS+'-S',JSON.stringify({...S,aiTimers:[],sel:null}))}catch(e){}}const fx=NET.fx.splice(0);
   const list=NET.members.filter(m=>m.sid!==NET.me&&m.seat<nPl()).map(m=>({sid:m.sid,view:{v:viewFor(m.seat),fx:fx.map(e=>rotFx(e,m.seat))}}));
   if(list.length)netSend('up',list)}
 let hostWrapped=false;
@@ -5614,6 +5614,7 @@ function openGameMenu(btn){const m=$('gameMenu');m.dir=LANG==='ar'?'rtl':'ltr';c
     <button type="button" data-gm="exit" class="gmexit"><svg viewBox="0 0 24 24"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"/></svg>${L('Leave the game','خروج من اللعبة')}</button>`;
   m.hidden=false;const r=btn.getBoundingClientRect(),W=m.offsetWidth;let left=LANG==='ar'?r.right-W:r.left;left=Math.max(8,Math.min(innerWidth-W-8,left));m.style.left=left+'px';m.style.top=(r.bottom+6)+'px'}
 function leaveGame(){const online=typeof NET!=='undefined'&&NET.on;
+  try{if(S){S.aiTimers&&S.aiTimers.forEach(clearTimeout);gen++}}catch(e){}try{if(typeof turnDeadline!=='undefined')turnDeadline=0}catch(e){}
   if(online){try{netSend('leave')}catch(e){}try{netReset()}catch(e){}try{history.replaceState(null,'',location.pathname)}catch(e){}if(typeof lobbyCode!=='undefined')lobbyCode='';S=null;try{clearFx()}catch(e){}}
   else{try{if(S)saveGame()}catch(e){}if(S){try{gen++}catch(e){}try{S.aiTimers&&S.aiTimers.forEach(clearTimeout)}catch(e){}S=null;try{clearFx()}catch(e){}}}
   ['over','lobby','setup','shopSheet','profSheet','chatBar'].forEach(id=>{const el=$(id);if(el)el.hidden=true});const gp=$('giftPop');if(gp)gp.hidden=true;
@@ -5633,8 +5634,55 @@ window.addEventListener('click',e=>{
 #gameMenu button svg{width:20px;height:20px;fill:none;stroke:#f2d27a;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
 #gameMenu .gmexit{color:#ff9a8a}#gameMenu .gmexit svg{stroke:#ff9a8a}`;document.head.appendChild(st)})();
 
+// ===================== Round 50: speed (layout once per frame, calmer animations), "computer is playing" badges, mic closes when you leave the app =====================
+// ---------- 1. Speed: the heavy layout passes run once per frame, not after every render ----------
+(function(){let req=0,need={g:0,s:0};const _fg=fitGround,_fs=fitSeats;
+  function flush(){if(req){cancelAnimationFrame(req);req=0}const s=need.s,g=need.g;need.s=need.g=0;try{if(s)_fs()}catch(e){}try{if(g)_fg()}catch(e){}}
+  const ask=k=>{need[k]=1;if(!req)req=requestAnimationFrame(()=>{req=0;flush()})};
+  fitGround=function(){ask('g')};fitSeats=function(){ask('s')};window.flushFits=flush;
+  // anything that measures positions gets the finished layout
+  const _pt=pt;pt=function(el){if(need.g||need.s)flush();return _pt(el)};
+  addEventListener('resize',()=>{need.g=need.s=1;flush()})})();
+// rank badges keep their shine, just a little slower
+(function(){const st=document.createElement('style');st.textContent='.rkic:not(.big)::after{animation-duration:5s!important}';document.head.appendChild(st)})();
+// voice volumes don't need checking so often
+if(typeof voiceVols==='function'){const vv=voiceVols;voiceVols=function(){if(typeof NET==='undefined'||!NET.on||!VOICE.peers.size)return;vv()}}
+
+// ---------- 2. Show when the computer is playing for someone ----------
+const AUTOP={};
+say=(function(prev){return function(i,text){if(text==='الوقت!'||text==='Time!'){AUTOP[i]=Date.now();if(i===0)setTimeout(()=>toast(L('🤖 Your time ran out: the computer played for you','🤖 خلص وقتك: الكمبيوتر لعب عنك')),200);setTimeout(()=>{if(S)render()},50);setTimeout(()=>{if(S)render()},6200)}
+  return prev.apply(this,arguments)}})(say);
+function seatMember(local){if(typeof NET==='undefined'||!NET.on||!S||!S.players)return undefined;const n=S.players.length,base=NET.host||(typeof amWatch==='function'&&amWatch())?0:(NET.mySeat||0),g=(local+base)%n;
+  return NET.members.find(x=>x.seat===g&&!x.watch)||null}
+render=(function(prev){return function(){const r=prev.apply(this,arguments);try{if(!S||!S.players)return r;const now=Date.now(),online=typeof NET!=='undefined'&&NET.on;
+  S.players.forEach((p,i)=>{const el=i===0?$('mebox'):document.querySelector(`#seats .seat[data-seat="${i}"]`);if(!el)return;const old=el.querySelector('.botchip');old&&old.remove();
+    const m=seatMember(i),timed=AUTOP[i]&&now-AUTOP[i]<6000;let txt='';
+    if(online&&m===null&&i!==0)txt=L('🤖 Computer','🤖 كمبيوتر');
+    else if(online&&m&&m.away)txt=L('🤖 Away: computer plays','🤖 طالع: الكمبيوتر يلعب');
+    else if(timed)txt=i===0?L('🤖 Computer played for you','🤖 الكمبيوتر لعب عنك'):L('🤖 Computer played for them','🤖 الكمبيوتر لعب عنه');
+    el.classList.toggle('botplay',!!txt);if(!txt)return;const c=document.createElement('span');c.className='botchip'+(timed?' hot':'');c.textContent=txt;(el.querySelector('.name')||el).after(c)})}catch(e){}return r}})(render);
+
+// ---------- 3. The mic closes when you leave the page or switch apps ----------
+async function micOff(){if(typeof VOICE==='undefined'||!VOICE.stream)return;try{VOICE.peers.forEach(st=>st.pc.getSenders().forEach(s=>{if(s.track&&s.track.kind==='audio')s.replaceTrack(null).catch(()=>{})}))}catch(e){}
+  try{VOICE.stream.getTracks().forEach(t=>t.stop())}catch(e){}VOICE.stream=null;const was=VOICE.on;VOICE.on=false;try{if(NET.on)netSend('mic',{on:false})}catch(e){}try{micIcon()}catch(e){}
+  if(was)VOICE.wasOn=true}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)micOff();else if(VOICE&&VOICE.wasOn){VOICE.wasOn=false;setTimeout(()=>toast(L('Your mic was turned off while you were away. Tap 🎙 to turn it on.','قفلنا مايكك لما طلعت. اضغط 🎙 عشان تفتحه.')),400)}});
+addEventListener('pagehide',micOff);
+// turning it back on reuses the existing connections (no second audio line)
+if(typeof voiceToggle==='function'){const _vt=voiceToggle;voiceToggle=async function(){if(!NET.on)return;
+  if(!VOICE.stream&&VOICE.peers.size){let s;try{s=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}})}catch(e){toast(L('Microphone not allowed: check the browser permission','ما سمح الجهاز بالمايك: افتح الإذن من إعدادات المتصفح'));return}
+    const tr=s.getAudioTracks()[0];VOICE.stream=s;VOICE.on=true;NET.members.forEach(m=>{if(m.sid===NET.me)return;const st=peer(m.sid);const snd=st.pc.getSenders().find(x=>!x.track||x.track.kind==='audio');
+      if(snd&&!snd.track)snd.replaceTrack(tr).catch(()=>{});else if(!snd)st.pc.addTrack(tr,s)});netSend('mic',{on:true});micIcon();return}
+  return _vt.apply(this,arguments)}}
+
+(function(){const st=document.createElement('style');st.textContent=`
+.botchip{display:block;width:max-content;margin:2px auto 0;padding:2px 8px;border-radius:999px;font-size:10.5px;font-weight:900;background:rgba(20,30,50,.85);color:#bfe3ff;box-shadow:inset 0 0 0 1px rgba(120,180,255,.5);white-space:nowrap}
+.botchip.hot{background:#1f5fa8;color:#fff;animation:botp 1s ease-in-out 3}@keyframes botp{50%{transform:scale(1.1)}}
+.seat.botplay .avatar{filter:grayscale(.55) brightness(.9)}
+#mebox .botchip{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:4px;z-index:5}#mebox{position:relative}`;document.head.appendChild(st)})();
+
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1106.1915';
+const EB_VERSION='v1106.2031';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
