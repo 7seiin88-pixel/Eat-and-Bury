@@ -1,6 +1,6 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>حفر ودفن</title>
-<meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#3a2a20">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="حفر ودفن"><meta name="theme-color" content="#5e0f14"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="icon" href="/icon-192.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Bodoni+Moda:opsz,wght@6..96,600;6..96,700&family=Cairo:wght@400;600;700;800;900&family=Orbitron:wght@700&display=swap">
 <style>
 /* Layout: phone-style card table in the Gulf card-app manner — sand background, a square Sadu rug in the middle, players on beige tiles with fanned grey card backs, glossy charcoal bars top and bottom with grey buttons. The app column is phone-width on every screen. */
@@ -618,7 +618,7 @@ function startTurn(i){
   S.lone=isLone(i);S.wasLone=S.lone;
   const active=S.players.filter(q=>q.hand.length>0).length;
   if(S.lone&&S.passes>=active){S.lone=false;S.passes=0;log(L(`Everyone held their last card for a full round, so ${p.name} ${p.human?'draw':'draws'} and ${p.human?'play':'plays'} on.`,`الكل بقي على آخر ورقة، فـ${p.name} يسحب ويكمّل.`))}
-  if(S.draw.length)drawCards(i,1);
+  if(S.draw.length&&p.hand.length<5)drawCards(i,1);
   S.phase='choose';render();
   if(!p.human&&!p.remote)later(()=>aiChoose(i),850);
 }
@@ -3722,6 +3722,400 @@ document.addEventListener('click',e=>{if(e.target.closest('#profClose,#pSave,#sh
 .testtok{border:0!important}
 `;document.head.appendChild(st)})();
 (function(){const st=document.createElement('style');st.textContent=`#lbShare,.lbwa,.overlay .sheet .lbwa{background:linear-gradient(180deg,#5fe07a,#25d366 50%,#1da851)!important;color:#fff!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 3px 0 #128c3e,0 6px 12px rgba(0,0,0,.25)!important}`;document.head.appendChild(st)})();
+
+// ===================== Round 21: install as an app (home-screen icon, full screen) =====================
+const IS_IOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const IS_APP=()=>(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
+let installEvt=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;if(!$('home').hidden)renderHome()});
+addEventListener('appinstalled',()=>{installEvt=null;toast(L('Installed!','تثبّتت اللعبة!'));if(!$('home').hidden)renderHome()});
+if(typeof ONLINE_BASE!=='undefined'&&ONLINE_BASE&&'serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
+const _rhI=renderHome;renderHome=function(){_rhI();if(IS_APP())return;const btns=document.querySelector('.hm-btns');if(!btns||btns.querySelector('.hm-install'))return;
+  const b=document.createElement('button');b.type='button';b.className='hm-install';b.dataset.hm='install';b.innerHTML=`📲 ${L('Install the game as an app','ثبّت اللعبة كتطبيق')}`;btns.appendChild(b)};
+(function addInstallSheet(){const d=document.createElement('div');d.id='instSheet';d.className='overlay';d.hidden=true;d.innerHTML='<div class="sheet" id="instBox"></div>';document.body.appendChild(d)})();
+function openInstall(){if(installEvt){installEvt.prompt();installEvt.userChoice.finally(()=>{installEvt=null;renderHome()});return}
+  const s=$('instBox');s.dir=LANG==='ar'?'rtl':'ltr';
+  const share='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#0a84ff" stroke-width="2" style="vertical-align:-5px"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v8h14v-8"/></svg>';
+  s.innerHTML=`<h2 style="font-size:22px">📲 ${L('Install حفر ودفن','ثبّت حفر ودفن')}</h2>`+(IS_IOS?
+    `<ol class="inst"><li>${L('Open the game in <b>Safari</b>','افتح اللعبة من <b>Safari</b>')}</li><li>${L('Tap Share ','اضغط زر المشاركة ')}${share}</li><li>${L('Choose <b>Add to Home Screen</b>','اختر <b>إضافة إلى الشاشة الرئيسية</b>')}</li><li>${L('Tap <b>Add</b>','اضغط <b>إضافة</b>')}</li></ol>`:
+    `<ol class="inst"><li>${L('Open the browser menu ⋮','افتح قائمة المتصفح ⋮')}</li><li>${L('Choose <b>Install app</b> or <b>Add to Home screen</b>','اختر <b>تثبيت التطبيق</b> أو <b>إضافة إلى الشاشة الرئيسية</b>')}</li></ol>`)+
+    `<p class="note">${L('The icon appears on your home screen and the game opens full screen like an app.','بتطلع أيقونة اللعبة بشاشتك الرئيسية، وتفتح بشاشة كاملة مثل التطبيق.')}</p><button type="button" class="pill" id="instClose">${L('OK','تمام')}</button>`;$('instSheet').hidden=false}
+document.addEventListener('click',e=>{if(e.target.closest('[data-hm="install"]')){e.stopImmediatePropagation();openInstall();return}if(e.target.closest('#instClose'))$('instSheet').hidden=true},true);
+if(!$('home').hidden)renderHome();
+(function(){const st=document.createElement('style');st.textContent=`
+.hm-install{border:0;border-radius:14px;padding:10px;background:rgba(10,4,2,.6);color:#f2d27a;font:inherit;font-weight:900;font-size:14px;box-shadow:0 0 0 1px rgba(242,210,122,.5)}
+#instSheet{z-index:46}.inst{text-align:start;line-height:2;font-size:16px;padding-inline-start:22px;margin:8px 0}
+html.app-mode .hm{padding-top:calc(18px + env(safe-area-inset-top,0px))}`;document.head.appendChild(st)})();
+if(IS_APP())document.documentElement.classList.add('app-mode');
+
+// ===================== Round 22: a cleaner, simpler main screen (no rug) =====================
+const HI={
+  shop:'<svg viewBox="0 0 24 24"><path d="M4 8h16l-1.2 11.2a2 2 0 0 1-2 1.8H7.2a2 2 0 0 1-2-1.8z"/><path d="M8.5 8V6.5a3.5 3.5 0 0 1 7 0V8"/></svg>',
+  theme:'<svg viewBox="0 0 24 24"><path d="M3 13v-2a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v2"/><path d="M2 13h20v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/><path d="M5 19v2M19 19v2"/></svg>',
+  user:'<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+  lang:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>',
+  play:'<svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor" stroke="none"/></svg>',
+  people:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14a6.5 6.5 0 0 1 3.5 6"/></svg>',
+  install:'<svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>'};
+function fanHTML2(){const cards=[{id:-21,r:'A',s:'♠'},{id:-22,r:'JK',s:''},{id:-23,r:'A',s:'♥'},{id:-24,r:'JK',s:''}];
+  return `<div class="hx-fan">${cards.map((c,k)=>`<div class="hx-c" style="--k:${k-1.5}">${k===1?`<div class="cardback"></div>`:cardHTML(c)}</div>`).join('')}</div>`}
+renderHome=function(){const h=$('homeIn');if(!h)return;h.dir=LANG==='ar'?'rtl':'ltr';const pr=profPublic();
+  h.innerHTML=`<div class="hx-top">
+      <button type="button" class="hx-me" data-hm="prof"><span class="hx-av">${avInner(pr)}</span><span><b>${esc(MYPROF.name||L('Your profile','ملفك'))}</b><small>${L('Level ','المستوى ')+levelOf(MYPROF.xp)}</small></span></button>
+      <button type="button" class="hx-tok" data-hm="store"><i class="cn"></i><b>${(WAL.tokens||0).toLocaleString('en')}</b><span>+</span></button></div>
+    <div class="hx-mid">${fanHTML2()}<div class="eblogo"><span class="ebl-main">حفر ودفن</span></div></div>
+    <div class="hx-btns">
+      <button type="button" class="hx-play" data-hm="play">${HI.play}<span>${L('Play','العب')}</span></button>
+      <button type="button" class="hx-online" data-hm="online">${HI.people}<span>${L('Play with friends','العب مع ربعك')}</span></button>
+      <div class="hx-row">
+        <button type="button" data-hm="gifts">${HI.shop}<span>${L('Shop','المتجر')}</span></button>
+        <button type="button" data-hm="skins">${HI.theme}<span>${L('Themes','الثيمات')}</span></button>
+        <button type="button" data-hm="prof">${HI.user}<span>${L('Profile','ملفي')}</span></button>
+        <button type="button" data-hm="lang">${HI.lang}<span>${LANG==='ar'?'English':'العربية'}</span></button>
+      </div>
+      ${typeof IS_APP==='function'&&!IS_APP()?`<button type="button" class="hx-inst" data-hm="install">${HI.install}<span>${L('Install as an app','ثبّت اللعبة كتطبيق')}</span></button>`:''}
+    </div>`};
+if(!$('home').hidden)renderHome();
+(function hxCSS(){const st=document.createElement('style');st.textContent=`
+#home .hm-bg{background:
+  radial-gradient(ellipse 70% 42% at 50% 36%,rgba(242,190,100,.22),transparent 70%),
+  radial-gradient(ellipse 120% 80% at 50% 110%,rgba(120,20,25,.55),transparent 60%),
+  linear-gradient(180deg,#1b0f0c 0%,#120a08 55%,#0b0605 100%)!important}
+#home .hm-bg::after{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600' viewBox='0 0 600 600'%3E%3Cg fill='none' stroke='%23f2d27a' stroke-opacity='.07' stroke-width='1.5'%3E%3Crect x='170' y='170' width='260' height='260'/%3E%3Crect x='170' y='170' width='260' height='260' transform='rotate(45 300 300)'/%3E%3Ccircle cx='300' cy='300' r='120'/%3E%3Ccircle cx='300' cy='300' r='200'/%3E%3C/g%3E%3C/svg%3E") 50% 26%/min(620px,150vw) no-repeat!important}
+.hm{gap:0}
+.hx-top{display:flex;justify-content:space-between;align-items:center}
+.hx-me,.hx-tok{display:flex;align-items:center;gap:8px;border:0;background:rgba(255,255,255,.06);color:#f4ead6;border-radius:999px;font:inherit;box-shadow:inset 0 0 0 1px rgba(242,210,122,.25)}
+.hx-me{padding:4px 14px 4px 4px}.hx-me>span:last-child{display:flex;flex-direction:column;text-align:start;line-height:1.2}.hx-me b{font-size:14px}.hx-me small{font-size:11px;color:#c9a04a}
+.hx-av{position:relative;width:36px;height:36px;border-radius:50%;overflow:hidden;display:grid;place-items:end center;background:#ddd;box-shadow:0 0 0 1.5px #c9a04a}.hx-av svg,.hx-av img{width:100%;height:100%;object-fit:cover}
+.hx-tok{padding:5px 5px 5px 12px;color:#f2d27a;font-weight:900}.hx-tok span{width:22px;height:22px;border-radius:50%;background:#c9a04a;color:#1b0f0c;display:grid;place-items:center;font-size:16px;line-height:1}
+.hx-mid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:0}
+.hx-fan{position:relative;width:240px;height:140px;margin-bottom:6px}
+.hx-c{position:absolute;left:50%;bottom:0;--cw:84px;transform-origin:50% 125%;transform:translateX(-50%) rotate(calc(var(--k) * 17deg)) translateY(calc(var(--k) * var(--k) * 5px));filter:drop-shadow(0 14px 18px rgba(0,0,0,.55));animation:hxin .9s cubic-bezier(.2,.8,.3,1) both;animation-delay:calc((var(--k) + 1.5) * 90ms)}
+.hx-c .card{width:84px;height:118px}.hx-c .cardback{width:84px;height:118px;border-radius:7px}
+@keyframes hxin{from{transform:translateX(-50%) rotate(0) translateY(26px);opacity:0}}
+.hx-mid .ebl-main{font-size:clamp(60px,18vw,92px)}
+.hx-btns{display:flex;flex-direction:column;gap:10px;padding-bottom:4px}
+.hx-play,.hx-online,.hx-inst{display:flex;align-items:center;justify-content:center;gap:10px;border:0;border-radius:16px;font:inherit;font-weight:900;padding:15px}
+.hx-play svg,.hx-online svg,.hx-inst svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.hx-play{font-size:21px;background:linear-gradient(180deg,#f8e3a0,#e2bd5c 55%,#c9a04a);color:#2a1606;box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 10px 24px rgba(201,160,74,.25)}
+.hx-online{font-size:18px;background:transparent;color:#f2d27a;box-shadow:inset 0 0 0 1.5px rgba(242,210,122,.7)}
+.hx-play:active,.hx-online:active{transform:scale(.98)}
+.hx-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}
+.hx-row button{display:flex;flex-direction:column;align-items:center;gap:6px;border:0;background:none;color:#e9dcc2;font:inherit;font-size:12px;font-weight:700;padding:4px}
+.hx-row svg{width:46px;height:46px;padding:12px;box-sizing:border-box;border-radius:50%;fill:none;stroke:#f2d27a;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 1px rgba(242,210,122,.3)}
+.hx-inst{font-size:13px;padding:8px;background:none;color:rgba(233,220,194,.75);font-weight:700}.hx-inst svg{width:16px;height:16px}
+@media (max-height:640px){.hx-fan{height:110px;transform:scale(.82)}.hx-mid .ebl-main{font-size:58px}.hx-play,.hx-online{padding:11px}}
+`;document.head.appendChild(st)})();
+
+// ===================== Round 23: bigger table, bigger cards; smaller sofas to make the room =====================
+(function bigTableCSS(){const st=document.createElement('style');st.textContent=`
+.table{--rugS:min(calc(var(--W) * .97),71cqh)!important;--rugC:calc(100% - var(--rugS) / 2 - 4px)!important;--tile:min(calc(var(--W) * .16),15cqh)!important}
+.table .rug,.table .center{width:var(--rugS)!important;top:var(--rugC)!important}
+#table>#war{top:calc(100% - 70px)!important}
+/* side players sit right at the edge, over the rug border */
+.table .s-left{left:calc(var(--tile) * .5)!important}.table .s-right{left:calc(100% - var(--tile) * .5)!important}
+/* bigger cards: ground and the face-up piles */
+.ground>.card{--cw:min(calc(var(--W) * .2),15.5cqh)!important}
+.table .seat:not([data-seat="0"]) .card.mini{--cw:calc(var(--W) * .135)!important}
+.drawrow{z-index:5}
+`;document.head.appendChild(st)})();
+// smaller sofas
+const _fitSm=fitSeats;fitSeats=function(){_fitSm();document.querySelectorAll('.mjs').forEach(m=>{const w=parseFloat(m.style.width),h=parseFloat(m.style.height),l=parseFloat(m.style.left),t=parseFloat(m.style.top);if(!w||m.dataset.sm===m.style.width)return;
+  const side=m.classList.contains('mj-v'),nw=side?w*.8:w*.78,nh=side?h*.78:h*.8;m.style.width=nw+'px';m.style.height=nh+'px';m.style.left=(l+(w-nw)/2)+'px';m.style.top=(t+(h-nh)/2)+'px';m.dataset.sm=m.style.width})};
+// ---------- Ground layout: only in the free space between the players' piles, cards shrink and overlap so their corners stay readable ----------
+fitGround=function(){const g=$('ground'),rug=document.querySelector('.rug');if(!g||!rug)return;
+  const cards=[...g.querySelectorAll(':scope>.card')],n=cards.length;if(!n)return;
+  const gr=g.getBoundingClientRect(),rr=rug.getBoundingClientRect();
+  // free box inside the rug
+  let L=rr.left+rr.width*.06,R=rr.right-rr.width*.06,T=rr.top+rr.height*.05,B=rr.bottom-rr.height*.05;
+  document.querySelectorAll('.table .seat:not([data-seat="0"]) .pilebox').forEach(p=>{if(!p.querySelector('.card'))return;const r=p.getBoundingClientRect();if(!r.width)return;const s=p.closest('.seat');
+    if(s.classList.contains('s-left'))L=Math.max(L,r.right+6);else if(s.classList.contains('s-right'))R=Math.min(R,r.left-6);else T=Math.max(T,r.bottom+6)});
+  const dr=document.querySelector('.drawrow');if(dr){const r=dr.getBoundingClientRect();if(r.bottom>T&&r.top<T)T=Math.max(T,r.bottom+4)}
+  const W=Math.max(60,R-L),H=Math.max(80,B-T);
+  // try every column count, keep the biggest card that fits
+  let best=null;const OX=.56,OY=.5,RAT=1.42;
+  for(let C=1;C<=Math.min(n,5);C++){const rows=Math.ceil(n/C);
+    const cwW=W/(1+(C-1)*OX),cwH=H/(RAT*(1+(rows-1)*OY));let cw=Math.min(cwW,cwH,gr.width*.24,96);
+    const score=cw*(rows>C?.7:1);if(!best||score>=best.score-.5)best={C,rows,cw,score}}
+  const {C,rows}=best,cw=Math.floor(best.cw),ch=cw*RAT,dx=cw*OX,dy=ch*OY;
+  const totW=cw+(C-1)*dx,totH=ch+(rows-1)*dy,x0=L-gr.left+(W-totW)/2,y0=T-gr.top+(H-totH)/2;
+  cards.forEach((el,k)=>{const row=Math.floor(k/C),inRow=Math.min(C,n-row*C),col=k%C,rowW=cw+(inRow-1)*dx;
+    el.style.setProperty('--cw',cw+'px');el.style.left=(x0+(totW-rowW)/2+col*dx)+'px';el.style.top=(y0+row*dy)+'px';
+    el.style.setProperty('--tilt',(((k*37)%7)-3)+'deg');el.style.zIndex=1+k})};
+const _rFG=render;render=function(){_rFG();try{fitGround()}catch(e){}};
+addEventListener('resize',()=>{try{fitGround()}catch(e){}});
+(function(){const st=document.createElement('style');st.textContent=`.ground>.card{--cw:inherit}.ground>.card[style*="--cw"]{width:var(--cw)}`;document.head.appendChild(st)})();
+// side players right at the screen edge; their face-up cards stay facing the middle, tight against them
+(function(){const st=document.createElement('style');st.textContent=`
+.table .s-left{left:calc(var(--tile) * .47)!important}.table .s-right{left:calc(100% - var(--tile) * .47)!important}
+.table .s-left .name,.table .s-right .name{font-size:11px;max-width:calc(var(--tile) * 1.15);overflow:hidden;text-overflow:ellipsis}
+.table .seat.s-left .pilebox{left:calc(100% - 4px)!important}.table .seat.s-right .pilebox{right:calc(100% - 4px)!important}
+.table .seat.s-left .pilebox,.table .seat.s-right .pilebox{gap:1px}
+.table .seat:not([data-seat="0"]) .card.mini{--cw:calc(var(--W) * .125)!important}
+`;document.head.appendChild(st)})();
+
+// ===================== Rule fix: jokers won on their own stay their own group =====================
+// If the top of a pile is jokers (a joker-only war was won), the exposed group is those jokers only:
+// it can be taken only with a joker, never with the rank lying under it.
+exposed=function(pile){if(!pile||!pile.length)return null;
+  if(pile[pile.length-1].r==='JK'){let n=0;for(let k=pile.length-1;k>=0&&pile[k].r==='JK';k--)n++;return {rank:'JK',n,cards:pile.slice(pile.length-n)}}
+  let rank=null,n=0;
+  for(let k=pile.length-1;k>=0;k--){const c=pile[k];if(c.r==='JK'){n++;continue}if(rank===null){rank=c.r;n++;continue}if(c.r===rank){n++;continue}break}
+  while(n>0&&pile[pile.length-n].r==='JK')n--;
+  return n?{rank,n,cards:pile.slice(pile.length-n)}:null};
+
+// A joker on the ground must be eaten by whoever holds a joker (other eats are allowed first, but the turn cannot end without it)
+options=function(i){const h=S.players[i].hand,hasJ=h.some(c=>c.r==='JK');
+  return ORDER.map(r=>{const t=targetsFor(i,r);if(!t.count)return null;
+    const natural=(r!=='JK'&&h.some(c=>c.r===r))||(r==='JK'&&hasJ&&t.g.length>0);
+    return (natural||hasJ)?{r,t,natural}:null}).filter(Boolean)};
+
+// ===================== Round 24: drag to play, names in sync online, voice fixes, watchers =====================
+// ---------- Drag a card from your hand to play it ----------
+(function dragPlay(){let d=null;const TH=26;
+  const myCard=id=>S&&S.players&&S.players[0].hand.find(c=>c.id==id);
+  const canAct=()=>S&&((S.turn===0&&(S.phase==='choose'||S.phase==='throw'))||S.war);
+  document.addEventListener('pointerdown',e=>{const el=e.target.closest('#myrow [data-card]');if(!el||!canAct()||(typeof amWatch==='function'&&amWatch()))return;
+    d={el,id:+el.dataset.card,x:e.clientX,y:e.clientY,ghost:null,moved:false,pid:e.pointerId}},{passive:true});
+  document.addEventListener('pointermove',e=>{if(!d||e.pointerId!==d.pid)return;const dx=e.clientX-d.x,dy=e.clientY-d.y;
+    if(!d.moved){if(Math.hypot(dx,dy)<TH||dy>-8)return;d.moved=true;const r=d.el.getBoundingClientRect();
+      d.ghost=d.el.cloneNode(true);d.ghost.classList.add('dragghost');Object.assign(d.ghost.style,{left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px'});
+      document.body.appendChild(d.ghost);d.el.classList.add('dragging');d.ox=e.clientX-r.left;d.oy=e.clientY-r.top}
+    e.preventDefault();d.ghost.style.left=(e.clientX-d.ox)+'px';d.ghost.style.top=(e.clientY-d.oy)+'px';
+    const hand=$('myrow').getBoundingClientRect();d.ghost.classList.toggle('ready',e.clientY<hand.top-10);
+    document.querySelectorAll('.droptgt').forEach(x=>x.classList.remove('droptgt'));d.ghost.style.pointerEvents='none';
+    const under=document.elementFromPoint(e.clientX,e.clientY),tg=under&&under.closest('[data-target]');if(tg)tg.classList.add('droptgt')},{passive:false});
+  const end=e=>{if(!d||e.pointerId!==d.pid)return;const st=d;d=null;document.querySelectorAll('.droptgt').forEach(x=>x.classList.remove('droptgt'));
+    if(!st.moved)return;st.el.classList.remove('dragging');const hand=$('myrow').getBoundingClientRect(),up=e.clientY<hand.top-10;
+    const under=document.elementFromPoint(e.clientX,e.clientY),tg=under&&under.closest('[data-target]');st.ghost.remove();
+    lastTap={id:null,t:0};window.__dragJust=performance.now();if(!up||!canAct())return;const c=myCard(st.id);if(!c)return;
+    if(S.war){if(canIntercept(0).some(x=>x.id===c.id))intercept(0,c);return}
+    if(S.turn!==0)return;
+    if(tg&&S.phase==='choose'){S.sel=c;tg.click();return}
+    quickPlay(c)};
+  document.addEventListener('pointerup',end);document.addEventListener('pointercancel',e=>{if(d&&d.ghost){d.ghost.remove();d.el.classList.remove('dragging')}d=null});
+  // the click that follows a drag must not also select the card
+  document.addEventListener('click',e=>{if(window.__dragJust&&performance.now()-window.__dragJust<350&&e.target.closest('#myrow [data-card]')){e.stopImmediatePropagation();e.preventDefault()}},true);
+  const st=document.createElement('style');st.textContent=`#myrow [data-card]{touch-action:none}
+.dragghost{position:fixed;z-index:80;pointer-events:none;transform:rotate(-4deg) scale(1.08);filter:drop-shadow(0 14px 14px rgba(0,0,0,.45));transition:transform .12s}
+.dragghost.ready{transform:rotate(0) scale(1.18);box-shadow:0 0 0 3px #f6d20d,0 0 18px rgba(246,210,13,.7)}
+#myrow .card.dragging{opacity:.25}
+.droptgt{box-shadow:0 0 0 4px #2ecc71,0 0 18px #2ecc71!important;scale:1.06}`;document.head.appendChild(st)})();
+
+// ---------- Online: the names on the seats always match the people in the room ----------
+if(typeof NET!=='undefined'&&NET.handlers){const _hr2=NET.handlers.room;NET.handlers.room=r=>{_hr2&&_hr2(r);
+  if(NET.on&&NET.host&&S&&S.players){const before=S.players.map(p=>p.name).join('|');hostSeats();if(S.players.map(p=>p.name).join('|')!==before){render();flushUp()}}}}
+// the name in the lobby is the profile name, so both are the same from the start
+const _rlN=renderLobby;renderLobby=function(){_rlN();const n=$('lbName');if(n&&MYPROF.name&&!n.dataset.set){n.value=MYPROF.name;n.dataset.set=1}};
+document.addEventListener('input',e=>{if(e.target&&e.target.id==='lbName'){const v=e.target.value.trim();if(v){MYPROF.name=v;try{saveProf()}catch(err){}}}});
+
+// ---------- Voice: relay servers for mobile data, reconnect on failure, unlock sound on iPhone ----------
+if(typeof ICE!=='undefined'){ICE.iceServers=[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:global.stun.twilio.com:3478']},
+  {urls:['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443','turn:openrelay.metered.ca:443?transport=tcp'],username:'openrelayproject',credential:'openrelayproject'}]}
+if(typeof peer==='function'){const _peer=peer;peer=function(sid){const had=VOICE.peers.has(sid),st=_peer(sid);if(had)return st;const pc=st.pc;
+    pc.onconnectionstatechange=()=>{if(pc.connectionState==='failed'){try{pc.restartIce()}catch(e){}}};
+    const ot=pc.ontrack;pc.ontrack=ev=>{ot&&ot(ev);setTimeout(()=>{if(st.audio&&st.audio.paused)soundLock(true)},400)};
+    return st}}
+function soundLock(on){let b=$('soundUnlock');if(!b){b=document.createElement('button');b.type='button';b.id='soundUnlock';b.innerHTML=`🔊 ${L('Tap to hear the players','اضغط عشان تسمع اللاعبين')}`;document.body.appendChild(b)}b.hidden=!on}
+document.addEventListener('click',e=>{if(!e.target.closest('#soundUnlock')&&!(typeof VOICE!=='undefined'&&VOICE.peers.size))return;let blocked=false;
+  if(typeof VOICE!=='undefined')VOICE.peers.forEach(st=>{if(st.audio){st.audio.muted=false;const p=st.audio.play();p&&p.catch(()=>{blocked=true})}});setTimeout(()=>soundLock(blocked),300)},true);
+(function(){const st=document.createElement('style');st.textContent=`#soundUnlock{position:fixed;left:50%;top:calc(70px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:95;border:0;border-radius:999px;padding:10px 18px;font:inherit;font-weight:900;background:#2ecc71;color:#fff;box-shadow:0 6px 16px rgba(0,0,0,.4)}#soundUnlock[hidden]{display:none}`;document.head.appendChild(st)})();
+
+// ---------- Watchers: see the host's cards face down, team names on the score, 👁 always shown online ----------
+const _cardW=cardHTML;cardHTML=function(c,extra='',attrs=''){if(c&&c.r==='?')return `<div class="card backcard ${extra}" ${attrs}><div class="cardback"></div></div>`;return _cardW(c,extra,attrs)};
+const _rW=render;render=function(){_rW();if(!S||!S.players)return;
+  if(typeof amWatch==='function'&&amWatch()&&S.teams){const b=$('board');if(b)b.querySelectorAll('.col .t').forEach((t,k)=>{const names=S.players.filter(p=>p.team===k).map(p=>p.name).join(L(' & ',' و'));const ar=t.querySelector('.ar');if(ar)ar.textContent=names;else t.lastChild.textContent=names})}};
+eyesUI=(function(prev){return function(){prev();const b=$('eyesBtn');if(b&&typeof NET!=='undefined'&&NET.on&&S)b.hidden=false}})(eyesUI);
+(function(){const st=document.createElement('style');st.textContent=`
+html.watching #myrow .hand{visibility:visible!important;pointer-events:none}
+.card.backcard{background:none!important;box-shadow:none!important;padding:0}.card.backcard .cardback{width:100%;height:100%;border-radius:inherit}
+html.watching #board .t .ar{font-size:10px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle}`;document.head.appendChild(st)})();
+(function(){const st=document.createElement('style');st.textContent='html.watching .seat .tags{display:none}';document.head.appendChild(st)})();
+
+// ===================== Round 25 (trial on the modern living room): fewer details, slim sofas, a bigger playing rug =====================
+(function cleanModernCSS(){const st=document.createElement('style');st.textContent=`
+/* only two pieces, both in corners */
+html body .stage .td.nM,html body .stage .td.nB,html body .stage .td.nN,html body .stage .td.nP,html body .stage .td.sA,html body .stage .td.sC,html body .stage .td.sM,html body .stage .td.sB{display:none!important}
+/* the rug fills the room: from just under the partner to the bottom, almost edge to edge */
+html .table .rug,html .table .center{aspect-ratio:auto!important;width:calc(var(--W) * .97)!important;top:calc(var(--tile) * 1.55)!important;bottom:4px;height:auto!important;transform:translateX(-50%)!important}
+html.t-modern .table .rug{box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 2px 2px rgba(0,0,0,.15),0 14px 26px rgba(40,25,10,.3)!important}
+/* slim sofas: just the backrest and seat behind each player */
+html .mjs i::after{display:none!important}
+html .mjs.mj-h i,html .mjs.mj-v i{display:none!important}
+html body .cornerplant{display:none!important}
+`;document.head.appendChild(st)})();
+// slimmer sofas in this theme
+const _fitMod=fitSeats;fitSeats=function(){_fitMod();
+  document.querySelectorAll('.mjs').forEach(m=>{if(m.dataset.slim===m.style.width)return;const w=parseFloat(m.style.width),h=parseFloat(m.style.height),l=parseFloat(m.style.left),t=parseFloat(m.style.top);if(!w)return;
+    const side=m.classList.contains('mj-v'),nw=side?w*.62:w*.8,nh=side?h*.8:h*.62;
+    m.style.width=nw+'px';m.style.height=nh+'px';m.style.left=(l+(m.classList.contains('backR')?(w-nw):m.classList.contains('backL')?0:(w-nw)/2))+'px';m.style.top=(t+(side?(h-nh)/2:0))+'px';m.dataset.slim=m.style.width})};
+
+// one decoration per theme, in the free top-right corner
+Object.assign(LAYOUT,{sadu:{D:'mabkhara'},night:{D:'perfume'},teal:{D:'mabkhara'},royal:{D:'perfume'},camp:{D:'fire'},old:{D:'lantern'},winter:{D:'coals'},
+  modern:{D:'floorlamp'},sea:{D:'umbrella'},chalet:{D:'umbrella'},ramadan:{D:'fanousR'},classic:{D:'goldlamp'},diwan2:{D:'floorlamp'},noir:{D:'perfume'}});
+placeItems();
+(function(){const st=document.createElement('style');st.textContent=`html body .stage .td.sD{right:1%!important;top:4px!important;left:auto!important;bottom:auto!important;width:calc(var(--W) * .15)!important;max-width:calc(var(--tile) * 1.4)!important}
+html body .stage .td-floorlamp.sD,html body .stage .td-goldlamp.sD,html body .stage .td-umbrella.sD{width:calc(var(--W) * .22)!important;max-width:calc(var(--tile) * 1.6)!important}
+html body .stage .td-coals.sD,html body .stage .td-fire.sD{width:calc(var(--W) * .2)!important}`;document.head.appendChild(st)})();
+(function(){const st=document.createElement('style');st.textContent='html.t-modern body .stage .td-monstera,html body .stage .td-monstera{display:none!important}';document.head.appendChild(st)})();
+
+// ===================== Round 26: card pick sound (no lift) + three rebuilt, calmer premium themes =====================
+// ---------- Picking a card: it stays in place, a soft card sound plays ----------
+document.addEventListener('click',e=>{const c=e.target.closest('#myrow [data-card]');if(!c||!S||(typeof amWatch==='function'&&amWatch()))return;
+  if(typeof playSample==='function')playSample('card'+(1+Math.floor(Math.random()*3)),0,.55);else if(SND.deal)SND.deal()},true);
+(function(){const st=document.createElement('style');st.textContent=`
+#myrow .hand .card.sel{box-shadow:0 0 0 3px #f6d20d,0 0 14px rgba(246,210,13,.6),0 6px 14px rgba(0,0,0,.4)!important;z-index:3}`;document.head.appendChild(st)})();
+
+// ---------- Fabric textures (calm, fine weave: nothing that fights with the cards) ----------
+(function premiumTextures(){const mk=(w,h,draw,q=.9)=>{const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);return c.toDataURL('image/jpeg',q)};const rnd=(a,b)=>a+Math.random()*(b-a);
+  const fabric=(base,lite,dark)=>mk(256,256,(x,w,h)=>{x.fillStyle=base;x.fillRect(0,0,w,h);
+    for(let y=0;y<h;y+=2){x.fillStyle=`rgba(${lite},${rnd(.02,.06)})`;x.fillRect(0,y,w,1)}for(let xx=0;xx<w;xx+=2){x.fillStyle=`rgba(${dark},${rnd(.03,.07)})`;x.fillRect(xx,0,1,h)}
+    for(let i=0;i<7000;i++){x.fillStyle=`rgba(${Math.random()<.5?lite:dark},${rnd(.02,.07)})`;x.fillRect(rnd(0,w),rnd(0,h),rnd(1,2),1)}});
+  const dunes=mk(800,500,(x,w,h)=>{const g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,'#0b1022');g.addColorStop(.42,'#1b1c35');g.addColorStop(.62,'#6a4630');g.addColorStop(1,'#a87a4c');x.fillStyle=g;x.fillRect(0,0,w,h);
+    for(let i=0;i<220;i++){x.fillStyle=`rgba(255,248,230,${rnd(.25,.9)})`;x.beginPath();x.arc(rnd(0,w),rnd(0,h*.45),Math.random()<.06?rnd(1,1.6):rnd(.3,.8),0,7);x.fill()}
+    [[.6,'#5a3a26'],[.7,'#7a5234'],[.82,'#94673f']].forEach(([y0,c],k)=>{x.fillStyle=c;x.beginPath();x.moveTo(0,h);for(let xx=0;xx<=w;xx+=10)x.lineTo(xx,h*y0+Math.sin(xx/w*Math.PI*(2+k)+k)*h*.05);x.lineTo(w,h);x.fill()});
+    for(let i=0;i<9000;i++){x.fillStyle=`rgba(${Math.random()<.5?'255,230,190':'60,35,20'},${rnd(.02,.06)})`;x.fillRect(rnd(0,w),rnd(h*.55,h),1,1)}});
+  const R=document.documentElement.style;
+  R.setProperty('--fx-burgundy',`url(${fabric('#6e1420','255,210,200','30,0,5')})`);
+  R.setProperty('--fx-camel',`url(${fabric('#c9a77a','255,245,225','90,60,30')})`);
+  R.setProperty('--fx-night',`url(${fabric('#1c1840','200,190,255','5,0,20')})`);
+  R.setProperty('--tx-dunes',`url(${dunes})`)})();
+const CORNER=(c)=>`url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><path d='M2 2h16M2 2v16' stroke='${c}' stroke-width='1.6' fill='none'/><path d='M8 8l6 0 0 6-6 0z' fill='${c}' transform='rotate(45 11 11)'/></svg>`)}")`;
+const CRES=(c)=>`url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><path d='M24 6a14 14 0 1 0 10 24A11 11 0 1 1 24 6z' fill='${c}'/><path d='M31 10l1.2 3.4 3.4 1.2-3.4 1.2-1.2 3.4-1.2-3.4-3.4-1.2 3.4-1.2z' fill='${c}'/></svg>`)}")`;
+const RAMS=THEMES.find(t=>t.id==='ramadan'),CAMP=THEMES.find(t=>t.id==='camp');if(CAMP){CAMP.en='Desert night';CAMP.ar='ليلة البر'}
+Object.assign(TPREV,{classic:{floor:'var(--tx-marble) 0 0/160px,#efede8',rug:'var(--fx-burgundy) 0 0/80px,#6e1420',edge:'#d9b25a'},
+  camp:{floor:'var(--tx-dunes) center/cover,#1b1c35',rug:'var(--fx-camel) 0 0/80px,#c9a77a',edge:'#3a2414'},
+  ramadan:{floor:'var(--tx-zellige) 0 0/120px,#13233f',rug:'var(--fx-night) 0 0/80px,#1c1840',edge:'#e0bd6a'}});
+LAYOUT.camp={};LAYOUT.ramadan={D:'fanousR'};LAYOUT.classic={D:'goldlamp'};if(typeof placeItems==='function')placeItems();
+
+(function premiumCSS(){const st=document.createElement('style');st.textContent=`
+/* shared: a framed fabric table, thin double border, tiny corner marks */
+html:is(.t-classic,.t-camp,.t-ramadan,.t-felt,.t-pearl,.t-turq) .table .rug{padding:calc(var(--W) * .022)!important;border-radius:6px!important;background:var(--rugEdge)!important;box-shadow:0 0 0 1px rgba(0,0,0,.35),0 18px 34px rgba(0,0,0,.45)!important}
+html:is(.t-classic,.t-camp,.t-ramadan,.t-felt,.t-pearl,.t-turq) .table .rug::before,html:is(.t-classic,.t-camp,.t-ramadan,.t-felt,.t-pearl,.t-turq) .table .rug::after{content:none!important}
+html:is(.t-classic,.t-camp,.t-ramadan,.t-felt,.t-pearl,.t-turq) .table .field{border-radius:3px!important;background:var(--corner) left 6px top 6px/22px no-repeat,var(--corner) right 6px top 6px/22px no-repeat,var(--corner) left 6px bottom 6px/22px no-repeat,var(--corner) right 6px bottom 6px/22px no-repeat,
+  radial-gradient(ellipse at 50% 42%,rgba(255,255,255,.07),transparent 65%),radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.28)),var(--rugFace)!important;
+  box-shadow:inset 0 0 0 1.5px var(--line),inset 0 0 0 5px transparent,inset 0 0 0 6px var(--line2),inset 0 0 30px rgba(0,0,0,.35)!important}
+html:is(.t-classic,.t-camp,.t-ramadan,.t-felt,.t-pearl,.t-turq) .table .field::after{background:none!important}
+html:is(.t-classic,.t-camp,.t-ramadan,.t-felt,.t-pearl,.t-turq) .stage .td{filter:drop-shadow(0 4px 5px rgba(0,0,0,.5))}
+
+/* Grand majlis: burgundy velvet, gold frame, marble floor */
+html.t-classic{--rugEdge:linear-gradient(135deg,#8a6a1f,#f2d27a 30%,#b8862e 55%,#f2d27a 80%,#8a6a1f);--rugFace:var(--fx-burgundy) 0 0/180px,#6e1420;--line:rgba(242,210,122,.85);--line2:rgba(242,210,122,.45);--corner:${CORNER('#e8c46a')}}
+html.t-classic .table .field .empty,html.t-classic .drawrow{color:#f6e3a8}
+
+/* Desert night (was the camp): night sky over the dunes, a camel wool rug with a dark leather frame */
+html.t-camp #app{background:radial-gradient(ellipse 55% 30% at 50% 70%,rgba(255,170,90,.18),transparent 70%),var(--tx-dunes) center/cover,#1b1c35!important}
+html.t-camp{--rugEdge:linear-gradient(180deg,#4a2c18,#2e1a0e);--rugFace:var(--fx-camel) 0 0/180px,#c9a77a;--line:rgba(46,26,14,.75);--line2:rgba(168,56,38,.6);--corner:${CORNER('#7a3a22')}}
+html.t-camp .topbar,html.t-camp .bottombar{background:linear-gradient(180deg,#2e1f16,#1a110b)!important;outline:none!important}
+html.t-camp .topbar::after,html.t-camp .bottombar::before{background:linear-gradient(90deg,#a83826,#efe2c0 50%,#a83826)!important;height:2px!important;box-shadow:none!important}
+html.t-camp .drawrow{color:#2e1a0e;text-shadow:none}html.t-camp .table .field .empty{color:#5a3a22}
+html.t-camp{--mjH:linear-gradient(180deg,#4a2c18,#2e1a0e);--mjV:linear-gradient(90deg,#2e1a0e,#4a2c18);--mjt:#c9a77a}
+
+/* Ramadan nights: deep indigo velvet, a gold frame with a crescent in each corner, tile floor and lights */
+html.t-ramadan{--rugEdge:linear-gradient(135deg,#7a5a1c,#e8c46a 35%,#a8822e 60%,#e8c46a 85%,#7a5a1c);--rugFace:var(--fx-night) 0 0/180px,#1c1840;--line:rgba(232,196,106,.85);--line2:rgba(232,196,106,.4);--corner:${CRES('#e8c46a')}}
+html.t-ramadan .table .rug{background:var(--rugEdge)!important}
+html.t-ramadan .table .field{background:var(--corner) left 6px top 6px/22px no-repeat,var(--corner) right 6px top 6px/22px no-repeat,var(--corner) left 6px bottom 6px/22px no-repeat,var(--corner) right 6px bottom 6px/22px no-repeat,
+  radial-gradient(ellipse at 50% 40%,rgba(232,196,106,.10),transparent 60%),radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.3)),var(--rugFace)!important}
+html.t-ramadan .drawrow,html.t-ramadan .table .field .empty{color:#f6e3a8}
+`;document.head.appendChild(st)})();
+
+// ===================== Round 27: premium card backs (fine engraving, metallic frame, centred seal) =====================
+function ebSVG2(b){const ink=b.ink,bg=b.bg,bg2=b.bg2;
+  // guilloche: overlapping sine rings around the centre, like banknote engraving
+  let guil='';for(let k=0;k<3;k++){const R0=20+k*7,amp=2.2+k*.6,lobes=18+k*6;let d='';for(let a=0;a<=360;a+=2){const t=a*Math.PI/180,r=R0+amp*Math.sin(lobes*t);d+=(a?'L':'M')+(50+Math.cos(t)*r).toFixed(2)+' '+(70+Math.sin(t)*r).toFixed(2)}guil+=`<path d="${d}z" fill="none" stroke="${ink}" stroke-width=".45" opacity="${.55-k*.12}"/>`}
+  // fine diagonal lattice with tiny stars
+  const lat=`<pattern id="l" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0H8M0 0V8" stroke="${ink}" stroke-width=".35" opacity=".28"/><circle cx="4" cy="4" r=".55" fill="${ink}" opacity=".45"/></pattern>`;
+  const sadu=b.sadu?[14,124].map(y=>`<rect x="9" y="${y}" width="82" height="4" fill="${bg2}"/><path d="${Array.from({length:10},(_,k)=>`M${9+k*8.2} ${y+4}l4.1-3.6 4.1 3.6z`).join('')}" fill="#efe2c0" opacity=".9"/>`).join(''):'';
+  const flourish=(x,y,rot)=>`<g transform="translate(${x} ${y}) rotate(${rot})"><path d="M0 0c4 0 7 3 7 7M0 0c0 4 3 7 7 7" stroke="url(#gm)" stroke-width=".9" fill="none"/><path d="M2 2l3 0 0 3-3 0z" transform="rotate(45 3.5 3.5)" fill="url(#gm)"/><circle cx="9" cy="2" r=".8" fill="url(#gm)"/><circle cx="2" cy="9" r=".8" fill="url(#gm)"/></g>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 140" preserveAspectRatio="xMidYMid slice"><defs>
+    <radialGradient id="g" cx=".5" cy=".42" r=".8"><stop offset="0" stop-color="${bg}"/><stop offset=".75" stop-color="${bg2}"/><stop offset="1" stop-color="${bg2}"/></radialGradient>
+    <linearGradient id="gm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${b.m0||'#8a6a1f'}"/><stop offset=".3" stop-color="${b.m1||'#fbe7a6'}"/><stop offset=".55" stop-color="${b.m2||'#c9a04a'}"/><stop offset=".8" stop-color="${b.m1||'#fbe7a6'}"/><stop offset="1" stop-color="${b.m0||'#8a6a1f'}"/></linearGradient>
+    <linearGradient id="sh" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/></linearGradient>${lat}</defs>
+    <rect width="100" height="140" fill="#fbf8f0"/><rect x="3" y="3" width="94" height="134" rx="4.5" fill="url(#g)"/><rect x="3" y="3" width="94" height="134" rx="4.5" fill="url(#l)"/>${sadu}
+    <rect x="6" y="6" width="88" height="128" rx="3" fill="none" stroke="url(#gm)" stroke-width="1.4"/><rect x="8.6" y="8.6" width="82.8" height="122.8" rx="2" fill="none" stroke="url(#gm)" stroke-width=".5"/>
+    ${flourish(10,10,0)}${flourish(90,10,90)}${flourish(90,130,180)}${flourish(10,130,270)}
+    ${guil}<circle cx="50" cy="70" r="17.5" fill="${bg2}" stroke="url(#gm)" stroke-width="1.3"/><circle cx="50" cy="70" r="15.2" fill="none" stroke="url(#gm)" stroke-width=".4" stroke-dasharray="1 1.4"/>
+    <text x="50" y="68" text-anchor="middle" font-family="'Aref Ruqaa','Reem Kufi',Tajawal,'Geeza Pro',serif" font-weight="700" font-size="10.5" fill="${b.txt||'url(#gm)'}">حفر</text>
+    <text x="50" y="79.5" text-anchor="middle" font-family="'Aref Ruqaa','Reem Kufi',Tajawal,'Geeza Pro',serif" font-weight="700" font-size="10.5" fill="${b.txt||'url(#gm)'}">ودفن</text>
+    <rect x="3" y="3" width="94" height="134" rx="4.5" fill="url(#sh)"/></svg>`}
+const MET={eb:{},ebnavy:{m0:'#6e7686',m1:'#ffffff',m2:'#b9c2d4'},ebgreen:{},ebblack:{},ebwhite:{m0:'#0b1830',m1:'#3a5480',m2:'#14284b'},ebsadu:{m0:'#8a6a3a',m1:'#fff6dc',m2:'#d9c28e'},ebpurple:{}};
+(function(){const st=document.createElement('style');st.textContent=EB_BACKS.map(b=>{const u=`url("data:image/svg+xml,${encodeURIComponent(ebSVG2({...b,...(MET[b.id]||{})}))}") center/100% 100%`;
+  return `html.cb-${b.id} :not(.cbprev)>.cardback.cardback,html .cbprev.cb-${b.id} .cardback.cardback{background:${u}!important;border-radius:6px!important;box-shadow:0 0 0 .5px rgba(0,0,0,.35),0 2px 5px rgba(0,0,0,.35)!important}`}).join('\n');document.head.appendChild(st)})();
+
+// ===================== Round 28: a better desert night + three new premium themes =====================
+(function moreFabrics(){const mk=(w,h,draw,q=.9)=>{const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);return c.toDataURL('image/jpeg',q)};const rnd=(a,b)=>a+Math.random()*(b-a);
+  const fabric=(base,lite,dark,n=7000)=>mk(256,256,(x,w,h)=>{x.fillStyle=base;x.fillRect(0,0,w,h);
+    for(let y=0;y<h;y+=2){x.fillStyle=`rgba(${lite},${rnd(.02,.05)})`;x.fillRect(0,y,w,1)}for(let xx=0;xx<w;xx+=2){x.fillStyle=`rgba(${dark},${rnd(.03,.06)})`;x.fillRect(xx,0,1,h)}
+    for(let i=0;i<n;i++){x.fillStyle=`rgba(${Math.random()<.5?lite:dark},${rnd(.02,.06)})`;x.fillRect(rnd(0,w),rnd(0,h),rnd(1,2),1)}});
+  // desert night, high resolution: deep sky, moon with halo, soft stars, three layers of smooth dunes with light on their crests
+  const night=mk(1200,900,(x,w,h)=>{const g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,'#060a1c');g.addColorStop(.35,'#121a3a');g.addColorStop(.55,'#2a2440');g.addColorStop(.66,'#4a3330');g.addColorStop(1,'#2a1a10');x.fillStyle=g;x.fillRect(0,0,w,h);
+    const mx=w*.78,my=h*.16;let hg=x.createRadialGradient(mx,my,0,mx,my,170);hg.addColorStop(0,'rgba(255,244,214,.35)');hg.addColorStop(1,'rgba(255,244,214,0)');x.fillStyle=hg;x.fillRect(0,0,w,h*.6);
+    x.fillStyle='#fdf3d8';x.beginPath();x.arc(mx,my,28,0,7);x.fill();x.fillStyle='rgba(200,190,160,.25)';[[-8,-6,7],[9,5,5],[-3,10,4]].forEach(([a,b,r])=>{x.beginPath();x.arc(mx+a,my+b,r,0,7);x.fill()});
+    for(let i=0;i<420;i++){const y=rnd(0,h*.55),a=rnd(.15,.9)*(1-y/(h*.6));x.fillStyle=`rgba(255,250,235,${a})`;x.beginPath();x.arc(rnd(0,w),y,Math.random()<.05?rnd(1,1.5):rnd(.3,.8),0,7);x.fill()}
+    const dune=(y0,amp,f,ph,c1,c2,crest)=>{const gg=x.createLinearGradient(0,h*y0-amp,0,h);gg.addColorStop(0,c1);gg.addColorStop(1,c2);x.fillStyle=gg;x.beginPath();x.moveTo(0,h);const pts=[];
+      for(let xx=0;xx<=w;xx+=6){const y=h*y0+Math.sin(xx/w*Math.PI*f+ph)*amp+Math.sin(xx/w*Math.PI*f*2.3+ph*2)*amp*.25;pts.push([xx,y]);x.lineTo(xx,y)}x.lineTo(w,h);x.fill();
+      x.strokeStyle=crest;x.lineWidth=2;x.beginPath();pts.forEach(([a,b],k)=>k?x.lineTo(a,b):x.moveTo(a,b));x.stroke()};
+    dune(.62,26,2.2,.4,'#5a3c2c','#3a2418','rgba(255,220,170,.18)');dune(.72,34,1.6,2.1,'#7a5236','#4a2e1c','rgba(255,214,160,.25)');dune(.84,30,1.2,4,'#9a6c44','#6a4428','rgba(255,220,170,.3)');
+    for(let i=0;i<26000;i++){const y=rnd(h*.6,h);x.fillStyle=`rgba(${Math.random()<.5?'255,225,185':'40,22,10'},${rnd(.02,.05)})`;x.fillRect(rnd(0,w),y,1,1)}});
+  const sadu=mk(96,40,(x,w,h)=>{x.fillStyle='#2a1810';x.fillRect(0,0,w,h);x.fillStyle='#a83826';x.fillRect(0,8,w,24);x.fillStyle='#efe2c0';for(let k=0;k<6;k++){x.beginPath();x.moveTo(k*16,32);x.lineTo(k*16+8,20);x.lineTo(k*16+16,32);x.fill();x.beginPath();x.moveTo(k*16,8);x.lineTo(k*16+8,20);x.lineTo(k*16+16,8);x.fill()}
+    x.fillStyle='#1a0e08';for(let k=0;k<6;k++){x.beginPath();x.arc(k*16+8,20,2.2,0,7);x.fill()}for(let i=0;i<1500;i++){x.fillStyle=`rgba(${Math.random()<.5?'255,240,220':'0,0,0'},${rnd(.03,.1)})`;x.fillRect(rnd(0,w),rnd(0,h),1,1)}});
+  const walnut=mk(512,256,(x,w,h)=>{x.fillStyle='#4a2a16';x.fillRect(0,0,w,h);for(let l=0;l<70;l++){x.strokeStyle=`rgba(${Math.random()<.5?'120,70,35':'20,10,4'},${rnd(.15,.4)})`;x.lineWidth=rnd(.5,2.4);x.beginPath();const y0=rnd(0,h);x.moveTo(0,y0);for(let xx=0;xx<=w;xx+=12)x.lineTo(xx,y0+Math.sin(xx*.012+l)*rnd(2,8));x.stroke()}});
+  const stone=mk(400,400,(x,w,h)=>{x.fillStyle='#d9d6cf';x.fillRect(0,0,w,h);for(let i=0;i<9000;i++){x.fillStyle=`rgba(${Math.random()<.5?'255,255,255':'120,115,105'},${rnd(.04,.1)})`;x.fillRect(rnd(0,w),rnd(0,h),rnd(1,2),rnd(1,2))}x.strokeStyle='rgba(140,135,125,.5)';x.lineWidth=1.2;x.strokeRect(.5,.5,w-1,h-1)});
+  const leather=mk(256,256,(x,w,h)=>{x.fillStyle='#efe6d6';x.fillRect(0,0,w,h);for(let i=0;i<1400;i++){const xx=rnd(0,w),yy=rnd(0,h),r=rnd(2,5),g=x.createRadialGradient(xx,yy,0,xx,yy,r);g.addColorStop(0,`rgba(${Math.random()<.5?'255,255,255':'150,130,100'},${rnd(.02,.05)})`);g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(xx-r,yy-r,2*r,2*r)}});
+  const R=document.documentElement.style;
+  R.setProperty('--tx-night2',`url(${night})`);R.setProperty('--tx-sadustrip',`url(${sadu})`);R.setProperty('--tx-walnut',`url(${walnut})`);R.setProperty('--tx-stone',`url(${stone})`);R.setProperty('--tx-ivory',`url(${leather})`);
+  R.setProperty('--fx-felt',`url(${fabric('#1f5c3e','200,255,220','0,20,10',9000)})`);R.setProperty('--fx-turq',`url(${fabric('#0f5f66','190,255,255','0,20,25')})`)})();
+THEMES.push({id:'felt',en:'Card table',ar:'طاولة الورق',cost:350},{id:'pearl',en:'Pearl lounge',ar:'الصالون اللؤلؤي',cost:450},{id:'turq',en:'Turquoise majlis',ar:'المجلس الفيروزي',cost:450});
+Object.assign(TPREV,{camp:{floor:'var(--tx-night2) center/cover,#121a3a',rug:'var(--fx-camel) 0 0/80px,#c9a77a',edge:'#a83826'},
+  felt:{floor:'var(--tx-oak) 0 0/160px,#3a2a1c',rug:'var(--fx-felt) 0 0/80px,#1f5c3e',edge:'#4a2a16'},
+  pearl:{floor:'var(--tx-stone) 0 0/160px,#d9d6cf',rug:'var(--tx-ivory) 0 0/80px,#efe6d6',edge:'#b9bcc4'},
+  turq:{floor:'var(--tx-blackmarble) 0 0/160px,#121214',rug:'var(--fx-turq) 0 0/80px,#0f5f66',edge:'#d9b25a'}});
+Object.assign(LAYOUT,{felt:{D:'goldlamp'},pearl:{D:'vase'},turq:{D:'mabkhara'}});if(typeof placeItems==='function')placeItems();
+(function newPremiumCSS(){const st=document.createElement('style');st.textContent=`
+html:is(.t-felt,.t-pearl,.t-turq) .topbar::after,html:is(.t-felt,.t-pearl,.t-turq) .bottombar::before{height:2px!important;background:linear-gradient(90deg,transparent,#c9a04a,transparent)!important;box-shadow:none!important}
+html.t-pearl .topbar::after,html.t-pearl .bottombar::before{background:linear-gradient(90deg,transparent,#9aa0aa,transparent)!important}
+/* desert night: high-res sky and dunes, wool rug with a sadu band */
+html.t-camp #app{background:var(--tx-night2) center 30%/cover,#121a3a!important}
+html.t-camp{--rugEdge:var(--tx-sadustrip) 0 0/72px 30px repeat,#2a1810;--line:rgba(42,24,16,.7);--line2:rgba(168,56,38,.45)}
+html.t-camp .table .rug{padding:calc(var(--W) * .03)!important}
+
+/* card table: dark oak floor, walnut rail, green baize */
+html.t-felt #app{background:radial-gradient(ellipse 70% 50% at 50% 55%,rgba(255,230,180,.16),transparent 70%),radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,.55)),var(--tx-oak) 0 0/360px,#3a2a1c!important;filter:none}
+html.t-felt{--rugEdge:linear-gradient(180deg,rgba(255,255,255,.12),transparent 30%,rgba(0,0,0,.25)),var(--tx-walnut) 0 0/300px,#4a2a16;--rugFace:var(--fx-felt) 0 0/180px,#1f5c3e;--line:rgba(232,196,106,.55);--line2:rgba(232,196,106,.25);--corner:none}
+html.t-felt .table .rug{border-radius:16px!important;padding:calc(var(--W) * .035)!important}html.t-felt .table .field{border-radius:8px!important}
+html.t-felt .topbar,html.t-felt .bottombar{background:linear-gradient(180deg,#2a1c12,#170f09)!important}
+html.t-felt .drawrow,html.t-felt .table .field .empty{color:#e9dcc2}
+html.t-felt{--mjH:var(--tx-walnut) 0 0/200px,#4a2a16;--mjV:var(--tx-walnut) 0 0/200px,#4a2a16;--mjt:rgba(232,196,106,.5)}
+
+/* pearl lounge: pale stone floor, ivory leather table, brushed silver frame */
+html.t-pearl #app{background:radial-gradient(ellipse 70% 50% at 50% 50%,rgba(255,255,255,.45),transparent 70%),var(--tx-stone) 0 0/320px,#d9d6cf!important}
+html.t-pearl{--rugEdge:linear-gradient(135deg,#8c9098,#f4f5f7 30%,#b9bcc4 55%,#f4f5f7 80%,#8c9098);--rugFace:var(--tx-ivory) 0 0/200px,#efe6d6;--line:rgba(120,125,135,.7);--line2:rgba(120,125,135,.35);--corner:${CORNER('#8c9098')}}
+html.t-pearl .table .rug{box-shadow:0 0 0 1px rgba(0,0,0,.12),0 18px 34px rgba(60,55,45,.3)!important}
+html.t-pearl .topbar,html.t-pearl .bottombar{background:linear-gradient(180deg,#fbfbfa,#e6e3dd)!important}
+html.t-pearl .gbtn,html.t-pearl .pill{background:linear-gradient(180deg,#ffffff,#eceae5)!important;color:#3a3d44!important}
+html.t-pearl .gbtn svg [fill="#fff"],html.t-pearl .gbtn svg[fill="#fff"]{fill:#3a3d44}html.t-pearl .gbtn svg[stroke="#fff"]{stroke:#3a3d44}
+html.t-pearl .score{background:linear-gradient(180deg,#3a3d44,#24262b)!important}html.t-pearl #board .n{background:#f4f5f7;color:#24262b}
+html.t-pearl .status{background:#3a3d44;color:#fff}html.t-pearl .drawrow{color:#3a3d44;text-shadow:none}
+html.t-pearl{--mjH:linear-gradient(180deg,#f4f1ea,#ddd8cd);--mjV:linear-gradient(90deg,#ddd8cd,#f4f1ea);--mjt:#b9bcc4}
+
+/* turquoise majlis: black marble floor, turquoise velvet, gold frame */
+html.t-turq #app{background:radial-gradient(ellipse 65% 50% at 50% 52%,rgba(255,220,150,.12),transparent 70%),radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,.55)),var(--tx-blackmarble) 0 0/380px,#121214!important}
+html.t-turq{--rugEdge:linear-gradient(135deg,#8a6a1f,#f2d27a 30%,#b8862e 55%,#f2d27a 80%,#8a6a1f);--rugFace:var(--fx-turq) 0 0/180px,#0f5f66;--line:rgba(242,210,122,.85);--line2:rgba(242,210,122,.4);--corner:${CORNER('#e8c46a')}}
+html.t-turq .topbar,html.t-turq .bottombar{background:linear-gradient(180deg,#1b1b1e,#0a0a0b)!important}
+html.t-turq .drawrow,html.t-turq .table .field .empty{color:#f6e3a8}
+html.t-turq{--mjH:linear-gradient(180deg,#0f5f66,#083a40);--mjV:linear-gradient(90deg,#083a40,#0f5f66);--mjt:#c9a04a}
+`;document.head.appendChild(st)})();
+
+// ===================== Round 29: light card backs =====================
+const LIGHT_BACKS=[
+  {id:'ebsky',en:'Sky blue',ar:'سماوي',cost:150,bg:'#d6ecfa',bg2:'#a9d2ef',ink:'#1f4f86',m0:'#1f4f86',m1:'#6fa8dc',m2:'#163c66'},
+  {id:'ebmint',en:'Mint',ar:'نعناعي',cost:150,bg:'#dcf3e8',bg2:'#ace0c6',ink:'#1d6b4a',m0:'#1d6b4a',m1:'#5fb88e',m2:'#134a33'},
+  {id:'ebrose',en:'Rose',ar:'وردي',cost:150,bg:'#fbe3e6',bg2:'#f1b9c2',ink:'#9a2a44',m0:'#9a2a44',m1:'#e07a90',m2:'#6e1a30'},
+  {id:'ebsand',en:'Sand',ar:'رملي',cost:150,bg:'#f6ead2',bg2:'#e2c99a',ink:'#7a5222',m0:'#7a5222',m1:'#c9a04a',m2:'#5a3a14'},
+  {id:'eblav',en:'Lavender',ar:'لافندر',cost:200,bg:'#ece4fa',bg2:'#cdbdf0',ink:'#5a3a9a',m0:'#5a3a9a',m1:'#a68ae0',m2:'#3e2470'},
+  {id:'ebcream',en:'Cream & gold',ar:'كريمي وذهبي',cost:250,bg:'#fffaf0',bg2:'#f1e4c6',ink:'#a8822e',m0:'#8a6a1f',m1:'#f2d27a',m2:'#a8822e'}];
+LIGHT_BACKS.forEach(b=>{b.txt=b.id==='ebcream'?'#8a6a1f':b.ink;EB_BACKS.push(b);if(!BACKS.some(x=>x.id===b.id))BACKS.push({id:b.id,en:b.en,ar:b.ar,cost:b.cost})});
+BACKS.sort((a,b)=>(a.id.startsWith('eb')?0:1)-(b.id.startsWith('eb')?0:1));
+(function(){const st=document.createElement('style');st.textContent=LIGHT_BACKS.map(b=>{const u=`url("data:image/svg+xml,${encodeURIComponent(ebSVG2(b))}") center/100% 100%`;
+  return `html.cb-${b.id} :not(.cbprev)>.cardback.cardback,html .cbprev.cb-${b.id} .cardback.cardback{background:${u}!important;border-radius:6px!important;box-shadow:0 0 0 .5px rgba(0,0,0,.3),0 2px 5px rgba(0,0,0,.3)!important}`}).join('\n');document.head.appendChild(st)})();
 
 </script>
 
