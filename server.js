@@ -169,7 +169,7 @@ function onMessage(c, { type, data = {}, rid }) {
       if (av.length > 40000 || !(/^p:\d{1,2}$/.test(av) || av.startsWith('data:image/jpeg;base64,'))) return;
       const short = (v, n) => String(v || '').replace(/[<>"]/g, '').slice(0, n);
       const num = v => Math.max(0, Math.min(1e7, Math.floor(+v || 0)));
-      m.prof = { av, flag: short(p.flag, 8), frame: short(p.frame, 16), level: num(p.level), games: num(p.games), wins: num(p.wins), wars: num(p.wars), auto: autoOf(p.auto), efx: String(p.efx || '').replace(/[^a-z]/g, '').slice(0, 12) };
+      m.prof = { av, flag: short(p.flag, 8), frame: short(p.frame, 16), level: num(p.level), games: num(p.games), wins: num(p.wins), wars: num(p.wars), rp: num(p.rp), streak: num(p.streak), auto: autoOf(p.auto), efx: String(p.efx || '').replace(/[^a-z]/g, '').slice(0, 12) };
       if (p.name) m.name = clean(p.name);
       return toRoom(r, 'room', pub(r));
     }
@@ -185,7 +185,7 @@ function drop(c, keepSocket, now) {
   const m = r.members.find(x => x.sid === c.id); if (!m) return;
   if (!now) { // lost connection: hold the seat for a while so they can come back
     m.away = true; m.mic = false;
-    m.timer = setTimeout(() => remove(r, m), GRACE);
+    m.timer = setTimeout(() => remove(r, m), r.started ? 15 * 60 * 1000 : GRACE); // a game in progress keeps the seat 15 minutes
     return toRoom(r, 'room', pub(r));
   }
   remove(r, m);
