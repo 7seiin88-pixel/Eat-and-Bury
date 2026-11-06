@@ -1086,7 +1086,7 @@ setInterval(()=>{
     if(sec)sec.textContent=Math.max(0,Math.ceil(left/1000))}
   if(S.turn!==0)return;
   const s=Math.ceil(left/1000);if(s!==turnSec){turnSec=s;if(s>0&&s<=3)SND.tick()}
-  if(left<=0){turnDeadline=0;S.sel=null;if(window.NET_ON&&!NET.host)return;log(L('Your time ran out, so the computer played for you.','خلص وقتك، الكمبيوتر لعب عنك.'));say(0,L('Time!','الوقت!'));
+  if(left<=0){turnDeadline=0;S.sel=null;if(window.NET_ON)return;log(L('Your time ran out, so the computer played for you.','خلص وقتك، الكمبيوتر لعب عنك.'));say(0,L('Time!','الوقت!'));
     if(S.phase==='choose')aiChoose(0);else aiThrow(0)}
 },100);
 // Speech bubbles next to a player, like a card app's table talk.
@@ -1540,7 +1540,6 @@ async function tryResume(){retry=null;if(!NET.on)return;
   if(!res||!res.ok){giveUp();return}
   NET.me=res.me;NET.members=res.room.members;const m=NET.members.find(x=>x.sid===NET.me);if(m)NET.mySeat=m.seat;
   sessSave();showConn(false);voiceSync();if(!$('lobby').hidden)renderLobby();
-  if(NET.host&&S){hostSeats();NET.fx=[];flushUp()}
   if(S)render()}
 function again(){retryN++;if(retryN>40){giveUp();return}retry=setTimeout(tryResume,Math.min(5000,600*retryN))}
 function giveUp(){showConn(false);if(!NET.on)return;toast(L('Could not get back into the room','ما قدرنا نرجعك للغرفة'));netReset();S=null;showSetupLocal()}
@@ -1603,7 +1602,7 @@ function hostAct(a){if(!S)return;const s=a.seat,p=S.players[s];if(!p||!p.remote)
     case 'chat':chatBubble(s,String(a.text||'').slice(0,60));break;
     case 'say':say(s,String(a.text||'').slice(0,24));break;
   }}
-function hostSeats(){if(!S)return;const taken=new Set(NET.members.map(m=>m.name)),spare=(LANG==='ar'?['فيصل','يوسف','خالد','مريم','سالم','ناصر','عبدالله','دانة']:['Faisal','Yousef','Khalid','Mariam','Salem','Nasser','Abdullah','Dana']).filter(n=>!taken.has(n));
+function hostSeats(){return;if(!S)return;const taken=new Set(NET.members.map(m=>m.name)),spare=(LANG==='ar'?['فيصل','يوسف','خالد','مريم','سالم','ناصر','عبدالله','دانة']:['Faisal','Yousef','Khalid','Mariam','Salem','Nasser','Abdullah','Dana']).filter(n=>!taken.has(n));
   S.players.forEach((p,i)=>{if(!NET.members.some(x=>x.seat===i)&&taken.has(p.name)){p.name=spare.shift()||p.name;p.f=['مريم','دانة','Mariam','Dana'].includes(p.name)}});
   S.players.forEach((p,i)=>{const m=NET.members.find(x=>x.seat===i);if(m){p.name=m.name;p.f=false;p.remote=m.sid!==NET.me;if(i===0)p.human=true}else p.remote=false})}
 
@@ -1642,7 +1641,7 @@ function playFx(e){if(!S)return;switch(e.t){
 // ---------- Both: chat goes through the network, no fake computer replies ----------
 document.addEventListener('click',e=>{if(!NET.on)return;const t=e.target.closest('#chatSend');if(!t)return;e.stopImmediatePropagation();
   const v=$('chatIn').value.trim();if(!v)return;$('chatIn').value='';$('chatBar').hidden=true;
-  if(NET.host)chatBubble(0,v.slice(0,60));else netSend('act',{a:'chat',text:v.slice(0,60)})},true);
+  netSend('act',{a:'chat',text:v.slice(0,60)})},true);
 // Guests: new game / play again go back to the room
 document.addEventListener('click',e=>{if(!NET.on||NET.host)return;const t=e.target.closest('#newBtn,#againBtn');if(!t)return;e.stopImmediatePropagation();$('over').hidden=true;renderLobby();$('lobby').hidden=false},true);
 // Host: play again reopens the room so new friends can join
@@ -1652,12 +1651,12 @@ document.addEventListener('click',e=>{if(!NET.on||!NET.host)return;const t=e.tar
 const _renderO=render;render=function(){_renderO();if(!NET.on||!S)return;
   const n=nPl();document.querySelectorAll('[data-seat]').forEach(el=>el.classList.remove('mic-on','net-human'));
   NET.members.forEach(m=>{if(m.seat>=n)return;const i=rot(m.seat,NET.mySeat);const el=document.querySelector(`[data-seat="${i}"]`);if(el){el.classList.add('net-human');if(m.mic)el.classList.add('mic-on')}});
-  if(NET.host)upSoon()};
+};
 // Host: new games use the room's seats
 const _newGameO=newGame;newGame=function(cfg){
   if(NET.on&&NET.host){const count=cfg.mode==='3v3'?6:4;if(NET.members.some(m=>m.seat>=count)){toast(L('Too many players for this mode: choose 3 vs 3','عدد اللاعبين أكثر من الطاولة: اختر ٣ ضد ٣'));$('setup').hidden=false;return}}
-  _newGameO(cfg);
-  if(NET.on&&NET.host){hostSeats();netSend('start',{n:S.players.length});fxPush({t:'turn',s:S.turn});render()}};
+  if(NET.on){if(NET.host){$('setup').hidden=true;netSend('start',{cfg:{...cfg,lang:LANG}})}return}
+  _newGameO(cfg)};
 // Setup screen: add the online button, hide "continue saved game" while online
 const _renderSetupO=renderSetup;renderSetup=function(){_renderSetupO();const f=$('setupForm');if(!f)return;
   if(NET.on){const r=$('resumeBtn');if(r)r.remove();if(NET.host){const p=document.createElement('p');p.className='note';p.textContent=L('Choose the settings, then deal to start the game for everyone in the room.','اختر الإعدادات ووزّع الأوراق عشان تبدأ اللعبة لكل اللي في الغرفة.');f.querySelector('h2').after(p)}return}
@@ -1696,13 +1695,13 @@ async function doEnter(create){const name=($('lbName').value||'').trim();if(!nam
   if(!res.ok){lobbyErr={notfound:L('Room not found','الغرفة مو موجودة'),full:L('The room is full','الغرفة مليانة'),started:L('The game already started','اللعبة بدأت')}[res.err]||res.err;return renderLobby()}
   lobbyErr='';NET.on=true;window.NET_ON=true;NET.host=create;NET.me=res.me;NET.room=res.room.code;NET.members=res.room.members;sessSave(res.token);
   NET.mySeat=(NET.members.find(m=>m.sid===NET.me)||{}).seat||0;document.documentElement.classList.add('online');
-  if(create)wrapHost();else{document.documentElement.classList.add('online-guest');wrapGuest()}
+  wrapGuest();if(!create)document.documentElement.classList.add('online-guest')
   try{history.replaceState(null,'','?room='+NET.room)}catch(e){}renderLobby()}
-on('room',r=>{NET.members=r.members;const m=NET.members.find(x=>x.sid===NET.me);if(m)NET.mySeat=m.seat;voiceSync();if(!$('lobby').hidden)renderLobby();if(S)render()});
+on('room',r=>{NET.members=r.members;NET.host=r.host===NET.me;document.documentElement.classList.toggle('online-guest',!NET.host);const m=NET.members.find(x=>x.sid===NET.me);if(m)NET.mySeat=m.seat;voiceSync();if(!$('lobby').hidden)renderLobby();if(S)render()});
 on('started',()=>{if(!NET.host){$('lobby').hidden=true;toast(L('The game is starting','بدأت اللعبة'))}});
-on('ended',()=>{toast(L('The host left the room','المضيف طلع من الغرفة'));netReset();S=null;showSetupLocal()});
+on('ended',()=>{toast(L('The room closed','الغرفة انسكرت'));netReset();S=null;showSetupLocal()});
 on('rtc',d=>voiceSignal(d));
-on('back',()=>{if(NET.host&&S){hostSeats();upSoon()}});
+
 document.addEventListener('click',async e=>{const t=e.target.closest('#lbShare,#onlineBtn,#lbCreate,#lbJoin,#lbBack,#lbCopy,#lbStart,#lbLeave,#lbMic,[data-swap],#micBtn');if(!t)return;
   if(t.id==='lbShare'){try{await navigator.share({title:'Eat & Bury',text:L('Join my Eat & Bury table','تعال العب معي أكل ودفن'),url:$('lbLink').value})}catch(err){}return}
   if(t.id==='onlineBtn'){$('setup').hidden=true;renderLobby();$('lobby').hidden=false;return}
@@ -1774,14 +1773,10 @@ async function autoResume(){const ss=sessLoad();if(!ss||!ONLINE_OK)return;
   const res=await netAsk('resume',{code:ss.code,token:ss.token}).catch(()=>null);if(!res||!res.ok){sessClear();return}
   NET.on=true;window.NET_ON=true;NET.host=!!ss.host;NET.me=res.me;NET.room=res.room.code;NET.members=res.room.members;
   NET.mySeat=(NET.members.find(m=>m.sid===NET.me)||{}).seat||0;document.documentElement.classList.add('online');
-  if(NET.host)wrapHost();else{document.documentElement.classList.add('online-guest');wrapGuest()}
+  wrapGuest();if(!NET.host)document.documentElement.classList.add('online-guest')
   sessSave();$('setup').hidden=true;$('over').hidden=true;
-  let saved=null;if(NET.host&&res.room.started){try{saved=JSON.parse(localStorage.getItem(SESS+'-S')||'null')}catch(e){}}
-  if(saved&&saved.players){gen++;S=saved;S.aiTimers=[];S.sel=null;S.war=null;let mx=0;[...S.draw,...S.ground,...S.players.flatMap(p=>[...p.hand,...p.pile])].forEach(c=>{if(c.id>mx)mx=c.id});uid=mx+1;
-    hostSeats();$('lobby').hidden=true;const i=S.turn,p=S.players[i];turnKey='';
-    if(S.phase==='choose'||S.phase==='throw'){render();if(!p.human&&!p.remote)later(()=>S.phase==='choose'?aiChoose(i):aiThrow(i),700)}else{S.phase='idle';render();later(()=>startTurn(nextIdx(i)),400)}
-    flushUp();toast(L('Back in the game','رجعت للعبة'));return}
-  if(NET.host&&res.room.started)netSend('reopen');
+  NET.host=res.room.host===NET.me;if(NET.host)document.documentElement.classList.remove('online-guest');
+  if(res.room.started){toast(L('Back in the game','رجعت للعبة'));return} // the server sends the table right away
   renderLobby();$('lobby').hidden=false;toast(L('Back in the room','رجعت للغرفة'))}
 // Online only when the page comes from our game server
 (async()=>{if(!ONLINE_BASE)return;try{const r=await fetch('/health',{cache:'no-store'});if((await r.text()).trim()!=='ok')return}catch(e){return}
@@ -2106,7 +2101,7 @@ let slamArmed=false;
 function slamIcon(){const b=$('slamBtn');if(!b)return;b.classList.toggle('armed',slamArmed);b.innerHTML=`${FLAME}<b class="badge">${WAL.slams}</b><span>${L('Slam','صفقة')}</span>`}
 function fireSlam(i,quiet){ensureStack();setTimeout(()=>{SND.slap(3);burst(3);if(!quiet)say(i,L('SLAM!','صفقة!'))},380*ANIM);if(i===0)buzz([50,30,80])}
 function useSlam(){if(!slamArmed)return;slamArmed=false;WAL.slams=Math.max(0,WAL.slams-1);saveWal();slamIcon();
-  if(typeof NET!=='undefined'&&NET.on&&!NET.host){netSend('act',{a:'slam'});return}
+  if(typeof NET!=='undefined'&&NET.on){netSend('act',{a:'slam'});return}
   fireSlam(0);if(typeof NET!=='undefined'&&NET.on&&NET.host)fxPush({t:'slam',s:0})}
 // Hook my own plays
 const _thS=throwCard;throwCard=function(i,c){const me=i===0&&!(S&&S.players[0].remote);_thS(i,c);if(me)useSlam()};
@@ -5834,8 +5829,215 @@ photoToAvatar=async function(file){if(!file)throw new Error('no file');const S2=
   try{const data=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file)});return await viaImg(data)}catch(e){}
   const u=URL.createObjectURL(file);try{return await viaImg(u)}finally{URL.revokeObjectURL(u)}};
 
+// ===================== Round 56: online games run on the server =====================
+// seat → room member, from this phone's point of view (works for whoever is in charge of the room)
+function seatGlobal(local){const n=S&&S.players?S.players.length:4,base=(typeof amWatch==='function'&&amWatch())?0:(NET.mySeat||0);return (local+base)%n}
+seatMember=function(local){if(typeof NET==='undefined'||!NET.on||!S||!S.players)return undefined;const g=seatGlobal(local);return NET.members.find(x=>x.seat===g&&!x.watch)||null};
+efxOf=function(local){if(local==null||!S||!S.players)return null;if(typeof NET!=='undefined'&&NET.on){const m=seatMember(local);if(!m)return null;return m.sid===NET.me?MYPROF.efx:(m.prof&&m.prof.efx)}return local===0?MYPROF.efx:null};
+autoOf=function(j){if(typeof NET!=='undefined'&&NET.on){const m=seatMember(j);if(!m)return null;return m.sid===NET.me?MYPROF.auto:(m.prof&&m.prof.auto)}return j===0?MYPROF.auto:null};
+// automatic replies: the server says "this moment happened", each phone shows that player's chosen phrase
+if(typeof playFx==='function')playFx=(function(prev){return function(e){if(e&&e.t==='auto'){const a=autoOf(e.s);const k=a?+a[e.ev]:-1;
+    if(k>=0&&EMOTES[k]&&!(typeof isMuted==='function'&&isMuted(e.s)))setTimeout(()=>{if(S)(typeof localSay==='function'?localSay:say)(e.s,L(...EMOTES[k]))},350);return}return prev(e)}})(playFx);
+
+// ===================== Round 57: your account lives on the server (rupees, items, rank, stats) =====================
+const ACCT={token:null,me:null,on:false,busy:0};
+try{ACCT.token=localStorage.getItem('eb-acct')||null}catch(e){}
+function acctSave(){try{ACCT.token?localStorage.setItem('eb-acct',ACCT.token):localStorage.removeItem('eb-acct')}catch(e){}}
+async function api(path,body){const r=await fetch(path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json',...(ACCT.token?{Authorization:'Bearer '+ACCT.token}:{})},body:body?JSON.stringify(body):undefined,cache:'no-store'});
+  if(r.status===401){const e=new Error('auth');e.auth=true;throw e}if(!r.ok)throw new Error('http '+r.status);return r.json()}
+// the server's copy becomes this phone's copy
+let applyingMe=false;
+function applyMe(m,quiet){if(!m)return;ACCT.me=m;ACCT.on=true;applyingMe=true;
+  try{const p=m.prof||{},s=m.st||{},w=m.wal||{};
+    if(p.name)MYPROF.name=p.name;['av','flag','frame','efx','auto'].forEach(k=>{if(p[k]!=null)MYPROF[k]=p[k]});if(Array.isArray(p.qp))MYPROF.qp=p.qp;
+    ['xp','games','wins','wars','best','tauf','rp','streak','bestStreak'].forEach(k=>{if(s[k]!=null)MYPROF[k]=s[k]});
+    MYPROF.ach={};Object.keys(s.ach||{}).forEach(k=>MYPROF.ach[k]=s.ach[k]);
+    WAL.tokens=w.tokens;WAL.owned=[...new Set([...(w.owned||[])])];WAL.slams=w.slams||0;
+    origSaveWal();origSaveProf()}catch(e){console.error(e)}finally{applyingMe=false}
+  try{if(typeof slamIcon==='function')slamIcon()}catch(e){}try{if(!$('home').hidden)renderHome()}catch(e){}
+  if(!quiet)acctNotes(m.note)}
+function acctNotes(n){if(!n)return;
+  if(n.daily)setTimeout(()=>toast(L(`+${n.daily} daily gift`,`+${n.daily} هدية اليوم`)),600);
+  if(n.war)toast(L(`+${n.war} war won`,`+${n.war} ربحت حرب`));
+  if(n.offline)setTimeout(()=>toast(L(`+${n.offline} rupees`,`+${n.offline} روبية`)),1400);
+  if(n.refused&&n.refused.length)toast(L('Not enough rupees','ما عندك روبيات كافية'));
+  const ach=(n.ach||[]).map(x=>ACH.find(a=>a.id===x.id)).filter(Boolean);
+  if(n.game){const after=MYPROF.rp,before=after-n.game.rp;window.__acctPop=true;setTimeout(()=>{showRankPop(before,after,n.game.won,n.game.mult,ach);window.__acctPop=false},900)}
+  else if(ach.length)setTimeout(()=>{window.__acctPop=true;showRankPop(MYPROF.rp,MYPROF.rp,false,1,ach);window.__acctPop=false},800)}
+// local saves also go to the server (buying, using slams, sending gifts, profile changes)
+const origSaveWal=saveWal,origSaveProf=saveProf;let syncT=0;
+function syncSoon(){if(!ACCT.on||applyingMe)return;clearTimeout(syncT);syncT=setTimeout(syncNow,350)}
+async function syncNow(){if(!ACCT.on)return;try{const m=await api('/api/sync',{wal:{tokens:WAL.tokens,owned:WAL.owned,slams:WAL.slams},prof:{name:MYPROF.name,av:MYPROF.av,flag:MYPROF.flag,frame:MYPROF.frame,efx:MYPROF.efx,auto:MYPROF.auto,qp:MYPROF.qp,prefs:{theme:WAL.theme,back:WAL.back,face:WAL.face,joker:WAL.joker,lang:LANG}}});
+    applyMe(m);if(typeof NET!=='undefined'&&NET.on)netSend('prof',{})}catch(e){if(e.auth)acctLost()}}
+saveWal=function(){origSaveWal();syncSoon()};saveProf=function(){origSaveProf();syncSoon()};
+// rewards are given by the server now: the phone stops adding rupees by itself
+const _addTok=addTokens;addTokens=function(n,why){if(ACCT.on)return;_addTok(n,why)};
+const _chkAch=checkAch;checkAch=function(){if(ACCT.on)return [];return _chkAch()};
+const _srp=showRankPop;showRankPop=function(){if(ACCT.on&&!window.__acctPop)return;return _srp.apply(this,arguments)};
+// end of a game: undo the phone's own stat changes; the server sends the real result
+endGame=(function(prev){return function(){if(!ACCT.on||!S)return prev.apply(this,arguments);
+  const keepP=JSON.stringify(MYPROF),keepW=JSON.stringify(WAL);const online=typeof NET!=='undefined'&&NET.on;
+  let won=false,wars=0,best=0,tauf=0;try{const rows=S.teams.map((t,k)=>({k,s:teamScore(k)})).sort((a,b)=>b.s-a.s);won=rows[0].k===teamOf(0)&&!(rows[1]&&rows[0].s===rows[1].s);const st=S.stats&&S.stats[0]||{};wars=st.wars||0;best=st.best||0;tauf=st.tauf||0}catch(e){}
+  const r=prev.apply(this,arguments);
+  applyingMe=true;try{Object.assign(MYPROF,JSON.parse(keepP));const w=JSON.parse(keepW);WAL.tokens=w.tokens;WAL.owned=w.owned;WAL.slams=w.slams;origSaveWal();origSaveProf()}finally{applyingMe=false}
+  if(!online&&!window.__offlineSent){window.__offlineSent=true;api('/api/offline',{won,wars,best,tauf}).then(m=>applyMe(m)).catch(()=>{}).finally(()=>setTimeout(()=>window.__offlineSent=false,3000))}
+  return r}})(endGame);
+// online: tell the room server who we are, and listen for our updated account
+if(typeof netConnect==='function'){const _nc=netConnect;netConnect=function(){return _nc.apply(this,arguments).then(()=>{if(ACCT.token)netSend('auth',{token:ACCT.token})})}}
+if(typeof on==='function')on('me',m=>applyMe(m));
+function acctLost(){ACCT.on=false;ACCT.token=null;acctSave();acctStart()}
+// start: make an account the first time (bringing this phone's rupees, items and stats), otherwise load it
+async function acctStart(){if(typeof ONLINE_BASE==='undefined'||!ONLINE_BASE)return;
+  try{const h=await fetch('/health',{cache:'no-store'});if((await h.text()).trim()!=='ok')return}catch(e){return}
+  try{if(!ACCT.token){const r=await api('/api/guest',{local:{prof:MYPROF,wal:WAL}});ACCT.token=r.token;acctSave();applyMe(r.me)}
+    else applyMe(await api('/api/me'))}catch(e){if(e.auth){ACCT.token=null;acctSave();setTimeout(acctStart,300)}}}
+acctStart();
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&ACCT.on)api('/api/me').then(m=>applyMe(m)).catch(()=>{})});
+// the test button only adds on this phone, so hide it once the server keeps the rupees
+(function(){const st=document.createElement('style');st.textContent='html.acct #testTok{display:none!important}';document.head.appendChild(st);setInterval(()=>document.documentElement.classList.toggle('acct',ACCT.on),1000)})();
+// ---------- Fixes: level badge never covers the pile next to side players; no light strip under the game on iPhone ----------
+(function(){const st=document.createElement('style');st.textContent=`
+html body .seat.s-left .tilewrap .lvl,html body .seat.s-left .tile .lvl{right:auto!important;left:-8%!important}
+html body .seat.s-right .tilewrap .lvl,html body .seat.s-right .tile .lvl{left:auto!important;right:-8%!important}
+html,body{background:#0e0705!important}
+html body #app{min-height:100vh;min-height:100dvh}
+@supports(padding:env(safe-area-inset-bottom)){html body .bottombar{padding-bottom:max(6px,env(safe-area-inset-bottom))!important}}`;document.head.appendChild(st)})();
+(function(){const st=document.createElement('style');st.textContent=`
+html body .seat.s-left .seatgift{right:auto!important;left:4px!important;bottom:-10%!important}
+html body .seat.s-right .seatgift{left:auto!important;right:4px!important;bottom:-10%!important}`;document.head.appendChild(st)})();
+
+// ===================== Round 58: phrases tidy-up, a real particle engine for effects, slam effects you can buy, change cards mid-game =====================
+// ---------- Phrases: spelling fixes, one removed (kept hidden so saved choices still point to the right phrase), two new ----------
+(function(){const fix={10:'ورحمة خالتي فوقية، مانت شايفهم تاني',11:'نبدأ القيم؟',12:'إنت تعبان؟',15:'ما عندي',16:'ما عندي، وش أسوي أنا؟',18:'تفضّل',22:'ترا هو على كرت، انتبه!',30:'أسطورة!',31:'فنان!'};
+  Object.entries(fix).forEach(([k,v])=>{if(EMOTES[k])EMOTES[k][1]=v});if(EMOTES[22])EMOTES[22][0]='Careful, he\'s on one card!';
+  if(EMOTES[14])EMOTES[14].hidden=true;EMOTES.push(['Come on!','تعال!'],['What can I do? No cards','وش أسوي؟ ماكو ورق'])})();
+const emoHidden=k=>!!(EMOTES[k]&&EMOTES[k].hidden);
+function dropHidden(root){if(!root)return;root.querySelectorAll('[data-qp],[data-qpk],[data-emote]').forEach(el=>{const k=+(el.dataset.qp??el.dataset.qpk??el.dataset.emote);if(emoHidden(k))(el.closest('.qpi')||el).remove()});
+  root.querySelectorAll('select[data-auto] option').forEach(o=>{if(emoHidden(+o.value))o.remove()})}
+chatChips=(function(prev){return function(){prev();dropHidden($('chatBar'))}})(chatChips);
+renderQp=(function(prev){return function(){prev();dropHidden($('qpBox'))}})(renderQp);
+renderProfile=(function(prev){return function(i){prev(i);dropHidden($('profBox'))}})(renderProfile);
+renderShop=(function(prev){return function(){prev.apply(this,arguments);dropHidden($('shop'))}})(renderShop);
+
+// ---------- Particle engine: one canvas over the whole screen, additive light, only runs while something is on screen ----------
+const FXE=(function(){const cv=document.createElement('canvas');cv.id='fxCanvas';document.body.appendChild(cv);const c=cv.getContext('2d');let W=0,H=0,DPR=1,parts=[],decals=[],flashes=[],running=false,last=0;
+  function size(){DPR=Math.min(2,window.devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;cv.style.width=W+'px';cv.style.height=H+'px'}size();addEventListener('resize',size);
+  const sprites={};function glow(col){if(sprites[col])return sprites[col];const s=document.createElement('canvas');s.width=s.height=64;const g=s.getContext('2d'),gr=g.createRadialGradient(32,32,0,32,32,32);
+    gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.18,col);gr.addColorStop(.5,col.replace(/[\d.]+\)$/,'0.35)'));gr.addColorStop(1,col.replace(/[\d.]+\)$/,'0)'));g.fillStyle=gr;g.fillRect(0,0,64,64);return sprites[col]=s}
+  function soft(col,key){key=key||col;if(sprites['s'+key])return sprites['s'+key];const s=document.createElement('canvas');s.width=s.height=64;const g=s.getContext('2d'),gr=g.createRadialGradient(32,32,0,32,32,32);
+    gr.addColorStop(0,col);gr.addColorStop(.55,col.replace(/[\d.]+\)$/,'0.45)'));gr.addColorStop(1,col.replace(/[\d.]+\)$/,'0)'));g.fillStyle=gr;g.fillRect(0,0,64,64);return sprites['s'+key]=s}
+  function svgImg(svg){if(sprites[svg])return sprites[svg];const i=new Image();i.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);return sprites[svg]=i}
+  const R=(a,b)=>a+Math.random()*(b-a);
+  function add(p){p.t=0;p.life=p.life||1;p.vx=p.vx||0;p.vy=p.vy||0;p.ax=p.ax||0;p.ay=p.ay||0;p.drag=p.drag==null?.985:p.drag;p.rot=p.rot||0;p.vr=p.vr||0;parts.push(p);go()}
+  function flash(col,a,dur){flashes.push({col,a,dur,t:0});go()}
+  function decal(x,y,r,col,dur){decals.push({x,y,r,col,dur,t:0});go()}
+  function bolt(x,y,ang,len,seg){const pts=[[x,y]];let cx=x,cy=y;for(let k=1;k<=seg;k++){const d=len/seg;const a=ang+R(-.6,.6);cx+=Math.cos(a)*d;cy+=Math.sin(a)*d;pts.push([cx,cy])}return pts}
+  function go(){if(!running){running=true;last=performance.now();requestAnimationFrame(loop)}}
+  function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;c.setTransform(DPR,0,0,DPR,0,0);c.clearRect(0,0,W,H);
+    // scorch marks first
+    c.globalCompositeOperation='source-over';decals=decals.filter(d=>{d.t+=dt;const k=1-d.t/d.dur;if(k<=0)return false;const g=c.createRadialGradient(d.x,d.y,0,d.x,d.y,d.r);g.addColorStop(0,d.col.replace(/[\d.]+\)$/,(.55*k)+')'));g.addColorStop(1,d.col.replace(/[\d.]+\)$/,'0)'));c.fillStyle=g;c.beginPath();c.arc(d.x,d.y,d.r,0,7);c.fill();return true});
+    parts=parts.filter(p=>{p.t+=dt;if(p.t<(p.delay||0))return true;const t=p.t-(p.delay||0),k=t/p.life;if(k>=1)return false;
+      p.vx=(p.vx+p.ax*dt)*Math.pow(p.drag,dt*60);p.vy=(p.vy+p.ay*dt)*Math.pow(p.drag,dt*60);p.x+=p.vx*dt;p.y+=p.vy*dt;p.rot+=p.vr*dt;
+      const a=(p.fadeIn?Math.min(1,k/p.fadeIn):1)*(1-Math.pow(k,p.fade||1.6)),sz=p.size+(p.size2==null?0:(p.size2-p.size)*k);
+      c.globalCompositeOperation=p.add===false?'source-over':'lighter';c.globalAlpha=Math.max(0,a);
+      if(p.type==='spark'){c.strokeStyle=p.col;c.lineWidth=sz;c.lineCap='round';c.beginPath();c.moveTo(p.x,p.y);c.lineTo(p.x-p.vx*(p.trail||.035),p.y-p.vy*(p.trail||.035));c.stroke()}
+      else if(p.type==='ring'){c.strokeStyle=p.col;c.lineWidth=Math.max(.5,(p.w||6)*(1-k));c.beginPath();c.arc(p.x,p.y,sz,0,7);c.stroke()}
+      else if(p.type==='bolt'){if(!p.pts||Math.random()<.35)p.pts=bolt(p.x,p.y,p.ang,p.len,8);c.strokeStyle=p.col;c.lineJoin='round';[[8,.25],[3,.7],[1.4,1]].forEach(([w,al])=>{c.globalAlpha=Math.max(0,a*al);c.lineWidth=w;c.beginPath();p.pts.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.stroke()})}
+      else if(p.type==='img'){const im=svgImg(p.svg);if(im.complete){c.save();c.translate(p.x,p.y);c.rotate(p.rot);c.drawImage(im,-sz/2,-sz/2*(p.ar||1),sz,sz*(p.ar||1));c.restore()}}
+      else if(p.type==='shard'){c.save();c.translate(p.x,p.y);c.rotate(p.rot);c.fillStyle=p.col;c.beginPath();c.moveTo(0,-sz);c.lineTo(sz*.35,0);c.lineTo(0,sz*.6);c.lineTo(-sz*.35,0);c.closePath();c.fill();c.restore()}
+      else{const s=p.type==='smoke'?soft(p.col):glow(p.col);c.drawImage(s,p.x-sz,p.y-sz,sz*2,sz*2)}
+      return true});
+    c.globalCompositeOperation='lighter';flashes=flashes.filter(f=>{f.t+=dt;const k=f.t/f.dur;if(k>=1)return false;c.globalAlpha=f.a*(1-k)*(1-k);c.fillStyle=f.col;c.fillRect(0,0,W,H);return true});
+    c.globalAlpha=1;c.globalCompositeOperation='source-over';
+    if(parts.length||decals.length||flashes.length)requestAnimationFrame(loop);else{running=false;c.clearRect(0,0,W,H)}}
+  function shake(px,ms){const a=$('app');if(!a||!a.animate)return;const kf=[];for(let k=0;k<8;k++)kf.push({transform:`translate(${R(-px,px)}px,${R(-px,px)}px)`});kf.push({transform:'none'});a.animate(kf,{duration:ms,easing:'ease-out'})}
+  return {add,flash,decal,shake,R,glow}})();
+
+// colour helpers
+const CA=(h,s,l,a=1)=>`hsla(${h},${s}%,${l}%,${a})`;
+const STAR_SVG='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 1.5l3.1 6.6 7.2.9-5.3 5 1.4 7.1L12 17.6l-6.4 3.5L7 14l-5.3-5 7.2-.9z" fill="#ffd24a"/></svg>';
+const HEART_SVG='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50 94C36 80 6 58 6 32 6 15 19 6 31 6c9 0 16 5 19 14C53 11 60 6 69 6c12 0 25 9 25 26 0 26-30 48-44 62z" fill="#ff3d7f"/></svg>';
+const BILL_SVG=EF_BILL.replace('<svg ','<svg xmlns="http://www.w3.org/2000/svg" ');
+// building blocks (x,y in screen pixels, p: 1 eat, 2 cut, 3 slam)
+const FXB={
+  ring(x,y,col,p,n=1){for(let k=0;k<n;k++)FXE.add({type:'ring',x,y,col,size:10,size2:60+p*45+k*25,w:5+p*2,life:.45+p*.1+k*.12,delay:k*.07,fade:1})},
+  core(x,y,col,p){FXE.add({type:'glow',x,y,col,size:30,size2:70+p*40,life:.35+p*.1,fade:1.2})},
+  sparks(x,y,col,n,sp,g=900){for(let k=0;k<n;k++){const a=FXE.R(0,6.28),v=FXE.R(.3,1)*sp;FXE.add({type:'spark',x,y,col,size:FXE.R(1.2,2.8),vx:Math.cos(a)*v,vy:Math.sin(a)*v-sp*.25,ay:g,drag:.94,life:FXE.R(.35,.8),trail:.04})}},
+  embers(x,y,n,sp){for(let k=0;k<n;k++){const a=FXE.R(-2.9,-.25),v=FXE.R(.3,1)*sp;FXE.add({type:'glow',x:x+FXE.R(-20,20),y,col:CA(FXE.R(18,42),100,60,1),size:FXE.R(2,4.5),vx:Math.cos(a)*v,vy:Math.sin(a)*v,ay:-40,drag:.97,life:FXE.R(.8,1.6)})}},
+  flames(x,y,n,sz,spread=50){for(let k=0;k<n;k++)FXE.add({type:'glow',x:x+FXE.R(-spread,spread),y:y+FXE.R(-5,15),col:CA(FXE.R(10,38),100,55,1),size:FXE.R(.6,1)*sz,size2:4,vx:FXE.R(-25,25),vy:FXE.R(-140,-60),ay:-120,drag:.97,life:FXE.R(.5,1),delay:FXE.R(0,.25),fade:1.2})},
+  smoke(x,y,n,sz,col='rgba(70,70,75,0.55)'){for(let k=0;k<n;k++){const a=FXE.R(0,6.28),v=FXE.R(15,70);FXE.add({type:'smoke',add:false,x:x+FXE.R(-15,15),y,col,size:sz*.5,size2:sz*FXE.R(1.4,2.2),vx:Math.cos(a)*v,vy:Math.sin(a)*v*.5-FXE.R(25,60),drag:.97,life:FXE.R(1.2,2),fadeIn:.15,delay:FXE.R(.05,.25),fade:1})}},
+  dust(x,y,n){for(let k=0;k<n;k++){const a=FXE.R(0,6.28),v=FXE.R(80,220);FXE.add({type:'smoke',add:false,x,y,col:'rgba(160,140,110,0.45)',size:8,size2:FXE.R(22,40),vx:Math.cos(a)*v,vy:Math.sin(a)*v*.35,drag:.9,life:FXE.R(.6,1.1),fade:1})}},
+  sprites(x,y,svg,n,sz,sp,g=500,ar){for(let k=0;k<n;k++){const a=FXE.R(-3,-.15),v=FXE.R(.4,1)*sp;FXE.add({type:'img',add:false,svg,x,y,size:sz*FXE.R(.7,1.2),ar,vx:Math.cos(a)*v,vy:Math.sin(a)*v,ay:g,drag:.97,vr:FXE.R(-8,8),life:FXE.R(.9,1.5),fade:2.5})}},
+  bolts(x,y,n,len,col){for(let k=0;k<n;k++)FXE.add({type:'bolt',x,y,col,ang:k/n*6.28+FXE.R(-.3,.3),len:len*FXE.R(.7,1.1),size:1,life:FXE.R(.25,.45),delay:FXE.R(0,.12)})},
+  shards(x,y,n,sp){for(let k=0;k<n;k++){const a=FXE.R(0,6.28),v=FXE.R(.4,1)*sp;FXE.add({type:'shard',add:false,x,y,col:k%3?'rgba(215,240,255,0.95)':'rgba(140,200,255,0.9)',size:FXE.R(5,11),vx:Math.cos(a)*v,vy:Math.sin(a)*v-sp*.2,ay:700,drag:.96,vr:FXE.R(-14,14),life:FXE.R(.6,1.1),fade:2.5})}}};
+// the styles (eat effects and slam effects share the same artists)
+const FXS={
+  none(x,y,p){},
+  gold(x,y,p){FXB.core(x,y,'rgba(255,200,60,0.9)',p);FXB.ring(x,y,'rgba(255,215,90,0.9)',p,p);FXB.sparks(x,y,'rgba(255,220,120,1)',14*p,380+p*90)},
+  blue(x,y,p){FXS.neon(x,y,p,195)},purple(x,y,p){FXS.neon(x,y,p,275)},green(x,y,p){FXS.neon(x,y,p,140)},pink(x,y,p){FXS.neon(x,y,p,330)},
+  neon(x,y,p,h=195){FXB.core(x,y,CA(h,100,60,.9),p);FXB.ring(x,y,CA(h,100,65,.95),p,p+1);for(let k=0;k<12*p;k++){const a=FXE.R(0,6.28),v=FXE.R(180,420+p*80);FXE.add({type:'spark',x,y,col:CA(h+FXE.R(-20,20),100,70,1),size:FXE.R(1.5,3),vx:Math.cos(a)*v,vy:Math.sin(a)*v,drag:.9,life:FXE.R(.4,.8),trail:.07})}if(p>=2)FXE.flash(CA(h,100,60,.18),1,.25)},
+  fire(x,y,p){FXB.core(x,y,'rgba(255,120,30,0.95)',p);FXB.ring(x,y,'rgba(255,150,50,0.9)',p,p);FXB.flames(x,y,10+p*10,22+p*6,30+p*15);FXB.embers(x,y,10*p,260+p*60);FXB.sparks(x,y,'rgba(255,190,90,1)',8*p,320+p*80);setTimeout(()=>FXB.smoke(x,y-20,3+p*2,28+p*6,'rgba(40,30,28,0.5)'),250);if(p===3)FXE.decal(x,y,90,'rgba(20,8,0,0.55)',2.4)},
+  smoke(x,y,p){FXB.dust(x,y,8+p*5);FXB.smoke(x,y,6+p*5,26+p*8);FXB.ring(x,y,'rgba(220,210,190,0.5)',p,1);FXB.sparks(x,y,'rgba(255,240,200,1)',5*p,250)},
+  bolt(x,y,p){FXE.flash('rgba(160,210,255,0.35)',1,.18+p*.05);FXB.core(x,y,'rgba(120,190,255,0.95)',p);FXB.bolts(x,y,3+p*2,90+p*40,'rgba(200,235,255,1)');FXB.ring(x,y,'rgba(140,200,255,0.9)',p,p);FXB.sparks(x,y,'rgba(190,230,255,1)',10*p,420,600);if(p===3)setTimeout(()=>FXB.bolts(x,y,5,180,'rgba(220,240,255,1)'),160)},
+  stars(x,y,p){FXB.core(x,y,'rgba(255,210,80,0.8)',p);FXB.sprites(x,y,STAR_SVG,8+p*5,22,420+p*60,600);FXB.sparks(x,y,'rgba(255,240,170,1)',10*p,300)},
+  hearts(x,y,p){FXB.core(x,y,'rgba(255,80,140,0.75)',p);for(let k=0;k<7+p*4;k++)FXE.add({type:'img',add:false,svg:HEART_SVG,x:x+FXE.R(-40,40),y:y+FXE.R(-10,10),size:FXE.R(16,30),vx:FXE.R(-40,40),vy:FXE.R(-160,-80),ay:-30,drag:.98,vr:FXE.R(-1,1),life:FXE.R(1.1,1.7),delay:FXE.R(0,.3),fade:2})},
+  money(x,y,p){FXB.core(x,y,'rgba(80,220,120,0.7)',p);FXB.sprites(x,y,BILL_SVG,7+p*4,44,380+p*60,420,.5);FXB.sparks(x,y,'rgba(200,255,200,1)',6*p,260)},
+  frost(x,y,p){FXE.flash('rgba(200,235,255,0.25)',1,.3);FXB.core(x,y,'rgba(170,220,255,0.9)',p);FXB.ring(x,y,'rgba(210,240,255,0.95)',p,p+1);FXB.shards(x,y,10+p*7,320+p*80);FXB.smoke(x,y,3+p*2,24,'rgba(225,240,255,0.35)');for(let k=0;k<14*p;k++)FXE.add({type:'glow',x:x+FXE.R(-80,80),y:y+FXE.R(-60,60),col:'rgba(220,245,255,1)',size:FXE.R(1.5,3),life:FXE.R(.5,1.2),delay:FXE.R(0,.4)})},
+  meteor(x,y,p){const sx=x+FXE.R(140,220)*(Math.random()<.5?-1:1),sy=y-420,T=.32;for(let k=0;k<26;k++){const f=k/26;FXE.add({type:'glow',x:sx+(x-sx)*f,y:sy+(y-sy)*f,col:CA(25+f*10,100,60,1),size:18*(1-f*.4),size2:2,life:.35,delay:T*f,fade:1})}
+    FXE.add({type:'glow',x:sx,y:sy,col:'rgba(255,180,80,1)',size:26,vx:(x-sx)/T,vy:(y-sy)/T,life:T,drag:1,fade:.01});setTimeout(()=>{FXE.flash('rgba(255,170,90,0.45)',1,.35);FXE.shake(10,420);FXS.fire(x,y,3);FXB.ring(x,y,'rgba(255,240,200,1)',3,3);FXB.dust(x,y,16);FXE.decal(x,y,120,'rgba(10,4,0,0.6)',3)},T*1000)},
+  galaxy(x,y,p){FXB.core(x,y,'rgba(150,90,255,0.9)',p);FXB.ring(x,y,'rgba(190,140,255,0.9)',p,p+1);for(let k=0;k<40*p/2;k++){const a=FXE.R(0,6.28),r=FXE.R(10,30);FXE.add({type:'glow',x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,col:CA(FXE.R(250,320),100,70,1),size:FXE.R(1.5,4),vx:-Math.sin(a)*FXE.R(120,260)+Math.cos(a)*60,vy:Math.cos(a)*FXE.R(120,260)+Math.sin(a)*60,drag:.93,life:FXE.R(.7,1.3)})}FXB.sprites(x,y,STAR_SVG,4*p,16,300,200);if(p===3)FXE.flash('rgba(140,80,255,0.25)',1,.3)},
+  // slam defaults
+  blaze(x,y,p){FXE.flash('rgba(255,150,60,0.35)',1,.3);FXE.shake(8,380);FXB.ring(x,y,'rgba(255,230,180,1)',3,3);FXS.fire(x,y,3);FXB.dust(x,y,10)},
+  inferno(x,y,p){FXE.flash('rgba(255,80,20,0.5)',1,.45);FXE.shake(12,520);FXB.ring(x,y,'rgba(255,120,40,1)',3,4);FXB.flames(x,y,46,36,80);FXB.embers(x,y,50,420);FXB.sparks(x,y,'rgba(255,210,120,1)',40,560);setTimeout(()=>FXB.flames(x,y,30,30,60),220);setTimeout(()=>FXB.smoke(x,y-30,10,46,'rgba(30,20,18,0.55)'),350);FXE.decal(x,y,130,'rgba(25,6,0,0.65)',3)},
+  thunder(x,y,p){FXE.flash('rgba(200,230,255,0.6)',1,.12);setTimeout(()=>FXE.flash('rgba(200,230,255,0.45)',1,.15),140);FXE.shake(10,420);FXS.bolt(x,y,3);FXB.bolts(x,y-10,1,420,'rgba(255,255,255,1)');FXB.dust(x,y,10);FXE.decal(x,y,90,'rgba(10,20,40,0.5)',2)},
+  ice(x,y,p){FXE.shake(7,360);FXS.frost(x,y,3);FXB.shards(x,y,24,560);FXB.ring(x,y,'rgba(255,255,255,1)',3,2)},
+  royal(x,y,p){FXE.flash('rgba(255,215,100,0.4)',1,.35);FXE.shake(8,380);FXS.gold(x,y,3);FXB.sprites(x,y,STAR_SVG,14,26,560,700);FXB.ring(x,y,'rgba(255,240,170,1)',3,4)}};
+// what you can buy: eat effects (EFX, already in the shop) + the new slam effects
+EFX.push({id:'frost',en:'Frost',ar:'جليد',cost:350},{id:'galaxy',en:'Galaxy',ar:'مجرة',cost:450});
+const SFX=[{id:'blaze',en:'Blaze',ar:'لهب',cost:0},{id:'inferno',en:'Inferno',ar:'جحيم',cost:500},{id:'thunder',en:'Thunder',ar:'صاعقة',cost:450},{id:'ice',en:'Ice blast',ar:'انفجار جليدي',cost:400},
+  {id:'meteor',en:'Meteor',ar:'نيزك',cost:700},{id:'royal',en:'Royal gold',ar:'ذهب ملكي',cost:400},{id:'galaxy',en:'Galaxy',ar:'مجرة',cost:450},{id:'money',en:'Money storm',ar:'عاصفة فلوس',cost:500}];
+if(!MYPROF.sfx){MYPROF.sfx='blaze'}
+profPublic=(function(prev){return function(){const p=prev();p.sfx=MYPROF.sfx||'blaze';return p}})(profPublic);
+function sfxOf(local){if(local==null||!S||!S.players)return null;if(typeof NET!=='undefined'&&NET.on){const m=seatMember(local);if(!m)return 'blaze';return m.sid===NET.me?MYPROF.sfx:((m.prof&&m.prof.sfx)||'blaze')}return local===0?MYPROF.sfx:'blaze'}
+// play one at a point given inside a box (the table or the shop preview)
+runEfx=function(id,box,at,p){if(!id||id==='none'||!box||!at)return;const f=FXS[id];if(!f)return;const r=box.getBoundingClientRect();try{f(r.left+at.x,r.top+at.y,p||1)}catch(e){console.error(e)}};
+// slams (and fire cuts) use the slam effect; eats and normal cuts use the eat effect
+slapFx=(function(prev){return function(card,from,power){const s=window.__efSeat;if(power===3&&s!=null){window.__efSeat=null;const id=sfxOf(s);prev(card,from,2);const ms=460*.78*(typeof ANIM==='number'?ANIM:1);setTimeout(()=>runEfx(id||'blaze',$('fx'),stackAt||groundPt(),3),ms);return}return prev(card,from,power)}})(slapFx);
+fireSlam=function(i,quiet){ensureStack();setTimeout(()=>{SND.slap(3);burst(2);runEfx(sfxOf(i)||'blaze',$('fx'),stackAt||groundPt(),3);if(!quiet)say(i,L('SLAM!','صفقة!'))},380*(typeof ANIM==='number'?ANIM:1));if(i===0)buzz([50,30,80])};
+
+// ---------- Shop: the Effects tab gets two sections ----------
+renderShop=(function(prev){return function(){prev.apply(this,arguments);if(shopTab!=='efx')return;const box=document.querySelector('#shop .efshop');if(!box||box.dataset.v2)return;box.dataset.v2=1;
+  const grid=(list,kind,cur)=>`<div class="grid efgrid">${list.map(x=>{const pid=(kind==='e'?'efx-':'sfx-')+x.id,own=x.cost===0||WAL.owned.includes(pid),on=cur===x.id;
+    return `<button type="button" class="item efitem ${on?'sel':''}" data-fx2="${kind}:${x.id}"><i class="efsw efsw2" style="--h:${(x.id.length*47)%360}">${fxIcon(x.id)}</i><span>${L(x.en,x.ar)}</span>${on?`<span class="own">${L('In use','مستخدم')}</span>`:own?`<span class="own">${L('Use','استخدم')}</span>`:`<span class="price"><i class="cn"></i>${x.cost}</span>`}</button>`}).join('')}</div>`;
+  box.innerHTML=`<p class="note">${L('Tap any effect to see it on the card. Everyone at the table sees your effects.','اضغط على أي تأثير تشوفه على الورقة. كل اللي بالطاولة يشوفون تأثيراتك.')}</p>
+    <div class="efdemo" id="efDemo"><div class="efcard">${cardHTML({id:-91,r:'K',s:'♠'})}</div></div>
+    <div class="label">${L('Eat effect','تأثير الأكل')}</div>${grid(EFX,'e',MYPROF.efx||'none')}
+    <div class="label" style="margin-top:12px">${L('Slam effect (the fire button)','تأثير الطق (الزر الناري)')}</div>${grid(SFX,'s',MYPROF.sfx||'blaze')}`}})(renderShop);
+function fxIcon(id){const m={none:'✦',gold:'✨',blue:'💠',purple:'🔮',green:'🟢',pink:'🌸',fire:'🔥',smoke:'💨',bolt:'⚡',stars:'⭐',hearts:'💗',money:'💵',frost:'❄️',galaxy:'🌌',blaze:'🔥',inferno:'🌋',thunder:'🌩️',ice:'🧊',meteor:'☄️',royal:'👑'};return `<b>${m[id]||'✦'}</b>`}
+let fx2Try=null;
+window.addEventListener('click',async e=>{const b=e.target.closest('#shop [data-fx2]');if(!b)return;e.stopImmediatePropagation();const [kind,id]=b.dataset.fx2.split(':'),list=kind==='e'?EFX:SFX,x=list.find(z=>z.id===id);if(!x)return;
+  const box=$('efDemo');if(box){const r=box.getBoundingClientRect();runEfx(id==='none'?null:id,box,{x:r.width/2,y:r.height/2},kind==='s'?3:2);const cd=box.querySelector('.efcard');cd&&cd.animate([{transform:'translate(-50%,-50%) scale(1.6) rotate(-24deg)'},{transform:'translate(-50%,-50%) scale(1) rotate(-6deg)'}],{duration:kind==='s'?320:240,easing:'cubic-bezier(.55,0,.9,.45)'});SND.init&&SND.init();SND.ok()&&SND.slap(kind==='s'?3:2)}
+  const pid=(kind==='e'?'efx-':'sfx-')+id,own=x.cost===0||WAL.owned.includes(pid);
+  if(!own){if(fx2Try!==pid){fx2Try=pid;return}fx2Try=null;if((WAL.tokens||0)<x.cost){toast(L('Not enough rupees','ما عندك روبيات كافية'));return}
+    if(!(await ebAsk(L(`Buy "${x.en}" for ${x.cost} rupees?`,`تشتري "${x.ar}" بـ${x.cost} روبية؟`),L('Buy','اشترِ'),L('Not now','مو الحين'))))return;WAL.tokens-=x.cost;WAL.owned.push(pid);toast(L(`${x.en} unlocked`,`انفتح لك ${x.ar}`))}
+  if(kind==='e')MYPROF.efx=id;else MYPROF.sfx=id;saveWal();saveProf();renderShop()},true);
+// the server keeps the slam effect too
+if(typeof syncNow==='function'){syncNow=(function(prev){return async function(){if(!ACCT.on)return;try{const m=await api('/api/sync',{wal:{tokens:WAL.tokens,owned:WAL.owned,slams:WAL.slams},prof:{name:MYPROF.name,av:MYPROF.av,flag:MYPROF.flag,frame:MYPROF.frame,efx:MYPROF.efx,sfx:MYPROF.sfx,auto:MYPROF.auto,qp:MYPROF.qp,prefs:{theme:WAL.theme,back:WAL.back,face:WAL.face,joker:WAL.joker,lang:LANG}}});applyMe(m);if(typeof NET!=='undefined'&&NET.on)netSend('prof',{})}catch(e){if(e.auth)acctLost()}}})(syncNow)}
+if(typeof applyMe==='function')applyMe=(function(prev){return function(m,q){prev(m,q);if(m&&m.prof&&m.prof.sfx)MYPROF.sfx=m.prof.sfx}})(applyMe);
+
+// ---------- Change your cards during a game: the … menu ----------
+openGameMenu=(function(prev){return function(btn){prev(btn);const m=$('gameMenu');if(!m||m.querySelector('[data-gm="cards"]'))return;const t=m.querySelector('[data-gm="theme"]');
+  const b=document.createElement('button');b.type='button';b.dataset.gm='cards';b.innerHTML=`<svg viewBox="0 0 24 24"><rect x="3" y="5" width="11" height="15" rx="2"/><path d="M10 4.5l8.5 2.3a2 2 0 0 1 1.4 2.4l-3 11"/></svg>${L('Change cards','غيّر الورق')}`;(t||m.firstChild).after(b)}})(openGameMenu);
+window.addEventListener('click',e=>{const b=e.target.closest('[data-gm="cards"]');if(!b)return;e.stopImmediatePropagation();$('gameMenu').hidden=true;openShop('skins');
+  setTimeout(()=>{const g=document.querySelector('#shop .fgrid,#shop [data-face],#shop .cbprev');const el=g&&(g.closest('.grid')||g);if(el){const lab=el.previousElementSibling;(lab||el).scrollIntoView({block:'start'})}},120)},true);
+
+(function(){const st=document.createElement('style');st.textContent=`
+#fxCanvas{position:fixed;left:0;top:0;pointer-events:none;z-index:62}
+.efsw2{display:grid!important;place-items:center;background:radial-gradient(circle,hsla(var(--h),90%,60%,.55),transparent 70%)!important;box-shadow:inset 0 0 0 1.5px hsla(var(--h),90%,70%,.6)!important}.efsw2 b{font-size:24px;font-style:normal;filter:drop-shadow(0 0 6px rgba(255,255,255,.4))}
+#shop .efgrid .efitem.sel .efsw2{box-shadow:inset 0 0 0 2.5px #f2d27a!important}`;document.head.appendChild(st)})();
+
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1106.2352';
+const EB_VERSION='v1107.0138';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
