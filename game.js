@@ -3,7 +3,7 @@
 'use strict';
 const vm = require('vm'), fs = require('fs'), path = require('path');
 const CORE = fs.readFileSync(path.join(__dirname, 'engine_core.js'), 'utf8');
-const SCRIPT = new vm.Script(CORE + '\n;function __getS(){return S}\nfunction __setGen(){gen++}\nfunction __ctx(){return {sum,teamScore,nextIdx,isLone,ORDER}}\n', { filename: 'engine_core.js' });
+const SCRIPT = new vm.Script(CORE + '\n;function __getS(){return S}\nfunction __setGen(){gen++}\nfunction __ctx(){return {sum,teamScore,nextIdx,isLone,ORDER,canThrow,throwable,mustNow,mustEat,canSleep,onGround}}\n', { filename: 'engine_core.js' });
 const TURN_MS = 10000, AWAY_MS = 4000;
 
 class Game {
@@ -27,7 +27,7 @@ class Game {
     const c0 = E.intercept; E.intercept = function (j, card, fire = false) { const S = self.S; if (!S || !S.war) return; const w = S.war, pl = w.leader, vic = [...(w.victims || [])];
       c0(j, card); self.push({ t: 'cut', s: j, c: card, fire: !!fire }); sayT(j, fire ? 'طق!' : 'قطع!', fire ? 'Slap!' : 'Cut!'); self.autoEvents('cut', j, pl, vic) };
     const r0 = E.resolveWar; E.resolveWar = function () { const S = self.S; if (!S || !S.war) return; S.moves = (S.moves || 0) + 1; const W = S.war.leader, fought = S.war.pot.length > 1, gain = E.__ctx().sum([...S.war.targets, ...S.war.pot]);
-      r0(); self.push({ t: 'win', s: W, gain }); if (fought) self.autoEvents('win', W) };
+      r0(); self.push({ t: 'win', s: W, gain }); if (fought) self.autoEvents('win', W); if (self.hooks.war) try { self.hooks.war(W, gain) } catch (e) { console.error(e) } };
     const t0 = E.throwCard; E.throwCard = function (i, c) { const S = self.S; S.moves = (S.moves || 0) + 1; const sleeping = S.players[i].hand.length === 2 && S.draw.length > 0; t0(i, c); self.push({ t: 'throw', s: i, c }); if (sleeping) sayT(i, 'نايم', 'Sleeping') };
     const s0 = E.startTurn; E.startTurn = function (i) { const S = self.S; if (S) S.moves = (S.moves || 0) + 1; s0(i); const S2 = self.S; if (S2 && S2.turn === i && S2.phase === 'choose' && !S2.chain) self.push({ t: 'turn', s: i }) };
     // names and who is a person, then deal
@@ -66,7 +66,7 @@ class Game {
   turnKeyAt(now) { return this.turnDeadline - TURN_MS + AWAY_MS }
   // a person's move (checked against the rules)
   act(seat, a) {
-    const S = this.S, E = this.ctx; if (!S || S.phase === 'over') return; const p = S.players[seat]; if (!p || !p.human) return;
+    const S = this.S, E = Object.assign(Object.create(this.ctx), this.ctx.__ctx()); if (!S || S.phase === 'over') return; const p = S.players[seat]; if (!p || !p.human) return;
     const n = S.players.length, card = id => p.hand.find(c => c.id === id);
     switch (a.a) {
       case 'eat': { if (S.turn !== seat || S.phase !== 'choose') return; const c = card(a.card); if (!c) return; const r = String(a.r); if (!(c.r === r || c.r === 'JK')) return; if (!E.options(seat).some(o => o.r === r)) return;
@@ -104,6 +104,8 @@ class Game {
       const watcher = !!m.watch || m.seat >= S.players.length, k = watcher ? 0 : m.seat;
       this.hooks.send(m.sid, 'up', { v: this.viewFor(k, watcher), fx: fx.map(e => this.rotFx(e, k)) }) }
   }
+  results() { const S = this.S, E = this.ctx.__ctx(); const rows = S.teams.map((t, k) => ({ k, s: E.teamScore(k) })).sort((a, b) => b.s - a.s); const tie = rows[1] && rows[0].s === rows[1].s;
+    return S.players.map((p, i) => ({ seat: i, won: !tie && rows[0].k === p.team, wars: (S.stats && S.stats[i] && S.stats[i].wars) || 0, best: (S.stats && S.stats[i] && S.stats[i].best) || 0, tauf: (S.stats && S.stats[i] && S.stats[i].tauf) || 0 })) }
   stop() { this.dead = true; clearInterval(this.clock); for (const h of this.timers) clearTimeout(h); this.timers.clear(); if (this.upT) clearTimeout(this.upT); try { this.ctx.__setGen() } catch (e) {} }
 }
 module.exports = { Game };

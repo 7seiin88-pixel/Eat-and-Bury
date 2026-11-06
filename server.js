@@ -1,12 +1,14 @@
 // Eat & Bury online server.
 // - Serves the game page (public/index.html).
 // - Connects players in rooms over WebSockets and relays their messages.
-// The room creator's browser runs the game rules; this server only connects people.
+// The server runs every online game itself (game.js), so no player's phone is in charge.
 // No extra packages needed: uses only what comes with Node.js.
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { Game } = require('./game');
+const ACC = require('./accounts');
 
 const PUBLIC = path.join(__dirname, 'public');
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.json': 'application/json' };
@@ -14,6 +16,7 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '
 const server = http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
   if (url === '/health') { res.end('ok'); return; }
+  if (url.startsWith('/api/')) return ACC.http(req, res, url.split('?')[0]);
   if (url === '/rooms') { // live rooms list for the "rooms now" screen
     const list = [...rooms.values()].filter(r => !r.priv).map(r => {
       const players = r.members.filter(m => !m.watch), host = r.members.find(m => m.sid === r.host);
@@ -94,13 +97,14 @@ const GRACE = 3 * 60 * 1000; // keep a player's seat this long after they lose c
 const token = () => crypto.randomBytes(12).toString('hex');
 const toRoom = (r, type, data) => r.members.forEach(m => send(clients.get(m.sid), type, data));
 
-function onMessage(c, { type, data = {}, rid }) {
+function onMessage(c, msg) { try { return onMessage2(c, msg) } catch (e) { console.error('message', msg && msg.type, e) } }
+function onMessage2(c, { type, data = {}, rid }) {
   const reply = res => sendFrame(c, JSON.stringify({ type: 'reply', rid, data: res }));
   const r = rooms.get(c.room);
   switch (type) {
     case 'create': {
       const tk = token();
-      const room = { code: newCode(), host: c.id, started: false, members: [{ sid: c.id, name: clean(data.name), seat: 0, mic: false, token: tk }] };
+      const room = { code: newCode(), host: c.id, started: false, members: [{ sid: c.id, name: clean(data.name), seat: 0, mic: false, token: tk, atoken: c.atoken || null }] };
       rooms.set(room.code, room); c.room = room.code;
       return reply({ ok: true, room: pub(room), me: c.id, token: tk });
     }
@@ -111,20 +115,20 @@ function onMessage(c, { type, data = {}, rid }) {
       if (room.started && !data.watch && room.n) { // take a computer's seat in a game that already started
         const used = new Set(room.members.filter(m => !m.watch).map(m => m.seat)); let seat = 1; while (used.has(seat)) seat++;
         if (seat < room.n) { const tk = token();
-          room.members.push({ sid: c.id, name: clean(data.name), seat, mic: false, token: tk }); c.room = room.code;
+          room.members.push({ sid: c.id, name: clean(data.name), seat, mic: false, token: tk , atoken: c.atoken || null }); c.room = room.code;
           reply({ ok: true, room: pub(room), me: c.id, token: tk, late: true });
-          return toRoom(room, 'room', pub(room)); }
+          toRoom(room, 'room', pub(room)); if (room.game) { room.game.syncSeats(); room.game.flush(c.id); } return; }
       }
       if (room.started || players >= 6 || data.watch) { // watch the game instead of playing
         if (room.members.filter(m => m.watch).length >= 30) return reply({ ok: false, err: 'full' });
         const tw = token();
-        room.members.push({ sid: c.id, name: clean(data.name), seat: 99, watch: true, mic: false, token: tw }); c.room = room.code;
+        room.members.push({ sid: c.id, name: clean(data.name), seat: 99, watch: true, mic: false, token: tw , atoken: c.atoken || null }); c.room = room.code;
         reply({ ok: true, room: pub(room), me: c.id, token: tw, watch: true });
-        return toRoom(room, 'room', pub(room));
+        toRoom(room, 'room', pub(room)); if (room.game) room.game.flush(c.id); return;
       }
       const used = new Set(room.members.map(m => m.seat)); let seat = 1; while (used.has(seat)) seat++;
       const tk = token();
-      room.members.push({ sid: c.id, name: clean(data.name), seat, mic: false, token: tk }); c.room = room.code;
+      room.members.push({ sid: c.id, name: clean(data.name), seat, mic: false, token: tk , atoken: c.atoken || null }); c.room = room.code;
       reply({ ok: true, room: pub(room), me: c.id, token: tk });
       return toRoom(room, 'room', pub(room));
     }
@@ -134,16 +138,16 @@ function onMessage(c, { type, data = {}, rid }) {
       if (a) a.seat = data.b; if (b) b.seat = data.a;
       return toRoom(r, 'room', pub(r));
     }
-    case 'start': if (!r || r.host !== c.id) return; r.started = true; r.n = Math.min(6, Math.max(2, +(data && data.n) || 4)); toRoom(r, 'room', pub(r)); return toRoom(r, 'started', {});
-    case 'reopen': if (!r || r.host !== c.id) return; r.started = false; return toRoom(r, 'room', pub(r));
-    case 'up': // host sends each player their own view of the table
-      if (!r || r.host !== c.id || !Array.isArray(data)) return;
-      for (const { sid, view } of data) if (r.members.some(m => m.sid === sid)) send(clients.get(sid), 'up', view);
-      return;
-    case 'act': { // a player's move goes to the host
-      if (!r) return; const m = r.members.find(x => x.sid === c.id); if (!m || m.sid === r.host) return;
-      if (m.watch) return;
-      return send(clients.get(r.host), 'act', { ...data, seat: m.seat });
+    case 'start': { if (!r || r.host !== c.id) return; const cfg = data.cfg || {};
+      const safe = { mode: ['solo', '2v2', '3v3'].includes(cfg.mode) ? cfg.mode : '2v2', decks: Math.min(6, Math.max(1, +cfg.decks || 4)), timer: Math.min(15, Math.max(2, +cfg.timer || 3)), level: ['easy', 'normal', 'hard'].includes(cfg.level) ? cfg.level : 'normal', hints: !!cfg.hints, lang: cfg.lang === 'en' ? 'en' : 'ar' };
+      if (r.game) r.game.stop();
+      try { r.game = new Game(r, safe, { send: (sid, type, d) => send(clients.get(sid), type, d), war: (seat, gain) => reward(r, seat, a => ACC.warWon(a, gain)), over: g => { for (const x of g.results()) reward(r, x.seat, a => ACC.gameOver(a, x)) } }); } catch (e) { console.error('game start', e); r.game = null; return; }
+      r.started = true; r.n = r.game.S.players.length; toRoom(r, 'room', pub(r)); toRoom(r, 'started', {}); r.game.flush(); return; }
+    case 'reopen': if (!r || r.host !== c.id) return; if (r.game) { r.game.stop(); r.game = null; } r.started = false; return toRoom(r, 'room', pub(r));
+    case 'up': return; // (old app versions) the server sends the table now
+    case 'act': { // a player's move: the server checks it against the rules and plays it
+      if (!r || !r.game) return; const m = r.members.find(x => x.sid === c.id); if (!m || m.watch) return;
+      return r.game.act(m.seat, data || {});
     }
     case 'mic': { if (!r) return; const m = r.members.find(x => x.sid === c.id); if (m) { m.mic = !!data.on; toRoom(r, 'room', pub(r)); } return; }
     case 'rtc': // voice chat signalling
@@ -156,28 +160,37 @@ function onMessage(c, { type, data = {}, rid }) {
       const old = m.sid;
       if (m.timer) { clearTimeout(m.timer); m.timer = null; }
       const oc = clients.get(old); if (oc && oc !== c) { oc.room = null; try { oc.socket.destroy(); } catch (e) {} clients.delete(old); }
-      m.sid = c.id; m.away = false; m.mic = false; c.room = room.code;
+      m.sid = c.id; m.away = false; m.mic = false; c.room = room.code; if (m.atoken && !c.atoken) c.atoken = m.atoken;
       if (room.host === old) room.host = c.id;
       reply({ ok: true, room: pub(room), me: c.id, watch: !!m.watch });
       toRoom(room, 'room', pub(room));
-      if (room.host !== c.id) send(clients.get(room.host), 'back', { seat: m.seat, sid: c.id, old });
+      if (room.game) { room.game.changed(); room.game.flush(c.id); }
       return;
     }
     case 'prof': { // player profile: name, picture, flag, frame, level and a few stats
       if (!r) return; const m = r.members.find(x => x.sid === c.id); if (!m) return;
+      if (m.atoken || c.atoken) { const tok = m.atoken || c.atoken; m.atoken = tok; ACC.load(tok).then(a => { if (!a) return; m.prof = ACC.pub(a); if (a.prof.name) m.name = clean(a.prof.name); if (r.game) r.game.syncSeats(); toRoom(r, 'room', pub(r)) }).catch(() => {}); return; }
       const p = data || {}, av = String(p.av || '');
       if (av.length > 40000 || !(/^p:\d{1,2}$/.test(av) || av.startsWith('data:image/jpeg;base64,'))) return;
       const short = (v, n) => String(v || '').replace(/[<>"]/g, '').slice(0, n);
       const num = v => Math.max(0, Math.min(1e7, Math.floor(+v || 0)));
-      m.prof = { av, flag: short(p.flag, 8), frame: short(p.frame, 16), level: num(p.level), games: num(p.games), wins: num(p.wins), wars: num(p.wars), rp: num(p.rp), streak: num(p.streak), auto: autoOf(p.auto), efx: String(p.efx || '').replace(/[^a-z]/g, '').slice(0, 12) };
+      m.prof = { av, flag: short(p.flag, 8), frame: short(p.frame, 16), level: num(p.level), games: num(p.games), wins: num(p.wins), wars: num(p.wars), rp: num(p.rp), streak: num(p.streak), auto: autoOf(p.auto), efx: String(p.efx || '').replace(/[^a-z]/g, '').slice(0, 12), sfx: String(p.sfx || '').replace(/[^a-z]/g, '').slice(0, 12) };
       if (p.name) m.name = clean(p.name);
+      if (r.game) r.game.syncSeats();
       return toRoom(r, 'room', pub(r));
     }
+    case 'auth': { // link this player to their account (rank, rupees and rewards come from the server)
+      const tok = String(data.token || '').slice(0, 80); c.atoken = tok;
+      ACC.load(tok).then(a => { if (!a) { c.atoken = null; return } const rr = rooms.get(c.room); const m = rr && rr.members.find(x => x.sid === c.id);
+        if (m) { m.atoken = tok; m.prof = ACC.pub(a); if (a.prof.name) m.name = clean(a.prof.name); if (rr.game) rr.game.syncSeats(); toRoom(rr, 'room', pub(rr)) } }).catch(() => {});
+      return reply && rid ? reply({ ok: true }) : undefined; }
     case 'priv': { if (!r || r.host !== c.id) return; r.priv = !!data.on; return toRoom(r, 'room', pub(r)); }
     case 'leave': return drop(c, true, true);
   }
 }
 
+function reward(r, seat, fn) { const m = r.members.find(x => !x.watch && x.seat === seat); if (!m || !m.atoken) return;
+  ACC.load(m.atoken).then(a => a && fn(a)).then(me => { if (!me) return; send(clients.get(m.sid), 'me', me); m.prof = { ...(m.prof || {}), level: me.st.level, rp: me.st.rp, streak: me.st.streak, wins: me.st.wins, games: me.st.games, wars: me.st.wars } }).catch(e => console.error('reward', e)); }
 function drop(c, keepSocket, now) {
   const r = rooms.get(c.room); c.room = null;
   if (!keepSocket) clients.delete(c.id);
@@ -186,6 +199,7 @@ function drop(c, keepSocket, now) {
   if (!now) { // lost connection: hold the seat for a while so they can come back
     m.away = true; m.mic = false;
     m.timer = setTimeout(() => remove(r, m), r.started ? 15 * 60 * 1000 : GRACE); // a game in progress keeps the seat 15 minutes
+    if (r.game) r.game.changed();
     return toRoom(r, 'room', pub(r));
   }
   remove(r, m);
@@ -193,11 +207,19 @@ function drop(c, keepSocket, now) {
 function remove(r, m) {
   if (m.timer) { clearTimeout(m.timer); m.timer = null; }
   if (!rooms.has(r.code)) return;
-  if (r.host === m.sid) { toRoom(r, 'ended', {}); rooms.delete(r.code); return; }
   r.members = r.members.filter(x => x !== m);
-  send(clients.get(r.host), 'left', { seat: m.seat, sid: m.sid });
+  if (r.host === m.sid) { // the room carries on with someone else in charge; it closes only when nobody is left
+    const next = r.members.find(x => !x.watch && !x.away) || r.members.find(x => !x.watch) || r.members[0];
+    if (!next) { if (r.game) r.game.stop(); rooms.delete(r.code); return; }
+    r.host = next.sid;
+  }
+  if (!r.members.length) { if (r.game) r.game.stop(); rooms.delete(r.code); return; }
+  if (r.game) r.game.syncSeats();
   toRoom(r, 'room', pub(r));
 }
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log('Eat & Bury server running on port ' + PORT));
+// keep the game server running even if one room hits an unexpected error
+process.on('uncaughtException', e => console.error('uncaught', e));
+process.on('unhandledRejection', e => console.error('unhandled', e));
