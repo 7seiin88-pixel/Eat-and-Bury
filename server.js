@@ -14,6 +14,13 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '
 const server = http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
   if (url === '/health') { res.end('ok'); return; }
+  if (url === '/rooms') { // live rooms list for the "rooms now" screen
+    const list = [...rooms.values()].filter(r => !r.priv).map(r => {
+      const players = r.members.filter(m => !m.watch), host = r.members.find(m => m.sid === r.host);
+      return { code: r.code, host: host ? host.name : '', players: players.map(m => m.name), watchers: r.members.filter(m => m.watch).length, started: !!r.started, free: r.started && r.n ? Math.max(0, r.n - players.length) : 0, away: players.filter(m => m.away).length };
+    }).sort((a, b) => (b.started - a.started) || (b.players.length - a.players.length)).slice(0, 50);
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(list)); return;
+  }
   let file = path.normalize(path.join(PUBLIC, url === '/' ? 'index.html' : url));
   if (!file.startsWith(PUBLIC)) { res.writeHead(403); res.end(); return; }
   // The game page can also sit next to server.js (easier to upload from a phone or iPad)
@@ -80,7 +87,9 @@ setInterval(() => { for (const c of clients.values()) { if (!c.alive) { c.socket
 const rooms = new Map();
 const clean = s => String(s || '').replace(/[<>]/g, '').trim().slice(0, 16) || 'لاعب';
 function newCode() { let c; do { c = Math.random().toString(36).slice(2, 7).toUpperCase(); } while (rooms.has(c)); return c; }
-const pub = r => ({ code: r.code, host: r.host, started: r.started, members: r.members.map(m => ({ sid: m.sid, name: m.name, seat: m.seat, mic: m.mic, away: !!m.away, watch: !!m.watch, prof: m.prof || null })) });
+const autoOf = a => { if (!a || typeof a !== 'object') return null; const k = v => { v = Math.floor(+v); return Number.isFinite(v) ? Math.max(-1, Math.min(300, v)) : -1; };
+  return { def: k(a.def), save: k(a.save), took: k(a.took), win: k(a.win), snd: String(a.snd || '').replace(/[^a-z]/g, '').slice(0, 12) }; };
+const pub = r => ({ code: r.code, host: r.host, started: r.started, priv: !!r.priv, members: r.members.map(m => ({ sid: m.sid, name: m.name, seat: m.seat, mic: m.mic, away: !!m.away, watch: !!m.watch, prof: m.prof || null })) });
 const GRACE = 3 * 60 * 1000; // keep a player's seat this long after they lose connection
 const token = () => crypto.randomBytes(12).toString('hex');
 const toRoom = (r, type, data) => r.members.forEach(m => send(clients.get(m.sid), type, data));
@@ -99,6 +108,13 @@ function onMessage(c, { type, data = {}, rid }) {
       const room = rooms.get(String(data.code || '').toUpperCase().trim());
       if (!room) return reply({ ok: false, err: 'notfound' });
       const players = room.members.filter(m => !m.watch).length;
+      if (room.started && !data.watch && room.n) { // take a computer's seat in a game that already started
+        const used = new Set(room.members.filter(m => !m.watch).map(m => m.seat)); let seat = 1; while (used.has(seat)) seat++;
+        if (seat < room.n) { const tk = token();
+          room.members.push({ sid: c.id, name: clean(data.name), seat, mic: false, token: tk }); c.room = room.code;
+          reply({ ok: true, room: pub(room), me: c.id, token: tk, late: true });
+          return toRoom(room, 'room', pub(room)); }
+      }
       if (room.started || players >= 6 || data.watch) { // watch the game instead of playing
         if (room.members.filter(m => m.watch).length >= 30) return reply({ ok: false, err: 'full' });
         const tw = token();
@@ -118,7 +134,7 @@ function onMessage(c, { type, data = {}, rid }) {
       if (a) a.seat = data.b; if (b) b.seat = data.a;
       return toRoom(r, 'room', pub(r));
     }
-    case 'start': if (!r || r.host !== c.id) return; r.started = true; toRoom(r, 'room', pub(r)); return toRoom(r, 'started', {});
+    case 'start': if (!r || r.host !== c.id) return; r.started = true; r.n = Math.min(6, Math.max(2, +(data && data.n) || 4)); toRoom(r, 'room', pub(r)); return toRoom(r, 'started', {});
     case 'reopen': if (!r || r.host !== c.id) return; r.started = false; return toRoom(r, 'room', pub(r));
     case 'up': // host sends each player their own view of the table
       if (!r || r.host !== c.id || !Array.isArray(data)) return;
@@ -153,10 +169,11 @@ function onMessage(c, { type, data = {}, rid }) {
       if (av.length > 40000 || !(/^p:\d{1,2}$/.test(av) || av.startsWith('data:image/jpeg;base64,'))) return;
       const short = (v, n) => String(v || '').replace(/[<>"]/g, '').slice(0, n);
       const num = v => Math.max(0, Math.min(1e7, Math.floor(+v || 0)));
-      m.prof = { av, flag: short(p.flag, 8), frame: short(p.frame, 16), level: num(p.level), games: num(p.games), wins: num(p.wins), wars: num(p.wars) };
+      m.prof = { av, flag: short(p.flag, 8), frame: short(p.frame, 16), level: num(p.level), games: num(p.games), wins: num(p.wins), wars: num(p.wars), auto: autoOf(p.auto), efx: String(p.efx || '').replace(/[^a-z]/g, '').slice(0, 12) };
       if (p.name) m.name = clean(p.name);
       return toRoom(r, 'room', pub(r));
     }
+    case 'priv': { if (!r || r.host !== c.id) return; r.priv = !!data.on; return toRoom(r, 'room', pub(r)); }
     case 'leave': return drop(c, true, true);
   }
 }
