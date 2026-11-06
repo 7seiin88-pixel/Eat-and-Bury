@@ -1806,7 +1806,7 @@ chatBubble=function(i,text){const at=seatPt(i);if(!at)return;const b=addFx('','c
 
 // ---------- Profile ----------
 const FLAGS=['🇰🇼','🇸🇦','🇦🇪','🇶🇦','🇧🇭','🇴🇲','🇮🇶','🇯🇴','🇪🇬','🇱🇧','🇸🇾','🇵🇸','🇲🇦','🇾🇪'];
-const FRAMES=[{id:'none',en:'Insta',ar:'انستقرام',cost:0},{id:'sadu',en:'Sadu',ar:'سدو',cost:0},{id:'silver',en:'Silver',ar:'فضي',cost:100},{id:'gold',en:'Gold',ar:'ذهبي',cost:250},{id:'fire',en:'Fire',ar:'ناري',cost:400},{id:'vip',en:'VIP diamond',ar:'ماسي VIP',cost:800}];
+const FRAMES=[{id:'none',en:'Colour ring',ar:'الحلقة الملونة',cost:0},{id:'sadu',en:'Sadu',ar:'سدو',cost:0},{id:'silver',en:'Silver',ar:'فضي',cost:100},{id:'gold',en:'Gold',ar:'ذهبي',cost:250},{id:'fire',en:'Fire',ar:'ناري',cost:400},{id:'vip',en:'VIP diamond',ar:'ماسي VIP',cost:800}];
 // Avatar presets: drawn here, no image files
 const AV=(()=>{const face='#f3c9a0',ink='#3a2416';
   const man=(cloth,band,bg)=>`<rect width="64" height="64" fill="${bg}"/><path d="M8 64c2-14 12-20 24-20s22 6 24 20z" fill="#fff"/><path d="M14 30c0-12 8-20 18-20s18 8 18 20l2 18c-6 4-12 6-20 6s-14-2-20-6z" fill="${cloth}"/><ellipse cx="32" cy="31" rx="10" ry="12" fill="${face}"/><path d="M24 38q8 7 16 0q-2 7-8 7t-8-7z" fill="${ink}"/><path d="M27 29h3M34 29h3" stroke="${ink}" stroke-width="1.8" stroke-linecap="round"/><path d="M15 21c5-6 29-6 34 0" stroke="${band}" stroke-width="4" fill="none"/>`;
@@ -2142,7 +2142,7 @@ document.addEventListener('click',e=>{const t=e.target.closest('#slamBtn,#slamCl
 @media (max-width:520px){#slamBtn{min-width:40px;height:40px;flex-basis:40px}#slamBtn span{display:none}}`;document.head.appendChild(st)})();
 (function barCSS(){const st=document.createElement('style');st.textContent=`@media (max-width:520px){#slamBtn,#giftBtn,#chatBtn,#micBtn{min-width:36px!important;width:36px;height:38px!important;flex:0 0 36px!important;padding:2px!important;border-radius:9px}.barrow{gap:5px}}`;document.head.appendChild(st)})();
 
-// ===================== Fixes: theme button, Instagram-style pictures, choosing who gets a gift =====================
+// ===================== Fixes: theme button, story-ring style pictures, choosing who gets a gift =====================
 // Gifts: you pick the player first (or tap the gift, then the player). Nothing is sent to anyone by default.
 let giftPreset=null;
 openShop=function(tab){giftTo=giftPreset;giftPreset=null;shopTab=tab||shopTab;giftSel=null;renderShop();$('shopSheet').hidden=false};
@@ -2161,7 +2161,7 @@ const _shopG=renderShop;renderShop=function(){_shopG();if(shopTab!=='gifts'||!S)
   row.before(tip);if(giftSel){const it=document.querySelector(`#shop [data-gift="${giftSel}"]`);if(it)it.classList.add('sel')}};
 (function fixCSS(){const st=document.createElement('style');st.textContent=`
 #shopSheet,#profSheet,#slamSheet{z-index:45}
-/* Instagram-style round pictures, a bit bigger */
+/* story-ring style round pictures, a bit bigger */
 .table{--tile:min(calc(var(--W) * .19),17.5cqh)}
 #mebox{--tile:calc(var(--W) * .145)}
 html .tile,html[class] .tile{background:none!important;box-shadow:none!important;outline:none!important;border-radius:50%}
@@ -5425,7 +5425,7 @@ window.addEventListener('click',e=>{const s=e.target.closest('[data-sgift]');if(
 // themes, card designs and effects are chosen outside the game: hide them while playing
 function inGame(){return !!(S&&$('home')&&$('home').hidden&&$('setup')&&$('setup').hidden&&$('lobby')&&$('lobby').hidden)}
 renderShop=(function(prev){return function(){prev.apply(this,arguments);if(!inGame())return;const t=document.querySelector('#shop .tabs');if(!t)return;
-  t.querySelectorAll('[data-tab]').forEach(b=>{if(!['gifts','emotes'].includes(b.dataset.tab))b.remove()})}})(renderShop);
+  t.querySelectorAll('[data-tab]').forEach(b=>{if(!['gifts','emotes','skins'].includes(b.dataset.tab))b.remove()})}})(renderShop);
 
 // ---------- 6. The watchers eye sits on the side, not over the top player's cards ----------
 (function(){const st=document.createElement('style');st.textContent=`
@@ -5611,21 +5611,23 @@ Object.assign(ASND,{
 (function(){const m=document.createElement('div');m.id='gameMenu';m.hidden=true;document.body.appendChild(m)})();
 function openGameMenu(btn){const m=$('gameMenu');m.dir=LANG==='ar'?'rtl':'ltr';const online=typeof NET!=='undefined'&&NET.on;
   m.innerHTML=`<button type="button" data-gm="new"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.3-5.6M4 4v4h4"/></svg>${online?L('Back to the room','رجوع للغرفة'):L('New game','قيم جديد')}</button>
+    <button type="button" data-gm="theme"><svg viewBox="0 0 24 24"><path d="M3 13v-2a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v2"/><path d="M2 13h20v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/><path d="M5 19v2M19 19v2"/></svg>${L('Change theme','غيّر الجلسة')}</button>
     <button type="button" data-gm="exit" class="gmexit"><svg viewBox="0 0 24 24"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"/></svg>${L('Leave the game','خروج من اللعبة')}</button>`;
   m.hidden=false;const r=btn.getBoundingClientRect(),W=m.offsetWidth;let left=LANG==='ar'?r.right-W:r.left;left=Math.max(8,Math.min(innerWidth-W-8,left));m.style.left=left+'px';m.style.top=(r.bottom+6)+'px'}
 function leaveGame(){const online=typeof NET!=='undefined'&&NET.on;
   try{if(S){S.aiTimers&&S.aiTimers.forEach(clearTimeout);gen++}}catch(e){}try{if(typeof turnDeadline!=='undefined')turnDeadline=0}catch(e){}
   if(online){try{netSend('leave')}catch(e){}try{netReset()}catch(e){}try{history.replaceState(null,'',location.pathname)}catch(e){}if(typeof lobbyCode!=='undefined')lobbyCode='';S=null;try{clearFx()}catch(e){}}
   else{try{if(S)saveGame()}catch(e){}if(S){try{gen++}catch(e){}try{S.aiTimers&&S.aiTimers.forEach(clearTimeout)}catch(e){}S=null;try{clearFx()}catch(e){}}}
-  ['over','lobby','setup','shopSheet','profSheet','chatBar'].forEach(id=>{const el=$(id);if(el)el.hidden=true});const gp=$('giftPop');if(gp)gp.hidden=true;
+  {const ac=$('actions');if(ac)ac.innerHTML=''}['over','lobby','setup','shopSheet','profSheet','chatBar'].forEach(id=>{const el=$(id);if(el)el.hidden=true});const gp=$('giftPop');if(gp)gp.hidden=true;
   try{if(typeof MUSIC!=='undefined')MUSIC.stop()}catch(e){}showHome(true)}
 window.addEventListener('click',e=>{
   const nb=e.target.closest('#newBtn');if(nb&&!window.__gmPass){if(!S)return;e.stopImmediatePropagation();e.preventDefault();const m=$('gameMenu');if(!m.hidden){m.hidden=true;return}openGameMenu(nb);return}
   const g=e.target.closest('[data-gm]');if(g){e.stopImmediatePropagation();$('gameMenu').hidden=true;
+    if(g.dataset.gm==='theme'){openShop('skins');return}
     if(g.dataset.gm==='new'){window.__gmPass=true;try{$('newBtn').click()}finally{window.__gmPass=false}return}
     const online=typeof NET!=='undefined'&&NET.on,host=online&&NET.host;
     const msg=host?L('Leave? The room will close for everyone.','تبي تطلع؟ الغرفة بتنسكر على الكل.'):online?L('Leave the game? The computer will take your seat.','تبي تطلع من اللعبة؟ الكمبيوتر بياخذ مكانك.'):L('Leave to the main screen? You can continue this game later.','تطلع للشاشة الرئيسية؟ تقدر تكمل هالقيم بعدين.');
-    if(confirm(msg))leaveGame();return}
+    ebAsk(msg,L('Leave','اطلع'),L('Stay','خلني')).then(ok=>{if(ok)leaveGame()});return}
   const m=$('gameMenu');if(m&&!m.hidden&&!e.target.closest('#gameMenu'))m.hidden=true},true);
 (function(){const st=document.createElement('style');st.textContent=`
 #gameMenu{position:fixed;z-index:95;min-width:200px;padding:6px;border-radius:14px;background:linear-gradient(180deg,rgba(34,20,15,.98),rgba(16,9,6,.98));box-shadow:0 12px 30px rgba(0,0,0,.6),inset 0 0 0 1px rgba(242,210,122,.35);display:flex;flex-direction:column;gap:4px}
@@ -5655,12 +5657,12 @@ say=(function(prev){return function(i,text){if(text==='الوقت!'||text==='Tim
 function seatMember(local){if(typeof NET==='undefined'||!NET.on||!S||!S.players)return undefined;const n=S.players.length,base=NET.host||(typeof amWatch==='function'&&amWatch())?0:(NET.mySeat||0),g=(local+base)%n;
   return NET.members.find(x=>x.seat===g&&!x.watch)||null}
 render=(function(prev){return function(){const r=prev.apply(this,arguments);try{if(!S||!S.players)return r;const now=Date.now(),online=typeof NET!=='undefined'&&NET.on;
-  S.players.forEach((p,i)=>{const el=i===0?$('mebox'):document.querySelector(`#seats .seat[data-seat="${i}"]`);if(!el)return;const old=el.querySelector('.botchip');old&&old.remove();
+  document.querySelectorAll('.botchip').forEach(x=>x.remove());S.players.forEach((p,i)=>{const el=i===0?$('mebox'):document.querySelector(`#seats .seat[data-seat="${i}"]`);if(!el)return;
     const m=seatMember(i),timed=AUTOP[i]&&now-AUTOP[i]<6000;let txt='';
     if(online&&m===null&&i!==0)txt=L('🤖 Computer','🤖 كمبيوتر');
     else if(online&&m&&m.away)txt=L('🤖 Away: computer plays','🤖 طالع: الكمبيوتر يلعب');
     else if(timed)txt=i===0?L('🤖 Computer played for you','🤖 الكمبيوتر لعب عنك'):L('🤖 Computer played for them','🤖 الكمبيوتر لعب عنه');
-    el.classList.toggle('botplay',!!txt);if(!txt)return;const c=document.createElement('span');c.className='botchip'+(timed?' hot':'');c.textContent=txt;(el.querySelector('.name')||el).after(c)})}catch(e){}return r}})(render);
+    el.classList.toggle('botplay',!!txt);if(!txt)return;const c=document.createElement('span');c.className='botchip'+(timed?' hot':'');c.textContent=txt;if(i===0)el.appendChild(c);else{const nm=el.querySelector('.name');nm?nm.after(c):el.appendChild(c)}})}catch(e){}return r}})(render);
 
 // ---------- 3. The mic closes when you leave the page or switch apps ----------
 async function micOff(){if(typeof VOICE==='undefined'||!VOICE.stream)return;try{VOICE.peers.forEach(st=>st.pc.getSenders().forEach(s=>{if(s.track&&s.track.kind==='audio')s.replaceTrack(null).catch(()=>{})}))}catch(e){}
@@ -5680,9 +5682,160 @@ if(typeof voiceToggle==='function'){const _vt=voiceToggle;voiceToggle=async func
 .botchip.hot{background:#1f5fa8;color:#fff;animation:botp 1s ease-in-out 3}@keyframes botp{50%{transform:scale(1.1)}}
 .seat.botplay .avatar{filter:grayscale(.55) brightness(.9)}
 #mebox .botchip{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:4px;z-index:5}#mebox{position:relative}`;document.head.appendChild(st)})();
+// ---------- War buttons float above your hand instead of making the bottom bar taller ----------
+(function(){let q=0;const place=()=>{q=0;const a=$('actions'),hz=document.querySelector('.handzone'),bar=document.querySelector('.bottombar');if(!a||!hz||!bar)return;
+    if(a.parentElement!==document.body)document.body.appendChild(a);const top=Math.min(hz.getBoundingClientRect().top,bar.getBoundingClientRect().top);a.style.bottom=(innerHeight-top+8)+'px'};
+  render=(function(prev){return function(){const r=prev.apply(this,arguments);if(!q)q=requestAnimationFrame(place);return r}})(render);addEventListener('resize',()=>{if(!q)q=requestAnimationFrame(place)});
+  const st=document.createElement('style');st.textContent=`
+html body #actions{position:fixed!important;left:0;right:0;display:flex;justify-content:center;align-items:center;gap:10px;z-index:60;pointer-events:none;margin:0!important;padding:0!important;height:auto!important}
+html body #actions:empty{display:none}
+html body #actions>*{pointer-events:auto;box-shadow:0 8px 20px rgba(0,0,0,.5)}
+html:not(.ingame) #actions{}`;document.head.appendChild(st)})();
+
+// ===================== Round 51: story-ring style profile circles (bigger, clean ring) + 16 new characters =====================
+(function newAvatars(){const sk=['#f3c9a0','#e0ac7e','#c68a5a','#8d5a3b'],ink='#2b1a10';
+  const eyes=(y=30,c=ink)=>`<path d="M26 ${y}h3M35 ${y}h3" stroke="${c}" stroke-width="2" stroke-linecap="round"/>`;
+  const smile=(y=38,c=ink)=>`<path d="M27 ${y}q5 4 10 0" stroke="${c}" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+  const body=(c)=>`<path d="M8 64c2-14 12-20 24-20s22 6 24 20z" fill="${c}"/>`;
+  const head=(c,ry=12)=>`<ellipse cx="32" cy="31" rx="11" ry="${ry}" fill="${c}"/>`;
+  const L=[
+    // old man: white beard, red ghutra
+    `<rect width="64" height="64" fill="#f6e3c8"/>${body('#fff')}<path d="M13 31c0-13 8-21 19-21s19 8 19 21l2 19c-6 4-13 6-21 6s-15-2-21-6z" fill="#c62f2f"/><path d="M13 31c0-13 8-21 19-21s19 8 19 21" fill="none" stroke="#fff" stroke-width="1" stroke-dasharray="2 3" opacity=".6"/>${head(sk[1])}<path d="M21 34q11 18 22 0q-2 12-11 13q-9-1-11-13z" fill="#f4f4f4"/><path d="M26 29h3M35 29h3" stroke="${ink}" stroke-width="2" stroke-linecap="round"/><path d="M24 25q3-2 6 0M34 25q3-2 6 0" stroke="#eee" stroke-width="2" fill="none"/><path d="M15 21c5-6 29-6 34 0" stroke="#111" stroke-width="4" fill="none"/>`,
+    // grandma: black shayla, glasses
+    `<rect width="64" height="64" fill="#e8dcf2"/>${body('#1e1a24')}<path d="M11 36c0-15 9-26 21-26s21 11 21 26l-2 18c-5 4-12 6-19 6s-14-2-19-6z" fill="#1e1a24"/>${head(sk[0],12)}<circle cx="27.5" cy="30" r="3.6" fill="none" stroke="#7a5a2a" stroke-width="1.4"/><circle cx="36.5" cy="30" r="3.6" fill="none" stroke="#7a5a2a" stroke-width="1.4"/><path d="M31 30h2" stroke="#7a5a2a" stroke-width="1.4"/>${smile(38,'#a8445a')}<path d="M24 35q-2 1-1 2M40 35q2 1 1 2" stroke="#d99" stroke-width="1.5" fill="none"/>`,
+    // young man, cap backwards
+    `<rect width="64" height="64" fill="#cdeafd"/>${body('#ff6a3d')}${head(sk[1])}<path d="M20 26q12-16 24 0z" fill="#1d3557"/><path d="M42 24q10 0 12 4l-10 0z" fill="#1d3557"/><rect x="20" y="24" width="24" height="3" fill="#e63946"/>${eyes(31)}${smile(38)}`,
+    // gamer with headset
+    `<rect width="64" height="64" fill="#1f1d36"/>${body('#6c3ce9')}${head(sk[0])}<path d="M21 26q11-12 22 0z" fill="#3a2a1a"/><path d="M18 32q0-17 14-17t14 17" stroke="#111" stroke-width="3" fill="none"/><rect x="15" y="28" width="6" height="10" rx="3" fill="#00e5ff"/><rect x="43" y="28" width="6" height="10" rx="3" fill="#00e5ff"/><path d="M19 38q2 6 9 6" stroke="#111" stroke-width="2" fill="none"/><circle cx="28" cy="44" r="1.8" fill="#00e5ff"/>${eyes(31)}${smile(38)}`,
+    // girl, pink hijab
+    `<rect width="64" height="64" fill="#ffe3ec"/>${body('#f06292')}<path d="M12 35c0-15 9-25 20-25s20 10 20 25l-2 17c-5 4-11 6-18 6s-13-2-18-6z" fill="#f48fb1"/><path d="M18 30q14-14 28 0" stroke="#fff" stroke-width="1.5" fill="none" opacity=".5"/>${head(sk[0],11.5)}${eyes(31)}<path d="M28 37q4 3 8 0" stroke="#c2185b" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="24" cy="35" r="2" fill="#f8bbd0"/><circle cx="40" cy="35" r="2" fill="#f8bbd0"/>`,
+    // girl, sunglasses & long hair
+    `<rect width="64" height="64" fill="#fff3c4"/><path d="M14 34c-2-16 6-26 18-26s20 10 18 26l2 22H12z" fill="#5a3a22"/>${body('#26a69a')}${head(sk[1])}<path d="M21 26q11-10 22 0q-6-8-11-8t-11 8z" fill="#5a3a22"/><rect x="22" y="27" width="9" height="6" rx="2.5" fill="#111"/><rect x="33" y="27" width="9" height="6" rx="2.5" fill="#111"/><path d="M31 29h2" stroke="#111" stroke-width="1.5"/><path d="M28 38q4 3 8 0" stroke="#d81b60" stroke-width="2.2" fill="none" stroke-linecap="round"/>`,
+    // curly-haired boy
+    `<rect width="64" height="64" fill="#d7f5e1"/>${body('#ffb300')}${head(sk[2])}<g fill="#2a1a10">${[18,23,28,33,38,43,46,16].map((x,k)=>`<circle cx="${x}" cy="${k>5?26:19+(k%2)*2}" r="5"/>`).join('')}</g>${eyes(31)}${smile(38)}`,
+    // sporty, headband
+    `<rect width="64" height="64" fill="#e3f2fd"/>${body('#1565c0')}<path d="M26 46h12v6H26z" fill="#fff"/>${head(sk[1])}<path d="M21 25q11-12 22 0z" fill="#1b1b1b"/><rect x="20" y="24" width="24" height="4" rx="1" fill="#e53935"/>${eyes(31)}${smile(38)}<path d="M44 24l6 -4l-1 5z" fill="#e53935"/>`,
+    // chef
+    `<rect width="64" height="64" fill="#fff8e1"/>${body('#fff')}<path d="M26 46l6 6 6-6" fill="none" stroke="#d32f2f" stroke-width="3"/>${head(sk[0])}<path d="M20 22q-4-10 6-10 2-6 6-6t6 6q10 0 6 10z" fill="#fff" stroke="#ddd"/><rect x="20" y="21" width="24" height="5" fill="#fff" stroke="#ddd"/>${eyes(31)}<path d="M26 35q6 4 12 0" stroke="#5d4037" stroke-width="2.5" fill="none" stroke-linecap="round"/>${smile(39)}`,
+    // pilot / captain
+    `<rect width="64" height="64" fill="#cfe8ff"/>${body('#0d2a4a')}<path d="M28 46l4 8 4-8" fill="#fff"/><path d="M30 50h4" stroke="#c9a04a" stroke-width="2"/>${head(sk[1])}<path d="M18 25q14-14 28 0v2H18z" fill="#0d2a4a"/><rect x="18" y="24" width="28" height="3" fill="#111"/><path d="M29 20h6l-3 3z" fill="#f2d27a"/>${eyes(31)}${smile(38)}<path d="M26 35q6 2 12 0" stroke="#3e2a1a" stroke-width="2" fill="none"/>`,
+    // cat
+    `<rect width="64" height="64" fill="#fde2c4"/><path d="M14 22l6-14 8 10zM50 22l-6-14-8 10z" fill="#f2994a"/><ellipse cx="32" cy="34" rx="19" ry="17" fill="#f2994a"/><path d="M18 26q4-2 6 2M46 26q-4-2-6 2" stroke="#d9772c" stroke-width="3" fill="none"/><ellipse cx="25" cy="33" rx="3" ry="4" fill="#222"/><ellipse cx="39" cy="33" rx="3" ry="4" fill="#222"/><circle cx="26" cy="32" r="1" fill="#fff"/><circle cx="40" cy="32" r="1" fill="#fff"/><path d="M30 39h4l-2 2z" fill="#e57373"/><path d="M32 41q-3 4-6 2M32 41q3 4 6 2" stroke="#7a4a20" stroke-width="1.5" fill="none"/><path d="M14 38h8M14 42h8M42 38h8M42 42h8" stroke="#7a4a20" stroke-width="1"/>`,
+    // wolf
+    `<rect width="64" height="64" fill="#cfd8e3"/><path d="M12 24l6-16 10 10zM52 24l-6-16-10 10z" fill="#6b7785"/><path d="M12 30q0-14 20-14t20 14q0 12-8 18l-12 8-12-8q-8-6-8-18z" fill="#6b7785"/><path d="M22 40q10 16 20 0q-4 12-10 14q-6-2-10-14z" fill="#e8edf2"/><path d="M20 30l8 2M44 30l-8 2" stroke="#2b333d" stroke-width="2"/><circle cx="25" cy="33" r="2.4" fill="#ffc107"/><circle cx="39" cy="33" r="2.4" fill="#ffc107"/><path d="M29 42h6l-3 3z" fill="#222"/>`,
+    // tiger
+    `<rect width="64" height="64" fill="#fff1d6"/><circle cx="16" cy="18" r="6" fill="#ff9800"/><circle cx="48" cy="18" r="6" fill="#ff9800"/><ellipse cx="32" cy="34" rx="19" ry="18" fill="#ff9800"/><path d="M32 16v8M24 18l3 6M40 18l-3 6M14 32h6M14 38h5M50 32h-6M50 38h-5" stroke="#3a1f0a" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="32" cy="42" rx="9" ry="7" fill="#fff"/><circle cx="25" cy="32" r="2.6" fill="#222"/><circle cx="39" cy="32" r="2.6" fill="#222"/><path d="M29 39h6l-3 3z" fill="#3a1f0a"/><path d="M32 42q-3 3-5 1M32 42q3 3 5 1" stroke="#3a1f0a" stroke-width="1.5" fill="none"/>`,
+    // robot
+    `<rect width="64" height="64" fill="#e0f7fa"/><path d="M31 6h2v6h-2z" fill="#607d8b"/><circle cx="32" cy="6" r="3" fill="#ff5252"/><rect x="14" y="12" width="36" height="32" rx="8" fill="#90a4ae"/><rect x="18" y="18" width="28" height="16" rx="5" fill="#263238"/><circle cx="26" cy="26" r="3.5" fill="#00e5ff"/><circle cx="38" cy="26" r="3.5" fill="#00e5ff"/><rect x="24" y="37" width="16" height="3" rx="1.5" fill="#455a64"/><rect x="10" y="22" width="4" height="10" rx="2" fill="#78909c"/><rect x="50" y="22" width="4" height="10" rx="2" fill="#78909c"/><path d="M14 64v-12q0-6 6-6h24q6 0 6 6v12z" fill="#78909c"/>`,
+    // alien
+    `<rect width="64" height="64" fill="#1a1036"/><circle cx="10" cy="12" r="1" fill="#fff"/><circle cx="54" cy="10" r="1.2" fill="#fff"/><circle cx="50" cy="52" r="1" fill="#fff"/><path d="M24 12l-4-6M40 12l4-6" stroke="#7cf27c" stroke-width="2"/><circle cx="20" cy="6" r="2" fill="#7cf27c"/><circle cx="44" cy="6" r="2" fill="#7cf27c"/><path d="M12 30q0-20 20-20t20 20q0 16-20 26q-20-10-20-26z" fill="#7cf27c"/><ellipse cx="24" cy="31" rx="6" ry="8" fill="#111" transform="rotate(-20 24 31)"/><ellipse cx="40" cy="31" rx="6" ry="8" fill="#111" transform="rotate(20 40 31)"/><path d="M28 45q4 2 8 0" stroke="#2e7d32" stroke-width="2" fill="none"/>`,
+    // ninja
+    `<rect width="64" height="64" fill="#ffccbc"/>${body('#212121')}<path d="M12 32q0-22 20-22t20 22v10q-10 8-20 8t-20-8z" fill="#212121"/><path d="M18 26h28v9H18z" fill="${sk[1]}"/><path d="M22 30l6 1M42 30l-6 1" stroke="#111" stroke-width="2.5" stroke-linecap="round"/><path d="M46 22l10-4-2 6 6 2z" fill="#d32f2f"/><rect x="12" y="22" width="40" height="3" fill="#d32f2f"/>`];
+  L.forEach(x=>AV.push(`<svg class="pav" viewBox="0 0 64 64">${x}</svg>`))})();
+
+// ---------- story-ring style circle: bigger picture, thin white gap, clean ring, level as a small pill ----------
+(function(){const ring='-webkit-mask:radial-gradient(circle closest-side,transparent 86%,#000 87.5%,#000 99%,transparent 100%)!important;mask:radial-gradient(circle closest-side,transparent 86%,#000 87.5%,#000 99%,transparent 100%)!important;box-shadow:none!important;filter:none!important';
+  const st=document.createElement('style');st.textContent=`
+html body .tilewrap{transform:scale(1.12);transform-origin:50% 50%}
+#mebox .tilewrap{transform:scale(1.08)}
+html body .tile .avatar{width:86%!important;height:86%!important;border-radius:50%!important;box-shadow:0 0 0 2.5px #fff,0 4px 10px rgba(0,0,0,.4)!important;overflow:hidden}
+html body .tile .avatar .pav,html body .tile .avatar svg.pav{width:100%;height:100%;display:block}
+html body .tilewrap .frm,html body .pbig .frm,html body .fprev .frm{left:0!important;top:0!important;width:100%!important;height:100%!important;border-radius:50%;${ring}}
+html body .pbig .frm,html body .fprev .frm{left:-8%!important;top:-8%!important;width:116%!important;height:116%!important}
+html body .fr-ig{background:conic-gradient(from 210deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5,#feda75)!important}
+html body .fr-sadu{background:repeating-conic-gradient(#b8402f 0 10deg,#16110e 10deg 20deg,#efe5cf 20deg 30deg)!important}
+html body .fr-silver{background:conic-gradient(#f4f6f8,#9aa1ab,#e9edf2,#7d848e,#f4f6f8,#aab1bb,#f4f6f8)!important}
+html body .fr-gold{background:conic-gradient(#fff3c4,#c9962e,#f8e3a0,#9a6a10,#fff3c4,#d9b25a,#fff3c4)!important}
+html body .fr-fire{background:conic-gradient(#ff3d00,#ffb300,#ff6d00,#ffd54f,#ff3d00)!important;animation:igspin 3s linear infinite}
+html body .fr-vip{background:conic-gradient(#7df9ff,#c38bff,#fff,#7df9ff,#5ec8ff,#fff,#7df9ff)!important;animation:igspin 4s linear infinite}
+@keyframes igspin{to{transform:rotate(360deg)}}
+html body .tilewrap .lvl,html body .tile .lvl{left:50%!important;top:auto!important;bottom:-7%!important;transform:translateX(-50%)!important;min-width:20px;height:15px;padding:0 5px;border-radius:8px;font:900 9.5px/15px var(--digit);background:linear-gradient(180deg,#f8e3a0,#c9a04a)!important;color:#2a1606!important;box-shadow:0 0 0 1.5px #fff,0 2px 4px rgba(0,0,0,.4)!important}
+html body .pbig .lvl{left:50%!important;bottom:-4%!important;transform:translateX(-50%) scale(1.3)!important;transform-origin:50% 100%}
+/* home + profile pickers use the same look */
+html body .hx-av{width:44px!important;height:44px!important;box-shadow:0 0 0 2px #1b0f0c,0 0 0 4.5px #d62976!important;background:conic-gradient(from 210deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5,#feda75)!important;padding:2.5px;box-sizing:border-box}
+html body .hx-av>*{border-radius:50%;box-shadow:0 0 0 2px #fff}
+html body .hx-me{padding:4px 14px 4px 5px}
+html body .avgrid{grid-template-columns:repeat(5,1fr)!important;gap:8px!important;max-height:260px;overflow:auto;padding:4px}
+html body .avgrid button{border-radius:50%!important;aspect-ratio:1;padding:0!important;overflow:hidden;box-shadow:0 0 0 2px rgba(255,255,255,.15)!important}
+html body .avgrid button.on{box-shadow:0 0 0 2.5px #1b0f0c,0 0 0 5px #d62976!important}
+html body .avgrid button svg{width:100%;height:100%;display:block}`;document.head.appendChild(st)})();
+if(typeof S!=='undefined'&&S&&S.players)render();if(!$('home').hidden)renderHome();
+(function(){const st=document.createElement('style');st.textContent='html body .s-left .tilewrap{transform-origin:0 50%}html body .s-right .tilewrap{transform-origin:100% 50%}html body .s-top .tilewrap{transform-origin:50% 0}';document.head.appendChild(st)})();
+(function(){const st=document.createElement('style');st.textContent=`html body .tilewrap .lvl,html body .tile .lvl{left:auto!important;right:-8%!important;top:-6%!important;bottom:auto!important;transform:none!important}
+html body .seatgift{width:23px!important;height:23px!important;bottom:18%!important;right:-16px!important;padding:3.5px!important}
+html body .seat.s-right .seatgift{right:auto!important;left:-16px!important}`;document.head.appendChild(st)})();
+// the colourful ring frame has its own name
+(function(){const f=FRAMES.find(x=>x.id==='none');if(f){f.en='Colour ring';f.ar='الحلقة الملونة'}})();
+
+// ===================== Round 52: picture changes apply at once, "add photo" first, three more phrases =====================
+EMOTES.push(['Old pro!','يالعوود'],['Legend!','أسطورة'],['Artist!','فنان']);
+// put "from your photos" first in the picture grid
+renderProfile=(function(prev){return function(i){prev(i);const g=document.querySelector('#profBox .avgrid'),up=g&&g.querySelector('.avup');if(up&&g.firstElementChild!==up)g.prepend(up)}})(renderProfile);
+// picture, flag and frame are saved the moment you pick them (no need to press Save)
+setInterval(()=>{const sh=$('profSheet');if(!sh||sh.hidden||typeof profEdit==='undefined'||!profEdit)return;let ch=false;
+  ['av','flag','frame'].forEach(k=>{if(profEdit[k]&&profEdit[k]!==MYPROF[k]){if(k==='frame'){const f=FRAMES.find(x=>x.id===profEdit.frame);if(!f||!(f.cost===0||WAL.owned.includes('fr-'+f.id)))return}MYPROF[k]=profEdit[k];ch=true}});
+  if(ch){saveProf();try{if(S)render()}catch(e){}try{renderHome()}catch(e){}}},400);
+(function(){const st=document.createElement('style');st.textContent=`html body .avgrid .avup{border-radius:50%!important;aspect-ratio:1;display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:linear-gradient(180deg,#f8e3a0,#c9a04a)!important;color:#2a1606!important;overflow:hidden;box-shadow:0 0 0 2px rgba(255,255,255,.2)}
+html body .avgrid .avup span{font-size:22px;font-weight:900;line-height:1}html body .avgrid .avup small{font-size:9px;font-weight:800;line-height:1.1;text-align:center}
+html body .avgrid .avup img{width:100%;height:100%;object-fit:cover;border-radius:50%}`;document.head.appendChild(st)})();
+// ---------- Lift a card even when it isn't your turn (just to look at it); it stays picked when your turn comes ----------
+let PEEK=null;
+const myActTurn=()=>S&&S.turn===0&&(S.phase==='choose'||S.phase==='throw');
+window.addEventListener('click',e=>{const el=e.target.closest('#myrow [data-card]');if(!el||!S||(typeof amWatch==='function'&&amWatch()))return;
+  if(window.__dragJust&&performance.now()-window.__dragJust<350)return;
+  if(myActTurn())return;const id=+el.dataset.card,c=S.players[0].hand.find(x=>x.id===id);if(!c)return;
+  if(S.war&&typeof canIntercept==='function'&&canIntercept(0).some(x=>x.id===id))return;
+  e.stopImmediatePropagation();e.preventDefault();PEEK=PEEK===id?null:id;
+  try{if(typeof playSample==='function')playSample('card'+(1+Math.floor(Math.random()*3)),0,.55)}catch(err){}markPeek()},true);
+function markPeek(){document.querySelectorAll('#myrow [data-card]').forEach(el=>{const on=PEEK!=null&&+el.dataset.card===PEEK&&!myActTurn();el.classList.toggle('peek',on);if(on){el.classList.add('sel');el.style.setProperty('--dy','-18px')}else if(el.classList.contains('peekd')){}})}
+render=(function(prev){return function(){const r=prev.apply(this,arguments);try{if(!S||!S.players)return r;
+  if(PEEK!=null&&!S.players[0].hand.some(c=>c.id===PEEK))PEEK=null;
+  if(PEEK!=null&&myActTurn()&&S.phase==='choose'&&!S.sel){const c=S.players[0].hand.find(x=>x.id===PEEK);PEEK=null;if(c){S.sel=c;setTimeout(()=>{if(S)render()},0)}}
+  else markPeek()}catch(e){}return r}})(render);
+// the small gift button must sit above the pile next to the player
+(function(){const st=document.createElement('style');st.textContent='html body .seat .who{position:relative;z-index:4}html body .seat .tilewrap{z-index:5}';document.head.appendChild(st)})();
+// ---------- "Deposit" victory sound: coins drop into the account, then the bright success chime ----------
+ASND.deposit={en:'Deposit',ar:'صوت الإيداع',cost:200,play(t){for(let k=0;k<6;k++){const d=k*.045,f=3000+Math.random()*1800;SND.hit(t+d,{f,q:14,gain:.18,decay:.08});SND.tone(t+d,f*.7,f*.7,.12,{gain:.03})}
+  [[1318.5,.32],[1975.5,.36]].forEach(([f,d],k)=>{const s=t+.34+k*.16;SND.tone(s,f,f*.999,.9,{gain:.16});SND.tone(s,f*2,f*2*.999,.5,{gain:.04});SND.tone(s,f*3.01,f*3,.25,{gain:.015})})}};
+
+// ===================== Round 53: our own confirm boxes (no browser pop-ups: they are blocked in previews and look out of place in the app) =====================
+(function(){const d=document.createElement('div');d.id='ebAsk';d.hidden=true;document.body.appendChild(d)})();
+function ebAsk(msg,yes,no){return new Promise(res=>{const d=$('ebAsk');d.dir=LANG==='ar'?'rtl':'ltr';
+  d.innerHTML=`<div class="ebabox"><p>${msg}</p><div class="ebarow"><button type="button" class="ebayes">${yes||L('Yes','اي')}</button><button type="button" class="ebano">${no||L('No','لا')}</button></div></div>`;d.hidden=false;
+  const done=v=>{d.hidden=true;d.innerHTML='';res(v)};d.querySelector('.ebayes').onclick=e=>{e.stopPropagation();done(true)};d.querySelector('.ebano').onclick=e=>{e.stopPropagation();done(false)};d.onclick=e=>{if(e.target===d)done(false)}})}
+window.confirm=function(){return false};// never use the browser's box
+// buying a victory sound: preview it, then our own box
+window.addEventListener('click',async e=>{const b=e.target.closest('#profBox [data-asnd]');if(!b||typeof profEdit==='undefined'||!profEdit)return;const id=b.dataset.asnd,s=ASND[id];
+  if(!s||s.cost===0||WAL.owned.includes('snd-'+id))return;e.stopImmediatePropagation();e.preventDefault();SND.init&&SND.init();playASnd(id);
+  if((WAL.tokens||0)<s.cost){toast(L('Not enough rupees','ما عندك روبيات كافية'));return}
+  const ok=await ebAsk(L(`Buy "${s.en}" for ${s.cost} rupees?`,`تشتري "${s.ar}" بـ${s.cost} روبية؟`),L('Buy','اشترِ'),L('Not now','مو الحين'));if(!ok)return;
+  WAL.tokens-=s.cost;WAL.owned.push('snd-'+id);saveWal();profEdit.auto=profEdit.auto||{};profEdit.auto.snd=id;MYPROF.auto={...(MYPROF.auto||{}),...profEdit.auto};try{saveProf()}catch(err){}
+  toast(L('Sound unlocked','انفتح لك الصوت'));const box=b.parentNode;box.querySelectorAll('[data-asnd]').forEach(x=>x.classList.toggle('on',x===b));b.classList.remove('lock');const sm=b.querySelector('small');if(sm)sm.textContent='▶'},true);
+(function(){const st=document.createElement('style');st.textContent=`
+#ebAsk{position:fixed;inset:0;z-index:200;display:grid;place-items:center;background:rgba(0,0,0,.55)}#ebAsk[hidden]{display:none}
+.ebabox{width:min(320px,86vw);padding:18px 16px 14px;border-radius:18px;background:linear-gradient(180deg,#2a1712,#130a07);box-shadow:0 20px 40px rgba(0,0,0,.6),inset 0 0 0 1.5px rgba(242,210,122,.45);color:#f4ead6;text-align:center;animation:rpin .25s ease-out}
+.ebabox p{margin:0 0 14px;font-size:16px;font-weight:800;line-height:1.5}
+.ebarow{display:flex;gap:8px}.ebarow button{flex:1;border:0;border-radius:12px;padding:11px;font:inherit;font-weight:900;font-size:15px}
+.ebayes{background:linear-gradient(180deg,#f8e3a0,#e2bd5c 55%,#c9a04a);color:#2a1606}.ebano{background:rgba(255,255,255,.07);color:#f4ead6;box-shadow:inset 0 0 0 1px rgba(242,210,122,.35)}`;document.head.appendChild(st)})();
+
+// ===================== Round 55: victory sounds switched off for now (they come back with real recordings) =====================
+autoSound=function(){};
+renderProfile=(function(prev){return function(i){prev(i);const box=$('profBox');if(!box)return;const g=box.querySelector('.asnds');if(g){const lab=g.previousElementSibling;if(lab&&lab.classList.contains('label'))lab.remove();g.remove()}}})(renderProfile);
+// give back the rupees for any victory sound already bought
+(function(){let back=0;WAL.owned=WAL.owned.filter(id=>{if(id.startsWith('snd-')){const s=ASND[id.slice(4)];if(s)back+=s.cost;return false}return true});
+  if(back){WAL.tokens=(WAL.tokens||0)+back;saveWal();setTimeout(()=>toast(L(`Victory sounds are off for now: ${back} rupees returned`,`أصوات الفوز توقفت مؤقتاً: رجعنا لك ${back} روبية`)),2500)}
+  if(MYPROF.auto&&MYPROF.auto.snd){MYPROF.auto.snd='';try{saveProf()}catch(e){}}})();
+// ---------- Reading a photo from the phone: try every way the browser allows (some previews block blob: pictures) ----------
+photoToAvatar=async function(file){if(!file)throw new Error('no file');const S2=160;
+  const draw=src=>{const w=src.width||src.naturalWidth,h=src.height||src.naturalHeight;if(!w||!h)throw new Error('empty');const c=document.createElement('canvas');c.width=c.height=S2;const x=c.getContext('2d'),s=Math.min(w,h);
+    x.drawImage(src,(w-s)/2,(h-s)/2,s,s,0,0,S2,S2);return c.toDataURL('image/jpeg',.74)};
+  const viaImg=url=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>{try{res(draw(i))}catch(e){rej(e)}};i.onerror=rej;i.src=url});
+  try{if(window.createImageBitmap){const bm=await createImageBitmap(file);try{return draw(bm)}finally{bm.close&&bm.close()}}}catch(e){}
+  try{const data=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file)});return await viaImg(data)}catch(e){}
+  const u=URL.createObjectURL(file);try{return await viaImg(u)}finally{URL.revokeObjectURL(u)}};
 
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1106.2031';
+const EB_VERSION='v1106.2352';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
