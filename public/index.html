@@ -4117,6 +4117,86 @@ BACKS.sort((a,b)=>(a.id.startsWith('eb')?0:1)-(b.id.startsWith('eb')?0:1));
 (function(){const st=document.createElement('style');st.textContent=LIGHT_BACKS.map(b=>{const u=`url("data:image/svg+xml,${encodeURIComponent(ebSVG2(b))}") center/100% 100%`;
   return `html.cb-${b.id} :not(.cbprev)>.cardback.cardback,html .cbprev.cb-${b.id} .cardback.cardback{background:${u}!important;border-radius:6px!important;box-shadow:0 0 0 .5px rgba(0,0,0,.3),0 2px 5px rgba(0,0,0,.3)!important}`}).join('\n');document.head.appendChild(st)})();
 
+// ===================== Round 31: "حفر ودفن" house theme (the main screen's colours), now the default =====================
+(function(){const mk=(w,h,draw,q=.9)=>{const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);return c.toDataURL('image/jpeg',q)};const rnd=(a,b)=>a+Math.random()*(b-a);
+  const velvet=mk(256,256,(x,w,h)=>{x.fillStyle='#3a0f14';x.fillRect(0,0,w,h);for(let y=0;y<h;y+=2){x.fillStyle=`rgba(255,200,170,${rnd(.015,.04)})`;x.fillRect(0,y,w,1)}
+    for(let i=0;i<8000;i++){x.fillStyle=`rgba(${Math.random()<.5?'255,210,180':'10,0,2'},${rnd(.02,.06)})`;x.fillRect(rnd(0,w),rnd(0,h),rnd(1,2),1)}});
+  document.documentElement.style.setProperty('--fx-house',`url(${velvet})`)})();
+const HOUSE_STAR=`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600' viewBox='0 0 600 600'%3E%3Cg fill='none' stroke='%23f2d27a' stroke-opacity='.06' stroke-width='1.5'%3E%3Crect x='170' y='170' width='260' height='260'/%3E%3Crect x='170' y='170' width='260' height='260' transform='rotate(45 300 300)'/%3E%3Ccircle cx='300' cy='300' r='120'/%3E%3Ccircle cx='300' cy='300' r='200'/%3E%3C/g%3E%3C/svg%3E")`;
+if(!THEMES.some(t=>t.id==='house'))THEMES.unshift({id:'house',en:'Hafr w Dafn',ar:'حفر ودفن',cost:0});
+TPREV.house={floor:'radial-gradient(ellipse at 50% 40%,rgba(242,190,100,.25),transparent 70%),linear-gradient(180deg,#1b0f0c,#0b0605)',rug:'var(--fx-house) 0 0/80px,#3a0f14',edge:'#d9b25a'};
+LAYOUT.house={D:'goldlamp'};
+if((WAL.v||0)<4){WAL.v=4;WAL.theme='house';saveWal();applySkin()}
+if(typeof placeItems==='function')placeItems();
+(function houseCSS(){const st=document.createElement('style');st.textContent=`
+html.t-house #app{background:${HOUSE_STAR} 50% 46%/min(760px,190vw) no-repeat,radial-gradient(ellipse 75% 45% at 50% 48%,rgba(242,190,100,.16),transparent 70%),radial-gradient(ellipse 120% 70% at 50% 110%,rgba(120,20,25,.45),transparent 60%),linear-gradient(180deg,#1b0f0c 0%,#120a08 55%,#0b0605 100%)!important}
+html.t-house .topbar,html.t-house .bottombar{background:linear-gradient(180deg,#1f1310,#120a08)!important;box-shadow:0 4px 14px rgba(0,0,0,.6)!important;outline:none!important}
+html.t-house .topbar::after,html.t-house .bottombar::before{height:1.5px!important;background:linear-gradient(90deg,transparent,#c9a04a,transparent)!important;box-shadow:none!important}
+html.t-house .gbtn,html.t-house .pill{background:rgba(255,255,255,.05)!important;color:#f2d27a!important;box-shadow:inset 0 0 0 1px rgba(242,210,122,.35)!important;text-shadow:none!important}
+html.t-house .gbtn svg [fill="#fff"],html.t-house .gbtn svg[fill="#fff"]{fill:#f2d27a}html.t-house .gbtn svg[stroke="#fff"]{stroke:#f2d27a}
+html.t-house .score{background:linear-gradient(180deg,#f8e3a0,#e2bd5c 55%,#c9a04a)!important;color:#2a1606}html.t-house #board .n{background:#120a08!important;color:#f2d27a!important}
+html.t-house .status{background:rgba(10,4,2,.85)!important;color:#f4ead6!important;box-shadow:inset 0 0 0 1px rgba(242,210,122,.3)!important}html.t-house .status b{color:#f2d27a}
+html.t-house .table .rug{padding:calc(var(--W) * .02)!important;border-radius:8px!important;background:linear-gradient(135deg,#8a6a1f,#f2d27a 30%,#b8862e 55%,#f2d27a 80%,#8a6a1f)!important;box-shadow:0 0 0 1px rgba(0,0,0,.5),0 22px 40px rgba(0,0,0,.7),0 0 60px rgba(242,190,100,.08)!important}
+html.t-house .table .rug::before,html.t-house .table .rug::after{content:none!important}
+html.t-house .table .field{border-radius:5px!important;background:${CORNER('#e8c46a')} left 6px top 6px/22px no-repeat,${CORNER('#e8c46a')} right 6px top 6px/22px no-repeat,${CORNER('#e8c46a')} left 6px bottom 6px/22px no-repeat,${CORNER('#e8c46a')} right 6px bottom 6px/22px no-repeat,
+  ${HOUSE_STAR} center/120% no-repeat,radial-gradient(ellipse at 50% 42%,rgba(255,200,150,.10),transparent 65%),radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.35)),var(--fx-house) 0 0/180px,#3a0f14!important;
+  box-shadow:inset 0 0 0 1.5px rgba(242,210,122,.85),inset 0 0 0 6px transparent,inset 0 0 0 7px rgba(242,210,122,.35),inset 0 0 34px rgba(0,0,0,.45)!important}
+html.t-house .table .field::after{background:none!important}
+html.t-house .drawrow,html.t-house .table .field .empty{color:#f2d27a}
+html.t-house .pilebox>span{background:#120a08;color:#f2d27a;box-shadow:inset 0 0 0 1px rgba(242,210,122,.4)}
+html.t-house{--mjH:linear-gradient(180deg,#2a1612,#160b08);--mjV:linear-gradient(90deg,#160b08,#2a1612);--mjt:rgba(242,210,122,.55)}
+html.t-house .stage .td{filter:drop-shadow(0 4px 6px rgba(0,0,0,.6))}
+`;document.head.appendChild(st)})();
+if(typeof renderSetup==='function'&&!$('setup').hidden)renderSetup();
+
+// ===================== Round 32: one look everywhere (menus in the main-screen colours) + a matching default card back =====================
+(function(){const b={id:'ebhouse',en:'Hafr w Dafn',ar:'حفر ودفن الأساسي',cost:0,bg:'#4a1218',bg2:'#1b0806',ink:'#e8c46a'};
+  if(!EB_BACKS.some(x=>x.id===b.id)){EB_BACKS.unshift(b);BACKS.unshift({id:b.id,en:b.en,ar:b.ar,cost:0})}
+  if(!WAL.owned.includes(b.id)){WAL.owned.push(b.id)}
+  const st=document.createElement('style');st.textContent=`html.cb-ebhouse :not(.cbprev)>.cardback.cardback,html .cbprev.cb-ebhouse .cardback.cardback{background:url("data:image/svg+xml,${encodeURIComponent(ebSVG2(b))}") center/100% 100%!important;border-radius:6px!important;box-shadow:0 0 0 .5px rgba(0,0,0,.4),0 2px 5px rgba(0,0,0,.4)!important}`;document.head.appendChild(st);
+  if((WAL.v||0)<5){WAL.v=5;WAL.back='ebhouse';applySkin()}saveWal()})();
+(function homeLookCSS(){const st=document.createElement('style');st.textContent=`
+:root{--hg1:#f8e3a0;--hg2:#e2bd5c;--hg3:#c9a04a;--hink:#2a1606;--hline:rgba(242,210,122,.3)}
+/* every sheet: same dark brown with the gold line and the star mark */
+html .overlay{background:radial-gradient(ellipse at 50% 30%,rgba(120,40,20,.25),transparent 60%),rgba(8,4,3,.82)!important}
+html .overlay .sheet{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600' viewBox='0 0 600 600'%3E%3Cg fill='none' stroke='%23f2d27a' stroke-opacity='.05' stroke-width='1.5'%3E%3Crect x='170' y='170' width='260' height='260'/%3E%3Crect x='170' y='170' width='260' height='260' transform='rotate(45 300 300)'/%3E%3Ccircle cx='300' cy='300' r='200'/%3E%3C/g%3E%3C/svg%3E") 50% 0/520px no-repeat,linear-gradient(180deg,#22140f,#140b08 60%,#0e0705)!important;
+  box-shadow:0 20px 60px rgba(0,0,0,.7),inset 0 0 0 1px var(--hline)!important;color:#f4ead6!important}
+html .overlay .sheet h2{color:#f4ead6}html .overlay .sheet p,html .overlay .sheet .note{color:rgba(233,220,194,.75)!important}
+html .overlay .sheet .label{color:#c9a04a!important}
+/* choice chips: gold outline, gold fill when chosen */
+html .seg span{background:rgba(255,255,255,.04)!important;color:#e9dcc2!important;box-shadow:inset 0 0 0 1px var(--hline)!important}
+html .seg input:checked+span{background:linear-gradient(180deg,var(--hg1),var(--hg2) 55%,var(--hg3))!important;color:var(--hink)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.6)!important}
+/* main buttons: the same soft gold as "العب" */
+html .overlay .sheet .pill,html .overlay .sheet button.pill,#lbCopy,#lbMic,#lbLeave,#lbBack,#lbJoin,#lbCreate,#lbStart,#startBtn,#againBtn,#pSave,#tpvBar .tpvgo,.testtok,.homeback,#resumeBtn,#onlineBtn{
+  background:linear-gradient(180deg,var(--hg1),var(--hg2) 55%,var(--hg3))!important;color:var(--hink)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 8px 18px rgba(201,160,74,.18)!important}
+/* secondary buttons: gold outline, like "العب مع ربعك" */
+#resumeBtn,#onlineBtn,#lbLeave,#lbBack,.homeback,.overlay .sheet #profClose,.overlay .sheet #shopClose,.overlay .sheet #slamClose,.overlay .sheet #eyesClose,.overlay .sheet #instClose,#tpvBar .pill{
+  background:transparent!important;color:#f2d27a!important;box-shadow:inset 0 0 0 1.5px rgba(242,210,122,.7)!important}
+.testtok{background:transparent!important;color:#f2d27a!important;box-shadow:inset 0 0 0 1px rgba(242,210,122,.5)!important;border:1px dashed rgba(242,210,122,.5)!important}
+/* profile / theme cards and shop items */
+html .setbtn,html .overlay .sheet .item,html .overlay .sheet .titem{background:rgba(255,255,255,.04)!important;box-shadow:inset 0 0 0 1px var(--hline)!important;color:#f4ead6!important}
+html .overlay .sheet .item.sel,html .overlay .sheet .titem.sel{box-shadow:inset 0 0 0 2px #e2bd5c,0 0 14px rgba(226,189,92,.25)!important}
+html .setbtn small{color:#c9a04a!important}
+html .tabs button{background:rgba(255,255,255,.04)!important;color:#e9dcc2!important;box-shadow:inset 0 0 0 1px var(--hline)!important}
+html .tabs button.on{background:linear-gradient(180deg,var(--hg1),var(--hg2) 55%,var(--hg3))!important;color:var(--hink)!important}
+html .lbseat{background:rgba(255,255,255,.04)!important;box-shadow:inset 0 0 0 1px var(--hline)}
+html .lbcode{color:#f2d27a!important}
+html #lbLink,html .lbin,html .chatbar input{background:#fbf6ea!important;color:#2a1606!important}
+/* WhatsApp stays green */
+#lbShare,.lbwa{background:linear-gradient(180deg,#5fe07a,#25d366 50%,#1da851)!important;color:#fff!important}
+#tpvBar{background:rgba(20,11,8,.94)!important;box-shadow:0 10px 30px rgba(0,0,0,.6),inset 0 0 0 1px var(--hline)!important}
+`;document.head.appendChild(st)})();
+
+// ===================== Round 30: always open on the main screen; show the version =====================
+const EB_VERSION='v1106.1503';
+// a saved online session no longer skips the main screen; only a room link or a real comeback does
+(function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
+  if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
+setInterval(()=>{const h=$('home');if(!h||h.hidden||h.dataset.user)return;if(typeof NET!=='undefined'&&NET.on&&typeof S!=='undefined'&&S&&S.players&&S.phase!=='over')hideHome()},500);
+const _rhV=renderHome;renderHome=function(){_rhV();const h=$('homeIn');if(h&&!h.querySelector('.hx-ver')){const v=document.createElement('div');v.className='hx-ver';v.textContent=EB_VERSION;h.appendChild(v)}};
+if(!$('home').hidden)renderHome();
+(function(){const st=document.createElement('style');st.textContent='.hx-ver{text-align:center;font-size:10px;color:rgba(233,220,194,.35);margin-top:4px;direction:ltr}';document.head.appendChild(st)})();
+
 </script>
 
 </body></html>
