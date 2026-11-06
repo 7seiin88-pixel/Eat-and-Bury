@@ -915,7 +915,7 @@ function render(){
   const me=S.players[0],myTurn=S.turn===0&&S.phase!=='idle'&&S.phase!=='over';
   const must=myTurn&&S.phase==='choose'&&mustNow(0);
   const eaters=myTurn&&S.phase==='choose'?new Set(options(0).flatMap(o=>o.natural?[o.r]:['JK'])):new Set();
-  const sorted=[...me.hand].sort((a,b)=>ORDER.indexOf(a.r)-ORDER.indexOf(b.r));
+  const sorted=(window.handOrder||(h=>[...h].sort((a,b)=>ORDER.indexOf(a.r)-ORDER.indexOf(b.r))))(me.hand);
   const n=sorted.length,mid=(n-1)/2;
   const sug=S.cfg.hints&&myTurn&&(S.phase==='choose'||S.phase==='throw')&&!S.sel?suggest():null;
   const hand=sorted.map((c,k)=>{const sel=S.sel&&S.sel.id===c.id,dy=sel?-18:0;
@@ -1239,7 +1239,7 @@ function fitGround(){const g=$('ground'),rug=document.querySelector('.rug');if(!
   cards.forEach((el,k)=>{const row=Math.floor(k/C),inRow=Math.min(C,n-row*C),col=k%C,h=hashR(el.dataset.r||el.dataset.eat||String(k));
     const rowW=cw+(inRow-1)*dx,x=(totalW-rowW)/2+col*dx+(h-.5)*cw*.12,y=row*dy+(hashR(String(k))-.5)*ch*.06;
     el.style.left=`calc(50% - ${totalW/2}px + ${x}px)`;el.style.top=`calc(50% - ${totalH/2}px + ${y}px)`;el.style.setProperty('--tilt',((h-.5)*16).toFixed(1)+'deg');el.style.zIndex=1+k})}
-// ---- Wallet: tokens, skins and gifts ----
+// ---- Wallet: rupees, skins and gifts ----
 const THEMES=[{id:'night',en:'Night majlis',ar:'ليلة الديوانية',cost:0,sw:'radial-gradient(circle at 50% 60%,#ffb050 0 8%,transparent 30%),linear-gradient(135deg,#4d1216,#1a0507)'},
   {id:'sadu',en:'Sadu tent',ar:'بيت السدو',cost:0,sw:'repeating-linear-gradient(0deg,#b8402f 0 8px,#3e6a4c 8px 11px,#d9a040 11px 14px),#e7d6b3'},
   {id:'teal',en:'Green majlis',ar:'المجلس الأخضر',cost:300,sw:'radial-gradient(circle,#8f1d22 0 30%,transparent 31%),linear-gradient(135deg,#245653,#163634)'}];
@@ -1312,7 +1312,7 @@ function sendGift(from,to,id,free){const g=GIFTS.find(x=>x.id===id);if(!g||!S)re
 let shopTab='gifts',giftSel=null;
 function openShop(tab){shopTab=tab||shopTab;giftSel=null;renderShop();$('shopSheet').hidden=false}
 function renderShop(){const s=$('shop');s.dir=LANG==='ar'?'rtl':'ltr';
-  const tabs=[['gifts','Gifts','هدايا'],['emotes','Reactions','تعابير'],['skins','Themes','الثيمات'],['store','Tokens','التوكنز']];
+  const tabs=[['gifts','Gifts','هدايا'],['emotes','Reactions','تعابير'],['skins','Themes','الثيمات'],['store','Rupees','الروبيات']];
   let body='';
   if(shopTab==='gifts'){
     body=`<div class="grid">${GIFTS.map(g=>`<button type="button" class="item ${g.troll?'troll':''} ${giftSel===g.id?'sel':''}" data-gift="${g.id}" ${WAL.tokens<g.cost?'disabled':''}>${GIFT_SVG[g.id]}<span>${L(g.en,g.ar)}</span><span class="price"><i class="cn"></i>${g.cost}</span></button>`).join('')}</div>`;
@@ -1326,8 +1326,8 @@ function renderShop(){const s=$('shop');s.dir=LANG==='ar'?'rtl':'ltr';
     body=`<div class="label">${L('Table themes','ثيمات الطاولة')}</div><div class="grid">${THEMES.map(x=>card('theme',x,`<div class="swatch" style="background:${x.sw}"></div>`)).join('')}</div>
       <div class="label">${L('Card backs','ظهر الورق')}</div><div class="grid">${BACKS.map(x=>card('back',x,`<div class="cbprev cb-${x.id}"><div class="cardback" style="--cw:40px;--ch:56px;margin:auto"></div></div>`)).join('')}</div>`}
   else{body=`<div class="grid">${PACKS.map(([n,tag])=>`<div class="item"><span class="price" style="font-size:16px"><i class="cn"></i>${n}</span>${tag?`<span class="own">${tag}</span>`:''}<span class="note">${L('Coming soon','قريباً')}</span></div>`).join('')}</div>
-    <p class="note">${L('This preview has no real payments. In the released app, token packs, themes and gifts would be bought through the App Store and Google Play.','هذي نسخة تجريبية بدون دفع حقيقي. في التطبيق الرسمي تنشرى التوكنز والثيمات والهدايا عن طريق آب ستور وقوقل بلاي.')}</p>
-    <p class="note">${L('Earn free tokens: 50 every day, a few for every war you win, and 10–40 for each game.','اكسب توكنز مجانية: ٥٠ كل يوم، وشوي مع كل حرب تربحها، و١٠–٤٠ مع كل لعبة.')}</p>`}
+    <p class="note">${L('This preview has no real payments. In the released app, rupee packs, themes and gifts would be bought through the App Store and Google Play.','هذي نسخة تجريبية بدون دفع حقيقي. في التطبيق الرسمي تنشرى الروبيات والثيمات والهدايا عن طريق آب ستور وقوقل بلاي.')}</p>
+    <p class="note">${L('Earn free tokens: 50 every day, a few for every war you win, and 10–40 for each game.','اكسب روبية مجانية: ٥٠ كل يوم، وشوي مع كل حرب تربحها، و١٠–٤٠ مع كل لعبة.')}</p>`}
   s.innerHTML=`<div class="head"><h2>${L('Majlis shop','متجر المجلس')}</h2><span class="coinpill"><i class="cn"></i>${WAL.tokens}</span></div>
     <div class="tabs">${tabs.map(([k,en,ar])=>`<button type="button" data-tab="${k}" class="${shopTab===k?'on':''}">${L(en,ar)}</button>`).join('')}</div>${body}
     <button type="button" class="pill" id="shopClose">${L('Close','إغلاق')}</button>`}
@@ -2099,7 +2099,7 @@ const _gsN=giftSound;giftSound=function(id){if(!SND.ok())return _gsN(id);const t
 // The agal shakes the player who gets hit
 const _sendA=sendGift;sendGift=function(f,to,id,free){_sendA(f,to,id,free);if(id==='agal'||id==='dog')setTimeout(()=>{const tw=document.querySelector(`[data-seat="${to}"] .tilewrap`);if(tw){tw.classList.remove('hitshake');void tw.offsetWidth;tw.classList.add('hitshake')}if(id==='agal'&&to===0)buzz([60,30,60])},850*ANIM)};
 
-// ---------- 🔥 Fire slam: arm it, then your next card lands with a huge slap (paid with tokens) ----------
+// ---------- 🔥 Fire slam: arm it, then your next card lands with a huge slap (paid with rupees) ----------
 const SLAM_PACKS=[[5,40],[15,100],[40,220]];
 if(typeof WAL.slams!=='number'){WAL.slams=3;saveWal()} // 3 free to try
 let slamArmed=false;
@@ -2123,7 +2123,7 @@ if(typeof playFx==='function'){const _pf=playFx;playFx=function(e){if(e&&e.t==='
 function openSlamShop(){const s=$('slamBox');s.dir=LANG==='ar'?'rtl':'ltr';
   s.innerHTML=`<h2 style="font-size:24px">${L('Fire slams','الصفقات النارية')}</h2><p>${L('Tap 🔥, then play your card: it lands with a huge slap everyone hears.','اضغط 🔥 وبعدها العب ورقتك: تنزل بصفقة قوية يسمعها الكل.')}</p>
     <div class="grid">${SLAM_PACKS.map(([n,c])=>`<button type="button" class="item" data-slambuy="${n}:${c}" ${WAL.tokens<c?'disabled':''}>${FLAME}<span>×${n}</span><span class="price"><i class="cn"></i>${c}</span></button>`).join('')}</div>
-    <p class="note">${L('You have','عندك')} ${WAL.slams} · ${L('Tokens','توكنز')}: ${WAL.tokens}</p><button type="button" class="pill" id="slamClose">${L('Close','إغلاق')}</button>`;$('slamSheet').hidden=false}
+    <p class="note">${L('You have','عندك')} ${WAL.slams} · ${L('Rupees','روبية')}: ${WAL.tokens}</p><button type="button" class="pill" id="slamClose">${L('Close','إغلاق')}</button>`;$('slamSheet').hidden=false}
 document.addEventListener('click',e=>{const t=e.target.closest('#slamBtn,#slamClose,[data-slambuy]');if(!t)return;
   if(t.id==='slamClose'){$('slamSheet').hidden=true;return}
   if(t.dataset.slambuy){const [n,c]=t.dataset.slambuy.split(':').map(Number);if(WAL.tokens<c)return;WAL.tokens-=c;WAL.slams+=n;saveWal();slamIcon();$('slamSheet').hidden=true;toast(L(`+${n} fire slams`,`+${n} صفقات نارية`));return}
@@ -2152,7 +2152,7 @@ document.addEventListener('click',e=>{if(!S||shopTab!=='gifts'||$('shopSheet').h
   if(g&&giftTo==null){e.stopImmediatePropagation();giftSel=g.dataset.gift;renderShop();return}
   const to=e.target.closest('[data-to]');
   if(to&&giftSel){const target=to.dataset.to==='all'?'all':+to.dataset.to;const id=giftSel,g2=GIFTS.find(x=>x.id===id),n=target==='all'?S.players.length-1:1;
-    if(WAL.tokens<g2.cost*n){toast(L('Not enough tokens','ما عندك توكنز تكفي'));return}
+    if(WAL.tokens<g2.cost*n){toast(L('Not enough rupees','ما عندك روبية تكفي'));return}
     giftSel=null;$('shopSheet').hidden=true;const list=target==='all'?S.players.map((p,i)=>i).filter(i=>i):[target];list.forEach((x,k)=>setTimeout(()=>sendGift(0,x,id),k*180))}},false);
 const _shopG=renderShop;renderShop=function(){_shopG();if(shopTab!=='gifts'||!S)return;const row=document.querySelector('#shop .giftto');if(!row)return;
   const old=document.querySelector('#shop .gpick');if(old)old.remove();const tip=document.createElement('div');tip.className='gpick';
@@ -2291,7 +2291,7 @@ function tpvBar(){let bar=$('tpvBar');if(!bar){bar=document.createElement('div')
     <div class="tpvname"><b>${L(x.en,x.ar)}</b><small>${inUse?L('In use','مستخدم الحين'):own?L('Free / owned','مجاني / عندك'):`<i class="cn"></i> ${x.cost}`}</small></div>
     <button type="button" class="tpvnav" data-tpvnav="1" aria-label="next">›</button>
     <div class="tpvact">${inUse?`<button type="button" class="tpvgo" data-tpvdone="1">${L('Done','تم')} ✓</button>`:own?`<button type="button" class="tpvgo" data-tpvuse="1">${L('Use this theme','استخدم هالثيم')}</button>`:
-      `<button type="button" class="tpvgo" data-tpvbuy="1" ${WAL.tokens<x.cost?'disabled':''}>${WAL.tokens<x.cost?L('Not enough tokens','توكنزك ما تكفي'):L('Buy for ','اشترِ بـ ')+x.cost}</button>`}
+      `<button type="button" class="tpvgo" data-tpvbuy="1" ${WAL.tokens<x.cost?'disabled':''}>${WAL.tokens<x.cost?L('Not enough rupees','روبياتك ما تكفي'):L('Buy for ','اشترِ بـ ')+x.cost}</button>`}
       <button type="button" class="pill" data-tpvback="1">${L('Back','رجوع')}</button></div>`;bar.hidden=false}
 function tpvDemo(on){const g=$('ground');if(!g||S)return;if(on){g.innerHTML=[{id:-1,r:'A',s:'♠'},{id:-2,r:'7',s:'♥'},{id:-3,r:'K',s:'♦'}].map((c,k)=>cardHTML(c,'',`style="--tilt:${k*3-3}deg"`)).join('');g.classList.add('tpvdemo')}else{g.innerHTML='';g.classList.remove('tpvdemo')}}
 function tpvShow(id){if(!tpv)tpv={fromSetup:!$('setup').hidden};tpv.id=id;themeTry=WAL.theme===id?null:id;applySkin();
@@ -2346,16 +2346,16 @@ html.tpv #shopSheet,html.tpv #setup{display:none!important}
 @media (prefers-reduced-motion:reduce){.flamecol .f1,.flamecol .f2,html.slam-armed #myrow .hand .card,.drawrow.low .dcnt{animation:none}}
 `;document.head.appendChild(st)})();
 
-// ===================== Round 5: rug lower, real-feel slam, test tokens, majlis details, new themes =====================
+// ===================== Round 5: rug lower, real-feel slam, test rupees, majlis details, new themes =====================
 SAMPLES.slam2='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';SVOL.slam2=1;
 
-// ---------- Test tokens (for trying the paid things; remove before launch) ----------
+// ---------- Test rupees (for trying the paid things; remove before launch) ----------
 const TEST_TOKENS=true;
-if(TEST_TOKENS&&WAL.tokens<20000){WAL.tokens=50000;WAL.slams=Math.max(WAL.slams||0,50);saveWal();setTimeout(()=>{try{slamIcon();toast(L('Test mode: 50,000 tokens','وضع التجربة: عندك ٥٠٬٠٠٠ توكنز'))}catch(e){}},800)}
+if(TEST_TOKENS&&WAL.tokens<20000){WAL.tokens=50000;WAL.slams=Math.max(WAL.slams||0,50);saveWal();setTimeout(()=>{try{slamIcon();toast(L('Test mode: 50,000 rupees','وضع التجربة: عندك ٥٠٬٠٠٠ روبية'))}catch(e){}},800)}
 const _setupT=renderSetup;renderSetup=function(){_setupT();if(!TEST_TOKENS||$('testTok'))return;const row=document.querySelector('#setupForm .setrow');if(!row)return;
-  const b=document.createElement('button');b.type='button';b.id='testTok';b.className='testtok';b.innerHTML=`<i class="cn"></i> ${L('Test mode: +5000 tokens','وضع التجربة: +٥٠٠٠ توكنز')}`;row.after(b)};
+  const b=document.createElement('button');b.type='button';b.id='testTok';b.className='testtok';b.innerHTML=`<i class="cn"></i> ${L('Test mode: +5000 rupees','وضع التجربة: +٥٠٠٠ روبية')}`;row.after(b)};
 document.addEventListener('click',e=>{if(!e.target.closest('#testTok'))return;WAL.tokens+=5000;WAL.slams=(WAL.slams||0)+20;saveWal();if(typeof slamIcon==='function')slamIcon();
-  toast(L(`Tokens: ${WAL.tokens} · Slams: ${WAL.slams}`,`توكنزك: ${WAL.tokens} · صفقات: ${WAL.slams}`));if(typeof renderShop==='function'&&!$('shopSheet').hidden)renderShop()});
+  toast(L(`Tokens: ${WAL.tokens} · Slams: ${WAL.slams}`,`روبياتك: ${WAL.tokens} · صفقات: ${WAL.slams}`));if(typeof renderShop==='function'&&!$('shopSheet').hidden)renderShop()});
 renderSetup();
 
 // ---------- Fire slam, realistic: a heavy hand slap. No cartoon flames ----------
@@ -2439,7 +2439,7 @@ if(typeof renderShop==='function'&&!$('shopSheet').hidden)renderShop();
 .table .rug,.table .center{top:calc(57% + var(--tile) * .3)}
 #table>#war{top:calc(57% + var(--tile) * .3 + min(calc(var(--W) * .88),68cqh)/2 - 64px)!important}
 
-/* Test-tokens button */
+/* Test-rupees button */
 .testtok{width:100%;margin:6px 0 2px;padding:9px;border-radius:12px;border:1px dashed #e0b45a;background:rgba(224,180,90,.12);color:inherit;font-weight:800;display:flex;gap:6px;align-items:center;justify-content:center}
 
 /* Realistic slam */
@@ -3659,7 +3659,7 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-hm],#homeB
   if(a==='prof'){openProfile(0);return}
   if(a==='lang'){LANG=LANG==='ar'?'en':'ar';try{localStorage.setItem('eb-lang',LANG)}catch(err){}if(typeof applyLang==='function')applyLang();renderHome();renderSetup();return}
   openShop(a)});
-// keep the main screen fresh (tokens, name) when sheets close
+// keep the main screen fresh (rupees, name) when sheets close
 setInterval(()=>{const h=$('home');if(!h||h.hidden)return;if(!$('lobby').hidden&&!h.dataset.user){hideHome();return}
   const tk=h.querySelector('.hm-tok b');if(tk&&tk.textContent!==(WAL.tokens||0).toLocaleString('en'))renderHome()},700);
 document.addEventListener('click',e=>{if(e.target.closest('#profClose,#pSave,#shopClose'))setTimeout(()=>{if(!$('home').hidden)renderHome()},50)});
@@ -4218,7 +4218,7 @@ const _rsF=renderShop;renderShop=function(){_rsF();if(shopTab!=='skins')return;c
     return `<button type="button" class="item ${on?'sel':''}" data-face="${f.id}"><div class="fprevc cf-${f.id}">${cardHTML({id:-901,r:'K',s:'♥'},'')}${cardHTML({id:-902,r:'7',s:'♠'},'')}</div><span>${L(f.en,f.ar)}</span>${on?`<span class="own">${L('In use','مستخدم')}</span>`:own?`<span class="own">${L('Use','استخدم')}</span>`:`<span class="price"><i class="cn"></i>${f.cost}</span>`}</button>`}).join('');
   const close=s.querySelector('#shopClose');(close?close.parentNode:s).insertBefore(lab,close||null);lab.after(g)};
 document.addEventListener('click',e=>{const t=e.target.closest('[data-face]');if(!t)return;e.stopImmediatePropagation();const f=FACES_STYLES.find(x=>x.id===t.dataset.face);if(!f)return;
-  const own=!f.cost||WAL.owned.includes(f.id);if(!own){if(WAL.tokens<f.cost){toast(L('Not enough tokens','توكنزك ما تكفي'));return}WAL.tokens-=f.cost;WAL.owned.push(f.id)}
+  const own=!f.cost||WAL.owned.includes(f.id);if(!own){if(WAL.tokens<f.cost){toast(L('Not enough rupees','روبياتك ما تكفي'));return}WAL.tokens-=f.cost;WAL.owned.push(f.id)}
   WAL.face=f.id;saveWal();applyFace();if(S)render();renderShop()},true);
 (function(){const st=document.createElement('style');st.textContent=`.fprevc{display:flex;justify-content:center;gap:4px;height:64px;align-items:center}.fprevc .card{--cw:40px}
 .fprevc.cf-fbig .idx b,.fprevc.cf-fcream .idx b,.fprevc.cf-fnoir .idx b{font-size:calc(var(--cw)*.31)!important;font-family:"Cairo",Georgia,serif!important;font-weight:900!important}
@@ -4620,7 +4620,7 @@ const _rsJ=renderShop;renderShop=function(){_rsJ();if(shopTab!=='skins')return;c
     return `<button type="button" class="item ${on?'sel':''}" data-joker="${j.id}"><div class="jprev">${j.art||'<b>🃏</b>'}</div><span>${L(j.en,j.ar)}</span>${on?`<span class="own">${L('In use','مستخدم')}</span>`:own?`<span class="own">${L('Use','استخدم')}</span>`:`<span class="price"><i class="cn"></i>${j.cost}</span>`}</button>`}).join('');
   const fg=s.querySelector('.facegrid');(fg||s.lastChild).after(lab);lab.after(g)};
 document.addEventListener('click',e=>{const t=e.target.closest('[data-joker]');if(!t)return;e.stopImmediatePropagation();const j=JOKERS.find(x=>x.id===t.dataset.joker);if(!j)return;
-  if(j.cost&&!WAL.owned.includes(j.id)){if(WAL.tokens<j.cost){toast(L('Not enough tokens','توكنزك ما تكفي'));return}WAL.tokens-=j.cost;WAL.owned.push(j.id)}
+  if(j.cost&&!WAL.owned.includes(j.id)){if(WAL.tokens<j.cost){toast(L('Not enough rupees','روبياتك ما تكفي'));return}WAL.tokens-=j.cost;WAL.owned.push(j.id)}
   WAL.joker=j.id;saveWal();if(typeof S!=='undefined'&&S&&S.players)render();renderShop();if(!$('home').hidden)renderHome()},true);
 // main screen fan: bigger, prettier aces (gold edge, large index, big centre suit with a soft glow)
 fanHTML2=function(){const cards=[{id:-21,r:'A',s:'♠'},{id:-22,r:'JK',s:''},{id:-23,r:'A',s:'♥'},{id:-24,r:'JK',s:''}];
@@ -5218,8 +5218,8 @@ renderProfile=(function(prev){return function(i){prev(i);if(i!==0||!profEdit)ret
 document.addEventListener('change',e=>{const s=e.target.closest('[data-auto]');if(!s||!profEdit)return;profEdit.auto=profEdit.auto||{};profEdit.auto[s.dataset.auto]=+s.value;
   MYPROF.auto={...(MYPROF.auto||{}),...profEdit.auto};try{saveProf()}catch(err){}});
 document.addEventListener('click',e=>{const b=e.target.closest('#profBox [data-asnd]');if(!b||!profEdit)return;const id=b.dataset.asnd,s=ASND[id];
-  if(s&&!(s.cost===0||WAL.owned.includes('snd-'+id))){if((WAL.tokens||0)<s.cost){SND.init&&SND.init();playASnd(id);toast(L('Not enough tokens','ما عندك توكنز كافية'));return}
-    if(!confirm(L(`Buy "${s.en}" for ${s.cost} tokens?`,`تشتري صوت "${s.ar}" بـ${s.cost} توكن؟`)))return;WAL.tokens-=s.cost;WAL.owned.push('snd-'+id);saveWal();toast(L('Sound unlocked','انفتح لك الصوت'))}
+  if(s&&!(s.cost===0||WAL.owned.includes('snd-'+id))){if((WAL.tokens||0)<s.cost){SND.init&&SND.init();playASnd(id);toast(L('Not enough rupees','ما عندك روبية كافية'));return}
+    if(!confirm(L(`Buy "${s.en}" for ${s.cost} rupees?`,`تشتري صوت "${s.ar}" بـ${s.cost} روبية؟`)))return;WAL.tokens-=s.cost;WAL.owned.push('snd-'+id);saveWal();toast(L('Sound unlocked','انفتح لك الصوت'))}
   profEdit.auto=profEdit.auto||{};profEdit.auto.snd=id;MYPROF.auto={...(MYPROF.auto||{}),...profEdit.auto};try{saveProf()}catch(err){}
   SND.init&&SND.init();if(id)setTimeout(()=>playASnd(id),60);
   b.parentNode.querySelectorAll('[data-asnd]').forEach(x=>x.classList.toggle('on',x===b));const sm=b.querySelector('small');if(sm&&b.classList.contains('lock')){b.classList.remove('lock');sm.textContent='▶'}});
@@ -5329,8 +5329,312 @@ document.addEventListener('click',e=>{const b=e.target.closest('#shop [data-efbu
 .efbuy{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:-2px 0 10px;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.06);color:#f4ead6;box-shadow:inset 0 0 0 1px rgba(242,210,122,.35)}
 .efbuy button{border:0;border-radius:10px;padding:8px 14px;font:inherit;font-weight:900;background:linear-gradient(180deg,#f8e3a0,#e2bd5c 55%,#c9a04a);color:#2a1606}.efbuy button[disabled]{opacity:.5}`;document.head.appendChild(st)})();
 
+// ===================== Round 46: online fixes — iPhone sound with the mic, volume mixer, names on the score, hand order, gifts by each player, eye badge =====================
+var IS_IOS2=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const AUD=(()=>{const d={game:1,music:1,voice:{}};try{return Object.assign(d,JSON.parse(localStorage.getItem('eb-aud')||'{}'))}catch(e){return d}})();
+function saveAud(){try{localStorage.setItem('eb-aud',JSON.stringify(AUD))}catch(e){}}
+
+// ---------- 1. Every game sound goes through one bus we control (volume + iPhone routing) ----------
+const _aConn=AudioNode.prototype.connect;let gBus=null,gOut=null,gEl=null,gMode='';
+function gameBus(c){if(!gBus||gBus.context!==c){gBus=c.createGain();gBus.gain.value=AUD.game;gMode='';reroute()}return gBus}
+AudioNode.prototype.connect=function(dst,...a){try{if(typeof SND!=='undefined'&&SND.ctx&&dst===SND.ctx.destination&&this!==gBus&&!this.__direct)return _aConn.call(this,gameBus(SND.ctx),...a)}catch(e){}return _aConn.call(this,dst,...a)};
+// On iPhone, once the microphone is open Safari stops Web Audio from reaching the speaker. We play the game through an <audio> element, like the voices.
+function voiceBusy(){return typeof VOICE!=='undefined'&&(!!VOICE.stream||VOICE.peers.size>0)}
+function reroute(){if(!gBus||!SND.ctx)return;const c=SND.ctx,want=IS_IOS2&&voiceBusy()?'el':'dest';if(want===gMode)return;gMode=want;try{gBus.disconnect()}catch(e){}
+  if(want==='el'){if(!gOut||gOut.context!==c)gOut=c.createMediaStreamDestination();_aConn.call(gBus,gOut);
+    if(!gEl){gEl=document.createElement('audio');gEl.setAttribute('playsinline','');gEl.autoplay=true;gEl.id='gameOut';document.body.appendChild(gEl)}gEl.srcObject=gOut.stream;gEl.play().catch(()=>{})}
+  else{_aConn.call(gBus,c.destination);if(gEl)try{gEl.pause()}catch(e){}}}
+function wakeAudio(){try{if(typeof SND==='undefined')return;if(!SND.ctx&&SND.on)SND.init();const c=SND.ctx;if(!c)return;if(c.state!=='running'&&SND.on)c.resume().catch(()=>{});gameBus(c);reroute();if(gEl&&gMode==='el'&&gEl.paused)gEl.play().catch(()=>{})}catch(e){}}
+['touchstart','pointerdown','click','keydown'].forEach(ev=>document.addEventListener(ev,wakeAudio,{capture:true,passive:true}));
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(wakeAudio,200)});
+setInterval(()=>{if(typeof SND==='undefined'||!SND.ctx)return;if(gBus)reroute();if(SND.on&&SND.ctx.state!=='running')SND.ctx.resume().catch(()=>{});if(gEl&&gMode==='el'&&gEl.paused)gEl.play().catch(()=>{})},1000);
+if(typeof SND!=='undefined'&&SND.init){const _si=SND.init;SND.init=function(){_si.call(this);try{if(this.ctx&&!this.ctx.__eb){this.ctx.__eb=1;this.ctx.addEventListener('statechange',()=>{if(this.on&&this.ctx.state!=='running')setTimeout(()=>this.ctx.resume().catch(()=>{}),150)})}}catch(e){}}}
+// music gets its own volume
+if(typeof MUSIC!=='undefined'){const _ms=MUSIC.start;MUSIC.start=function(){_ms.call(this);try{if(this.bus&&!this.vol){const c=SND.ctx;this.vol=c.createGain();this.vol.gain.value=AUD.music;this.bus.disconnect();this.bus.connect(this.vol);this.vol.connect(SND.out())}}catch(e){}}}
+function applyAud(){if(gBus)gBus.gain.value=AUD.game;if(typeof MUSIC!=='undefined'&&MUSIC.vol)MUSIC.vol.gain.value=AUD.music;voiceVols()}
+// each player's voice volume (and mute) on my phone only
+function voiceVols(){if(typeof VOICE==='undefined'||typeof NET==='undefined'||!NET.on)return;VOICE.peers.forEach((st,sid)=>{if(!st.audio)return;const m=NET.members.find(x=>x.sid===sid);if(!m)return;
+  const v=AUD.voice[m.name]!=null?AUD.voice[m.name]:1,mu=typeof MUTED!=='undefined'&&MUTED.has(m.name);
+  if(IS_IOS2){if((v<.999||st.wa)&&SND.ctx&&st.audio.srcObject){try{if(!st.wa||st.wa.stream!==st.audio.srcObject){if(st.wa)try{st.wa.g.disconnect()}catch(e){}const c=SND.ctx,g=c.createGain(),src=c.createMediaStreamSource(st.audio.srcObject);g.__direct=1;src.connect(g);_aConn.call(g,gMode==='el'&&gOut?gOut:c.destination);st.wa={g,src,stream:st.audio.srcObject}}
+      st.wa.g.gain.value=mu?0:v;st.audio.muted=true}catch(e){}}else st.audio.muted=mu}
+  else{st.audio.volume=Math.max(0,Math.min(1,v));st.audio.muted=mu}})}
+setInterval(voiceVols,400);
+
+// ---------- 2. Volume sheet (tap the Sound button) ----------
+(function(){const d=document.createElement('div');d.id='audSheet';d.className='overlay';d.hidden=true;d.innerHTML='<div class="sheet" id="audBox"></div>';document.body.appendChild(d)})();
+function renderAud(){const b=$('audBox');if(!b)return;b.dir=LANG==='ar'?'rtl':'ltr';const pct=v=>Math.round(v*100);
+  const others=(typeof NET!=='undefined'&&NET.on)?NET.members.filter(m=>m.sid!==NET.me):[];
+  b.innerHTML=`<h2>${L('Sound','الصوت')}</h2>
+    <label class="audrow audtog"><span>${L('Game sounds','أصوات اللعبة')}</span><input type="checkbox" id="audOn" ${SND.on?'checked':''}></label>
+    <div class="audrow"><span>${L('Game volume','مستوى صوت اللعبة')}</span><input type="range" min="0" max="100" value="${pct(AUD.game)}" data-aud="game"><b>${pct(AUD.game)}%</b></div>
+    <div class="audrow"><span>${L('Music','الموسيقى')}</span><input type="range" min="0" max="100" value="${pct(AUD.music)}" data-aud="music"><b>${pct(AUD.music)}%</b></div>
+    ${others.length?`<div class="label" style="margin-top:12px">${L('Players\' voices (only on your phone)','أصوات اللاعبين (عندك أنت بس)')}</div>
+    ${others.map(m=>{const v=AUD.voice[m.name]!=null?AUD.voice[m.name]:1,mu=typeof MUTED!=='undefined'&&MUTED.has(m.name);return `<div class="audrow"><span>${esc(m.name)}${m.mic?' 🎙':''}</span><input type="range" min="0" max="100" value="${pct(v)}" data-avoice="${esc(m.name)}"><button type="button" class="audmute ${mu?'on':''}" data-amute="${esc(m.name)}">${mu?L('Unmute','رجّع'):L('Mute','اكتم')}</button></div>`}).join('')}`:
+    `<p class="note">${L('In an online game you can set each player\'s voice here.','باللعب أونلاين تقدر تتحكم بصوت كل لاعب من هني.')}</p>`}
+    <button type="button" class="pill" id="audClose">${L('Close','إغلاق')}</button>`}
+window.addEventListener('click',e=>{const t=e.target.closest('#soundBtn');if(!t)return;e.stopImmediatePropagation();e.preventDefault();wakeAudio();renderAud();$('audSheet').hidden=false},true);
+document.addEventListener('input',e=>{const r=e.target;if(r.dataset.aud){AUD[r.dataset.aud]=r.value/100;r.nextElementSibling.textContent=r.value+'%';applyAud();saveAud()}
+  else if(r.dataset.avoice!=null){AUD.voice[r.dataset.avoice]=r.value/100;voiceVols();saveAud()}});
+document.addEventListener('change',e=>{if(e.target.id==='audOn'){SND.on=e.target.checked;SND.init();try{localStorage.setItem('eb-sound',SND.on?'on':'off')}catch(err){}soundIcon();if(!SND.on&&typeof MUSIC!=='undefined')MUSIC.stop();wakeAudio()}});
+document.addEventListener('click',e=>{if(e.target.closest('#audClose')||e.target.id==='audSheet'){$('audSheet').hidden=true;return}
+  const m=e.target.closest('[data-amute]');if(m&&typeof MUTED!=='undefined'){const n=m.dataset.amute;MUTED.has(n)?MUTED.delete(n):MUTED.add(n);saveMuted();voiceVols();renderAud();if(S)render()}});
+
+// ---------- 3. Score names always match the players (solo games) ----------
+render=(function(prev){return function(){try{if(S&&S.cfg&&S.cfg.mode==='solo'&&S.teams&&S.players)S.players.forEach((p,i)=>{const t=S.teams[p.team];if(t){t.name=i===0?L('You','أنت'):p.name;t.ar=''}})}catch(e){}return prev.apply(this,arguments)}})(render);
+
+// ---------- 4. Arrange your hand any time (drag a card sideways) ----------
+let MYORDER=[];
+window.handOrder=function(hand){const base=[...hand].sort((a,b)=>ORDER.indexOf(a.r)-ORDER.indexOf(b.r));if(!MYORDER.length)return base;
+  const ids=new Set(hand.map(c=>c.id));MYORDER=MYORDER.filter(id=>ids.has(id));const first=MYORDER.map(id=>hand.find(c=>c.id===id)).filter(Boolean);return first.concat(base.filter(c=>!MYORDER.includes(c.id)))};
+(function reorder(){let d=null;
+  document.addEventListener('pointerdown',e=>{const el=e.target.closest('#myrow [data-card]');if(!el||(typeof amWatch==='function'&&amWatch()))return;d={el,id:+el.dataset.card,x:e.clientX,y:e.clientY,pid:e.pointerId,on:false}},{capture:true,passive:true});
+  window.addEventListener('pointermove',e=>{if(!d||e.pointerId!==d.pid)return;const dx=e.clientX-d.x,dy=e.clientY-d.y;
+    if(!d.on){if(Math.abs(dx)<16||Math.abs(dx)<Math.abs(dy)*1.3)return;d.on=true;const r=d.el.getBoundingClientRect();d.g=d.el.cloneNode(true);d.g.classList.add('reghost');
+      Object.assign(d.g.style,{left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px'});document.body.appendChild(d.g);d.el.classList.add('regone');d.ox=e.clientX-r.left;d.top=r.top}
+    e.stopImmediatePropagation();d.g.style.left=(e.clientX-d.ox)+'px'},{capture:true,passive:true});
+  const end=e=>{if(!d||e.pointerId!==d.pid)return;const st=d;d=null;if(!st.on)return;st.g.remove();st.el.classList.remove('regone');window.__dragJust=performance.now();
+    const els=[...document.querySelectorAll('#myrow [data-card]')];const x=e.clientX;
+    const items=els.map(el=>({id:+el.dataset.card,cx:el===st.el?x:(r=>r.left+r.width/2)(el.getBoundingClientRect())}));items.sort((a,b)=>a.cx-b.cx);
+    let vis=items.map(i=>i.id);const a=els[0].getBoundingClientRect(),z=els[els.length-1].getBoundingClientRect();if(els.length>1&&a.left>z.left)vis.reverse();
+    MYORDER=vis;if(S)render()};
+  window.addEventListener('pointerup',end,true);window.addEventListener('pointercancel',e=>{if(d&&d.g){d.g.remove();d.el.classList.remove('regone')}d=null},true)})();
+
+// ---------- 5. Gifts: a small gift button by each player, a compact picker, no sheet over the game ----------
+(function(){const p=document.createElement('div');p.id='giftPop';p.hidden=true;document.body.appendChild(p)})();
+let gpTo=null;
+function openGiftPop(to,anchor){gpTo=to;const p=$('giftPop');p.dir=LANG==='ar'?'rtl':'ltr';
+  const others=S?S.players.map((pl,i)=>({i,pl})).filter(x=>x.i!==0):[];
+  p.innerHTML=`<div class="gphead">${to==null?L('Send a gift to…','أرسل هدية لـ…'):`${L('Gift for ','هدية لـ')}<b>${esc(S.players[to].name)}</b>`}<span class="gptok"><i class="cn"></i>${WAL.tokens||0}</span><button type="button" class="gpx" data-gpx>×</button></div>
+    ${to==null?`<div class="gpwho">${others.map(x=>`<button type="button" data-gpto="${x.i}">${esc(x.pl.name)}</button>`).join('')}</div>`:''}
+    <div class="gpgrid">${GIFTS.map(g=>`<button type="button" data-gpg="${g.id}" ${(WAL.tokens||0)<g.cost||to==null?'disabled':''}><span>${GIFT_SVG[g.id]}</span><small><i class="cn"></i>${g.cost}</small></button>`).join('')}</div>`;
+  p.hidden=false;const r=anchor&&anchor.getBoundingClientRect(),W=Math.min(330,innerWidth-16);p.style.width=W+'px';
+  let left=r?r.left+r.width/2-W/2:(innerWidth-W)/2;left=Math.max(8,Math.min(innerWidth-W-8,left));p.style.left=left+'px';
+  const h=p.offsetHeight;let top=r?(r.top+r.height/2<innerHeight/2?r.bottom+6:r.top-h-6):innerHeight-h-90;top=Math.max(8,Math.min(innerHeight-h-8,top));p.style.top=top+'px'}
+function seatGiftBtns(){if(!S||!S.players)return;const watching=typeof amWatch==='function'&&amWatch();document.querySelectorAll('#seats .seat').forEach(el=>{const i=+el.dataset.seat;if(!i||watching)return;
+  if(el.querySelector('.seatgift'))return;const b=document.createElement('button');b.type='button';b.className='seatgift';b.dataset.sgift=i;b.setAttribute('aria-label','gift');
+  b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="9" width="18" height="12" rx="1.5"/><path d="M2 9h20M12 9v12M12 9c-1.5-4-6-5-6-2s4 2 6 2c2 0 6 1 6-2s-4.5-2-6 2"/></svg>';
+  (el.querySelector('.avatar')||el).after(b)})}
+render=(function(prev){return function(){const r=prev.apply(this,arguments);try{seatGiftBtns()}catch(e){}return r}})(render);
+window.addEventListener('click',e=>{const s=e.target.closest('[data-sgift]');if(s){e.stopImmediatePropagation();e.preventDefault();openGiftPop(+s.dataset.sgift,s);return}
+  const gb=e.target.closest('#giftBtn');if(gb&&S){e.stopImmediatePropagation();e.preventDefault();openGiftPop(null,gb);return}
+  const p=$('giftPop');if(!p||p.hidden)return;
+  if(e.target.closest('[data-gpx]')){p.hidden=true;return}
+  const w=e.target.closest('[data-gpto]');if(w){e.stopImmediatePropagation();const a=document.querySelector(`#seats .seat[data-seat="${w.dataset.gpto}"]`);openGiftPop(+w.dataset.gpto,a&&a.querySelector('.avatar')||null);return}
+  const g=e.target.closest('[data-gpg]');if(g){e.stopImmediatePropagation();if(gpTo==null)return;const gi=GIFTS.find(x=>x.id===g.dataset.gpg);if(!gi||(WAL.tokens||0)<gi.cost)return;p.hidden=true;sendGift(0,gpTo,gi.id);return}
+  if(!e.target.closest('#giftPop'))p.hidden=true},true);
+// themes, card designs and effects are chosen outside the game: hide them while playing
+function inGame(){return !!(S&&$('home')&&$('home').hidden&&$('setup')&&$('setup').hidden&&$('lobby')&&$('lobby').hidden)}
+renderShop=(function(prev){return function(){prev.apply(this,arguments);if(!inGame())return;const t=document.querySelector('#shop .tabs');if(!t)return;
+  t.querySelectorAll('[data-tab]').forEach(b=>{if(!['gifts','emotes'].includes(b.dataset.tab))b.remove()})}})(renderShop);
+
+// ---------- 6. The watchers eye sits on the side, not over the top player's cards ----------
+(function(){const st=document.createElement('style');st.textContent=`
+#eyesBtn{left:auto!important;right:6px!important;top:auto!important;bottom:6px!important;transform:none!important;padding:3px 8px!important;font-size:12px!important}
+.reghost{position:fixed;z-index:80;pointer-events:none;transform:translateY(-14px) scale(1.06);filter:drop-shadow(0 12px 12px rgba(0,0,0,.45))}
+#myrow .card.regone{opacity:.3}
+.seatgift{position:absolute;z-index:6;width:26px;height:26px;border-radius:50%;border:0;padding:4px;display:grid;place-items:center;background:linear-gradient(180deg,#f8e3a0,#c9a04a);color:#2a1606;box-shadow:0 2px 6px rgba(0,0,0,.45),0 0 0 1.5px #1b0f0c;right:-9px;bottom:-7px;left:auto;top:auto;margin:0}
+.seatgift svg{width:16px;height:16px}
+html.watching .seatgift{display:none}
+#giftPop{position:fixed;z-index:90;border-radius:16px;padding:8px;background:linear-gradient(180deg,rgba(34,20,15,.97),rgba(16,9,6,.97));box-shadow:0 12px 30px rgba(0,0,0,.6),inset 0 0 0 1px rgba(242,210,122,.35);color:#f4ead6}
+#giftPop[hidden]{display:none}
+.gphead{display:flex;align-items:center;gap:8px;font-size:14px;padding:2px 4px 6px}.gphead b{color:#f2d27a}.gptok{margin-inline-start:auto;display:flex;align-items:center;gap:4px;font-weight:900;color:#f2d27a;font-size:13px}
+.gpx{border:0;background:rgba(255,255,255,.08);color:#fff;width:26px;height:26px;border-radius:50%;font-size:18px;line-height:1}
+.gpwho{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}.gpwho button{border:0;border-radius:999px;padding:6px 12px;font:inherit;font-weight:800;background:linear-gradient(180deg,#f8e3a0,#c9a04a);color:#2a1606}
+.gpgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.gpgrid button{border:0;border-radius:10px;padding:4px 2px;background:rgba(255,255,255,.06);display:flex;flex-direction:column;align-items:center;gap:1px;color:#f2d27a;box-shadow:inset 0 0 0 1px rgba(242,210,122,.2)}
+.gpgrid button span{width:38px;height:38px;display:block}.gpgrid button span svg{width:100%;height:100%}
+.gpgrid button small{font-size:10px;display:flex;align-items:center;gap:2px}.gpgrid button small .cn{width:10px;height:10px}
+.gpgrid button[disabled]{opacity:.4}
+.audrow{display:grid;grid-template-columns:1fr 1.3fr auto;align-items:center;gap:10px;margin:10px 0;color:#f4ead6;font-weight:700;font-size:14px}
+.audrow b{min-width:40px;text-align:center;color:#f2d27a}.audrow input[type=range]{width:100%;accent-color:#c9a04a}
+.audtog{grid-template-columns:1fr auto}.audtog input{width:22px;height:22px;accent-color:#c9a04a}
+.audmute{border:0;border-radius:10px;padding:6px 10px;font:inherit;font-size:12px;font-weight:800;background:rgba(255,255,255,.08);color:#f4ead6;box-shadow:inset 0 0 0 1px rgba(242,210,122,.3)}.audmute.on{background:#c0392b;color:#fff}
+`;document.head.appendChild(st)})();
+(function(){const st=document.createElement('style');st.textContent='.seat.s-right .seatgift{right:auto!important;left:-9px!important}';document.head.appendChild(st)})();
+
+// ===================== Round 47: the rupee (coin + notes), ranks, win streaks, achievements =====================
+// ---------- Rupee coin & notes ----------
+const RUPEE_COIN=(id='rc')=>`<svg viewBox="0 0 64 64"><defs><radialGradient id="${id}a" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#fff6c8"/><stop offset=".45" stop-color="#f2c94c"/><stop offset="1" stop-color="#a9741b"/></radialGradient><linearGradient id="${id}b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e2b24a"/><stop offset="1" stop-color="#8a5a12"/></linearGradient></defs>
+  <circle cx="32" cy="32" r="31" fill="#6b4300"/><circle cx="32" cy="32" r="29.5" fill="url(#${id}a)"/><circle cx="32" cy="32" r="23" fill="url(#${id}b)"/><circle cx="32" cy="32" r="21.5" fill="url(#${id}a)"/>
+  ${[...Array(24)].map((_,k)=>{const a=k/24*6.283;return `<circle cx="${(32+26.3*Math.cos(a)).toFixed(2)}" cy="${(32+26.3*Math.sin(a)).toFixed(2)}" r="1.15" fill="#8a5a12" opacity=".75"/>`}).join('')}
+  <text x="32" y="41" text-anchor="middle" font-size="26" font-weight="900" font-family="Cairo,Tahoma,sans-serif" fill="#7a4d0c">ر</text><text x="31.3" y="40.2" text-anchor="middle" font-size="26" font-weight="900" font-family="Cairo,Tahoma,sans-serif" fill="#fff3c0" opacity=".55">ر</text>
+  <path d="M14 22a21 21 0 0 1 14-10" stroke="#fff" stroke-opacity=".6" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg>`;
+const RUPEE_NOTE=(v,col,id)=>`<svg viewBox="0 0 160 80"><defs><linearGradient id="${id}g" x1="0" x2="1"><stop offset="0" stop-color="${col[0]}"/><stop offset=".5" stop-color="${col[1]}"/><stop offset="1" stop-color="${col[0]}"/></linearGradient>
+  <pattern id="${id}p" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M0 4h8M4 0v8" stroke="${col[2]}" stroke-opacity=".18" stroke-width=".6"/></pattern></defs>
+  <rect x="1" y="1" width="158" height="78" rx="6" fill="url(#${id}g)" stroke="${col[2]}" stroke-width="2"/><rect x="1" y="1" width="158" height="78" rx="6" fill="url(#${id}p)"/>
+  <rect x="7" y="7" width="146" height="66" rx="4" fill="none" stroke="#f6e3a8" stroke-opacity=".8" stroke-width="1.4" stroke-dasharray="3 2"/>
+  <g transform="translate(26 40)" fill="none" stroke="#f6e3a8" stroke-width="1.6"><path d="M-14 10h28l-4 6h-20z" fill="#f6e3a8" fill-opacity=".25"/><path d="M0 10V-18M0-16l14 22H0M0-12l-11 18h11"/></g>
+  <circle cx="122" cy="40" r="20" fill="${col[2]}" fill-opacity=".35" stroke="#f6e3a8" stroke-width="1.4"/><text x="122" y="47" text-anchor="middle" font-size="${v.length>3?14:19}" font-weight="900" font-family="Cairo,Tahoma,sans-serif" fill="#fff6d8">${v}</text>
+  <text x="74" y="30" text-anchor="middle" font-size="11" font-weight="900" font-family="Cairo,Tahoma,sans-serif" fill="#fff6d8">حفر ودفن</text><text x="74" y="50" text-anchor="middle" font-size="13" font-weight="900" font-family="Cairo,Tahoma,sans-serif" fill="#f6e3a8">روبية</text>
+  <text x="74" y="64" text-anchor="middle" font-size="7" font-family="Cairo,Tahoma,sans-serif" fill="#fff6d8" opacity=".8">بنك الديوانية</text></svg>`;
+(function coinCSS(){const uri='url("data:image/svg+xml,'+encodeURIComponent(RUPEE_COIN('cn').replace('<svg ','<svg xmlns="http://www.w3.org/2000/svg" '))+'")';
+  const st=document.createElement('style');st.textContent=`.cn,i.cn,.coinpill .cn{background:${uri} center/100% no-repeat!important;box-shadow:none!important;border-radius:50%}
+  .hx-tok i.cn{width:20px;height:20px;display:inline-block}`;document.head.appendChild(st)})();
+// store: coins and notes on each pack
+renderShop=(function(prev){return function(){prev.apply(this,arguments);if(shopTab!=='store')return;const items=[...document.querySelectorAll('#shop .grid .item')].slice(0,4);
+  const art=[`<div class="pkart">${RUPEE_COIN('pk1')}</div>`,`<div class="pkart pk2">${RUPEE_COIN('pk2a')}${RUPEE_COIN('pk2b')}${RUPEE_COIN('pk2c')}</div>`,
+    `<div class="pkart pkn">${RUPEE_NOTE('١٠٠',['#2f7a4e','#3f9a62','#1d4f32'],'n1')}</div>`,`<div class="pkart pkn pk4">${RUPEE_NOTE('٥٠٠',['#7a2f5e','#9a3f7a','#4f1d3d'],'n2')}${RUPEE_NOTE('١٠٠٠',['#24507a','#3a6fa8','#16324f'],'n3')}</div>`];
+  items.forEach((it,k)=>{if(!it.querySelector('.pkart'))it.insertAdjacentHTML('afterbegin',art[k]||'')})}})(renderShop);
+
+// ---------- Ranks ----------
+const RANKS2=[{id:'bronze',en:'Bronze',ar:'برونزي',min:0,c:['#7a4a22','#d79a5c','#f3c999']},{id:'silver',en:'Silver',ar:'فضي',min:300,c:['#5d636c','#c0c6cf','#f4f6f8']},
+  {id:'gold',en:'Gold',ar:'ذهبي',min:800,c:['#8a6a1f','#f2d27a','#fff3c4']},{id:'plat',en:'Platinum',ar:'بلاتيني',min:1500,c:['#2a7a76','#7fd6d0','#e0fffb']},
+  {id:'diamond',en:'Diamond',ar:'ماسي',min:2500,c:['#2a4f9a','#8ab8ff','#eaf3ff']},{id:'legend',en:'Diwaniya legend',ar:'أسطورة الديوانية',min:4000,c:['#7a1030','#ff5a3d','#ffd27a']}];
+const rankOf=rp=>{let r=RANKS2[0];RANKS2.forEach(x=>{if((rp||0)>=x.min)r=x});return r};
+function rankSVG(r,id){const k=RANKS2.indexOf(r),c=r.c;return `<svg viewBox="0 0 60 64"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c[2]}"/><stop offset=".45" stop-color="${c[1]}"/><stop offset="1" stop-color="${c[0]}"/></linearGradient></defs>
+  ${k>=3?`<path d="M6 20L0 12l10 2zM54 20l6-8-10 2z" fill="${c[1]}"/>`:''}
+  <path d="M30 2l24 8v20c0 16-11 26-24 32C17 56 6 46 6 30V10z" fill="url(#${id})" stroke="${c[0]}" stroke-width="2"/>
+  <path d="M30 8l18 6v16c0 12-8 20-18 25-10-5-18-13-18-25V14z" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="1.2"/>
+  ${k===5?`<path d="M18 30l4-10 8 7 8-7 4 10z" fill="#ffd27a" stroke="#7a1030" stroke-width="1.2"/><rect x="18" y="31" width="24" height="4" rx="1" fill="#ffd27a"/>`:
+    `<g fill="#fff" fill-opacity=".92">${[...Array(Math.min(k+1,4))].map((_,j,a)=>{const x=30+(j-(a.length-1)/2)*9;return `<path transform="translate(${x} 30) scale(.32)" d="M0-14l4 9 10 1-7 7 2 10-9-5-9 5 2-10-7-7 10-1z"/>`}).join('')}</g>`}
+  <path d="M14 12l16-5 16 5" stroke="#fff" stroke-opacity=".7" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`}
+let RKN=0;const rankIcon=(rp,cls='')=>{const r=rankOf(rp);return `<i class="rkic rk-${r.id} ${cls}" title="${L(r.en,r.ar)}">${rankSVG(r,'rk'+(RKN++))}</i>`};
+
+// ---------- Profile data ----------
+MYPROF.rp=MYPROF.rp||0;MYPROF.streak=MYPROF.streak||0;MYPROF.bestStreak=MYPROF.bestStreak||0;MYPROF.ach=MYPROF.ach||{};
+profPublic=(function(prev){return function(){const p=prev();p.rp=MYPROF.rp||0;p.streak=MYPROF.streak||0;return p}})(profPublic);
+const ACH=[
+  {id:'w1',ic:'🏆',en:'First win',ar:'أول فوز',ok:p=>p.wins>=1,r:50},{id:'w10',ic:'🥇',en:'10 wins',ar:'١٠ انتصارات',ok:p=>p.wins>=10,r:150},{id:'w50',ic:'👑',en:'50 wins',ar:'٥٠ انتصار',ok:p=>p.wins>=50,r:500},
+  {id:'g10',ic:'🃏',en:'10 games',ar:'١٠ قيمات',ok:p=>p.games>=10,r:100},{id:'g100',ic:'🎖️',en:'100 games',ar:'١٠٠ قيم',ok:p=>p.games>=100,r:600},
+  {id:'war25',ic:'⚔️',en:'25 wars won',ar:'حرّاب: ٢٥ حرب',ok:p=>p.wars>=25,r:150},{id:'war100',ic:'🛡️',en:'100 wars won',ar:'أبو الحروب: ١٠٠ حرب',ok:p=>p.wars>=100,r:400},
+  {id:'big',ic:'💥',en:'A 100-point war',ar:'ضربة معلم: حرب ١٠٠ نقطة',ok:p=>(p.best||0)>=100,r:150},
+  {id:'s3',ic:'🔥',en:'3 wins in a row',ar:'على نار: ٣ ورا بعض',ok:p=>(p.bestStreak||0)>=3,r:150},{id:'s5',ic:'☄️',en:'5 wins in a row',ar:'ما ينوقف: ٥ ورا بعض',ok:p=>(p.bestStreak||0)>=5,r:400},
+  {id:'tauf',ic:'🌀',en:'Skipped 5 times',ar:'طوّاف: ٥ تطوف',ok:p=>(p.tauf||0)>=5,r:100},{id:'lv10',ic:'⭐',en:'Level 10',ar:'المستوى ١٠',ok:p=>levelOf(p.xp||0)>=10,r:200},
+  {id:'gold',ic:'🥮',en:'Reach Gold',ar:'وصلت ذهبي',ok:p=>(p.rp||0)>=800,r:300},{id:'legend',ic:'🐉',en:'Diwaniya legend',ar:'أسطورة الديوانية',ok:p=>(p.rp||0)>=4000,r:2000}];
+function checkAch(){const got=[];ACH.forEach(a=>{if(!MYPROF.ach[a.id]&&a.ok(MYPROF)){MYPROF.ach[a.id]=Date.now();WAL.tokens=(WAL.tokens||0)+a.r;got.push(a)}});if(got.length){saveWal();saveProf()}return got}
+
+// ---------- After each game: rank points, streak, XP multiplier, badges ----------
+endGame=(function(prev){return function(){const before={rp:MYPROF.rp||0,xp:MYPROF.xp||0,games:MYPROF.games};prev.apply(this,arguments);if(!S||MYPROF.games===before.games)return;
+  const rows=S.teams.map((t,k)=>({k,s:teamScore(k)})).sort((a,b)=>b.s-a.s);const won=rows[0].k===teamOf(0)&&!(rows[1]&&rows[0].s===rows[1].s);
+  let d,mult=1;if(won){MYPROF.streak=(MYPROF.streak||0)+1;MYPROF.bestStreak=Math.max(MYPROF.bestStreak||0,MYPROF.streak);mult=1+Math.min(MYPROF.streak-1,4)*.25;d=Math.round(20*mult)}
+  else{MYPROF.streak=0;d=-12}
+  const gained=MYPROF.xp-before.xp;if(mult>1)MYPROF.xp+=Math.round(gained*(mult-1));MYPROF.rp=Math.max(0,before.rp+d);saveProf();
+  const got=checkAch();setTimeout(()=>showRankPop(before.rp,MYPROF.rp,won,mult,got),900)}})(endGame);
+(function(){const d=document.createElement('div');d.id='rankPop';d.hidden=true;document.body.appendChild(d)})();
+function showRankPop(a,b,won,mult,got){const p=$('rankPop');const ra=rankOf(a),rb=rankOf(b),up=RANKS2.indexOf(rb)>RANKS2.indexOf(ra),down=RANKS2.indexOf(rb)<RANKS2.indexOf(ra);
+  const nx=RANKS2[RANKS2.indexOf(rb)+1],pct=nx?Math.round((b-rb.min)/(nx.min-rb.min)*100):100;
+  p.dir=LANG==='ar'?'rtl':'ltr';p.innerHTML=`<div class="rpbox ${up?'up':''} ${down?'down':''}">
+    <div class="rpem">${rankIcon(b,'big')}</div><b class="rpname">${up?L('Promoted! ','ترقيت! '):down?L('Dropped to ','نزلت إلى '):''}${L(rb.en,rb.ar)}</b>
+    <div class="rpd ${b-a>=0?'pos':'neg'}">${b-a>=0?'+':''}${b-a} ${L('rank points','نقطة تقييم')}</div>
+    <div class="rpbar"><i style="width:${pct}%"></i></div><small>${nx?`${b} / ${nx.min} · ${L('next: ','الجاي: ')}${L(nx.en,nx.ar)}`:L('Top rank','أعلى رتبة')}</small>
+    ${won&&MYPROF.streak>=2?`<div class="rpstreak">🔥×${MYPROF.streak} · XP ×${mult}</div>`:''}
+    ${got.map(a=>`<div class="rpach"><span>${a.ic}</span><b>${L(a.en,a.ar)}</b><small>+${a.r} <i class="cn"></i></small></div>`).join('')}</div>`;
+  p.hidden=false;clearTimeout(p._t);p._t=setTimeout(()=>p.hidden=true,got.length?6500:4200)}
+document.addEventListener('click',e=>{if(e.target.closest('#rankPop'))$('rankPop').hidden=true});
+
+// ---------- Rank + streak next to every player's name ----------
+render=(function(prev){return function(){const r=prev.apply(this,arguments);try{if(!S||!S.players)return r;document.querySelectorAll('#seats .seat, #mebox').forEach(el=>{const i=el.id==='mebox'?0:+el.dataset.seat;
+    const pr=i===0?{rp:MYPROF.rp,streak:MYPROF.streak}:profOf(i);if(!pr||pr.bot)return;const nm=el.querySelector('.name')||el;if(nm.querySelector('.rkwrap'))return;
+    const w=document.createElement('span');w.className='rkwrap';w.innerHTML=rankIcon(pr.rp||0)+((pr.streak||0)>=2?`<b class="stk">🔥${pr.streak}</b>`:'');nm.appendChild(w)})}catch(e){}return r}})(render);
+
+// ---------- Profile: rank card + streak + badges ----------
+renderProfile=(function(prev){return function(i){prev(i);const box=$('profBox');if(!box||box.querySelector('.rkcard'))return;const pr=i===0?MYPROF:profOf(i);if(!pr||pr.bot)return;
+  const rp=pr.rp||0,r=rankOf(rp),nx=RANKS2[RANKS2.indexOf(r)+1],pct=nx?Math.round((rp-r.min)/(nx.min-r.min)*100):100;
+  const c=document.createElement('div');c.className='rkcard';c.innerHTML=`<div class="rkem">${rankIcon(rp,'big')}</div><div class="rkinfo"><b>${L(r.en,r.ar)}</b><small>${rp} ${L('rank points','نقطة تقييم')}${nx?` · ${L('next ','الجاي ')}${L(nx.en,nx.ar)} ${nx.min}`:''}</small><div class="rpbar"><i style="width:${pct}%"></i></div>
+    ${(pr.streak||0)>=1?`<span class="rkstk">🔥 ${L('Win streak','فوز متتالي')}: ${pr.streak}${i===0?` · ${L('best','أفضل')} ${pr.bestStreak||0}`:''}</span>`:''}</div>`;
+  const big=box.querySelector('.xpbar')||box.querySelector('.pname')||box.firstElementChild;big&&big.after(c);
+  if(i!==0)return;const a=document.createElement('div');a.className='fieldset achbox';
+  a.innerHTML=`<div class="label">${L('Badges','الإنجازات')} · ${Object.keys(MYPROF.ach).length}/${ACH.length}</div><div class="achgrid">${ACH.map(x=>{const on=!!MYPROF.ach[x.id];return `<div class="ach ${on?'on':''}"><span>${x.ic}</span><b>${L(x.en,x.ar)}</b><small>${on?L('Done','تم'):`+${x.r} <i class="cn"></i>`}</small></div>`}).join('')}</div>`;
+  const st=box.querySelector('.autobox')||box.querySelector('.pstats');st?st.before(a):box.appendChild(a)}})(renderProfile);
+// home: rank badge next to your level
+renderHome=(function(prev){return function(){prev.apply(this,arguments);const s=document.querySelector('.hx-me small');if(s&&!s.querySelector('.rkic'))s.insertAdjacentHTML('afterbegin',rankIcon(MYPROF.rp||0)+' ')}})(renderHome);
+if(!$('home').hidden)renderHome();
+setTimeout(()=>{if(checkAch().length)toast(L('New badges in your profile!','عندك إنجازات جديدة بملفك!'))},2500);
+
+(function(){const st=document.createElement('style');st.textContent=`
+.rkic{display:inline-block;width:16px;height:17px;vertical-align:-3px;position:relative;overflow:hidden}.rkic svg{width:100%;height:100%;display:block}
+.rkic.big{width:64px;height:68px}
+.rkic::after{content:'';position:absolute;inset:-20%;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.75) 50%,transparent 60%);transform:translateX(-120%);animation:rkshine 3.2s ease-in-out infinite}
+@keyframes rkshine{0%,60%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+.rk-legend{filter:drop-shadow(0 0 4px #ff5a3d);animation:rklg 1.6s ease-in-out infinite}@keyframes rklg{50%{filter:drop-shadow(0 0 9px #ffb02e)}}
+.rkwrap{display:inline-flex;align-items:center;gap:2px;margin-inline-start:4px}.rkwrap .stk{font-size:11px;font-weight:900;color:#ff9a3d;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.rkcard{display:flex;gap:12px;align-items:center;margin:10px 0;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 1px rgba(242,210,122,.3);color:#f4ead6}
+.rkinfo{flex:1;display:flex;flex-direction:column;gap:4px}.rkinfo b{font-size:17px;color:#f2d27a}.rkinfo small{font-size:12px;opacity:.8}.rkstk{font-size:13px;font-weight:800;color:#ff9a3d}
+.rpbar{height:7px;border-radius:9px;background:rgba(255,255,255,.1);overflow:hidden}.rpbar i{display:block;height:100%;background:linear-gradient(90deg,#c9a04a,#f8e3a0);border-radius:9px}
+.achgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.ach{display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;padding:8px 4px;border-radius:12px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px rgba(242,210,122,.15);color:#f4ead6;opacity:.55;filter:grayscale(.9)}
+.ach.on{opacity:1;filter:none;box-shadow:inset 0 0 0 1.5px #c9a04a;background:radial-gradient(circle at 50% 20%,rgba(242,210,122,.18),transparent 70%)}
+.ach span{font-size:24px}.ach b{font-size:11px;line-height:1.2}.ach small{font-size:10px;color:#c9a04a;display:flex;align-items:center;gap:2px}.ach small .cn{width:10px;height:10px}
+#rankPop{position:fixed;inset:0;z-index:120;display:grid;place-items:center;background:rgba(0,0,0,.45)}#rankPop[hidden]{display:none}
+.rpbox{width:min(300px,86vw);padding:18px 16px;border-radius:20px;text-align:center;color:#f4ead6;background:linear-gradient(180deg,#2a1712,#130a07);box-shadow:0 20px 40px rgba(0,0,0,.6),inset 0 0 0 1.5px rgba(242,210,122,.45);display:flex;flex-direction:column;gap:6px;align-items:center;animation:rpin .5s cubic-bezier(.2,1.4,.4,1)}
+@keyframes rpin{from{transform:scale(.6);opacity:0}}
+.rpbox.up .rpem{animation:rpup 1.2s ease-out}@keyframes rpup{0%{transform:scale(.3) rotate(-30deg)}60%{transform:scale(1.3) rotate(8deg)}100%{transform:scale(1)}}
+.rpbox.down .rpem{animation:rpdn .8s ease-out}@keyframes rpdn{0%{transform:translateY(-20px)}50%{transform:translateY(6px)}100%{transform:none}}
+.rpname{font-size:19px;color:#f2d27a}.rpd{font-weight:900;font-size:15px}.rpd.pos{color:#5fe07a}.rpd.neg{color:#ff7a6a}.rpbox .rpbar{width:100%}.rpbox small{font-size:12px;opacity:.8}
+.rpstreak{font-weight:900;color:#ff9a3d;font-size:16px;animation:rkpulse 1s ease-in-out infinite}@keyframes rkpulse{50%{transform:scale(1.08)}}
+.rpach{display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;border-radius:12px;background:rgba(242,210,122,.12);box-shadow:inset 0 0 0 1px rgba(242,210,122,.4);animation:rpin .6s .3s both}
+.rpach span{font-size:24px}.rpach b{flex:1;text-align:start;font-size:13px}.rpach small{display:flex;align-items:center;gap:3px;color:#f2d27a;font-weight:900}
+.pkart{height:46px;display:flex;justify-content:center;align-items:center;margin:4px 0}.pkart svg{height:44px;width:auto}
+.pkart.pk2 svg{height:36px;margin:0 -10px}.pkart.pk2 svg:nth-child(2){transform:translateY(-6px)}
+.pkart.pkn svg{height:42px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))}.pkart.pk4{position:relative}.pkart.pk4 svg:first-child{position:absolute;transform:rotate(-10deg) translate(-8px,-4px)}.pkart.pk4 svg:last-child{transform:rotate(6deg) translate(6px,2px)}
+`;document.head.appendChild(st)})();
+
+// ===================== Round 48: more phrases, choose your quick-chat phrases, spoken phrases, more victory sounds =====================
+EMOTES.push(['No drawing!','لا يسحب'],['I\'ve got your back','حاميك'],['Deny it','اجحدها'],['Learn, just learn','تعلم بس تعلم'],['Don\'t worry','لا تحاتي'],['I had to, my friend','مجبور يا صاحبي']);
+
+// ---------- Choose which phrases sit in the chat bar ----------
+const qpList=()=>Array.isArray(MYPROF.qp)?MYPROF.qp.filter(k=>EMOTES[k]):EMOTES.map((_,k)=>k);
+chatChips=function(){const bar=$('chatBar');if(!bar)return;let c=bar.querySelector('.qchips');if(!c){c=document.createElement('div');c.className='qchips';bar.prepend(c)}
+  c.dir=LANG==='ar'?'rtl':'ltr';c.innerHTML=`<button type="button" class="qpedit" data-qpedit>✎ ${L('My phrases','عباراتي')}</button>`+qpList().map(k=>`<button type="button" data-qp="${k}">${esc(L(...EMOTES[k]))}</button>`).join('')};
+(function(){const d=document.createElement('div');d.id='qpSheet';d.className='overlay';d.hidden=true;d.innerHTML='<div class="sheet" id="qpBox"></div>';document.body.appendChild(d)})();
+function renderQp(){const b=$('qpBox');b.dir=LANG==='ar'?'rtl':'ltr';const on=new Set(qpList());
+  b.innerHTML=`<h2>${L('My phrases','عباراتي')}</h2><p class="note">${L('Pick the phrases you want in the chat bar.','اختار العبارات اللي تبيها تطلع بشريط الرسائل.')}</p>
+    <div class="qpall"><button type="button" class="pill" data-qpall="1">${L('All','الكل')}</button><button type="button" class="pill" data-qpall="0">${L('None','ولا وحدة')}</button></div>
+    <div class="qpgrid">${EMOTES.map((e,k)=>`<label class="qpi ${on.has(k)?'on':''}"><input type="checkbox" data-qpk="${k}" ${on.has(k)?'checked':''}><span>${esc(L(e[0],e[1]))}</span></label>`).join('')}</div>
+    <button type="button" id="qpDone">${L('Done','تم')}</button>`}
+window.addEventListener('click',e=>{if(e.target.closest('[data-qpedit]')){e.stopImmediatePropagation();e.preventDefault();renderQp();$('qpSheet').hidden=false;return}
+  const a=e.target.closest('[data-qpall]');if(a){MYPROF.qp=a.dataset.qpall==='1'?EMOTES.map((_,k)=>k):[];saveProf();renderQp();return}
+  if(e.target.closest('#qpDone')||e.target.id==='qpSheet'){$('qpSheet').hidden=true;chatChips();return}},true);
+document.addEventListener('change',e=>{const k=e.target.dataset&&e.target.dataset.qpk;if(k==null)return;const s=new Set(qpList());e.target.checked?s.add(+k):s.delete(+k);
+  MYPROF.qp=EMOTES.map((_,i)=>i).filter(i=>s.has(i));saveProf();e.target.closest('.qpi').classList.toggle('on',e.target.checked)});
+
+// ---------- More victory sounds ----------
+Object.assign(ASND,{
+  whistle:{en:'Whistle',ar:'صفير',cost:150,play(t){SND.tone(t,900,2300,.22,{gain:.16});SND.tone(t+.32,1300,2600,.12,{gain:.14});SND.tone(t+.44,2600,1100,.38,{gain:.14})}},
+  airhorn:{en:'Stadium horn',ar:'بوق ملعب',cost:200,play(t){[0,.45].forEach((d,k)=>{[233,293.7,349.2].forEach(f=>{SND.tone(t+d,f*.97,f,k?.7:.32,{type:'sawtooth',gain:.05})});SND.hit(t+d,{type:'lowpass',f:1200,gain:.08,decay:k?.6:.3})})}},
+  bell:{en:'Boxing bell',ar:'جرس الحلبة',cost:150,play(t){[0,.3,.6].forEach(d=>{[[1,.22],[2.76,.1],[5.4,.06],[8.9,.03]].forEach(([m,g])=>SND.tone(t+d,820*m,820*m*.998,1.1,{gain:g}));SND.hit(t+d,{f:3200,q:6,gain:.25,decay:.05})})}},
+  coins:{en:'Coin shower',ar:'رنة فلوس',cost:250,play(t){for(let k=0;k<16;k++){const d=k*.055+Math.random()*.03,f=2600+Math.random()*2400;SND.hit(t+d,{f,q:12,gain:.22,decay:.12});SND.tone(t+d,f*.75,f*.75,.25,{gain:.04})}}},
+  arcade:{en:'Arcade win',ar:'فوز أركيد',cost:150,play(t){[523.25,659.25,783.99,1046.5,783.99,1046.5,1318.5].forEach((f,k)=>SND.tone(t+k*.075,f,f,.09,{type:'square',gain:.06}));SND.tone(t+.53,1568,1568,.35,{type:'square',gain:.06})}},
+  boom:{en:'Explosion',ar:'انفجار',cost:200,play(t){SND.hit(t,{type:'lowpass',f:500,gain:1,attack:.002,decay:.9});SND.tone(t,90,30,.9,{gain:.7});SND.hit(t,{type:'highpass',f:3000,gain:.2,decay:.4});for(let k=0;k<8;k++)SND.hit(t+.1+k*.06,{type:'lowpass',f:900,gain:.15,decay:.08})}},
+  iqa:{en:'Gulf beat',ar:'إيقاع خليجي',cost:250,play(t){const b=.16;[['d',0],['t',2],['t',3],['d',4],['t',5],['d',6],['t',7],['d',8],['t',10],['t',11],['d',12],['t',13],['d',14],['d',15]].forEach(([k,s])=>{k==='d'?SND.dum(t+s*b*.5,.55):SND.tek(t+s*b*.5,.28)});SND.hit(t,{type:'highpass',f:6000,gain:.12,decay:.3})}},
+  tada:{en:'Ta-da!',ar:'تادا!',cost:150,play(t){[392,493.9,587.3].forEach(f=>SND.tone(t,f,f,.12,{type:'triangle',gain:.12}));[523.25,659.25,783.99,1046.5].forEach(f=>{SND.tone(t+.16,f,f*.999,.9,{type:'triangle',gain:.11});SND.tone(t+.16,f*2,f*2,.3,{gain:.02})});SND.hit(t+.16,{type:'highpass',f:5000,gain:.15,decay:.6})}}});
+
+(function(){const st=document.createElement('style');st.textContent=`
+.qchips .qpedit{background:linear-gradient(180deg,#f8e3a0,#c9a04a)!important;color:#2a1606!important}
+.qpall{display:flex;gap:8px;margin:6px 0 10px}.qpall .pill{flex:1}
+.qpgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;max-height:52vh;overflow:auto;padding:2px}
+.qpi{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:12px;background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 1px rgba(242,210,122,.2);color:#f4ead6;font-size:13px;font-weight:700;cursor:pointer}
+.qpi.on{box-shadow:inset 0 0 0 1.5px #c9a04a;background:rgba(242,210,122,.12)}.qpi input{width:18px;height:18px;accent-color:#c9a04a;flex:none}
+#qpDone{width:100%;margin-top:10px;border:0;border-radius:14px;padding:12px;font:inherit;font-weight:900;font-size:16px;background:linear-gradient(180deg,#f8e3a0,#e2bd5c 55%,#c9a04a);color:#2a1606}`;document.head.appendChild(st)})();
+
+// ===================== Round 49: the "…" button opens a small menu: new game / leave to the main screen =====================
+(function(){const m=document.createElement('div');m.id='gameMenu';m.hidden=true;document.body.appendChild(m)})();
+function openGameMenu(btn){const m=$('gameMenu');m.dir=LANG==='ar'?'rtl':'ltr';const online=typeof NET!=='undefined'&&NET.on;
+  m.innerHTML=`<button type="button" data-gm="new"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.3-5.6M4 4v4h4"/></svg>${online?L('Back to the room','رجوع للغرفة'):L('New game','قيم جديد')}</button>
+    <button type="button" data-gm="exit" class="gmexit"><svg viewBox="0 0 24 24"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"/></svg>${L('Leave the game','خروج من اللعبة')}</button>`;
+  m.hidden=false;const r=btn.getBoundingClientRect(),W=m.offsetWidth;let left=LANG==='ar'?r.right-W:r.left;left=Math.max(8,Math.min(innerWidth-W-8,left));m.style.left=left+'px';m.style.top=(r.bottom+6)+'px'}
+function leaveGame(){const online=typeof NET!=='undefined'&&NET.on;
+  if(online){try{netSend('leave')}catch(e){}try{netReset()}catch(e){}try{history.replaceState(null,'',location.pathname)}catch(e){}if(typeof lobbyCode!=='undefined')lobbyCode='';S=null;try{clearFx()}catch(e){}}
+  else{try{if(S)saveGame()}catch(e){}if(S){try{gen++}catch(e){}try{S.aiTimers&&S.aiTimers.forEach(clearTimeout)}catch(e){}S=null;try{clearFx()}catch(e){}}}
+  ['over','lobby','setup','shopSheet','profSheet','chatBar'].forEach(id=>{const el=$(id);if(el)el.hidden=true});const gp=$('giftPop');if(gp)gp.hidden=true;
+  try{if(typeof MUSIC!=='undefined')MUSIC.stop()}catch(e){}showHome(true)}
+window.addEventListener('click',e=>{
+  const nb=e.target.closest('#newBtn');if(nb&&!window.__gmPass){if(!S)return;e.stopImmediatePropagation();e.preventDefault();const m=$('gameMenu');if(!m.hidden){m.hidden=true;return}openGameMenu(nb);return}
+  const g=e.target.closest('[data-gm]');if(g){e.stopImmediatePropagation();$('gameMenu').hidden=true;
+    if(g.dataset.gm==='new'){window.__gmPass=true;try{$('newBtn').click()}finally{window.__gmPass=false}return}
+    const online=typeof NET!=='undefined'&&NET.on,host=online&&NET.host;
+    const msg=host?L('Leave? The room will close for everyone.','تبي تطلع؟ الغرفة بتنسكر على الكل.'):online?L('Leave the game? The computer will take your seat.','تبي تطلع من اللعبة؟ الكمبيوتر بياخذ مكانك.'):L('Leave to the main screen? You can continue this game later.','تطلع للشاشة الرئيسية؟ تقدر تكمل هالقيم بعدين.');
+    if(confirm(msg))leaveGame();return}
+  const m=$('gameMenu');if(m&&!m.hidden&&!e.target.closest('#gameMenu'))m.hidden=true},true);
+(function(){const st=document.createElement('style');st.textContent=`
+#gameMenu{position:fixed;z-index:95;min-width:200px;padding:6px;border-radius:14px;background:linear-gradient(180deg,rgba(34,20,15,.98),rgba(16,9,6,.98));box-shadow:0 12px 30px rgba(0,0,0,.6),inset 0 0 0 1px rgba(242,210,122,.35);display:flex;flex-direction:column;gap:4px}
+#gameMenu[hidden]{display:none}
+#gameMenu button{display:flex;align-items:center;gap:10px;border:0;border-radius:10px;padding:11px 12px;font:inherit;font-weight:800;font-size:15px;background:rgba(255,255,255,.05);color:#f4ead6;text-align:start}
+#gameMenu button svg{width:20px;height:20px;fill:none;stroke:#f2d27a;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+#gameMenu .gmexit{color:#ff9a8a}#gameMenu .gmexit svg{stroke:#ff9a8a}`;document.head.appendChild(st)})();
+
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1106.1729';
+const EB_VERSION='v1106.1915';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
