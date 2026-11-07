@@ -7709,18 +7709,39 @@ window.THEME_SHOTS=TH;
 const prev=themePrev;
 themePrev=function(id){const u=TH[id];if(!u)return prev(id);return `<div class="tprev tshot" style="background:#000 url(${u}) center 20%/cover no-repeat"></div>`};
 try{refreshThemeBtn()}catch(e){}
-const st=document.createElement('style');st.textContent=`.tprev.tshot{box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}.tprev.tshot>*{display:none}`;document.head.appendChild(st);
+const st=document.createElement('style');st.textContent=`@media (min-width:700px){html body #setupForm{display:grid!important;grid-template-columns:1fr 1fr;column-gap:24px;row-gap:4px;align-content:start}html body #setupForm>*{grid-column:1/-1}html body #setupForm>.fieldset{grid-column:auto}}
+.tprev.tshot{box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}.tprev.tshot>*{display:none}`;document.head.appendChild(st);
 // setup page: shrink it to fit when the screen is shorter than the page (Safari bars, iPad split view)
-function fitSetup(){const f=document.getElementById('setupForm'),o=document.getElementById('setup');if(!f||!o||o.hidden||innerWidth<600)return;f.style.removeProperty('zoom');
-  const base=parseFloat(getComputedStyle(f).zoom)||1,h=f.getBoundingClientRect().height,avail=innerHeight-28;if(h>avail)f.style.setProperty('zoom',(base*avail/h).toFixed(3),'important')}
+function fitSetup(){const f=document.getElementById('setupForm'),o=document.getElementById('setup');if(!f||!o||o.hidden||innerWidth<600)return;
+  // fill the screen: wide sheet, then the biggest zoom whose height still fits
+  const W=innerWidth*.94,Hh=innerHeight-24;let z=1.6;f.style.setProperty('box-sizing','border-box','important');
+  for(let k=0;k<4;k++){f.style.setProperty('max-width',(W/z)+'px','important');f.style.setProperty('width',(W/z)+'px','important');f.style.setProperty('zoom',z,'important');
+    const h=f.getBoundingClientRect().height;const nz=Math.max(.7,Math.min(1.9,z*Hh/h));if(Math.abs(nz-z)<.02)break;z=nz}
+  if(f.getBoundingClientRect().height>Hh){z=z*Hh/f.getBoundingClientRect().height;f.style.setProperty('zoom',z,'important');f.style.setProperty('max-width',(W/z)+'px','important');f.style.setProperty('width',(W/z)+'px','important')}}
 window.fitSetup=fitSetup;
 if(typeof showSetupLocal==='function')showSetupLocal=(function(p){return function(){const r=p.apply(this,arguments);requestAnimationFrame(fitSetup);setTimeout(fitSetup,250);return r}})(showSetupLocal);
 addEventListener('resize',()=>setTimeout(fitSetup,60));
 new MutationObserver(()=>setTimeout(fitSetup,30)).observe(document.getElementById('setup')||document.body,{attributes:true,attributeFilter:['hidden']});
 })();
+// iPad portrait: the game used a narrow square in the middle; the table now stretches across the screen like the home page
+(function(){const st=document.createElement('style');st.textContent=`
+@media (min-width:761px) and (orientation:portrait){
+  html body{--SW:min(calc(100vw - 2 * var(--sx,0px) - 120px),calc(var(--W) * 1.5))}
+  html body .stage{width:var(--SW)!important}
+  html body .table .rug,html body .table .center{width:calc(var(--SW) * .97)!important}
+  html body .table::before,html body .table::after{display:none!important}
+}
+/* the settings page is a full screen like the home page, not a box over the dimmed game */
+@media (min-width:600px){
+  html body #setup{background:var(--homebg,#140a08)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;padding:0!important;place-items:center!important}
+  html body #setupForm{border:0!important;box-shadow:none!important;background:transparent!important;border-radius:0!important}
+}`;document.head.appendChild(st);
+setTimeout(()=>{try{const h=document.getElementById('home');const bg=h&&getComputedStyle(h).backgroundImage;const bc=h&&getComputedStyle(h).backgroundColor;
+  if(h)document.documentElement.style.setProperty('--homebg',(bg&&bg!=='none'?bg+',':'')+(bc&&bc!=='rgba(0, 0, 0, 0)'?bc:'#140a08'))}catch(e){}},300);
+})();
 
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1107.1914';
+const EB_VERSION='v1107.1926';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
