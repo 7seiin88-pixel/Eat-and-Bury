@@ -943,21 +943,21 @@ function render(){
     if(S.sel&&tg&&tg.size)st=L(`Tap a glowing card to eat with ${lab(S.sel)}.`,`اضغط على ورقة مضيئة وكُل بـ${cardName(S.sel)}.`);
   } else if(myTurn&&S.phase==='choose'){
     if(!S.sel){const atk=S.players.filter((q,j)=>j!==0&&tg&&exposed(q.pile)&&tg.has(exposed(q.pile).rank)).map(q=>q.name);
-      st=(S.chain&&!must?L('Attack a glowing pile, or throw to finish. ','هاجم كومة مضيئة، أو ارمِ ورقة وخلّص. '):'')+(must?(S.chain?L('<b>Keep eating.</b> ','<b>كمّل الأكل.</b> '):'')+L('You hold a match: <b>double-tap</b> the card with the dot.','عندك أكلة: <b>اضغط مرتين</b> على الورقة اللي فوقها نقطة.'):L('<b>Double-tap</b> a card to eat its match or throw it.','<b>اضغط مرتين</b> على ورقة عشان تأكل فيها أو ترميها.'))+(atk.length?L(` Attack <b>${atk.join(' and ')}</b> by tapping the glowing pile.`,` تقدر تهاجم <b>${atk.join(' و')}</b> بالضغط على الكومة المضيئة.`):'');}
+      st=(S.chain&&!must?L('Attack a glowing pile, or throw to finish. ','هاجم كومة مضيئة، أو ارمِ ورقة وخلّص. '):'')+(must?(S.chain?L('<b>Keep eating.</b> ','<b>كمّل الأكل.</b> '):'')+L('You hold a match: <b>double-tap</b> the card with the dot.','عندك أكلة: <b>اضغط مرتين</b> على الورقة اللي فوقها نقطة، أو اسحبها للأرض.'):L('<b>Double-tap</b> a card to eat its match or throw it.','<b>اضغط مرتين</b> على ورقة أو اسحبها للأرض، عشان تأكل فيها أو ترميها.'))+(atk.length?L(` Attack <b>${atk.join(' and ')}</b> by tapping the glowing pile.`,` تقدر تهاجم <b>${atk.join(' و')}</b> بالضغط على الكومة المضيئة.`):'');}
     else if(tg&&tg.size)st=L(`Tap a glowing card or pile to eat with ${lab(S.sel)}${must?'':', or throw it'}.`,`اضغط على ورقة أو كومة مضيئة وكُل بـ${cardName(S.sel)}${must?'':'، أو ارمها'}.`);
     else st=must?L('That card has no match. Pick one with a dot.','هذي الورقة ما لها أكلة. اختر ورقة فوقها نقطة.'):L('No match for that card. Throw it or pick another.','ما لها أكلة. ارمها أو اختر ثانية.');
-  } else if(myTurn&&S.phase==='throw')st=S.wasLone?L('You ate on your last card: <b>throw one</b> to stay on one card until you cut in for 5.','أكلت وأنت على آخر ورقة: <b>ارمِ ورقة</b> وابقَ على وحدة لين تقطع وتسحب ٥.'):L('<b>Double-tap a card</b> to throw it.','<b>اضغط مرتين على ورقة</b> وارمها.');
+  } else if(myTurn&&S.phase==='throw')st=S.wasLone?L('You ate on your last card: <b>throw one</b> to stay on one card until you cut in for 5.','أكلت وأنت على آخر ورقة: <b>ارمِ ورقة</b> وابقَ على وحدة لين تقطع وتسحب ٥.'):L('<b>Double-tap a card</b> to throw it.','<b>اضغط مرتين على ورقة</b> أو اسحبها للأرض وارمها.');
   else if(S.phase!=='idle'&&S.phase!=='over')st=L(`${S.players[S.turn].name} is playing…`,`${S.players[S.turn].name} يلعب…`);
   else st='&nbsp;';
   if(meHit&&S.phase==='war')st=L(`<b>Your pile is under attack!</b> ${mine.length?'Slap back to defend it.':''}`,`<b>كومتك تحت الهجوم!</b> ${mine.length?'طق ودافع عنها.':''}`);
   // Coach hints (first games, or when switched on)
   if(S.cfg.hints){
-    if(S.phase==='war'&&mine.length)st=L('<b>Hint:</b> you hold a match! Hit the fire button before the timer ends to steal this war.','<b>تلميح:</b> عندك ورقة مطابقة! اضغط زر النار قبل ما يخلص الوقت وخذ الحرب.');
+    if(S.phase==='war'&&mine.length)st=L('<b>Hint:</b> you hold a match! Hit the fire button before the timer ends to steal this war.','<b>تلميح:</b> عندك ورقة مثلها! اقطع فيها قبل ما يخلص الوقت وخذ الحرب.');
     else if(sug){const c=sug.card;
-      if(sug.kind==='eat')st=L(`<b>Hint:</b> double-tap your <b>${lab(c)}</b> to eat the ${sug.r} on the rug.`,`<b>تلميح:</b> اضغط مرتين على <b>${cardName(c)}</b> وكُل الـ${sug.r} اللي على الزولية.`);
-      else if(sug.kind==='attack'){const own=S.players.find((q,j)=>j&&exposed(q.pile)&&exposed(q.pile).rank===sug.r);st=L(`<b>Hint:</b> tap ${own?own.name+"'s":'the'} glowing pile to take their ${sug.r}s with your ${lab(c)}.`,`<b>تلميح:</b> اضغط على كومة ${own?own.name:''} المضيئة وخذ الـ${sug.r} بـ${cardName(c)}.`)}
-      else if(sug.kind==='sleep')st=L(`<b>Hint:</b> double-tap your <b>${lab(c)}</b> to throw it, then sleep on your ${lab(sug.keep)} and wait to cut in.`,`<b>تلميح:</b> اضغط مرتين على <b>${cardName(c)}</b> وارمها، ونام على الـ${cardName(sug.keep)} وانتظر تقطع.`);
-      else if(sug.kind==='throw')st=L(`<b>Hint:</b> nothing worth eating. Double-tap your <b>${lab(c)}</b> to throw it; it's your least valuable card.`,`<b>تلميح:</b> ما في أكلة تستاهل. اضغط مرتين على <b>${cardName(c)}</b> وارمها، هي أقل ورقة قيمة.`)}}
+      if(sug.kind==='eat')st=L(`<b>Hint:</b> double-tap your <b>${lab(c)}</b> or drag it to the ground to eat the ${sug.r}.`,`<b>تلميح:</b> كُل الـ${sug.r} اللي على الأرض: اضغط مرتين على <b>${cardName(c)}</b> أو اسحبها للأرض.`);
+      else if(sug.kind==='attack'){const own=S.players.find((q,j)=>j&&exposed(q.pile)&&exposed(q.pile).rank===sug.r);st=L(`<b>Hint:</b> tap ${own?own.name+"'s":'the'} glowing pile to take their ${sug.r}s with your ${lab(c)}.`,`<b>تلميح:</b> خذ الـ${sug.r} من كومة ${own?own.name:''}: اضغط على الكومة المضيئة، أو اسحب <b>${cardName(c)}</b> عليها.`)}
+      else if(sug.kind==='sleep')st=L(`<b>Hint:</b> double-tap your <b>${lab(c)}</b> to throw it, then sleep on your ${lab(sug.keep)} and wait to cut in.`,`<b>تلميح:</b> ارمِ <b>${cardName(c)}</b> (اضغطها مرتين أو اسحبها للأرض)، ونام على الـ${cardName(sug.keep)} لين تقطع.`);
+      else if(sug.kind==='throw')st=L(`<b>Hint:</b> nothing worth eating. Double-tap your <b>${lab(c)}</b> to throw it; it's your least valuable card.`,`<b>تلميح:</b> ما في أكلة تستاهل. ارمِ <b>${cardName(c)}</b> لأنها أقل ورقة قيمة: اضغطها مرتين أو اسحبها للأرض.`)}}
   if(hint&&myTurn){st=hint;hint=''}
   $('status').innerHTML=st;$('status').dir=LANG==='ar'?'rtl':'ltr';
   $('last').textContent=S.log[0]||'';
@@ -5617,7 +5617,7 @@ function leaveGame(){const online=typeof NET!=='undefined'&&NET.on;
   try{if(typeof MUSIC!=='undefined')MUSIC.stop()}catch(e){}showHome(true)}
 window.addEventListener('click',e=>{
   const nb=e.target.closest('#newBtn');if(nb&&!window.__gmPass){if(!S)return;e.stopImmediatePropagation();e.preventDefault();const m=$('gameMenu');if(!m.hidden){m.hidden=true;return}openGameMenu(nb);return}
-  const g=e.target.closest('[data-gm]');if(g){e.stopImmediatePropagation();$('gameMenu').hidden=true;
+  const g=e.target.closest('[data-gm="theme"],[data-gm="new"],[data-gm="exit"]');if(g){e.stopImmediatePropagation();$('gameMenu').hidden=true;
     if(g.dataset.gm==='theme'){openShop('skins');return}
     if(g.dataset.gm==='new'){window.__gmPass=true;try{$('newBtn').click()}finally{window.__gmPass=false}return}
     const online=typeof NET!=='undefined'&&NET.on,host=online&&NET.host;
@@ -6434,10 +6434,10 @@ const meV=()=>typeof ACCT!=='undefined'&&ACCT.me&&ACCT.me.verified;
 render=(function(prev){return function(){const r=prev.apply(this,arguments);try{if(S&&S.players)document.querySelectorAll('#seats .seat, #mebox').forEach(el=>{const i=el.id==='mebox'?0:+el.dataset.seat;const pr=i===0?{verified:meV()}:(typeof profOf==='function'&&profOf(i));const nm=el.querySelector('.name')||el;
   if(pr&&pr.verified&&!nm.querySelector('.verb'))nm.insertAdjacentHTML('beforeend',VER)})}catch(e){}return r}})(render);
 // a player's card: rank, title, badges
-renderProfile=(function(prev){return function(i){prev.apply(this,arguments);if(!i)return;try{const pr=profOf(i);if(!pr||pr.bot)return;const b=$('profBox');if(!b||b.querySelector('.pc-rank'))return;
+renderProfile=(function(prev){return function(i){prev.apply(this,arguments);if(!i)return;try{const pr=profOf(i);if(!pr||pr.bot)return;const b=$('profBox');if(!b||b.querySelector('.pc-rank'))return;const rc=b.querySelector('.rkcard');
   const r=rankOf(pr.rp||0),h=b.querySelector('h2')||b.firstElementChild;const d=document.createElement('div');d.className='pc-rank';
   d.innerHTML=`${rankIcon(pr.rp||0,'big')}<div><b>${L(r.en,r.ar)}${pr.vip?'<i class="vipb">VIP</i>':''}${VER&&pr.verified?VER:''}</b><small>${(pr.rp||0).toLocaleString('en')} ${L('pts','نقطة')}${pr.title?' · '+titleText(pr.title):''}${pr.games?` · ${Math.round((pr.wins||0)/pr.games*100)}% ${L('wins','فوز')}`:''}</small></div>`;
-  h&&h.after?h.after(d):b.prepend(d)}catch(e){}}})(renderProfile);
+  if(rc){const sm=rc.querySelector('small');if(sm&&pr.title)sm.insertAdjacentHTML('beforeend',' · '+titleText(pr.title));if(pr.verified){const bb=rc.querySelector('b');bb&&bb.insertAdjacentHTML('beforeend',VER)}return}h&&h.after?h.after(d):b.prepend(d)}catch(e){}}})(renderProfile);
 // season and ranked-game news from the server
 acctNotes=(function(prev){return function(n){prev.apply(this,arguments);if(!n)return;
   if(n.season){const r=RANKS2[n.season.r]||RANKS2[0];setTimeout(()=>{if(typeof ebAsk==='function')ebAsk(`<div class="sz-pop">${rankIcon(r.min,'big')}<b>${L('A new season started!','بدأ موسم جديد!')}</b><span>${L(`Last season you reached ${r.en}. Your prize:`,`الموسم اللي راح وصلت ${r.ar}. جايزتك:`)} <b>+${n.season.prize.toLocaleString('en')} ${L('rupees','روبية')}</b></span><small>${L('Your rank points were halved for the new season.','نقاطك انقسمت على ٢ للموسم الجديد.')}</small></div>`,L('Let\'s go','يلا'),'')},1200)}
@@ -6739,12 +6739,77 @@ slapFx=(function(prev){return function(card,from,power){const s=window.__efSeat;
   return prev(card,from,power)}})(slapFx);
 // inside the iPhone app: no pinch zoom
 if(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform()){const m=document.querySelector('meta[name=viewport]');if(m)m.content='width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover'}
+// a normal phone turned sideways: ask to turn it back (big folding screens play sideways fine)
+(function(){const d=document.createElement('div');d.id='rotateMsg';d.innerHTML='<div><b>📱↻</b><span>'+L('Turn your phone upright','لف الجوال على الطول')+'</span></div>';document.body.appendChild(d);
+const st=document.createElement('style');st.textContent='#rotateMsg{display:none;position:fixed;inset:0;z-index:999;background:#0e0705;color:#f2d27a;align-items:center;justify-content:center;text-align:center;font-weight:900}#rotateMsg div{display:flex;flex-direction:column;gap:10px}#rotateMsg b{font-size:54px}#rotateMsg span{font-size:20px}@media (orientation:landscape) and (max-height:560px){#rotateMsg{display:flex}}';document.head.appendChild(st)})();
 // the ••• button in the game is the menu (new game, change cards, theme, leave)
 {const s=document.querySelector('#newBtn span');if(s){s.dataset.en='Menu';s.dataset.ar='القائمة';s.textContent=L('Menu','القائمة')}}
 })();
 
+// ===================== Round 68: the hint box leaves the bottom bar; short hint bubbles above your cards =====================
+(function(){
+// new players get hints in their first 5 games
+const _ng=newGame;newGame=function(cfg){try{if(cfg&&(MYPROF.games||0)<5)cfg.hints=true}catch(e){}return _ng.apply(this,arguments)};
+let last='',tm=0;
+function pop(html){let d=$('hintPop');if(!d){d=document.createElement('div');d.id='hintPop';document.body.appendChild(d)}
+  d.dir=LANG==='ar'?'rtl':'ltr';d.innerHTML=html;const row=$('myrow')||$('hand');const r=row?row.getBoundingClientRect():{top:innerHeight*.7};
+  d.style.top=Math.max(60,r.top-8)+'px';d.classList.remove('on');void d.offsetWidth;d.classList.add('on');clearTimeout(tm);tm=setTimeout(()=>d.classList.remove('on'),3200)}
+render=(function(prev){return function(){const r=prev.apply(this,arguments);try{const s=$('status');if(!s||!S)return r;const h=s.innerHTML.trim();
+  const important=/تلميح|Hint|تحت الهجوم|under attack/.test(h);
+  if(important&&h!==last){last=h;pop(h.replace(/<b>(تلميح|Hint):<\/b>\s*/,'💡 '))}
+  if(!important)last=''}catch(e){}return r}})(render);
+const st=document.createElement('style');st.textContent=`
+html body #status{display:none!important}
+#hintPop{position:fixed;left:50%;z-index:60;max-width:min(86vw,420px);transform:translate(-50%,-100%) scale(.9);opacity:0;pointer-events:none;
+  padding:9px 14px;border-radius:14px;background:rgba(20,10,6,.94);color:#f4ead6;font-size:13.5px;font-weight:700;line-height:1.6;text-align:center;
+  box-shadow:0 0 0 1px rgba(242,210,122,.5),0 8px 24px rgba(0,0,0,.5);transition:opacity .25s,transform .25s}
+#hintPop b{color:#f2d27a}#hintPop.on{opacity:1;transform:translate(-50%,-100%) scale(1)}`;document.head.appendChild(st);
+})();
+
+// ===================== Round 69: change your effects during a game; see (and try) another player's effects =====================
+(function(){
+const inWar=()=>!!(S&&S.war);
+// the effects tab stays in the shop during a game
+renderShop=(function(prev){return function(){prev.apply(this,arguments);try{if(!(typeof inGame==='function'&&inGame()))return;const t=document.querySelector('#shop .tabs');if(!t||t.querySelector('[data-tab="efx"]'))return;
+  const b=document.createElement('button');b.type='button';b.dataset.tab='efx';b.textContent=L('Effects','التأثيرات');if(shopTab==='efx')b.classList.add('on');t.appendChild(b)}catch(e){}}})(renderShop);
+// "change effects" in the game menu
+openGameMenu=(function(prev){return function(btn){prev(btn);const m=$('gameMenu');if(!m||m.querySelector('[data-gm="fx"]'))return;const t=m.querySelector('[data-gm="cards"]')||m.querySelector('[data-gm="theme"]');
+  const b=document.createElement('button');b.type='button';b.dataset.gm='fx';b.innerHTML=`<svg viewBox="0 0 24 24"><path d="M12 2c1 4-3 5-3 9a3 3 0 0 0 6 0c0-1-.5-2-1-3 3 1 5 4 5 7a7 7 0 0 1-14 0c0-6 6-8 7-13z"/></svg>${L('Change effects','غيّر التأثيرات')}`;(t||m.firstChild).after(b)}})(openGameMenu);
+window.addEventListener('click',e=>{const b=e.target.closest('[data-gm="fx"]');if(!b)return;e.stopImmediatePropagation();$('gameMenu').hidden=true;
+  if(inWar()){toast(L('Wait for the war to end','انطر لين تخلص الحرب'));return}openShop('efx')},true);
+// no changing or buying in the middle of a war (so a tap never lands on the shop instead of the slap)
+window.addEventListener('click',e=>{if(!inWar())return;const t=e.target.closest('#shop [data-fx2],#shop [data-bub],[data-pfx]');if(!t)return;e.stopImmediatePropagation();e.preventDefault();toast(L('Wait for the war to end','انطر لين تخلص الحرب'))},true);
+setInterval(()=>{if(inWar()&&!$('shopSheet').hidden&&shopTab==='efx'){$('shopSheet').hidden=true}},400);
+
+// a player's card: their effects, try them, buy them
+const nameOf=(list,id)=>{const x=list.find(z=>z.id===id);return x?L(x.en,x.ar):''};
+renderProfile=(function(prev){return function(i){prev.apply(this,arguments);try{if(!i)return;const pr=profOf(i);if(!pr||pr.bot)return;const box=$('profBox');if(!box||box.querySelector('.pfx'))return;
+  const items=[];if(pr.efx&&pr.efx!=='none'&&EFX.some(x=>x.id===pr.efx))items.push(['e',pr.efx,L('Eat effect','تأثير الأكل')]);
+  if(pr.sfx&&pr.sfx!=='plain'&&SFX.some(x=>x.id===pr.sfx))items.push(['s',pr.sfx,L('Fire button','زر النار')]);
+  if(pr.bub&&pr.bub!=='plain'&&window.BUBS&&BUBS.some(x=>x.id===pr.bub))items.push(['b',pr.bub,L('Phrase bubble','فقاعة العبارات')]);
+  if(!items.length)return;
+  const d=document.createElement('div');d.className='pfx';d.innerHTML=`<h3>${L('Their effects','تأثيراته')}</h3>`+items.map(([k,id,lab])=>{const list=k==='e'?EFX:k==='s'?SFX:BUBS,pid=(k==='e'?'efx-':k==='s'?'sfx-':'bub-')+id,x=list.find(z=>z.id===id),own=x&&(x.cost===0||WAL.owned.includes(pid));
+    return `<div class="pfxrow"><span class="pfxic">${k==='b'?'💬':(typeof fxIcon==='function'?fxIcon(id):'✦')}</span><div><b>${nameOf(list,id)}</b><small>${lab}</small></div>
+      <button type="button" data-pfx="try:${k}:${id}">${L('Try','جرّب')}</button>${own?`<em>${L('You have it','عندك')}</em>`:`<button type="button" class="gold" data-pfx="buy:${k}:${id}">${x&&x.vip?'👑 VIP':`<i class="cn"></i>${(x.cost||0).toLocaleString('en')}`}</button>`}</div>`}).join('');
+  const anchor=box.querySelector('.pc-rank')||box.querySelector('h2');anchor?anchor.after(d):box.appendChild(d)}catch(e){console.error(e)}}})(renderProfile);
+window.addEventListener('click',e=>{const t=e.target.closest('[data-pfx]');if(!t)return;e.stopImmediatePropagation();const [act,k,id]=t.dataset.pfx.split(':');
+  if(act==='try'){if(k==='b'){const was=MYPROF.bub;MYPROF.bub=id;$('profSheet').hidden=true;say(0,L('Yalla!','يالعوود'));MYPROF.bub=was;return}
+    $('profSheet').hidden=true;const at=(typeof stackAt!=='undefined'&&stackAt)||groundPt();setTimeout(()=>runEfx(id,$('fx'),at,k==='s'?3:2),150);return}
+  $('profSheet').hidden=true;if(k==='b'){openShop('emotes');return}openShop('efx');
+  setTimeout(()=>{const b=document.querySelector(`#shop [data-fx2="${k}:${id}"]`);if(b){b.scrollIntoView({block:'center'});b.classList.add('pfxflash');setTimeout(()=>b.classList.remove('pfxflash'),2200)}},150)},true);
+const st=document.createElement('style');st.textContent=`
+.pfx{margin:8px 0 10px;padding:10px;border-radius:14px;background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 1px rgba(242,210,122,.3)}
+.pfx h3{margin:0 0 6px;font-size:14px;color:#f2d27a}
+.pfxrow{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid rgba(242,210,122,.1)}.pfxrow:first-of-type{border-top:0}
+.pfxrow>div{flex:1;display:flex;flex-direction:column}.pfxrow b{font-size:13.5px}.pfxrow small{font-size:11px;opacity:.7}
+.pfxic{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:18px;background:rgba(0,0,0,.3)}
+.pfxrow button{border:0;border-radius:10px;font:inherit;font-weight:800;font-size:12px;padding:7px 10px;background:rgba(255,255,255,.08);color:#f2d27a;display:flex;align-items:center;gap:3px}
+.pfxrow button.gold{background:linear-gradient(180deg,#f8e3a0,#c9a04a);color:#2a1606}.pfxrow button .cn{width:12px;height:12px;display:inline-block}.pfxrow em{font-style:normal;font-size:11px;color:#5fe07a;font-weight:800}
+#shop .pfxflash{animation:pfxf .5s ease-in-out 4}@keyframes pfxf{50%{box-shadow:inset 0 0 0 3px #f2d27a,0 0 22px rgba(242,210,122,.7)}}`;document.head.appendChild(st);
+})();
+
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1107.1341';
+const EB_VERSION='v1107.1440';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
