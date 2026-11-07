@@ -1187,7 +1187,7 @@ function renderSetup(){
     <p>${L('Win wars for 10s, faces, aces and jokers, then bury them under low cards so nobody takes them back.','اربح الحروب على العشرات والصور والآصات والجواكر، وادفنها تحت الأوراق الصغيرة عشان محد ياخذها منك.')}</p>
     <div class="fieldset"><div class="label">${L('Language','اللغة')}</div>${seg('lang',[['ar','العربية','العربية'],['en','English','English']],LANG)}</div>
     <div class="fieldset"><div class="label">${L('Players','اللاعبين')}</div>${seg('mode',[['2v2','2 vs 2','٢ ضد ٢'],['3v3','3 vs 3','٣ ضد ٣'],['solo','Everyone alone (4)','كل واحد لحاله (٤)']],c.mode)}</div>
-    <div class="fieldset"><div class="label">${L('Decks','عدد الشدّات')}</div>${seg('decks',[[3,'3','٣'],[4,'4 (quick)','٤ (سريعة)'],[8,'8','٨'],[10,'10','١٠'],[12,'12 (full)','١٢ (كاملة)']],[3,4,8,10,12].includes(+c.decks)?c.decks:4)}</div>
+    <div class="fieldset"><div class="label">${L('Decks','عدد الشدّات')}</div>${seg('decks',[[4,'4','٤'],[8,'8','٨'],[10,'10','١٠'],[12,'12','١٢']],[4,8,10,12].includes(+c.decks)?c.decks:4)}</div>
     <div class="fieldset"><div class="label">${L('Computer players','مستوى الكمبيوتر')}</div>${seg('level',[['easy','Easy','سهل'],['normal','Normal','عادي'],['hard','Hard','صعب']],c.level||'normal')}</div>
     <div class="fieldset"><div class="label">${L('Intercept timer','وقت القطع')}</div>${seg('timer',[[2,'2 s','٢ ث'],[3,'3 s','٣ ث'],[5,'5 s','٥ ث'],[8,'8 s','٨ ث']],c.timer||2)}</div>
     <div class="fieldset"><div class="label">${L('Hints','التلميحات')}</div>${seg('hints',[['on','Show hints','أظهر التلميحات'],['off','No hints','بدون تلميحات']],c.hints?'on':'off')}</div>
@@ -6760,12 +6760,23 @@ render=(function(prev){return function(){const r=prev.apply(this,arguments);try{
   if(!important)last=''}catch(e){}return r}})(render);
 const st=document.createElement('style');st.textContent=`
 html body #status{display:none!important}
-/* phones with the camera or clock on the side (folded screens, landscape): keep everything clear of it */
-html body #app{box-sizing:border-box;padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
-html body .h2-page{padding-left:max(16px,calc(env(safe-area-inset-left,0px) + 8px))!important;padding-right:max(16px,calc(env(safe-area-inset-right,0px) + 8px))!important}
-html body .h2-tabs{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
-html body #home .hm{padding-left:env(safe-area-inset-left,0px)!important;padding-right:env(safe-area-inset-right,0px)!important}
-#hintPop{position:fixed;left:50%;z-index:60;max-width:min(86vw,420px);transform:translate(-50%,-100%) scale(.9);opacity:0;pointer-events:none;
+/* phones with the camera or clock on one side (folded screens, landscape): keep the same space on both sides so everything stays centred */
+:root{--sx:max(env(safe-area-inset-left,0px),env(safe-area-inset-right,0px))}
+html body #app{box-sizing:border-box;padding-left:var(--sx);padding-right:var(--sx)}
+html body .h2-page{padding-left:max(16px,calc(var(--sx) + 8px))!important;padding-right:max(16px,calc(var(--sx) + 8px))!important}
+html body .h2-tabs{padding-left:var(--sx);padding-right:var(--sx)}
+html body #home .hm{padding-left:var(--sx)!important;padding-right:var(--sx)!important}
+html body #home #homeIn.hm{max-width:none!important}
+html body .h2-page>*{width:100%;max-width:560px;margin-left:auto!important;margin-right:auto!important;box-sizing:border-box}
+html body .h2-tabs>button{max-width:120px}html body .h2-tabs{justify-content:center!important}
+/* wide, short screens (landscape): the settings fit on one screen in two columns */
+@media (orientation:landscape) and (max-height:760px){
+  html body #setupForm{max-width:min(880px,calc(100vw - 2 * var(--sx) - 24px))!important;width:100%;display:grid!important;grid-template-columns:1fr 1fr;column-gap:18px;row-gap:4px;align-content:start}
+  html body #setupForm>*{grid-column:1/-1}html body #setupForm>.fieldset{grid-column:auto}
+  html body #setupForm h2{margin:0}html body #setupForm>p{margin:0 0 4px}
+}
+`;document.head.appendChild(st);
+const st2=document.createElement('style');st2.textContent=`#hintPop{position:fixed;left:50%;z-index:60;max-width:min(86vw,420px);transform:translate(-50%,-100%) scale(.9);opacity:0;pointer-events:none;
   padding:9px 14px;border-radius:14px;background:rgba(20,10,6,.94);color:#f4ead6;font-size:13.5px;font-weight:700;line-height:1.6;text-align:center;
   box-shadow:0 0 0 1px rgba(242,210,122,.5),0 8px 24px rgba(0,0,0,.5);transition:opacity .25s,transform .25s}
 #hintPop b{color:#f2d27a}#hintPop.on{opacity:1;transform:translate(-50%,-100%) scale(1)}`;document.head.appendChild(st);
@@ -6813,8 +6824,708 @@ const st=document.createElement('style');st.textContent=`
 #shop .pfxflash{animation:pfxf .5s ease-in-out 4}@keyframes pfxf{50%{box-shadow:inset 0 0 0 3px #f2d27a,0 0 22px rgba(242,210,122,.7)}}`;document.head.appendChild(st);
 })();
 
+// ===================== Round 70: the side seats on wide screens become luxury majlis sofas in each theme's colours =====================
+(function(){
+// colours come from the theme's own seat colours (--mjV fabric, --mjt trim, --mjp pillows)
+const hexes=s=>(s.match(/#[0-9a-f]{6}\b|#[0-9a-f]{3}\b|rgba?\([^)]*\)/gi)||[]).map(c=>{const d=document.createElement('i');d.style.color=c;document.body.appendChild(d);const v=getComputedStyle(d).color;d.remove();const m=v.match(/[\d.]+/g)||[0,0,0,1];return {r:+m[0],g:+m[1],b:+m[2],a:m[3]==null?1:+m[3]}}).filter(c=>c.a>.5);
+const lum=c=>.2126*c.r+.7152*c.g+.0722*c.b,sat=c=>{const mx=Math.max(c.r,c.g,c.b),mn=Math.min(c.r,c.g,c.b);return mx?(mx-mn)/mx:0};
+const css=c=>`rgb(${Math.round(c.r)},${Math.round(c.g)},${Math.round(c.b)})`,mix=(a,b,t)=>({r:a.r+(b.r-a.r)*t,g:a.g+(b.g-a.g)*t,b:a.b+(b.b-a.b)*t});
+const BLACK={r:0,g:0,b:0},WHITE={r:255,g:255,b:255},GOLD={r:214,g:170,b:84};
+function palette(){const cs=getComputedStyle(document.documentElement);
+  const fab=hexes(cs.getPropertyValue('--mjV')+' '+cs.getPropertyValue('--mjH')),pil=hexes(cs.getPropertyValue('--mjp')),trim=hexes(cs.getPropertyValue('--mjt'));
+  const dist=(a,b)=>Math.hypot(a.r-b.r,a.g-b.g,a.b-b.b),tr0=trim[0]||GOLD,isGold=c=>dist(c,tr0)<80||dist(c,GOLD)<80;
+  const pool=fab.filter(c=>!isGold(c));const src=pool.length?pool:fab;
+  // fabric: the most coloured of the seat colours (not the thin gold trim stripes)
+  fab.length=0;fab.push(...src);
+  let f=fab.slice().sort((a,b)=>(sat(b)*1.4+Math.min(lum(b),140)/140)-(sat(a)*1.4+Math.min(lum(a),140)/140))[0]||{r:90,g:20,b:26};
+  if(lum(f)<28)f=mix(f,GOLD,.18);
+  let t=trim[0]||GOLD;if(Math.abs(lum(t)-lum(f))<40)t=lum(f)>140?mix(t,BLACK,.5):GOLD;
+  let p=pil.slice().sort((a,b)=>sat(b)-sat(a))[0]||mix(f,WHITE,.25);if(Math.abs(lum(p)-lum(f))<18&&sat(p)-sat(f)<.1)p=mix(t,f,.35);
+  return {f,t,p}}
+window.__seatPalette=palette;
+let key='';
+function sofa(w,h,P,flip){const f=css(P.f),fd=css(mix(P.f,BLACK,.45)),fl=css(mix(P.f,WHITE,.18)),t=css(P.t),td=css(mix(P.t,BLACK,.35)),p=css(P.p),pd=css(mix(P.p,BLACK,.4)),pl=css(mix(P.p,WHITE,.25));
+  const back=Math.round(w*.3),arm=Math.round(Math.min(w*.42,h*.07)),sx=back+2,sw=w-back-4,n=3,ph=(h-arm*2-12)/n;let s='';
+  // frame + back rest (the outer side) + rolled arms at both ends
+  s+=`<defs><linearGradient id="sf${flip}" x1="0" x2="1"><stop offset="0" stop-color="${fd}"/><stop offset=".55" stop-color="${f}"/><stop offset="1" stop-color="${fl}"/></linearGradient>
+   <linearGradient id="bk${flip}" x1="0" x2="1"><stop offset="0" stop-color="${fd}"/><stop offset="1" stop-color="${f}"/></linearGradient>
+   <radialGradient id="pl${flip}" cx="45%" cy="40%" r="70%"><stop offset="0" stop-color="${pl}"/><stop offset=".6" stop-color="${p}"/><stop offset="1" stop-color="${pd}"/></radialGradient>
+   <linearGradient id="gd${flip}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff1c2"/><stop offset=".45" stop-color="${t}"/><stop offset="1" stop-color="${td}"/></linearGradient>
+   <pattern id="tf${flip}" width="18" height="18" patternUnits="userSpaceOnUse"><path d="M9 0L18 9L9 18L0 9Z" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1"/><circle cx="9" cy="9" r="1.6" fill="url(#gd${flip})"/><circle cx="0" cy="0" r="1.6" fill="url(#gd${flip})"/><circle cx="18" cy="18" r="1.6" fill="url(#gd${flip})"/><circle cx="18" cy="0" r="1.6" fill="url(#gd${flip})"/><circle cx="0" cy="18" r="1.6" fill="url(#gd${flip})"/></pattern></defs>`;
+  s+=`<rect x="1" y="1" width="${w-2}" height="${h-2}" rx="${Math.min(22,w*.25)}" fill="${fd}" stroke="url(#gd${flip})" stroke-width="2.5"/>`;
+  s+=`<rect x="4" y="4" width="${back}" height="${h-8}" rx="${Math.min(18,back*.45)}" fill="url(#bk${flip})"/>`;
+  // seat cushion: tufted with gold buttons and piping
+  s+=`<rect x="${sx}" y="${arm+4}" width="${sw}" height="${h-arm*2-8}" rx="10" fill="url(#sf${flip})"/><rect x="${sx}" y="${arm+4}" width="${sw}" height="${h-arm*2-8}" rx="10" fill="url(#tf${flip})"/><rect x="${sx+2.5}" y="${arm+6.5}" width="${sw-5}" height="${h-arm*2-13}" rx="8" fill="none" stroke="url(#gd${flip})" stroke-width="1.6" stroke-dasharray="1 3" stroke-linecap="round"/>`;
+  // pillows leaning on the back
+  for(let k=0;k<n;k++){const y=arm+6+k*ph+ph*.08,hh=ph*.84,ww=Math.min(back+sw*.42,w*.62);
+    s+=`<g><rect x="3" y="${y}" width="${ww}" height="${hh}" rx="${Math.min(14,ww*.3)}" fill="url(#pl${flip})" stroke="${pd}" stroke-width="1"/><rect x="6" y="${y+3}" width="${ww-6}" height="${hh-6}" rx="${Math.min(11,ww*.26)}" fill="none" stroke="url(#gd${flip})" stroke-width="1.4"/>
+      <path d="M${ww*.5+2} ${y+hh*.28}l${ww*.14} ${hh*.22}l-${ww*.14} ${hh*.22}l-${ww*.14} -${hh*.22}z" fill="url(#gd${flip})" opacity=".85"/>
+      ${[0,1].map(e=>`<circle cx="${e?ww+1:4}" cy="${y+(e?hh-4:4)}" r="2.4" fill="url(#gd${flip})"/><path d="M${e?ww+1:4} ${y+(e?hh-2:6)}l${e?3:-3} ${e?7:7}" stroke="${t}" stroke-width="1.4"/>`).join('')}</g>`}
+  // rolled arms with gold bands and tassels
+  [[3,arm],[h-arm-3,arm]].forEach(([y,a],e)=>{s+=`<rect x="3" y="${y}" width="${w-6}" height="${a}" rx="${a/2}" fill="url(#sf${flip})" stroke="${fd}" stroke-width="1"/><rect x="3" y="${y+a*.18}" width="${w-6}" height="${a*.14}" fill="url(#gd${flip})" opacity=".9"/><rect x="3" y="${y+a*.68}" width="${w-6}" height="${a*.14}" fill="url(#gd${flip})" opacity=".9"/>
+    <g fill="url(#gd${flip})"><circle cx="${w-6}" cy="${e?y+a:y}" r="3.2"/><path d="M${w-9} ${e?y+a+2:y-2}h6l2 ${e?9:-9}h-10z" opacity=".95"/></g>`});
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${s}</svg>`}
+function draw(){return;const t=$('table'),rug=document.querySelector('.rug')||$('ground');if(!t||!rug)return;const r=t.getBoundingClientRect(),g=rug.getBoundingClientRect();
+  // sofas sit beside the rug, exactly as tall as the rug, in the space to its left and right
+  const gap=Math.max(10,r.width*.012),side=g.left-r.left-gap-10,w=Math.round(Math.min(130,side,g.height*.42));
+  let L=t.querySelector('.wsofa.l'),R=t.querySelector('.wsofa.r');
+  if(innerWidth<=760||w<44||!g.height){L&&L.remove();R&&R.remove();document.documentElement.classList.remove('wsofa-on');key='';return}
+  const h=Math.round(g.height),top=Math.round(g.top-r.top),th=[...document.documentElement.classList].find(c=>c.startsWith('t-'))||'',k=th+w+'x'+h;
+  if(!L){L=document.createElement('div');L.className='wsofa l';t.appendChild(L);R=document.createElement('div');R.className='wsofa r';t.appendChild(R)}
+  document.documentElement.classList.add('wsofa-on');
+  L.style.top=R.style.top=top+'px';L.style.left=Math.round(g.left-r.left-gap-w)+'px';R.style.left=Math.round(g.right-r.left+gap)+'px';R.style.right='auto';
+  if(k===key)return;key=k;const P=palette();
+  L.innerHTML=sofa(w,h,P,0);R.innerHTML=sofa(w,h,P,1);[L,R].forEach(x=>{x.style.width=w+'px';x.style.height=h+'px'})}
+let q=0;const soon=()=>{cancelAnimationFrame(q);q=requestAnimationFrame(()=>{try{draw()}catch(e){}})};
+render=(function(prev){return function(){const r=prev.apply(this,arguments);soon();return r}})(render);
+applySkin=(function(prev){return function(){const r=prev.apply(this,arguments);key='';soon();return r}})(applySkin);
+addEventListener('resize',()=>{key='';soon()});setTimeout(soon,600);
+const st=document.createElement('style');st.textContent=`
+html.wsofa-on body .table::before,html.wsofa-on body .table::after{display:none!important}
+.wsofa{position:absolute;pointer-events:none;z-index:0;filter:drop-shadow(0 14px 18px rgba(0,0,0,.55))}
+.wsofa.r{transform:scaleX(-1)}.wsofa svg{display:block}`;document.head.appendChild(st);
+})();
+// wide screens: no side seats at all; the table grows taller instead and the bars get slimmer
+(function(){const st=document.createElement('style');st.textContent=`
+@media (min-width:761px) and (orientation:landscape){
+  html body .table::before,html body .table::after{display:none!important}
+  html body{--W:min(calc(100vw - 16px),900px,calc(100dvh * .74))!important}
+  html body .topbar{min-height:0!important;padding-top:4px!important;padding-bottom:4px!important}
+  html body .topbar button,html body .topbar .gbtn{transform:scale(.86);transform-origin:center}
+  html body .bottombar{padding-top:2px!important;padding-bottom:max(2px,env(safe-area-inset-bottom))!important}
+}`;document.head.appendChild(st)})();
+
+// ===================== Round 71: landscape uses the width (wider rug, players further out); a different seat for every theme =====================
+(function(){
+const R=(a,b)=>a+Math.random()*(b-a);
+const css=c=>`rgb(${Math.round(c.r)},${Math.round(c.g)},${Math.round(c.b)})`,mix=(a,b,t)=>({r:a.r+(b.r-a.r)*t,g:a.g+(b.g-a.g)*t,b:a.b+(b.b-a.b)*t});
+const K={r:0,g:0,b:0},Wt={r:255,g:255,b:255},G={r:214,g:170,b:84};
+const hex=h=>{h=h.replace('#','');return {r:parseInt(h.slice(0,2),16),g:parseInt(h.slice(2,4),16),b:parseInt(h.slice(4,6),16)}};
+// which seat each theme gets
+const KIND={house:'floor',sadu:'floor',night:'round',camp:'floor',royal:'throne',modern:'armchair',teal:'round',sea:'lounger',old:'floor',ramadan:'pouf',
+  winter:'armchair',classic:'sofa',diwan2:'sofa',chalet:'lounger',noir:'throne',felt:'armchair',pearl:'armchair',turq:'round',herit:'floor',white:'sofa',andal:'pouf',
+  teen:'floor',garden:'armchair',emerald:'throne',sapph:'sofa',saduR:'floor',oud:'sofa',dive:'round',egypt:'mummy',moroc:'pouf',greek:'greek',west:'armchair',
+  drac:'coffin',lounge:'sofa',palace:'throne'};
+// shared paint: gradients made from the theme colours
+function kit(P,id){const f=css(P.f),fd=css(mix(P.f,K,.45)),fl=css(mix(P.f,Wt,.2)),t=css(P.t),td=css(mix(P.t,K,.4)),p=css(P.p),pd=css(mix(P.p,K,.4)),pl=css(mix(P.p,Wt,.3));
+  const defs=`<linearGradient id="${id}f" x1="0" x2="1"><stop offset="0" stop-color="${fd}"/><stop offset=".55" stop-color="${f}"/><stop offset="1" stop-color="${fl}"/></linearGradient>
+  <radialGradient id="${id}p" cx="42%" cy="38%" r="70%"><stop offset="0" stop-color="${pl}"/><stop offset=".6" stop-color="${p}"/><stop offset="1" stop-color="${pd}"/></radialGradient>
+  <radialGradient id="${id}r" cx="42%" cy="38%" r="70%"><stop offset="0" stop-color="${fl}"/><stop offset=".6" stop-color="${f}"/><stop offset="1" stop-color="${fd}"/></radialGradient>
+  <linearGradient id="${id}g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff1c2"/><stop offset=".45" stop-color="${t}"/><stop offset="1" stop-color="${td}"/></linearGradient>
+  <linearGradient id="${id}au" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3c4"/><stop offset=".4" stop-color="#e2b54e"/><stop offset=".75" stop-color="#a87418"/><stop offset="1" stop-color="#6e4608"/></linearGradient>
+  <linearGradient id="${id}wd" x1="0" x2="1"><stop offset="0" stop-color="#5a3317"/><stop offset=".5" stop-color="#8a5a2e"/><stop offset="1" stop-color="#5a3317"/></linearGradient>`;
+  return {f,fd,fl,t,td,p,pd,pl,defs,F:`url(#${id}f)`,PP:`url(#${id}p)`,RR:`url(#${id}r)`,GG:`url(#${id}g)`,AU:`url(#${id}au)`,WD:`url(#${id}wd)`}}
+const tassel=(x,y,c,d=1)=>`<circle cx="${x}" cy="${y}" r="2.6" fill="${c}"/><path d="M${x-2.5} ${y+2*d}h5l1.5 ${8*d}h-8z" fill="${c}" opacity=".95"/>`;
+const cushion=(x,y,w,h,k,rr)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rr==null?Math.min(12,w*.28):rr}" fill="${k.PP}" stroke="${k.pd}"/><rect x="${x+3}" y="${y+3}" width="${w-6}" height="${h-6}" rx="${Math.max(2,(rr==null?Math.min(12,w*.28):rr)-3)}" fill="none" stroke="${k.GG}" stroke-width="1.3"/>
+  <path d="M${x+w/2} ${y+h*.28}l${w*.13} ${h*.22}l-${w*.13} ${h*.22}l-${w*.13} -${h*.22}z" fill="${k.GG}" opacity=".85"/>`;
+const shadow=(w,h)=>`<ellipse cx="${w/2}" cy="${h/2}" rx="${w*.52}" ry="${h*.52}" fill="rgba(0,0,0,.0)"/>`;
+const SEAT={
+  // luxury tufted sofa (the one from before)
+  sofa(w,h,k,id){const back=w*.3,arm=Math.min(w*.42,h*.07),sx=back+2,sw=w-back-4;let s=`<pattern id="${id}tf" width="18" height="18" patternUnits="userSpaceOnUse"><path d="M9 0L18 9L9 18L0 9Z" fill="none" stroke="rgba(0,0,0,.22)"/><circle cx="9" cy="9" r="1.6" fill="${k.GG}"/></pattern>`;
+    s+=`<rect x="1" y="1" width="${w-2}" height="${h-2}" rx="${Math.min(22,w*.25)}" fill="${k.fd}" stroke="${k.GG}" stroke-width="2.5"/><rect x="4" y="4" width="${back}" height="${h-8}" rx="14" fill="${k.F}"/>
+      <rect x="${sx}" y="${arm+4}" width="${sw}" height="${h-arm*2-8}" rx="10" fill="${k.F}"/><rect x="${sx}" y="${arm+4}" width="${sw}" height="${h-arm*2-8}" rx="10" fill="url(#${id}tf)"/>`;
+    const n=k.n===1?1:3,ph=(h-arm*2-12)/n;for(let i=0;i<n;i++){const y=arm+6+i*ph+ph*.08;s+=cushion(3,y,Math.min(back+sw*.42,w*.62),ph*.84,k)}
+    [[3,0],[h-arm-3,1]].forEach(([y,e])=>{s+=`<rect x="3" y="${y}" width="${w-6}" height="${arm}" rx="${arm/2}" fill="${k.F}"/><rect x="3" y="${y+arm*.2}" width="${w-6}" height="${arm*.14}" fill="${k.GG}"/><rect x="3" y="${y+arm*.66}" width="${w-6}" height="${arm*.14}" fill="${k.GG}"/>`+tassel(w-7,e?y+arm:y,k.t,e?1:-1)});return s},
+  // Arab floor seating: a long mattress with sadu stripes, back cushions and arm pillows
+  floor(w,h,k,id){let s=`<pattern id="${id}sd" width="16" height="16" patternUnits="userSpaceOnUse"><rect width="16" height="16" fill="${k.f}"/><path d="M0 16L8 8L16 16" fill="${k.p}"/><path d="M0 8L8 0L16 8" fill="${k.fd}" opacity=".6"/><rect y="7" width="16" height="2" fill="${k.t}"/></pattern>`;
+    s+=`<rect x="2" y="2" width="${w-4}" height="${h-4}" rx="6" fill="${k.fd}"/><rect x="${w*.38}" y="6" width="${w*.6-6}" height="${h-12}" rx="5" fill="url(#${id}sd)" stroke="${k.GG}" stroke-width="1.5"/>
+      <rect x="${w*.38+5}" y="10" width="${w*.6-16}" height="${h-20}" rx="3" fill="none" stroke="rgba(255,255,255,.35)" stroke-dasharray="3 3"/>`;
+    const n=k.n===1?2:4,ph=(h-12)/n;for(let i=0;i<n;i++){const y=6+i*ph;s+=`<rect x="4" y="${y+2}" width="${w*.38}" height="${ph-4}" rx="9" fill="${k.RR}" stroke="${k.pd}"/><path d="M8 ${y+ph/2}h${w*.38-8}" stroke="${k.GG}" stroke-width="1.4"/>
+      <rect x="${w*.1}" y="${y+5}" width="${w*.06}" height="${ph-10}" fill="${k.p}" opacity=".7"/>`}
+    for(let i=1;i<n;i++){const y=6+i*ph;s+=`<ellipse cx="${w*.52}" cy="${y}" rx="${w*.16}" ry="${Math.min(10,ph*.14)}" fill="${k.PP}" stroke="${k.pd}"/><ellipse cx="${w*.66}" cy="${y}" rx="3" ry="${Math.min(8,ph*.11)}" fill="${k.GG}"/>`}
+    return s},
+  // armchairs with a little side table between
+  armchair(w,h,k,id){let s='';const n=k.n||2,gap=h*.14,ch=(h-gap-8)/n;
+    for(let i=0;i<n;i++){const y=4+i*(ch+gap);const cw=w-8;
+      s+=`<rect x="4" y="${y}" width="${cw}" height="${ch}" rx="${cw*.22}" fill="${k.fd}" stroke="${k.GG}" stroke-width="2"/>
+        <rect x="6" y="${y+3}" width="${cw*.32}" height="${ch-6}" rx="${cw*.16}" fill="${k.F}"/>
+        <rect x="${cw*.3}" y="${y+3}" width="${cw*.72}" height="${ch*.17}" rx="${ch*.08}" fill="${k.F}"/><rect x="${cw*.3}" y="${y+ch*.83-3}" width="${cw*.72}" height="${ch*.17}" rx="${ch*.08}" fill="${k.F}"/>
+        <rect x="${cw*.34}" y="${y+ch*.2}" width="${cw*.6}" height="${ch*.6}" rx="${cw*.14}" fill="${k.RR}" stroke="${k.pd}"/>
+        <path d="M${cw*.42} ${y+ch*.5}h${cw*.44}" stroke="rgba(0,0,0,.18)" stroke-width="1.5"/>
+        ${cushion(cw*.12,y+ch*.32,cw*.3,ch*.36,k,6)}
+        ${[[6,y+2],[cw+2,y+2],[6,y+ch-2],[cw+2,y+ch-2]].map(([x,yy])=>`<circle cx="${x}" cy="${yy}" r="3" fill="${k.GG}"/>`).join('')}`}
+    const ty=4+ch+gap/2;if(n>1)s+=`<circle cx="${w*.55}" cy="${ty}" r="${Math.min(gap*.42,w*.28)}" fill="${k.WD}" stroke="${k.GG}" stroke-width="2"/><circle cx="${w*.55}" cy="${ty}" r="${Math.min(gap*.42,w*.28)*.55}" fill="none" stroke="rgba(255,255,255,.25)"/>
+      <ellipse cx="${w*.5}" cy="${ty}" rx="6" ry="5" fill="#f4ead6"/><ellipse cx="${w*.5}" cy="${ty}" rx="3.5" ry="3" fill="#6b3a17"/>`;return s},
+  // big round floor cushions with a coffee tray and dallah
+  round(w,h,k,id){let s='';const n=k.n===1?1:3,ph=h/n;const r=Math.min(w*.46,ph*.42);
+    for(let i=0;i<n;i++){const cy=ph*i+ph/2;if(i===1){const tr=r*.95;s+=`<circle cx="${w/2}" cy="${cy}" r="${tr}" fill="${k.AU}" stroke="#6e4608" stroke-width="1.5"/><circle cx="${w/2}" cy="${cy}" r="${tr*.82}" fill="none" stroke="#6e4608" stroke-dasharray="2 3"/>
+        <g transform="translate(${w/2} ${cy})"><ellipse rx="${tr*.34}" ry="${tr*.3}" fill="#c9a04a" stroke="#6e4608"/><path d="M${tr*.3} 0l${tr*.32} -${tr*.12}" stroke="#a87418" stroke-width="3" stroke-linecap="round"/><circle r="${tr*.1}" fill="#6e4608"/>
+        ${[0,1,2,3,4].map(j=>{const a=j*1.26+.5;return `<circle cx="${Math.cos(a)*tr*.62}" cy="${Math.sin(a)*tr*.62}" r="${tr*.1}" fill="#f6efe0" stroke="#a87418"/>`}).join('')}</g>`;continue}
+      s+=`<circle cx="${w/2}" cy="${cy}" r="${r}" fill="${k.RR}" stroke="${k.pd}" stroke-width="1.5"/><circle cx="${w/2}" cy="${cy}" r="${r*.78}" fill="none" stroke="${k.GG}" stroke-width="1.6"/>
+        ${[...Array(8)].map((_,j)=>{const a=j*Math.PI/4;return `<path d="M${w/2} ${cy}L${w/2+Math.cos(a)*r*.78} ${cy+Math.sin(a)*r*.78}" stroke="rgba(0,0,0,.14)"/>`}).join('')}
+        <circle cx="${w/2}" cy="${cy}" r="${r*.16}" fill="${k.GG}"/>${[0,1,2,3].map(j=>{const a=j*Math.PI/2+.78;return tassel(w/2+Math.cos(a)*r,cy+Math.sin(a)*r,k.t,Math.sin(a)>0?1:-1)}).join('')}`}
+    return s},
+  // Moroccan leather poufs and a brass lantern
+  pouf(w,h,k,id){let s='';const n=k.n===1?1:3,ph=h/n,r=Math.min(w*.44,ph*.4);
+    for(let i=0;i<n;i++){const cy=ph*i+ph/2;if(i===1){const L=r*.9;s+=`<g transform="translate(${w/2} ${cy})"><circle r="${L*1.25}" fill="rgba(255,190,90,.22)"/><path d="M0 ${-L}L${L*.87} ${-L/2}L${L*.87} ${L/2}L0 ${L}L${-L*.87} ${L/2}L${-L*.87} ${-L/2}Z" fill="${k.AU}" stroke="#6e4608" stroke-width="1.5"/>
+        <path d="M0 ${-L*.6}L${L*.52} ${-L*.3}L${L*.52} ${L*.3}L0 ${L*.6}L${-L*.52} ${L*.3}L${-L*.52} ${-L*.3}Z" fill="#ffd27a"/>${[...Array(6)].map((_,j)=>{const a=j*Math.PI/3;return `<circle cx="${Math.cos(a)*L*.34}" cy="${Math.sin(a)*L*.34}" r="${L*.08}" fill="#6e4608"/>`}).join('')}<circle r="${L*.16}" fill="#fff4c8"/></g>`;continue}
+      s+=`<circle cx="${w/2}" cy="${cy}" r="${r}" fill="${k.RR}" stroke="${k.pd}" stroke-width="2"/>${[...Array(12)].map((_,j)=>{const a=j*Math.PI/6;return `<path d="M${w/2+Math.cos(a)*r*.35} ${cy+Math.sin(a)*r*.35}Q${w/2+Math.cos(a+.26)*r*.75} ${cy+Math.sin(a+.26)*r*.75} ${w/2+Math.cos(a)*r*.96} ${cy+Math.sin(a)*r*.96}" fill="none" stroke="${k.t}" stroke-width="1.6" stroke-dasharray="2 2"/>`}).join('')}
+        <path d="M${w/2} ${cy-r*.32}l${r*.32} ${r*.32}l-${r*.32} ${r*.32}l-${r*.32} -${r*.32}z" fill="${k.GG}" stroke="${k.td}"/><circle cx="${w/2}" cy="${cy}" r="${r*.1}" fill="${k.fd}"/>`}
+    return s},
+  // royal thrones with crown backs and a gold table
+  throne(w,h,k,id){let s='';const n=k.n||2,gap=h*.12,ch=(h-gap-8)/n,cw=w-8;
+    for(let i=0;i<n;i++){const y=4+i*(ch+gap);
+      s+=`<path d="M4 ${y+ch*.1}Q4 ${y} ${cw*.14+4} ${y}L${cw+4} ${y+ch*.06}L${cw+4} ${y+ch*.94}L${cw*.14+4} ${y+ch}Q4 ${y+ch} 4 ${y+ch*.9}Z" fill="${k.AU}" stroke="#6e4608" stroke-width="1.5"/>
+        <path d="M6 ${y+ch*.18}l${cw*.18} ${ch*.08}l-${cw*.08} ${ch*.12}l${cw*.1} ${ch*.12}l-${cw*.1} ${ch*.12}l${cw*.08} ${ch*.12}l-${cw*.18} ${ch*.08}z" fill="#fff1c2" opacity=".5"/>
+        <rect x="${cw*.3}" y="${y+ch*.1}" width="${cw*.66}" height="${ch*.8}" rx="${cw*.12}" fill="${k.RR}" stroke="#6e4608" stroke-width="1.5"/>
+        <rect x="${cw*.3+4}" y="${y+ch*.1+4}" width="${cw*.66-8}" height="${ch*.8-8}" rx="${cw*.1}" fill="none" stroke="${k.AU}" stroke-width="1.5" stroke-dasharray="1 3" stroke-linecap="round"/>
+        <g transform="translate(${cw*.15+4} ${y+ch/2})"><path d="M-${cw*.08} ${ch*.1}L-${cw*.1} -${ch*.08}L-${cw*.03} 0L0 -${ch*.14}L${cw*.03} 0L${cw*.1} -${ch*.08}L${cw*.08} ${ch*.1}Z" fill="#ffe08a" stroke="#6e4608"/><circle cy="${ch*.03}" r="${cw*.025}" fill="#c0392b"/></g>
+        ${[[8,y+4],[cw,y+4],[8,y+ch-4],[cw,y+ch-4]].map(([x,yy])=>`<circle cx="${x}" cy="${yy}" r="4" fill="${k.AU}" stroke="#6e4608"/>`).join('')}`}
+    const ty=4+ch+gap/2;if(n>1)s+=`<rect x="${w*.25}" y="${ty-gap*.36}" width="${w*.6}" height="${gap*.72}" rx="${gap*.2}" fill="${k.AU}" stroke="#6e4608"/><circle cx="${w*.55}" cy="${ty}" r="${gap*.18}" fill="#7a1a24"/>`;return s},
+  // beach sun loungers and a parasol
+  lounger(w,h,k,id){let s='';const n=k.n||2,gap=h*.2,ch=(h-gap-8)/n,cw=w*.78;
+    for(let i=0;i<n;i++){const y=4+i*(ch+gap),x=(w-cw)/2;
+      s+=`<rect x="${x}" y="${y}" width="${cw}" height="${ch}" rx="8" fill="#e9dcc2" stroke="#8a6a3a" stroke-width="2"/>${[...Array(12)].map((_,j)=>`<path d="M${x} ${y+ch*(j+.5)/12}h${cw}" stroke="#c9b48a" stroke-width="1.2"/>`).join('')}
+        <rect x="${x+4}" y="${y+5}" width="${cw-8}" height="${ch-10}" rx="6" fill="${k.f}"/>${[...Array(5)].map((_,j)=>j%2?`<rect x="${x+4+(cw-8)*j/5}" y="${y+5}" width="${(cw-8)/5}" height="${ch-10}" fill="#ffffff" opacity=".85"/>`:'').join('')}
+        <rect x="${x+8}" y="${y+8}" width="${cw-16}" height="${ch*.2}" rx="8" fill="#ffffff" stroke="#d0c6b0"/><rect x="${x+cw*.15}" y="${y+ch*.55}" width="${cw*.6}" height="${ch*.25}" rx="3" fill="${k.p}" opacity=".85" transform="rotate(-6 ${x+cw*.45} ${y+ch*.67})"/>`}
+    const ty=4+ch+gap/2,r=Math.min(gap*.62,w*.48);if(n>1)s+=`<g transform="translate(${w/2} ${ty})">${[...Array(8)].map((_,j)=>{const a=j*Math.PI/4,b=a+Math.PI/4;return `<path d="M0 0L${Math.cos(a)*r} ${Math.sin(a)*r}L${Math.cos(b)*r} ${Math.sin(b)*r}Z" fill="${j%2?'#ffffff':k.f}" stroke="rgba(0,0,0,.15)"/>`}).join('')}<circle r="3" fill="#8a6a3a"/></g>`;return s},
+  // Egypt: a golden sarcophagus (mummy case)
+  mummy(w,h,k,id){const L='#1f4fa0',cx=w/2,bw=w*.82,y0=6,y1=h-6,H=y1-y0;
+    let s=`<pattern id="${id}hg" width="14" height="14" patternUnits="userSpaceOnUse"><rect width="14" height="14" fill="#e2b54e"/><path d="M3 3h3v8h-3zM9 3a2.5 2.5 0 1 1 0 5a2.5 2.5 0 1 1 0-5z" fill="#6e4608" opacity=".55"/></pattern>`;
+    s+=`<path d="M${cx} ${y0}C${cx+bw*.62} ${y0} ${cx+bw*.58} ${y0+H*.2} ${cx+bw*.5} ${y0+H*.3}C${cx+bw*.55} ${y0+H*.62} ${cx+bw*.42} ${y0+H*.9} ${cx+bw*.3} ${y1}L${cx-bw*.3} ${y1}C${cx-bw*.42} ${y0+H*.9} ${cx-bw*.55} ${y0+H*.62} ${cx-bw*.5} ${y0+H*.3}C${cx-bw*.58} ${y0+H*.2} ${cx-bw*.62} ${y0} ${cx} ${y0}Z" fill="${k.AU}" stroke="#4a2c04" stroke-width="2"/>`;
+    // headdress stripes
+    s+=`<g clip-path="url(#${id}cl)"><clipPath id="${id}cl"><path d="M${cx} ${y0}C${cx+bw*.62} ${y0} ${cx+bw*.58} ${y0+H*.2} ${cx+bw*.5} ${y0+H*.3}L${cx-bw*.5} ${y0+H*.3}C${cx-bw*.58} ${y0+H*.2} ${cx-bw*.62} ${y0} ${cx} ${y0}Z"/></clipPath>${[...Array(9)].map((_,j)=>`<rect x="${cx-bw*.6+j*bw*.14}" y="${y0}" width="${bw*.07}" height="${H*.32}" fill="${L}"/>`).join('')}</g>`;
+    s+=`<ellipse cx="${cx}" cy="${y0+H*.15}" rx="${bw*.28}" ry="${H*.09}" fill="#f0c66a" stroke="#4a2c04"/><path d="M${cx-bw*.14} ${y0+H*.13}h${bw*.1}M${cx+bw*.04} ${y0+H*.13}h${bw*.1}" stroke="#111" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M${cx-bw*.18} ${y0+H*.12}q${bw*.06}-${H*.015} ${bw*.12} 0M${cx+bw*.06} ${y0+H*.12}q${bw*.06}-${H*.015} ${bw*.12} 0" stroke="#111" fill="none"/><rect x="${cx-bw*.04}" y="${y0+H*.24}" width="${bw*.08}" height="${H*.07}" fill="${L}" stroke="#4a2c04"/>`;
+    // collar
+    s+=`${[0,1,2,3].map(j=>`<path d="M${cx-bw*(.48-j*.02)} ${y0+H*(.31+j*.025)}Q${cx} ${y0+H*(.42+j*.025)} ${cx+bw*(.48-j*.02)} ${y0+H*(.31+j*.025)}" fill="none" stroke="${j%2?L:'#c0392b'}" stroke-width="${H*.018}"/>`).join('')}`;
+    // crossed arms with crook and flail
+    s+=`<path d="M${cx-bw*.36} ${y0+H*.45}L${cx+bw*.2} ${y0+H*.55}M${cx+bw*.36} ${y0+H*.45}L${cx-bw*.2} ${y0+H*.55}" stroke="#f0c66a" stroke-width="${bw*.12}" stroke-linecap="round"/>
+      <path d="M${cx-bw*.12} ${y0+H*.42}L${cx+bw*.1} ${y0+H*.62}" stroke="${L}" stroke-width="3"/><path d="M${cx+bw*.12} ${y0+H*.42}L${cx-bw*.1} ${y0+H*.62}" stroke="#c0392b" stroke-width="3"/>`;
+    // hieroglyph bands down the legs
+    s+=`<rect x="${cx-bw*.12}" y="${y0+H*.62}" width="${bw*.24}" height="${H*.34}" fill="url(#${id}hg)" stroke="#4a2c04"/>${[0,1,2].map(j=>`<path d="M${cx-bw*(.4-j*.04)} ${y0+H*(.66+j*.1)}H${cx+bw*(.4-j*.04)}" stroke="${L}" stroke-width="3"/>`).join('')}
+      <path d="M${cx-bw*.2} ${y0+H*.36}q${bw*.2} ${H*.04} ${bw*.4} 0" fill="none" stroke="#fff3c4" stroke-width="1.2" opacity=".6"/>`;
+    return s},
+  // Dracula: a closed coffin with a silver cross and candles
+  coffin(w,h,k,id){const cx=w/2,bw=w*.78,y0=10,y1=h-10,H=y1-y0;
+    let s=`<linearGradient id="${id}cw" x1="0" x2="1"><stop offset="0" stop-color="#1a0b0b"/><stop offset=".5" stop-color="#3a1414"/><stop offset="1" stop-color="#120606"/></linearGradient>`;
+    const pts=`${cx-bw*.3},${y0} ${cx+bw*.3},${y0} ${cx+bw*.5},${y0+H*.22} ${cx+bw*.34},${y1} ${cx-bw*.34},${y1} ${cx-bw*.5},${y0+H*.22}`;
+    s+=`<polygon points="${pts}" fill="url(#${id}cw)" stroke="#8a8f99" stroke-width="2.5"/><polygon points="${pts}" fill="none" stroke="#000" stroke-width="1" transform="translate(${cx} ${y0+H/2}) scale(.9) translate(${-cx} ${-(y0+H/2)})"/>
+      <rect x="${cx-bw*.05}" y="${y0+H*.2}" width="${bw*.1}" height="${H*.5}" rx="2" fill="#c9ced8" stroke="#555"/><rect x="${cx-bw*.22}" y="${y0+H*.32}" width="${bw*.44}" height="${bw*.1}" rx="2" fill="#c9ced8" stroke="#555"/>
+      ${[[cx-bw*.4,y0+H*.22],[cx+bw*.4,y0+H*.22],[cx-bw*.3,y1-6],[cx+bw*.3,y1-6]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="2.5" fill="#c9ced8"/>`).join('')}
+      <path d="M${cx-bw*.36} ${y0+H*.5}q${bw*.2} ${H*.1} ${bw*.72} 0" stroke="#7a0f12" stroke-width="3" fill="none" opacity=".8"/>`;
+    [[w*.5,4],[w*.5,h-4]].forEach(([x,y],e)=>{s+=`<circle cx="${x}" cy="${y}" r="9" fill="rgba(255,190,90,.35)"/><circle cx="${x}" cy="${y}" r="4" fill="#efe6d4" stroke="#8a7a60"/><circle cx="${x}" cy="${y}" r="1.6" fill="#ffcf5a"/>`});return s},
+  // Greece: a marble bench between two columns, and an amphora
+  greek(w,h,k,id){let s=`<linearGradient id="${id}mb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#e8ecf2"/><stop offset="1" stop-color="#c9d0db"/></linearGradient>`;
+    const col=(cy)=>{const r=w*.4;return `<circle cx="${w/2}" cy="${cy}" r="${r}" fill="url(#${id}mb)" stroke="#9aa4b4" stroke-width="2"/>${[...Array(16)].map((_,j)=>{const a=j*Math.PI/8;return `<path d="M${w/2+Math.cos(a)*r*.55} ${cy+Math.sin(a)*r*.55}L${w/2+Math.cos(a)*r*.95} ${cy+Math.sin(a)*r*.95}" stroke="#b4bccb"/>`}).join('')}<circle cx="${w/2}" cy="${cy}" r="${r*.5}" fill="#f4f6fa" stroke="#b4bccb"/>`};
+    const by=w*.5,bh=h-w-12;s+=`<rect x="${w*.12}" y="${by}" width="${w*.76}" height="${bh}" rx="6" fill="url(#${id}mb)" stroke="#9aa4b4" stroke-width="2"/>
+      <path d="M${w*.2} ${by+bh*.2}q${w*.2} ${bh*.1} ${w*.15} ${bh*.25}t${w*.25} ${bh*.3}" stroke="#c4cbd8" fill="none"/>
+      ${[...Array(Math.floor(bh/14))].map((_,j)=>{const y=by+6+j*14;return `<path d="M${w*.16} ${y}h4v4h4v-8h4v12" fill="none" stroke="#1f4fa0" stroke-width="1.6"/>`}).join('')}
+      ${cushion(w*.38,by+bh*.12,w*.42,bh*.3,k,8)}${cushion(w*.38,by+bh*.58,w*.42,bh*.3,k,8)}`;
+    s+=col(w*.42)+col(h-w*.42);
+    const ay=by+bh/2,ar=Math.min(w*.2,bh*.12);s+=`<g transform="translate(${w*.25} ${ay})"><ellipse rx="${ar}" ry="${ar*1.3}" fill="#c96a2a" stroke="#3a1a08"/><path d="M-${ar*.8} -${ar*.2}h${ar*1.6}M-${ar*.8} ${ar*.3}h${ar*1.6}" stroke="#1a0d05" stroke-width="2.5"/><circle r="${ar*.35}" fill="#1a0d05"/></g>`;return s}};
+// the space beside the rug: a wider rug in landscape, the seat fills the gap to the screen edge
+let key='';
+function paint(){const t=$('table'),rug=document.querySelector('.rug')||$('ground');if(!t||!rug)return;
+  const r=t.getBoundingClientRect(),g=rug.getBoundingClientRect(),gap=Math.max(10,r.width*.012),side=g.left-r.left-gap-10,w=Math.round(Math.min(130,side,g.height*.46));
+  let L=t.querySelector('.wsofa.l'),Rr=t.querySelector('.wsofa.r');
+  if(innerWidth<=760||w<44||!g.height){L&&L.remove();Rr&&Rr.remove();document.documentElement.classList.remove('wsofa-on');key='';return}
+  const h=Math.round(g.height),th=([...document.documentElement.classList].find(c=>c.startsWith('t-'))||'t-house').slice(2),kind=(window.SEAT_KIND||{})[th]||KIND[th]||'sofa',nL=Math.max(1,Math.min(2,document.querySelectorAll('#seats .seat.s-left').length)),nR=Math.max(1,Math.min(2,document.querySelectorAll('#seats .seat.s-right').length)),k2=th+w+'x'+h+'n'+nL+nR;
+  if(!L){L=document.createElement('div');L.className='wsofa l';t.appendChild(L);Rr=document.createElement('div');Rr.className='wsofa r';t.appendChild(Rr)}
+  document.documentElement.classList.add('wsofa-on');
+  L.style.top=Rr.style.top=Math.round(g.top-r.top)+'px';L.style.left=Math.round(g.left-r.left-gap-w)+'px';Rr.style.left=Math.round(g.right-r.left+gap)+'px';Rr.style.right='auto';
+  if(k2===key)return;key=k2;const P0=window.__seatPalette?__seatPalette():{f:hex('5a1a14'),t:G,p:hex('c9a04a')},ov=(window.SEAT_PAL||{})[th]||{},P={...P0};Object.keys(ov).forEach(x=>P[x]=hex(ov[x]));
+  [L,Rr].forEach((el,i)=>{const id='st'+i,kk=kit(P,id),n=i?nR:nL;kk.n=n;const hh=n>1?h:Math.round(h*.56),off=Math.round((h-hh)/2);el.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><defs>${kk.defs}</defs><g transform="translate(0 ${off})">${SEAT[kind](w,hh,kk,id)}</g></svg>`;el.style.width=w+'px';el.style.height=h+'px';el.dataset.kind=kind;el.dataset.n=n})}
+window.__seatPaint=()=>{key='';paint()};window.SEATS={SEAT,kit,hex,tassel,cushion,mix,css};
+let q=0;const soon=()=>{cancelAnimationFrame(q);q=requestAnimationFrame(()=>{try{paint()}catch(e){console.error(e)}})};
+render=(function(prev){return function(){const r=prev.apply(this,arguments);soon();return r}})(render);
+applySkin=(function(prev){return function(){const r=prev.apply(this,arguments);key='';soon();return r}})(applySkin);
+addEventListener('resize',()=>{key='';soon()});setTimeout(soon,700);
+const st=document.createElement('style');st.textContent=`
+@media (min-width:761px) and (orientation:landscape){
+  html body{--SW:min(calc(100vw - 2 * var(--sx,0px) - 250px),calc(var(--W) * 1.75))}
+  html body .stage{width:var(--SW)!important}
+  html body .table .rug,html body .table .center{width:calc(var(--SW) * .97)!important}
+}`;document.head.appendChild(st);
+})();
+
+// ===================== Round 72: theme fixes (Dracula table and gothic chairs, garden benches, grand classic sofas, a real night, beach, simpler Ramadan, desert sand, modern tiles, green majlis) =====================
+(function(){
+const S=window.SEATS;if(!S)return;const {SEAT,tassel,cushion}=S;
+window.SEAT_KIND={drac:'gothic',garden:'garden',classic:'grand',teal:'sofa'};
+window.SEAT_PAL={greek:{f:'f4f6f8',p:'1d4f8f',t:'c9a04a'},sea:{f:'18a3b3',p:'ffffff',t:'e8d3a0'},chalet:{f:'e0674a',p:'fbf3e6',t:'c99a5e'},drac:{f:'5a0a14',p:'8a1220',t:'b8bcc6'},
+  night:{f:'1d2b5a',p:'c9cfe0',t:'d9dde8'},ramadan:{f:'5a1f4a',p:'e8c46a',t:'e8c46a'},modern:{f:'a4a7ad',p:'2f3a4a',t:'c8a96a'},teal:{f:'1f6b55',p:'e2c06a',t:'e2c06a'},
+  camp:{f:'a83826',p:'efe5cf',t:'e2b54e'},classic:{f:'7a1a1a',p:'e9dcc0',t:'d4a94a'},garden:{f:'4f7a3a',p:'f1e6cf',t:'c9a04a'}};
+// Dracula: tall gothic chairs with a silver candelabra between them
+SEAT.gothic=function(w,h,k,id){let s=`<linearGradient id="${id}eb" x1="0" x2="1"><stop offset="0" stop-color="#0d0605"/><stop offset=".5" stop-color="#2e140c"/><stop offset="1" stop-color="#0d0605"/></linearGradient>`;
+  const n=k.n||2,gap=h*.16,ch=(h-gap-8)/n,cw=w-6;
+  for(let i=0;i<n;i++){const y=4+i*(ch+gap),b=cw*.34;
+    // pointed gothic back with spires on the outer side
+    s+=`<path d="M3 ${y+ch*.06}L${b*.5} ${y}L${b} ${y+ch*.06}L${b} ${y+ch*.94}L${b*.5} ${y+ch}L3 ${y+ch*.94}Z" fill="url(#${id}eb)" stroke="#8a8f99" stroke-width="1.5"/>
+      ${[.22,.5,.78].map(f=>`<path d="M${b*.2} ${y+ch*f}L${b*.5} ${y+ch*(f-.09)}L${b*.8} ${y+ch*f}L${b*.5} ${y+ch*(f+.09)}Z" fill="none" stroke="#5a1a14" stroke-width="1.5"/><circle cx="${b*.5}" cy="${y+ch*f}" r="2" fill="#b8bcc6"/>`).join('')}
+      <rect x="${b-2}" y="${y+ch*.08}" width="${cw-b+2}" height="${ch*.84}" rx="6" fill="url(#${id}eb)" stroke="#2a1208"/>
+      <rect x="${b+3}" y="${y+ch*.16}" width="${cw-b-8}" height="${ch*.68}" rx="8" fill="${k.RR}" stroke="#2a0306"/>
+      ${[...Array(6)].map((_,j)=>`<circle cx="${b+3+(cw-b-8)*((j%2)*.5+.25)}" cy="${y+ch*.16+ch*.68*(Math.floor(j/2)+.5)/3}" r="1.8" fill="#b8bcc6"/>`).join('')}
+      <rect x="${b-2}" y="${y+ch*.04}" width="${cw-b+2}" height="${ch*.1}" rx="4" fill="url(#${id}eb)" stroke="#8a8f99"/><rect x="${b-2}" y="${y+ch*.86}" width="${cw-b+2}" height="${ch*.1}" rx="4" fill="url(#${id}eb)" stroke="#8a8f99"/>`}
+  const cy=4+ch+gap/2,cx=w*.55;if(n>1)s+=`<circle cx="${cx}" cy="${cy}" r="${gap*.55}" fill="rgba(255,170,80,.25)"/><path d="M${cx-gap*.35} ${cy}h${gap*.7}M${cx} ${cy-gap*.35}v${gap*.7}" stroke="#c9ced8" stroke-width="3" stroke-linecap="round"/>
+    ${[[cx,cy],[cx-gap*.35,cy],[cx+gap*.35,cy],[cx,cy-gap*.35],[cx,cy+gap*.35]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="4" fill="#efe6d4" stroke="#8a7a60"/><circle cx="${x}" cy="${y}" r="1.7" fill="#ffcf5a"/>`).join('')}`;return s};
+// garden: wooden benches with cushions and potted plants
+SEAT.garden=function(w,h,k,id){let s=`<linearGradient id="${id}tk" x1="0" x2="1"><stop offset="0" stop-color="#8a5a2e"/><stop offset=".5" stop-color="#b98a52"/><stop offset="1" stop-color="#8a5a2e"/></linearGradient>`;
+  const pot=(cx,cy,r)=>`<circle cx="${cx}" cy="${cy}" r="${r}" fill="#b5653a" stroke="#6e3418" stroke-width="2"/><circle cx="${cx}" cy="${cy}" r="${r*.8}" fill="#4a2e1a"/>${[...Array(9)].map((_,j)=>{const a=j*.7;return `<ellipse cx="${cx+Math.cos(a)*r*.45}" cy="${cy+Math.sin(a)*r*.45}" rx="${r*.42}" ry="${r*.18}" fill="${j%2?'#3f7a32':'#5a9a44'}" transform="rotate(${a*57} ${cx+Math.cos(a)*r*.45} ${cy+Math.sin(a)*r*.45})"/>`}).join('')}<circle cx="${cx}" cy="${cy}" r="${r*.16}" fill="#f2c94c"/>`;
+  const nb=k.n||2,pr=Math.min(w*.4,h*.1),bh=nb>1?(h-pr*6)/2:(h-pr*4-8);
+  s+=pot(w/2,pr+2,pr);if(nb>1)s+=pot(w/2,h/2,pr);s+=pot(w/2,h-pr-2,pr);
+  for(let i=0;i<nb;i++){const y=pr*2+6+i*(bh+pr*2-4);
+    s+=`<rect x="4" y="${y}" width="${w-8}" height="${bh}" rx="5" fill="url(#${id}tk)" stroke="#5a3317" stroke-width="1.5"/>${[...Array(Math.floor(bh/9))].map((_,j)=>`<path d="M5 ${y+5+j*9}h${w-10}" stroke="#6e4422" stroke-width="1.2"/>`).join('')}
+      <rect x="${w*.3}" y="${y+5}" width="${w*.62}" height="${bh-10}" rx="8" fill="${k.PP}" stroke="${k.pd}"/><path d="M${w*.36} ${y+bh/2}h${w*.5}" stroke="rgba(0,0,0,.15)" stroke-width="1.5"/>
+      ${cushion(8,y+bh*.15,w*.3,bh*.32,k,6)}${cushion(8,y+bh*.53,w*.3,bh*.32,k,6)}`}
+  return s};
+// classic: grand carved gold sofa
+SEAT.grand=function(w,h,k,id){let s=`<pattern id="${id}dm" width="20" height="20" patternUnits="userSpaceOnUse"><rect width="20" height="20" fill="${k.f}"/><path d="M10 2c3 4 3 6 0 8c-3-2-3-4 0-8zM10 18c3-4 3-6 0-8c-3 2-3 4 0 8z" fill="${k.fd}" opacity=".6"/><circle cx="10" cy="10" r="1.5" fill="${k.GG}"/></pattern>`;
+  const back=w*.32,arm=Math.min(w*.4,h*.075);
+  // scalloped carved back
+  let d=`M${back} 6`;const n=6;for(let i=0;i<n;i++){const y0=6+i*(h-12)/n,y1=y0+(h-12)/n;d+=`L${back} ${y0}Q4 ${(y0+y1)/2} ${back} ${y1}`}
+  s+=`<path d="${d}L${back} ${h-6}L${w-3} ${h-6}L${w-3} 6Z" fill="${k.AU}" stroke="#6e4608" stroke-width="1.8"/>
+    <rect x="${back*.55}" y="10" width="${back*.5}" height="${h-20}" rx="10" fill="url(#${id}dm)" stroke="#6e4608"/>
+    <rect x="${back+3}" y="${arm+6}" width="${w-back-9}" height="${h-arm*2-12}" rx="10" fill="url(#${id}dm)" stroke="#6e4608" stroke-width="1.5"/>
+    <rect x="${back+7}" y="${arm+10}" width="${w-back-17}" height="${h-arm*2-20}" rx="7" fill="none" stroke="${k.GG}" stroke-width="1.4" stroke-dasharray="1 3" stroke-linecap="round"/>`;
+  [[4,0],[h-arm-4,1]].forEach(([y,e])=>{s+=`<path d="M${back*.4} ${y}H${w-6}a${arm/2} ${arm/2} 0 0 1 0 ${arm}H${back*.4}a${arm/2} ${arm/2} 0 0 1 0 -${arm}z" fill="${k.AU}" stroke="#6e4608"/><circle cx="${w-6}" cy="${y+arm/2}" r="${arm*.32}" fill="${k.fd}" stroke="${k.GG}"/>`+tassel(w-10,e?y+arm:y,'#e2b54e',e?1:-1)});
+  const nc=k.n===1?1:3,ph=(h-arm*2-28)/nc;for(let i=0;i<nc;i++)s+=cushion(back*.7,arm+14+i*ph+ph*.1,w*.42,ph*.8,k);
+  return s};
+
+// themes: fixes the players asked for
+const st=document.createElement('style');st.textContent=`
+/* Dracula: an ebony table with silver studs and blood-red velvet */
+html.t-drac body .table .rug{background:radial-gradient(circle,#c9ced8 0 1.6px,transparent 2.2px) 0 0/22px 22px,linear-gradient(135deg,#1c0b05,#4a2412 30%,#1a0a05 55%,#3a1a0c 80%,#140804)!important;padding:calc(var(--W) * .045)!important;border-radius:18px!important;box-shadow:0 0 0 2px #6e737d,0 0 0 4px #0a0505,0 22px 40px rgba(0,0,0,.8)!important}
+html.t-drac body .table .field{border-radius:10px!important;background:radial-gradient(ellipse at 50% 40%,rgba(255,80,90,.12),transparent 60%),repeating-linear-gradient(45deg,rgba(0,0,0,.08) 0 2px,transparent 2px 6px),radial-gradient(ellipse at center,#6e0c18,#2a0306 85%)!important;box-shadow:inset 0 0 0 2px #9aa0aa,inset 0 0 0 6px #1a0a05,inset 0 0 0 7px #6e737d,inset 0 0 30px rgba(0,0,0,.6)!important}
+/* Night: a real night sky, moon and stars, navy and silver */
+html.t-night body #app{background:radial-gradient(circle at 88% 9%,#fffbe8 0 18px,rgba(255,250,220,.35) 19px 34px,rgba(255,250,220,.08) 35px 70px,transparent 90px),radial-gradient(circle,#fff 0 1px,transparent 1.6px) 0 0/53px 47px,radial-gradient(circle,rgba(255,255,255,.7) 0 .8px,transparent 1.3px) 21px 13px/37px 41px,radial-gradient(circle,rgba(200,215,255,.6) 0 1.2px,transparent 1.8px) 9px 29px/71px 67px,radial-gradient(ellipse 70% 50% at 50% 55%,rgba(90,120,220,.18),transparent 70%),linear-gradient(180deg,#0a1230,#060a1c 70%,#04060f)!important}
+html.t-night body .topbar,html.t-night body .bottombar{background:linear-gradient(180deg,#121c44,#080d24)!important;box-shadow:0 0 0 1px rgba(200,210,235,.25),0 4px 14px rgba(0,0,0,.6)!important}
+html.t-night body .topbar::after,html.t-night body .bottombar::before{background:radial-gradient(circle,#d9dde8 0 1.4px,transparent 2px) 0 50%/14px 7px repeat-x!important}
+html.t-night body .table .rug{background:radial-gradient(circle,#d9dde8 0 1.3px,transparent 1.9px) 0 0/16px 16px,linear-gradient(135deg,#1a2550,#0e1636)!important;padding:calc(var(--W) * .035)!important;border-radius:6px!important;box-shadow:0 0 0 2px #c9cfe0,0 18px 34px rgba(0,0,0,.7)!important}
+html.t-night body .table .field{background:radial-gradient(circle at 50% 50%,transparent 26%,rgba(217,221,232,.18) 26.5% 27.5%,transparent 28%),radial-gradient(ellipse at 50% 42%,rgba(120,140,220,.22),transparent 65%),linear-gradient(160deg,#16205a,#0b1238)!important;box-shadow:inset 0 0 0 2px #c9cfe0aa,inset 0 0 26px rgba(0,0,0,.4)!important}
+html.t-night body .table .field::after,html.t-night body .rug::before,html.t-night body .rug::after{background:none!important;content:none!important}
+html.t-night body .gbtn{background:rgba(255,255,255,.06)!important;color:#d9dde8!important;box-shadow:inset 0 0 0 1px rgba(217,221,232,.4)!important}
+/* Beach: sand, a straw mat, turquoise */
+html.t-sea body #app{background:radial-gradient(circle,rgba(255,255,255,.35) 0 1px,transparent 1.5px) 0 0/9px 9px,radial-gradient(circle,rgba(150,110,50,.22) 0 1px,transparent 1.6px) 4px 5px/7px 7px,radial-gradient(ellipse 70% 55% at 50% 50%,rgba(255,250,235,.4),transparent 70%),linear-gradient(180deg,#ecd9b2,#dfc391)!important}
+html.t-sea body .topbar,html.t-sea body .bottombar{background:linear-gradient(180deg,#1fb3c2,#12808c)!important}
+html.t-sea body .topbar::after,html.t-sea body .bottombar::before{background:repeating-linear-gradient(90deg,#fff 0 8px,#ecd9b2 8px 16px)!important;height:4px!important}
+html.t-sea body .table .rug{background:repeating-linear-gradient(90deg,#18a3b3 0 10px,#fff 10px 20px)!important;padding:calc(var(--W) * .02)!important;border-radius:6px!important;box-shadow:0 14px 26px rgba(120,80,30,.35)!important}
+html.t-sea body .table .field{background:repeating-linear-gradient(0deg,rgba(120,80,30,.18) 0 1px,transparent 1px 5px),repeating-linear-gradient(90deg,#e9d3a0 0 4px,#dcc08a 4px 8px)!important;box-shadow:inset 0 0 0 2px #fff,inset 0 0 18px rgba(120,80,30,.25)!important;border-radius:3px!important}
+html.t-sea body .table .field::after{background:none!important}
+html.t-sea{--mjH:repeating-linear-gradient(90deg,#18a3b3 0 9px,#ffffff 9px 18px)!important;--mjV:repeating-linear-gradient(180deg,#18a3b3 0 9px,#ffffff 9px 18px)!important;--mjt:#e8d3a0!important}
+html.t-sea body .stage .td{filter:hue-rotate(170deg) saturate(.9) drop-shadow(0 6px 6px rgba(0,0,0,.3))}
+/* Ramadan: simpler, softer: navy, cream and gold, a crescent */
+html.t-ramadan body #app{background:radial-gradient(ellipse 60% 45% at 50% 52%,rgba(255,190,90,.28),transparent 70%),radial-gradient(circle at 50% 50%,rgba(232,196,106,.22) 0 2px,transparent 2.6px) 0 0/44px 44px,radial-gradient(ellipse at center,transparent 50%,rgba(20,0,15,.5)),linear-gradient(180deg,#5a1f4a,#3a1030)!important}
+html.t-ramadan body .topbar,html.t-ramadan body .bottombar{background:linear-gradient(180deg,#4a1640,#2a0a24)!important;box-shadow:0 0 0 1px rgba(232,196,106,.4),0 4px 14px rgba(0,0,0,.5)!important}
+html.t-ramadan body .table .rug{background:linear-gradient(135deg,#b8892e,#f2d27a 50%,#b8892e)!important;padding:calc(var(--W) * .018)!important;border-radius:6px!important;box-shadow:0 18px 34px rgba(0,0,0,.55)!important}
+html.t-ramadan body .table .field{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M60 26a26 26 0 1 0 0 48a21 21 0 1 1 0-48z' fill='%23c9a04a' fill-opacity='.35'/%3E%3Cpath d='M70 40l2 5 5 .5-4 3.5 1.2 5-4.2-2.7-4.2 2.7 1.2-5-4-3.5 5-.5z' fill='%23c9a04a' fill-opacity='.45'/%3E%3C/svg%3E") center/42% no-repeat,radial-gradient(ellipse at center,#f6efdf,#e9dcc0 90%)!important;box-shadow:inset 0 0 0 2px #c9a04a,inset 0 0 0 6px #f6efdf,inset 0 0 0 7px #c9a04a88!important}
+html.t-ramadan body .table .field::after,html.t-ramadan body .table .rug::before,html.t-ramadan body .table .rug::after{content:none!important;background:none!important}
+html.t-ramadan body .drawrow,html.t-ramadan body .table .field .empty{color:#8a6a1f!important}
+/* Chalet: a warm sunset terrace: teak deck, coral and cream outdoor rug */
+html.t-chalet body .topbar,html.t-chalet body .bottombar{background:linear-gradient(180deg,#8a5a34,#5e3a1e)!important;box-shadow:0 4px 14px rgba(60,30,10,.4)!important}
+html.t-chalet body .topbar::after,html.t-chalet body .bottombar::before{background:repeating-linear-gradient(90deg,#e0674a 0 10px,#fbf3e6 10px 20px)!important;height:4px!important}
+html.t-chalet body .gbtn{background:rgba(255,255,255,.1)!important;color:#fbe3c6!important;box-shadow:inset 0 0 0 1px rgba(251,227,198,.45)!important}
+html.t-chalet body .table .rug{background:repeating-linear-gradient(45deg,#e0674a 0 8px,#f0a37a 8px 16px)!important;padding:calc(var(--W) * .025)!important;border-radius:8px!important;box-shadow:0 16px 30px rgba(60,30,10,.4)!important}
+html.t-chalet body .table .field{background:radial-gradient(circle,rgba(224,103,74,.35) 0 2px,transparent 2.6px) 0 0/22px 22px,linear-gradient(135deg,#fbf3e6,#f1e2c8)!important;box-shadow:inset 0 0 0 2px #fff,inset 0 0 0 7px #fbf3e6,inset 0 0 0 8px #e0674a99!important;border-radius:4px!important}
+html.t-chalet body .table .field::after,html.t-chalet body .rug::before,html.t-chalet body .rug::after{content:none!important;background:none!important}
+html.t-chalet{--mjH:repeating-linear-gradient(90deg,#e0674a 0 9px,#fbf3e6 9px 18px)!important;--mjV:repeating-linear-gradient(180deg,#e0674a 0 9px,#fbf3e6 9px 18px)!important;--mjt:#c99a5e!important}
+/* Desert: sand all around (no more rug floating in the sky) */
+html.t-camp body #app{background:radial-gradient(ellipse 55% 35% at 50% 58%,rgba(255,150,60,.35),transparent 70%),radial-gradient(circle,rgba(255,240,210,.35) 0 1px,transparent 1.5px) 0 0/8px 8px,radial-gradient(circle,rgba(120,80,30,.25) 0 1px,transparent 1.6px) 3px 4px/6px 6px,radial-gradient(ellipse at center,transparent 50%,rgba(40,20,5,.45)),linear-gradient(180deg,#c99a5e,#b4834a)!important}
+/* Modern: porcelain tiles, one calm palette */
+html.t-modern body #app{background:linear-gradient(90deg,rgba(0,0,0,.07) 1px,transparent 1px) 0 0/180px 180px,linear-gradient(rgba(0,0,0,.07) 1px,transparent 1px) 0 0/180px 180px,radial-gradient(ellipse 70% 55% at 50% 50%,rgba(255,255,255,.6),transparent 70%),linear-gradient(135deg,#efeeeb,#dedcd7)!important}
+html.t-modern body .table .rug{background:#d9d6cf!important;padding:calc(var(--W) * .02)!important;border-radius:10px!important;box-shadow:0 1px 0 rgba(255,255,255,.7) inset,0 16px 30px rgba(40,40,50,.22)!important}
+html.t-modern body .table .field{background:radial-gradient(ellipse at 50% 45%,#f4f2ee,#e6e3dc)!important;box-shadow:inset 0 0 0 1px #2f3a4a33,inset 0 0 0 8px transparent,inset 0 0 0 9px #c8a96a66!important;border-radius:6px!important}
+html.t-modern body .table .field::after{background:none!important}
+/* Green majlis: emerald and gold, one coherent room */
+html.t-teal body #app{background:radial-gradient(circle,rgba(226,192,106,.14) 0 2px,transparent 3px) 0 0/30px 30px,radial-gradient(ellipse 70% 55% at 50% 50%,rgba(226,192,106,.12),transparent 70%),radial-gradient(ellipse at center,#1d4a3f,#0c241f 90%)!important}
+html.t-teal body .topbar,html.t-teal body .bottombar{background:linear-gradient(180deg,#14382f,#0a1f1a)!important;box-shadow:0 0 0 1px rgba(226,192,106,.35),0 4px 14px rgba(0,0,0,.5)!important}
+html.t-teal body .table .rug{background:radial-gradient(circle,#e2c06a 0 1.5px,transparent 2px) 0 0/14px 14px,linear-gradient(135deg,#f1e6cf,#e3d3ad)!important;padding:calc(var(--W) * .035)!important;border-radius:4px!important;box-shadow:0 0 0 2px #c9a04a,0 18px 32px rgba(0,0,0,.55)!important}
+html.t-teal body .table .field{background:radial-gradient(circle at 50% 50%,transparent 22%,rgba(226,192,106,.35) 22.5% 23.5%,transparent 24%),radial-gradient(ellipse at 50% 42%,rgba(255,255,255,.1),transparent 65%),linear-gradient(160deg,#1f6b55,#124535)!important;box-shadow:inset 0 0 0 2px #e2c06a,inset 0 0 0 6px #1f6b55,inset 0 0 0 7px #e2c06a88!important;border-radius:2px!important}
+html.t-teal body .table .field::after,html.t-teal body .rug::before,html.t-teal body .rug::after{content:none!important;background:none!important}
+/* Classic: the bars match the room (deep wine and gold, not blue) */
+html.t-classic body .topbar,html.t-classic body .bottombar{background:linear-gradient(180deg,#4a1a14,#260a07)!important}
+#table>.wdeco{position:absolute;right:calc(14px + env(safe-area-inset-right,0px));top:8px;width:58px;z-index:2;pointer-events:none;filter:drop-shadow(0 6px 6px rgba(0,0,0,.5))}#table>.wdeco[hidden]{display:none}#table>.wdeco svg{width:100%;height:auto;display:block}`;document.head.appendChild(st);
+if(window.__seatPaint)setTimeout(__seatPaint,800);
+// landscape: the corner piece (lantern, cat, candles) moves off the rug into the room's corner
+function moveDeco(){const t=$('table'),st=document.querySelector('.stage');if(!t||!st)return;const wide=innerWidth>760&&matchMedia('(orientation:landscape)').matches;
+  const inS=st.querySelector('.wdeco'),inT=t.querySelector(':scope>.wdeco');
+  if(wide){if(inS){if(inT)inT.remove();t.appendChild(inS)}}else if(inT){if(inS)inT.remove();else st.appendChild(inT)}}
+applySkin=(function(prev){return function(){const r=prev.apply(this,arguments);moveDeco();return r}})(applySkin);addEventListener('resize',moveDeco);setTimeout(moveDeco,500);
+})();
+
+// ===================== Round 73: a brand-new chalet (travertine terrace, jute rug, rattan sofas); the score box takes each theme's colours =====================
+(function(){
+const S=window.SEATS;if(!S)return;const {SEAT,cushion,mix,css,hex}=S;
+window.SEAT_KIND=Object.assign(window.SEAT_KIND||{},{chalet:'rattan'});
+window.SEAT_PAL=Object.assign(window.SEAT_PAL||{},{chalet:{f:'b8894e',p:'7d9467',t:'efe6d2'}});
+// rattan outdoor sofa: woven wicker frame, thick cream cushions, sage pillows, a little round table
+SEAT.rattan=function(w,h,k,id){let s=`<pattern id="${id}wk" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#b8894e"/><path d="M0 4h8M4 0v8" stroke="#8a6232" stroke-width="2"/><path d="M0 0l8 8M8 0L0 8" stroke="#d6aa6a" stroke-width=".8"/></pattern>`;
+  const n=k.n||2,gap=h*.15,ch=(h-gap-8)/n;
+  for(let i=0;i<n;i++){const y=4+i*(ch+gap),cw=w-6;
+    s+=`<rect x="3" y="${y}" width="${cw}" height="${ch}" rx="12" fill="url(#${id}wk)" stroke="#6e4a22" stroke-width="2"/>
+      <rect x="${cw*.36}" y="${y+ch*.14}" width="${cw*.6}" height="${ch*.72}" rx="10" fill="#efe6d2" stroke="#c9b892"/><path d="M${cw*.42} ${y+ch*.5}h${cw*.48}" stroke="#d8ccb0" stroke-width="1.5"/>
+      <rect x="7" y="${y+ch*.12}" width="${cw*.3}" height="${ch*.76}" rx="9" fill="#e8dcc2" stroke="#c9b892"/>
+      ${cushion(cw*.14,y+ch*.2,cw*.32,ch*.26,k,7)}${cushion(cw*.14,y+ch*.54,cw*.32,ch*.26,k,7)}`}
+  const ty=4+ch+gap/2,r=Math.min(gap*.42,w*.3);if(n>1)s+=`<circle cx="${w*.55}" cy="${ty}" r="${r}" fill="url(#${id}wk)" stroke="#6e4a22" stroke-width="2"/><circle cx="${w*.55}" cy="${ty}" r="${r*.78}" fill="#f4efe4" stroke="#c9b892"/>
+    <circle cx="${w*.5}" cy="${ty}" r="${r*.25}" fill="#e9583a"/><circle cx="${w*.62}" cy="${ty-r*.2}" r="${r*.18}" fill="#f2c94c"/><circle cx="${w*.6}" cy="${ty+r*.25}" r="${r*.16}" fill="#7d9467"/>`;return s};
+// the score box (لنا / لهم) in every theme's own colours
+const lum=c=>.2126*c.r+.7152*c.g+.0722*c.b;
+function scoreColours(){const th=([...document.documentElement.classList].find(c=>c.startsWith('t-'))||'t-house').slice(2);
+  const P0=window.__seatPalette?__seatPalette():null;if(!P0)return;const ov=(window.SEAT_PAL||{})[th]||{},P={...P0};Object.keys(ov).forEach(x=>P[x]=hex(ov[x]));
+  const H={greek:['ffffff','e8eef6','1d4f8f'],modern:['ffffff','eceae6','2f3a4a'],west:['f4f1ec','ded8ce','4a4d52'],pearl:['f6f4f0','e2ddd4','6b6f78']}[th];
+  const root=document.documentElement.style;
+  if(H){const a=hex(H[0]),b=hex(H[1]),c=hex(H[2]);root.setProperty('--sc1',css(a));root.setProperty('--sc2',css(b));root.setProperty('--sc3',css(mix(b,c,.15)));root.setProperty('--scn',css(c));root.setProperty('--scnt',css(a));root.setProperty('--sct',css(c));root.setProperty('--scl',css(mix(c,a,.5)));return}
+  let t=P.t;if(lum(t)<90)t=P.p;if(lum(t)<90)t=hex('d6aa54');
+  const f=P.f,dk=lum(f)>110?mix(f,{r:0,g:0,b:0},.6):mix(f,{r:0,g:0,b:0},.35);
+  root.setProperty('--sc1',css(mix(t,{r:255,g:255,b:255},.45)));root.setProperty('--sc2',css(t));root.setProperty('--sc3',css(mix(t,{r:0,g:0,b:0},.22)));
+  root.setProperty('--scn',css(dk));root.setProperty('--scnt',css(mix(t,{r:255,g:255,b:255},.35)));root.setProperty('--sct',css(mix(dk,{r:0,g:0,b:0},.3)));root.setProperty('--scl',css(mix(t,{r:255,g:255,b:255},.6)))}
+applySkin=(function(prev){return function(){const r=prev.apply(this,arguments);try{scoreColours()}catch(e){}return r}})(applySkin);setTimeout(()=>{try{scoreColours()}catch(e){}},600);
+const st=document.createElement('style');st.textContent=`
+html body .topbar .score{background:linear-gradient(180deg,var(--sc1,#f8e3a0),var(--sc2,#e2bd5c) 55%,var(--sc3,#c9a04a))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 0 0 1px rgba(0,0,0,.25),0 4px 10px rgba(0,0,0,.3)!important}
+html body .topbar .score #board .n{background:var(--scn,#120a08)!important;color:var(--scnt,#f2d27a)!important;box-shadow:inset 0 1px 3px rgba(0,0,0,.4)!important}
+html body .topbar .score #board .t,html body .topbar .score .sub{color:var(--sct,#1d1d1f)!important;text-shadow:0 1px 0 rgba(255,255,255,.35)!important}
+/* Chalet: travertine terrace, jute rug with a charcoal border, rattan seating */
+html.t-chalet body #app{background:linear-gradient(90deg,rgba(120,100,70,.18) 1.5px,transparent 1.5px) 0 0/150px 100px,linear-gradient(rgba(120,100,70,.18) 1.5px,transparent 1.5px) 0 0/150px 100px,radial-gradient(circle,rgba(150,120,80,.18) 0 1px,transparent 1.6px) 0 0/7px 9px,radial-gradient(ellipse 70% 55% at 50% 50%,rgba(255,250,235,.5),transparent 70%),linear-gradient(135deg,#ece2cf,#dccdb0)!important}
+html.t-chalet body .topbar,html.t-chalet body .bottombar{background:linear-gradient(180deg,#3a3d40,#232527)!important;box-shadow:0 4px 14px rgba(0,0,0,.35)!important}
+html.t-chalet body .topbar::after,html.t-chalet body .bottombar::before{background:linear-gradient(90deg,transparent,#d8c49a,transparent)!important;height:2px!important}
+html.t-chalet body .gbtn{background:rgba(255,255,255,.08)!important;color:#efe6d2!important;box-shadow:inset 0 0 0 1px rgba(239,230,210,.35)!important}
+html.t-chalet body .table .rug{background:linear-gradient(#2d2f31,#2d2f31)!important;padding:calc(var(--W) * .03)!important;border-radius:4px!important;box-shadow:0 0 0 1px rgba(0,0,0,.4),0 16px 30px rgba(80,60,30,.35)!important}
+html.t-chalet body .table .field{background:repeating-linear-gradient(0deg,rgba(90,60,25,.2) 0 1.5px,transparent 1.5px 6px),repeating-linear-gradient(90deg,#cdb487 0 5px,#bfa274 5px 10px)!important;box-shadow:inset 0 0 0 3px #efe6d2,inset 0 0 0 6px #2d2f31,inset 0 0 0 8px #efe6d2,inset 0 0 22px rgba(60,40,15,.3)!important;border-radius:2px!important}
+html.t-chalet body .table .field::after,html.t-chalet body .rug::before,html.t-chalet body .rug::after{content:none!important;background:none!important}
+html.t-chalet{--mjH:repeating-linear-gradient(90deg,#efe6d2 0 9px,#7d9467 9px 12px)!important;--mjV:repeating-linear-gradient(180deg,#efe6d2 0 9px,#7d9467 9px 12px)!important;--mjt:#b8894e!important}
+html.t-chalet body .stage .td{filter:saturate(.8) drop-shadow(0 6px 6px rgba(0,0,0,.25))}`;document.head.appendChild(st);
+if(window.__seatPaint)setTimeout(__seatPaint,900);
+})();
+// big screens in landscape: your hand cards get bigger and the rug gives them room (portrait stays exactly as it was)
+(function(){const st=document.createElement('style');st.textContent=`
+@media (min-width:761px) and (orientation:landscape) and (min-height:560px){
+  html body #myrow .card.big{--cw:min(calc(var(--W) * .2),15.5dvh)!important}
+  html body .handzone{height:calc(15.5dvh * 1.42 + 18px)!important}
+}`;document.head.appendChild(st)})();
+// big screens (iPad, open Duo): bigger cards on the rug; side seats only in landscape
+(function(){const st=document.createElement('style');st.textContent=`
+@media (min-width:761px) and (min-height:700px){html body .ground>.card{--cw:min(calc(var(--W) * .2),19cqh)!important}}
+@media (min-width:761px) and (orientation:landscape) and (min-height:560px){html body .ground>.card{--cw:min(calc(var(--SW,var(--W)) * .14),19cqh)!important}}
+@media (orientation:portrait){html body .wsofa{display:none!important}}`;document.head.appendChild(st);
+addEventListener('resize',()=>{try{fitGround()}catch(e){}});setTimeout(()=>{try{fitGround()}catch(e){}},800)})();
+// the score box sits exactly in the middle of the top bar (2 buttons on one side, 3 on the other)
+(function(){function wrap(){const tb=document.querySelector('.topbar'),sc=tb&&tb.querySelector('.score');if(!tb||!sc||tb.querySelector('.tbg'))return;
+  const kids=[...tb.children],i=kids.indexOf(sc),a=document.createElement('div'),b=document.createElement('div');a.className='tbg tbg-a';b.className='tbg tbg-b';
+  kids.slice(0,i).forEach(k=>a.appendChild(k));kids.slice(i+1).forEach(k=>b.appendChild(k));tb.insertBefore(a,sc);sc.after(b)}
+wrap();setTimeout(wrap,500);
+const st=document.createElement('style');st.textContent=`
+html body .topbar{display:grid!important;grid-template-columns:1fr minmax(88px,var(--scw,150px)) 1fr;align-items:center}
+html body .topbar .score{width:auto!important;min-width:0}
+@media (max-width:520px){html body .topbar{grid-template-columns:minmax(0,1fr) minmax(84px,min(27vw,112px)) minmax(0,1fr);padding-left:4px!important;padding-right:4px!important}html body .topbar .tbg{column-gap:3px}html body .topbar .tbg .gbtn{min-width:0!important;width:min(52px,calc((100vw - min(27vw,112px) - 44px) / 6))!important;flex:none!important;padding-left:0!important;padding-right:0!important}html body .topbar .score{margin:0 4px}}
+html body .topbar .tbg{display:flex;align-items:center;gap:inherit;min-width:0}
+html body .topbar .tbg>*{flex:none}
+html body .topbar .tbg-a{justify-content:flex-end}html body .topbar .tbg-b{justify-content:flex-start}
+html body .topbar .tbg{column-gap:6px}html body .topbar .score{margin:0 6px}`;document.head.appendChild(st)})();
+
+// ===================== Round 74: a real Kuwaiti chalet: teak deck at sunset, a glowing pool, string lights, palm shadows, outdoor sofa and a BBQ =====================
+(function(){
+const S=window.SEATS;if(!S)return;const {SEAT,cushion}=S;
+window.SEAT_KIND=Object.assign(window.SEAT_KIND||{},{chalet:'chalet'});
+window.SEAT_PAL=Object.assign(window.SEAT_PAL||{},{chalet:{f:'f4efe6',p:'1f8fa3',t:'d9b26a'}});
+// outdoor sectional (white cushions on a dark frame) with a charcoal BBQ grill between the two halves
+SEAT.chalet=function(w,h,k,id){let s='';const n=k.n||2,gap=h*.2,ch=(h-gap-8)/n,cw=w-6;
+  for(let i=0;i<n;i++){const y=4+i*(ch+gap);
+    s+=`<rect x="3" y="${y}" width="${cw}" height="${ch}" rx="10" fill="#3a3632" stroke="#1d1a17" stroke-width="2"/>
+      <rect x="6" y="${y+3}" width="${cw*.3}" height="${ch-6}" rx="8" fill="#f4efe6" stroke="#d9d0c0"/>
+      <rect x="${cw*.32+4}" y="${y+4}" width="${cw*.66-4}" height="${ch-8}" rx="8" fill="#fbf8f2" stroke="#d9d0c0"/><path d="M${cw*.34+4} ${y+ch/2}h${cw*.6}" stroke="#e2d9c8" stroke-width="1.5"/>
+      ${cushion(cw*.1,y+ch*.14,cw*.34,ch*.3,k,6)}${cushion(cw*.1,y+ch*.56,cw*.34,ch*.3,k,6)}`}
+  const gy=4+ch+gap/2,gw=Math.min(w*.6,gap*1.5),gh=gap*.62,gx=w*.55-gw/2;
+  if(n>1)s+=`<ellipse cx="${w*.55}" cy="${gy}" rx="${gw*.75}" ry="${gh*.9}" fill="rgba(255,120,40,.22)"/>
+    <rect x="${gx}" y="${gy-gh/2}" width="${gw}" height="${gh}" rx="4" fill="#26231f" stroke="#0f0d0b" stroke-width="2"/>
+    <rect x="${gx+4}" y="${gy-gh/2+4}" width="${gw-8}" height="${gh-8}" rx="2" fill="#1a0d06"/>
+    ${[...Array(6)].map((_,j)=>`<circle cx="${gx+8+(gw-16)*Math.random()}" cy="${gy-gh/2+6+(gh-12)*Math.random()}" r="${2+Math.random()*2.5}" fill="${['#ff6a1a','#ffb02e','#e2401a'][j%3]}"/>`).join('')}
+    ${[...Array(6)].map((_,j)=>`<path d="M${gx+4} ${gy-gh/2+5+j*(gh-10)/5}h${gw-8}" stroke="#8a8f99" stroke-width="1.2"/>`).join('')}
+    <rect x="${gx+gw*.2}" y="${gy-gh*.25}" width="${gw*.25}" height="${gh*.18}" rx="3" fill="#a0442a"/><rect x="${gx+gw*.55}" y="${gy+gh*.02}" width="${gw*.25}" height="${gh*.18}" rx="3" fill="#b5532f"/>`;return s};
+const lights=`url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='240' height='60' viewBox='0 0 240 60'><path d='M0 8Q60 40 120 8T240 8' fill='none' stroke='#2a2420' stroke-width='1.5'/>${[20,50,80,120,160,190,220].map((x,i)=>{const y=8+Math.sin((x/240)*Math.PI*2-Math.PI/2+Math.PI/2)*0+ (x<120?Math.sin(x/120*Math.PI)*16:Math.sin((x-120)/120*Math.PI)*16);return `<circle cx='${x}' cy='${y+6}' r='9' fill='rgba(255,210,120,.28)'/><circle cx='${x}' cy='${y+6}' r='3.6' fill='#ffe3a0'/>`}).join('')}</svg>`)}")`;
+const palm=`url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><g fill='rgba(0,0,0,.38)'>${[...Array(9)].map((_,i)=>{const a=i*40;return `<path transform='rotate(${a} 100 100)' d='M100 100Q120 60 112 8Q104 40 100 100Q96 40 88 8Q80 60 100 100Z'/>`}).join('')}</g></svg>`)}")`;
+const st=document.createElement('style');st.textContent=`
+html.t-chalet body #app{background:
+  ${palm} -60px 38%/280px 280px no-repeat,${palm} calc(100% + 70px) 78%/320px 320px no-repeat,
+  radial-gradient(ellipse 120px 26px at 50% 0,rgba(255,214,150,.38),transparent 70%) 0 116px/220px 60px repeat-x,
+  radial-gradient(circle,#fff6dc 0 2px,rgba(255,214,150,.6) 3px,transparent 6px) 104px 114px/220px 60px repeat-x,
+  linear-gradient(180deg,rgba(90,230,255,.85),rgba(90,230,255,0)) 0 106px/100% 10px no-repeat,
+  linear-gradient(180deg,#2c3238,#2c3238) 0 66px/100% 6px no-repeat,
+  radial-gradient(ellipse 40px 10px,rgba(160,250,255,.45),transparent) 0 82px/120px 22px repeat-x,
+  radial-gradient(ellipse 60% 120% at 50% 100%,rgba(80,240,255,.75),transparent 70%) 0 72px/100% 34px no-repeat,
+  linear-gradient(180deg,#0b5a78,#0a7fa0 60%,#16b6cf) 0 72px/100% 34px no-repeat,
+  linear-gradient(180deg,#2c3238,#2c3238) 0 106px/100% 4px no-repeat,
+  repeating-linear-gradient(0deg,rgba(0,0,0,.45) 0 2px,transparent 2px 26px),
+  radial-gradient(ellipse 70% 55% at 50% 58%,rgba(255,200,140,.22),transparent 70%),
+  linear-gradient(180deg,#3d2a1e,#24170f)!important}
+html.t-chalet body .topbar,html.t-chalet body .bottombar{background:linear-gradient(180deg,#1c2126,#111417)!important;box-shadow:0 0 0 1px rgba(90,230,255,.25),0 4px 14px rgba(0,0,0,.55)!important}
+html.t-chalet body .topbar::after,html.t-chalet body .bottombar::before{background:linear-gradient(90deg,transparent,#5ae6ff,transparent)!important;height:2px!important;box-shadow:0 0 8px #5ae6ff!important}
+html.t-chalet body .gbtn{background:rgba(255,255,255,.06)!important;color:#bff6ff!important;box-shadow:inset 0 0 0 1px rgba(90,230,255,.35)!important}
+html.t-chalet body .table .rug{background:#e9e3d8!important;padding:calc(var(--W) * .022)!important;border-radius:10px!important;box-shadow:0 0 0 2px #2c3238,0 0 26px rgba(90,230,255,.25),0 18px 30px rgba(0,0,0,.55)!important}
+html.t-chalet body .table .field{background:radial-gradient(circle,rgba(255,255,255,.55) 0 1.4px,transparent 2px) 0 0/14px 14px,linear-gradient(135deg,#1f8fa3,#146c80)!important;box-shadow:inset 0 0 0 3px #f4efe6,inset 0 0 0 7px #146c80,inset 0 0 0 9px #f4efe6aa,inset 0 0 26px rgba(0,30,40,.35)!important;border-radius:6px!important}
+html.t-chalet body .table .field::after,html.t-chalet body .rug::before,html.t-chalet body .rug::after{content:none!important;background:none!important}
+html.t-chalet{--mjH:linear-gradient(180deg,#3a3632 0 12%,#fbf8f2 12% 88%,#3a3632 88%)!important;--mjV:linear-gradient(90deg,#3a3632 0 12%,#fbf8f2 12% 88%,#3a3632 88%)!important;--mjt:#3a3632!important;--mjp:linear-gradient(135deg,#1f8fa3,#146c80)!important}
+html.t-chalet body .drawrow,html.t-chalet body .table .field .empty{color:#e8fbff!important}
+html.t-chalet body .stage .td{filter:drop-shadow(0 6px 6px rgba(40,20,5,.35))}`;document.head.appendChild(st);
+if(window.__seatPaint)setTimeout(__seatPaint,900);
+LAYOUT.chalet={D:'palm'};try{placeItems()}catch(e){}
+const st2=document.createElement('style');st2.textContent='html.t-chalet body .stage .td{filter:brightness(.85) drop-shadow(0 6px 6px rgba(0,0,0,.5))}html.t-chalet body .stage .td.sD{top:46px!important;width:calc(var(--W) * .12)!important;max-width:calc(var(--tile) * 1.05)!important}';document.head.appendChild(st2);
+})();
+
+// ===================== Round 75: HD classic cards (new default face), coloured joker, card back in the theme's colours =====================
+(function(){
+const SU={'♠':'M50 4C40 22 8 36 8 60c0 17 19 25 33 13-1 10-6 17-14 21h46c-8-4-13-11-14-21 14 12 33 4 33-13C92 36 60 22 50 4z',
+'♥':'M50 92C22 66 4 50 4 30 4 15 16 4 30 4c9 0 16 5 20 13 4-8 11-13 20-13 14 0 26 11 26 26 0 20-18 36-46 62z',
+'♦':'M50 2C62 22 76 38 90 50 76 62 62 78 50 98 38 78 24 62 10 50 24 38 38 22 50 2z',
+'♣':'M50 4a18 18 0 0 0-17 24A18 18 0 1 0 43 60c-1 12-6 21-15 28h44c-9-7-14-16-15-28a18 18 0 1 0 10-32A18 18 0 0 0 50 4z'};
+let H=213,MY=H/2;const W=150,RED='#c8102e',BLK='#15161a',BLUE='#1d3f8f',YEL='#f2b51d',SKIN='#f7dcb6';
+const isRed=s=>s==='♥'||s==='♦';
+const suit=(s,x,y,sz,c,flip)=>`<path transform="translate(${x} ${y})${flip?' rotate(180)':''} translate(${-sz/2} ${-sz/2}) scale(${sz/100})" d="${SU[s]}" fill="${c}"/>`;
+// shared gradients/patterns live once in the page (Safari and Chrome both resolve them from inline card SVGs)
+function defsOnce(){if(document.getElementById('hdDefs'))return;const d=document.createElement('div');d.id='hdDefs';d.style.cssText='position:absolute;width:0;height:0;overflow:hidden';
+  d.innerHTML=`<svg width="0" height="0" aria-hidden="true"><defs>
+  <linearGradient id="hdPaper" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".7" stop-color="#fbfaf6"/><stop offset="1" stop-color="#f1eee6"/></linearGradient>
+  <pattern id="hdDiam" width="6" height="6" patternUnits="userSpaceOnUse"><path d="M3 0L6 3 3 6 0 3z" fill="${YEL}"/></pattern>
+  <clipPath id="hdTop213"><rect x="36" y="38" width="${W-72}" height="${213/2-38}"/></clipPath><clipPath id="hdTop236"><rect x="36" y="38" width="${W-72}" height="${236/2-38}"/></clipPath></defs></svg>`;document.body.appendChild(d)}
+const svgWrap=inner=>`<svg class="hdsvg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><rect x="0" y="0" width="${W}" height="${H}" rx="12" fill="url(#hdPaper)"/>${inner}</svg>`;
+// big corner index so the cards read well while fanned in the hand
+const index=(r,s,c)=>{const ten=r==='10';const one=rot=>`<g${rot?` transform="rotate(180 ${W/2} ${MY})"`:''}><text x="${ten?19:18}" y="37" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-weight="700" font-size="${ten?30:38}" letter-spacing="${ten?-3:0}" fill="${c}">${r}</text>${suit(s,18,55,22,c)}</g>`;return one()+one(1)};
+const L=55,C=75,R=95;let T,B,M,LAY;
+function setH(h){H=h;MY=h/2;T=50;B=H-50;M=MY;LAY={2:[[C,T],[C,B]],3:[[C,T],[C,M],[C,B]],4:[[L,T],[R,T],[L,B],[R,B]],5:[[L,T],[R,T],[C,M],[L,B],[R,B]],
+6:[[L,T],[R,T],[L,M],[R,M],[L,B],[R,B]],7:[[L,T],[R,T],[C,(T+M)/2],[L,M],[R,M],[L,B],[R,B]],
+8:[[L,T],[R,T],[C,(T+M)/2],[L,M],[R,M],[C,(M+B)/2],[L,B],[R,B]],
+9:[[L,T],[R,T],[L,T+(B-T)/3],[R,T+(B-T)/3],[C,M],[L,B-(B-T)/3],[R,B-(B-T)/3],[L,B],[R,B]],
+10:[[L,T],[R,T],[C,T+(B-T)/6],[L,T+(B-T)/3],[R,T+(B-T)/3],[L,B-(B-T)/3],[R,B-(B-T)/3],[C,B-(B-T)/6],[L,B],[R,B]]};}
+setH(213);
+function pips(r,s){const c=isRed(s)?RED:BLK;let g=index(r,s,c);
+  if(r==='A')g+=s==='♠'?`<circle cx="75" cy="${MY}" r="40" fill="none" stroke="${BLK}" stroke-width=".8"/><circle cx="75" cy="${MY}" r="36" fill="none" stroke="${BLK}" stroke-width=".4" stroke-dasharray="1.5 2.5"/>`+suit(s,75,MY-2,58,c):suit(s,75,MY,46,c);
+  else (LAY[r]||[]).forEach(([x,y])=>g+=suit(s,x,y,24,c,y>MY+1));
+  return svgWrap(g)}
+function figure(r,s){const red=isRed(s),main=r==='Q'?(red?BLUE:RED):(red?RED:BLUE),alt=main===RED?BLUE:RED,o=BLK;
+  let f=`<path d="M36 105V92c4-9 16-14 30-16h18c14 2 26 7 30 16v13z" fill="${main}" stroke="${o}" stroke-width="1"/>`;
+  f+=`<path d="M58 105V80h34v25" fill="url(#hdDiam)" stroke="${o}" stroke-width=".8"/><path d="M58 92h34" stroke="${o}" stroke-width=".8"/>`;
+  f+=`<path d="M38 98c10-6 16-8 20-8M112 98c-10-6-16-8-20-8" stroke="${YEL}" stroke-width="3" fill="none"/>`;
+  f+=`<path d="M58 74c6 8 28 8 34 0l4 8c-8 9-34 9-42 0z" fill="${YEL}" stroke="${o}" stroke-width=".9"/>`+[0,1,2,3,4].map(i=>`<circle cx="${62+i*6.5}" cy="80" r="1.2" fill="${alt}"/>`).join('');
+  f+=`<path d="M68 70v6h14v-6" fill="${SKIN}" stroke="${o}" stroke-width=".8"/><ellipse cx="75" cy="60" rx="11" ry="13" fill="${SKIN}" stroke="${o}" stroke-width="1"/>`;
+  const eyes=`<path d="M70 57.5h3M77 57.5h3" stroke="${o}" stroke-width="1.2" stroke-linecap="round"/><path d="M75 59v5h-2" stroke="${o}" stroke-width=".8" fill="none"/>`;
+  f+=eyes+`<path d="M71.5 67q3.5 2 7 0" stroke="${RED}" stroke-width="1" fill="none"/>`;
+  if(r==='K'){f+=`<path d="M64 62c0 12 4 18 11 18s11-6 11-18c-2 4-5 6-11 6s-9-2-11-6z" fill="${YEL}" stroke="${o}" stroke-width=".9"/><path d="M69 65c3-2 5-2 6 0 1-2 3-2 6 0" stroke="${o}" stroke-width="1.1" fill="#d99a1a"/><path d="M73 70h4" stroke="${RED}" stroke-width="1.2"/>`;
+    f+=`<path d="M62 50l-2-14 7 7 4-10 4 8 4-8 4 10 7-7-2 14z" fill="${YEL}" stroke="${o}" stroke-width="1"/><rect x="62" y="47" width="26" height="5" fill="${YEL}" stroke="${o}" stroke-width=".9"/>${[66,75,84].map(x=>`<circle cx="${x}" cy="49.5" r="1.4" fill="${alt}"/>`).join('')}<circle cx="75" cy="33" r="2" fill="${RED}" stroke="${o}" stroke-width=".6"/>`;
+    f+=`<path d="M104 105V40" stroke="#9aa3b2" stroke-width="3"/><path d="M96 78h16" stroke="${YEL}" stroke-width="4" stroke-linecap="round"/><path d="M104 40l-2 4h4z" fill="#9aa3b2"/>`}
+  if(r==='Q'){f+=`<path d="M63 58c-3-14 4-22 12-22s15 8 12 22l4 22c-6 2-10 0-12-4l-1-14c-1 6-5 8-6 8s-5-2-6-8l-1 14c-2 4-6 6-12 4z" fill="#3a2414" stroke="${o}" stroke-width=".9"/><ellipse cx="75" cy="60" rx="9.5" ry="12" fill="${SKIN}"/>${eyes}<path d="M71.5 67q3.5 2 7 0" stroke="${RED}" stroke-width="1.2" fill="none"/>`;
+    f+=`<path d="M65 44l-1-9 5 5 6-8 6 8 5-5-1 9z" fill="${YEL}" stroke="${o}" stroke-width="1"/>${[69,75,81].map(x=>`<circle cx="${x}" cy="42" r="1.3" fill="${alt}"/>`).join('')}`;
+    f+=`<g transform="translate(46 70)"><path d="M0 35V6" stroke="#2d7a3a" stroke-width="1.6"/><path d="M0 22c-6-2-8-6-8-8 4 0 7 3 8 8z" fill="#2d7a3a"/>${[0,72,144,216,288].map(a=>`<ellipse rx="3.2" ry="5.5" transform="translate(0 2) rotate(${a}) translate(0 -4)" fill="${RED}" stroke="${o}" stroke-width=".5"/>`).join('')}<circle cy="2" r="2.4" fill="${YEL}"/></g>`}
+  if(r==='J'){f+=`<path d="M64 60c-1-10 4-14 11-14s12 4 11 14c-2-4-4-6-11-6s-9 2-11 6z" fill="#7a4a1e" stroke="${o}" stroke-width=".8"/>`;
+    f+=`<path d="M60 49c2-10 10-14 16-14s14 4 16 14z" fill="${alt}" stroke="${o}" stroke-width="1"/><rect x="60" y="47" width="32" height="4" rx="2" fill="${YEL}" stroke="${o}" stroke-width=".8"/><path d="M90 46c6-10 14-14 20-12-6 4-12 8-18 14" fill="${YEL}" stroke="${o}" stroke-width=".8"/>`;
+    f+=`<path d="M46 105V38" stroke="#7a4a1e" stroke-width="2.4"/><path d="M46 38l-6 10h12z M40 50q6 8 12 0" fill="#9aa3b2" stroke="${o}" stroke-width=".7"/>`}
+  f+=suit(s,104,48,14,red?RED:BLK);
+  const half=`<g clip-path="url(#hdTop${H})"><g transform="translate(75 ${MY}) scale(${H>213?1:.92}) translate(-75 -103)">${f}</g></g>`;
+  return `<rect x="36" y="38" width="${W-72}" height="${H-76}" fill="#fff"/>${half}<g transform="rotate(180 75 ${MY})">${half}</g><path d="M36 ${MY}h${W-72}" stroke="${o}" stroke-width="1"/><rect x="36" y="38" width="${W-72}" height="${H-76}" fill="none" stroke="${o}" stroke-width="1.2"/><rect x="33.5" y="35.5" width="${W-67}" height="${H-71}" fill="none" stroke="${red?RED:BLK}" stroke-width=".6"/>`}
+const court=(r,s)=>svgWrap(index(r,s,isRed(s)?RED:BLK)+figure(r,s));
+function joker(){const lt=['J','O','K','E','R'].map((ch,i)=>`<text x="17" y="${26+i*15}" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="15" fill="${RED}">${ch}</text>`).join('')+`<path transform="translate(17 112) translate(-8 -8) scale(.16)" d="M50 0l12 36h38l-31 22 12 37-31-23-31 23 12-37L0 36h38z" fill="${YEL}" stroke="${BLK}" stroke-width="5"/>`;
+  const fig=`<g transform="translate(78 104)" stroke="${BLK}" stroke-width="1">
+   <path d="M-30 74l6-40c4-10 14-14 24-14s20 4 24 14l6 40z" fill="${RED}"/><path d="M0 20 24 34l6 40H0z" fill="${BLUE}"/>
+   <path d="M-22 26c8 8 36 8 44 0l2 8c-10 10-38 10-48 0z" fill="${YEL}"/>${[-16,-8,0,8,16].map(x=>`<circle cx="${x}" cy="33" r="2.2" fill="${x%16?BLUE:RED}"/>`).join('')}
+   <ellipse cx="0" cy="4" rx="13" ry="15" fill="${SKIN}"/><path d="M-6 0h3M3 0h3" stroke-width="1.4" stroke-linecap="round"/><circle cx="-8" cy="8" r="2.4" fill="#f19a9a" stroke="none"/><circle cx="8" cy="8" r="2.4" fill="#f19a9a" stroke="none"/><path d="M-6 10q6 6 12 0" fill="#fff" stroke-width="1.1"/>
+   <path d="M-13-4C-24-12-34-6-40 4c4-14 2-28-6-36 16 0 26 10 30 22 0-18 6-30 16-38 10 8 16 20 16 38 4-12 14-22 30-22-8 8-10 22-6 36-6-10-16-16-27-8-6-6-20-6-26 0z" fill="${RED}"/>
+   <path d="M0-50C6-38 8-24 3-8" fill="none" stroke="${BLUE}" stroke-width="0"/>
+   ${[[-40,4],[-46,-32],[0,-50],[46,-32],[40,4]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="4.5" fill="${YEL}"/>`).join('')}
+   <path d="M-16-7c4-8 28-8 32 0" fill="${YEL}"/>
+   <g transform="translate(34 46) rotate(20)"><path d="M0 0v32" stroke="#7a4a1e" stroke-width="2.4"/><circle r="7" fill="${SKIN}"/><path d="M-7-2c-2-8 16-8 14 0z" fill="${BLUE}"/><circle cx="0" cy="-8" r="2" fill="${YEL}"/></g></g>`;
+  return svgWrap(lt+`<g transform="rotate(180 75 ${MY})">${lt}</g>`+fig)}
+const CACHE={};
+function hdSVG(c,tall){const k=c.r+c.s+(tall?'T':'');if(CACHE[k])return CACHE[k];setH(tall?236:213);const v=c.r==='JK'?joker():['K','Q','J'].includes(c.r)?court(c.r,c.s):pips(c.r,c.s);setH(213);return CACHE[k]=v}
+window.hdCardSVG=hdSVG;
+const hdOn=()=>window.__forceFace?__forceFace==='fhd':document.documentElement.classList.contains('cf-fhd');
+// ---- new default face ----
+if(typeof FACES_STYLES!=='undefined'&&!FACES_STYLES.some(f=>f.id==='fhd'))FACES_STYLES.unshift({id:'fhd',en:'Classic HD',ar:'كلاسيكي فاخر',cost:0});
+cardHTML=(function(prev){return function(c,extra='',attrs=''){
+  if(!c||c.r==='?'||!hdOn())return prev(c,extra,attrs);
+  if(c.r==='JK'&&WAL.joker&&WAL.joker!=='jauto')return prev(c,extra,attrs);
+  defsOnce();const h=prev(c,extra,attrs);const m=h.match(/^<div class="card([^"]*)"([^>]*)>/);if(!m)return h;
+  return `<div class="card hd${m[1]}"${m[2]}>${hdSVG(c,/\bbig\b/.test(extra)&&window.__hdTall&&__hdTall())}</div>`}})(cardHTML);
+// ---- card back in the theme's colours ----
+const hex=s=>{s=String(s).replace('#','');if(s.length===3)s=s.split('').map(x=>x+x).join('');return {r:parseInt(s.slice(0,2),16),g:parseInt(s.slice(2,4),16),b:parseInt(s.slice(4,6),16)}};
+const lum=c=>.2126*c.r+.7152*c.g+.0722*c.b,mix=(a,b,t)=>({r:a.r+(b.r-a.r)*t,g:a.g+(b.g-a.g)*t,b:a.b+(b.b-a.b)*t}),css=c=>`rgb(${Math.round(c.r)},${Math.round(c.g)},${Math.round(c.b)})`;
+const BK={r:0,g:0,b:0},WH={r:255,g:255,b:255};
+function themePal(){const th=([...document.documentElement.classList].find(c=>c.startsWith('t-'))||'t-house').slice(2);
+  const P0=window.__seatPalette?__seatPalette():null;const P=P0?{...P0}:{f:hex('7a1520'),t:hex('d6aa54'),p:hex('f3e6c8')};
+  const ov=(window.SEAT_PAL||{})[th]||{};Object.keys(ov).forEach(x=>P[x]=hex(ov[x]));
+  let bg=P.f,ac=P.t;
+  if(lum(bg)>150){const alt=[P.p,P.t].filter(c=>lum(c)<150).sort((a,b)=>lum(a)-lum(b))[0];bg=alt||mix(bg,BK,.55)}  // light fabric (greek, modern…): use the deep accent instead
+  if(lum(bg)<22)bg=mix(bg,WH,.08);
+  if(Math.abs(lum(ac)-lum(bg))<70)ac=lum(bg)>100?mix(bg,BK,.6):(lum(P.p)-lum(bg)>70?P.p:hex('e9cf8e'));
+  return {th,bg,bg2:mix(bg,BK,.45),ac}}
+function backSVG(p){const b=css(p.bg),b2=css(p.bg2),a=css(p.ac);
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 142" preserveAspectRatio="none"><defs><radialGradient id="g" cx=".5" cy=".45" r=".8"><stop offset="0" stop-color="${b}"/><stop offset="1" stop-color="${b2}"/></radialGradient>
+  <pattern id="l" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 3.5h7M3.5 0v7" stroke="${a}" stroke-width=".45" opacity=".45"/><circle cx="3.5" cy="3.5" r=".9" fill="${a}" opacity=".7"/></pattern></defs>
+  <rect width="100" height="142" rx="7" fill="#fbfaf6"/><rect x="4" y="4" width="92" height="134" rx="4.5" fill="url(#g)"/><rect x="4" y="4" width="92" height="134" rx="4.5" fill="url(#l)"/>
+  <rect x="4" y="4" width="92" height="134" rx="4.5" fill="none" stroke="${a}" stroke-width="1.2"/><rect x="7" y="7" width="86" height="128" rx="3" fill="none" stroke="${a}" stroke-width=".5" opacity=".8"/>
+  <ellipse cx="50" cy="71" rx="25" ry="31" fill="${b2}" stroke="${a}" stroke-width="1.6"/><ellipse cx="50" cy="71" rx="21.5" ry="27.5" fill="none" stroke="${a}" stroke-width=".5" stroke-dasharray="1.2 1.8"/>
+  <text x="50" y="69" text-anchor="middle" font-family="Tajawal,'Noto Kufi Arabic','Geeza Pro',Tahoma,Arial,sans-serif" font-weight="900" font-size="12.5" fill="${a}">حفر</text>
+  <text x="50" y="84" text-anchor="middle" font-family="Tajawal,'Noto Kufi Arabic','Geeza Pro',Tahoma,Arial,sans-serif" font-weight="900" font-size="12.5" fill="${a}">ودفن</text>
+  ${[['♠',42,51],['♥',58,51],['♣',42,92],['♦',58,92]].map(([s,x,y])=>suit(s,x,y,6,a)).join('')}</svg>`}
+let lastBack='';
+function themeBack(){const p=themePal(),key=p.th+css(p.bg)+css(p.ac);if(key===lastBack)return;lastBack=key;
+  let st=document.getElementById('ebThemeCSS');if(!st){st=document.createElement('style');st.id='ebThemeCSS';document.head.appendChild(st)}
+  const u=`url("data:image/svg+xml,${encodeURIComponent(backSVG(p))}") center/100% 100%`;
+  st.textContent=`html.cb-ebtheme :not(.cbprev)>.cardback.cardback,html .cbprev.cb-ebtheme .cardback.cardback{background:${u}!important;box-shadow:0 0 0 1px rgba(0,0,0,.25),0 2px 4px rgba(0,0,0,.35)!important;border-radius:5px}`}
+window.themeBack=themeBack;
+if(typeof BACKS!=='undefined'&&!BACKS.some(b=>b.id==='ebtheme'))BACKS.unshift({id:'ebtheme',en:'Theme colours',ar:'بلون الثيم',cost:0});
+applySkin=(function(prev){return function(){const r=prev.apply(this,arguments);lastBack='';setTimeout(()=>{try{themeBack()}catch(e){}},0);return r}})(applySkin);
+// one-time switch to the new defaults (players can still pick any other face/back from the shop)
+if(!WAL.hd75){WAL.hd75=1;if(!WAL.face||WAL.face==='fbig'||WAL.face==='fclassic')WAL.face='fhd';if(!WAL.back||WAL.back==='eb'||WAL.back==='ebhouse')WAL.back='ebtheme';saveWal();try{applyFace()}catch(e){}applySkin()}
+setTimeout(()=>{try{themeBack()}catch(e){}},700);
+const st=document.createElement('style');st.textContent=`
+.card.hd{background:none!important;border-radius:calc(var(--cw)*.08)}
+.card.hd:not(.can)::after{box-shadow:none!important;background:none!important}
+.card.hd>.hdsvg{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+.card.hd>.count{z-index:2}
+`;document.head.appendChild(st);
+})();
+// phones / portrait: your hand cards ~15% bigger (landscape big screens keep their own size)
+(function(){const K=.255,DV=13.8,RT=1.573;
+const big=()=>!(innerWidth>=761&&innerWidth>innerHeight&&innerHeight>=560),tall=()=>big()&&innerHeight>=740;
+const st=document.createElement('style');st.textContent=`
+@media not all and (min-width:761px) and (orientation:landscape) and (min-height:560px){
+  html body #myrow .card.big{--cw:min(calc(var(--W) * ${K}),${DV}dvh)!important;--ch:calc(var(--cw) * ${RT})!important}
+  html body .handzone{height:min(calc(var(--W) * ${K} * ${RT} + 18px),calc(${DV}dvh * ${RT} + 18px))!important}
+}
+@media (max-height:739px){
+  html body #myrow .card.big{--ch:calc(var(--cw) * 1.42)!important}
+  html body .handzone{height:min(calc(var(--W) * ${K} * 1.42 + 18px),calc(${DV}dvh * 1.42 + 18px))!important}
+}`;document.head.appendChild(st);
+window.__hdTall=tall;const prev=overlap;overlap=function(n){if(!big())return prev(n);if(n<2)return 0;const W=Math.min(innerWidth-16,720,innerHeight*.6),cw=Math.min(W*K,innerHeight*DV/100),avail=W-16;return Math.max(cw*.28,Math.ceil((n*cw-avail)/(n-1)))};
+})();
+// iPad / big screens: the home page, tab bar and setup sheet were phone-sized in the middle of a huge screen — scale them up
+(function(){const st=document.createElement('style');st.textContent=`
+@media (min-width:761px) and (min-height:700px){
+  html body .h2-page>*{zoom:1.28}
+  html body .h2-tabs{zoom:1.25}
+}
+@media (min-width:761px) and (min-height:950px){
+  html body .h2-page>*{zoom:1.5}
+  html body .h2-tabs{zoom:1.35}
+  html body .h2-page{padding-top:calc(28px + env(safe-area-inset-top,0px))!important}
+}
+@media (min-width:761px) and (min-height:950px) and (orientation:portrait){
+  html body #setupForm{zoom:1.4}
+}`;document.head.appendChild(st)})();
+
+// ===================== Round 76: card packs — Royal, Heritage, Modern, Black-gold, Cartoon (face + joker + matching back) =====================
+(function(){
+const SU={'♠':'M50 6C38 24 10 38 10 60c0 16 18 24 32 14-2 9-6 15-13 19h42c-7-4-11-10-13-19 14 10 32 2 32-14C90 38 62 24 50 6z','♥':'M50 88C20 62 6 48 6 30 6 16 17 6 30 6c9 0 16 5 20 13 4-8 11-13 20-13 13 0 24 10 24 24 0 18-14 32-44 58z','♦':'M50 4L88 50 50 96 12 50z','♣':'M50 6a17 17 0 0 0-16 23 17 17 0 1 0 8 30c-1 10-5 18-12 24h40c-7-6-11-14-12-24a17 17 0 1 0 8-30A17 17 0 0 0 50 6z'};
+const suit=(s,x,y,sz,c,rot=0)=>`<path transform="translate(${x-sz/2} ${y-sz/2}) scale(${sz/100})${rot?` rotate(180 50 50)`:''}" d="${SU[s]}" fill="${c}"/>`;
+const G='url(#pkgd)';
+const gold=`<linearGradient id="pkgd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff2c0"/><stop offset=".45" stop-color="#d9ac4c"/><stop offset="1" stop-color="#8a5c14"/></linearGradient>`;
+// ---------- style 1: Royal (ivory, gold, crown emblems) ----------
+const crown=(x,y,s,c)=>`<g transform="translate(${x} ${y}) scale(${s})"><path d="M-30 14L-36-16-16 0 0-24 16 0 36-16 30 14Z" fill="${c}" stroke="#5a3a08" stroke-width="2"/><rect x="-30" y="14" width="60" height="9" rx="2" fill="${c}" stroke="#5a3a08" stroke-width="2"/><circle cx="0" cy="-26" r="5" fill="#c0392b"/><circle cx="-36" cy="-18" r="4" fill="#1f4fa0"/><circle cx="36" cy="-18" r="4" fill="#1f4fa0"/><circle cx="0" cy="5" r="4" fill="#c0392b"/></g>`;
+const ROYAL={name:'ملكي',bg:'#fbf6ea',edge:'#c9a04a',font:'Georgia,serif',ace:58,defs:gold,col:r=>r?'#b3171e':'#16161a',
+  frame:(W,H)=>`<rect x="8" y="8" width="${W-16}" height="${H-16}" rx="8" fill="none" stroke="${G}" stroke-width="1.6"/>`,
+  aceDeco:(s,C)=>`<circle cx="70" cy="100" r="44" fill="none" stroke="${G}" stroke-width="2"/><circle cx="70" cy="100" r="38" fill="none" stroke="${G}" stroke-width="1" stroke-dasharray="2 4"/>`,
+  court:(r,s,C,red,W,H)=>{const bgc=red?'#7a0f16':'#141a3a';let fig='';
+    if(r==='K')fig=crown(70,82,1.15,G)+`<path d="M38 150q32-40 64 0" fill="none" stroke="${G}" stroke-width="3"/><g transform="translate(70 126)"><path d="M-6 -16h12l-2 34h-8z" fill="${G}"/><rect x="-18" y="-20" width="36" height="6" rx="2" fill="${G}"/></g>`;
+    if(r==='Q')fig=`<g transform="translate(70 100)"><circle r="26" fill="none" stroke="${G}" stroke-width="3"/>${[...Array(12)].map((_,i)=>{const a=i*Math.PI/6;return `<circle cx="${Math.cos(a)*26}" cy="${Math.sin(a)*26}" r="4.5" fill="#fbf6ea" stroke="${G}" stroke-width="1.5"/>`}).join('')}<path d="M0-14c8 8 8 20 0 28-8-8-8-20 0-28z" fill="${G}"/><path d="M-14 0c8-8 20-8 28 0-8 8-20 8-28 0z" fill="${G}"/></g>`+crown(70,52,.62,G);
+    if(r==='J')fig=`<g transform="translate(70 104)"><path d="M-24 18c4-30 20-44 46-48-10 10-14 22-12 36l18-8c-6 14-18 22-34 22z" fill="${G}" stroke="#5a3a08" stroke-width="1.5"/><circle cx="12" cy="-26" r="3" fill="#16161a"/><path d="M-30 34h60" stroke="${G}" stroke-width="3"/></g>`;
+    return `<rect x="34" y="44" width="72" height="112" rx="8" fill="${bgc}"/><rect x="38" y="48" width="64" height="104" rx="6" fill="none" stroke="${G}" stroke-width="1.5"/>${fig}<text x="70" y="148" text-anchor="middle" font-family="Georgia" font-weight="900" font-size="15" fill="${G}">${{K:'الشايب',Q:'البنت',J:'الولد'}[r]}</text>`},
+  joker:(W,H)=>`<rect x="14" y="14" width="${W-28}" height="${H-28}" rx="10" fill="#141a3a"/><rect x="18" y="18" width="${W-36}" height="${H-36}" rx="8" fill="none" stroke="${G}" stroke-width="1.6"/>
+    <g transform="translate(70 92)"><path d="M-34 10C-40-20-20-40 0-30c20-10 40 10 34 40-10-12-22-14-34-4-12-10-24-8-34 4z" fill="#b3171e" stroke="#5a3a08" stroke-width="1.5"/><path d="M0-30L0 6" stroke="${G}" stroke-width="2"/>${[[-34,10],[34,10],[0,-30]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="6" fill="${G}"/>`).join('')}<circle cx="0" cy="22" r="18" fill="#fbf6ea" stroke="${G}" stroke-width="2"/><path d="M-8 22q8 8 16 0" stroke="#b3171e" stroke-width="2.5" fill="none"/><circle cx="-6" cy="16" r="2" fill="#141a3a"/><circle cx="6" cy="16" r="2" fill="#141a3a"/></g>
+    <text x="70" y="160" text-anchor="middle" font-family="Georgia" font-weight="900" font-size="22" fill="${G}">جوكر</text><text x="24" y="34" font-family="Georgia" font-weight="900" font-size="13" fill="${G}">JK</text>`,
+  back:(W,H)=>`<rect x="2" y="2" width="${W-4}" height="${H-4}" rx="12" fill="#7a0f16" stroke="#c9a04a" stroke-width="2"/><rect x="9" y="9" width="${W-18}" height="${H-18}" rx="8" fill="none" stroke="${G}" stroke-width="2"/>
+    <pattern id="pkrp" width="16" height="16" patternUnits="userSpaceOnUse"><path d="M8 0L16 8 8 16 0 8z" fill="none" stroke="rgba(242,210,122,.35)"/></pattern><rect x="13" y="13" width="${W-26}" height="${H-26}" rx="6" fill="url(#pkrp)"/>
+    <circle cx="70" cy="100" r="34" fill="#7a0f16" stroke="${G}" stroke-width="3"/><text x="70" y="96" text-anchor="middle" font-family="Georgia" font-weight="900" font-size="15" fill="${G}">حفر</text><text x="70" y="116" text-anchor="middle" font-family="Georgia" font-weight="900" font-size="15" fill="${G}">ودفن</text>`};
+// ---------- style 2: Heritage (sadu borders, falcon, dallah, rose) ----------
+const sadu=(W,H)=>`<pattern id="pksd" width="12" height="12" patternUnits="userSpaceOnUse"><rect width="12" height="12" fill="#a83826"/><path d="M0 12L6 6 12 12" fill="#1b120d"/><path d="M0 6L6 0 12 6" fill="#efe2c0"/></pattern>`;
+const HERIT={name:'تراثي',bg:'#f6eedb',edge:'#7a2f1e',font:'Tahoma,sans-serif',ace:56,defs:gold+sadu(),col:r=>r?'#a32620':'#1b120d',
+  frame:(W,H)=>`<rect x="6" y="6" width="${W-12}" height="${H-12}" rx="9" fill="none" stroke="url(#pksd)" stroke-width="5"/>`,
+  aceDeco:()=>'',
+  court:(r,s,C,red,W,H)=>{let fig='';
+    if(r==='K')fig=`<g transform="translate(70 100)"><path d="M-8-40c10 0 18 6 18 16 0 8-6 12-6 12l20 6-22 6c0 10-6 20-16 24-4-14-14-20-24-22 8-6 12-14 10-24 4-10 10-18 20-18z" fill="#6b4a2a" stroke="#1b120d" stroke-width="1.5"/><circle cx="2" cy="-28" r="3" fill="#f2c94c"/><path d="M8-22l10 4-10 2z" fill="#f2c94c"/><path d="M-30 30h60" stroke="${C}" stroke-width="4"/><path d="M-24 30l-4 10M24 30l4 10" stroke="${C}" stroke-width="3"/></g>`;
+    if(r==='Q')fig=`<g transform="translate(70 100)">${[...Array(8)].map((_,i)=>`<ellipse rx="10" ry="22" fill="${i%2?'#d9485a':'#b3171e'}" transform="rotate(${i*45}) translate(0 -14)"/>`).join('')}<circle r="10" fill="#f2c94c" stroke="#8a5c14" stroke-width="2"/><path d="M0 34v20M-10 46q10-8 20 0" stroke="#2f6b3a" stroke-width="3" fill="none"/></g>`;
+    if(r==='J')fig=`<g transform="translate(70 104)"><path d="M-14 30h28l-4-36c8-2 14-8 14-16H4l2-12h-12l2 12h-14c0 8 6 14 14 16z" fill="${G}" stroke="#5a3a08" stroke-width="1.5"/><path d="M14-14c18-4 22 10 10 18" fill="none" stroke="${G}" stroke-width="4"/><path d="M-14-6l-18-10" stroke="${G}" stroke-width="5" stroke-linecap="round"/></g>`;
+    return `<rect x="30" y="42" width="80" height="116" rx="6" fill="#efe2c0" stroke="url(#pksd)" stroke-width="4"/>${fig}<text x="70" y="152" text-anchor="middle" font-family="Tahoma" font-weight="900" font-size="13" fill="${C}">${{K:'الشايب',Q:'البنت',J:'الولد'}[r]}</text>`},
+  joker:(W,H)=>`<rect x="14" y="14" width="${W-28}" height="${H-28}" rx="8" fill="#1b120d"/><g transform="translate(70 92)"><circle r="40" fill="none" stroke="url(#pksd)" stroke-width="7"/><path d="M-22-6c4-20 40-20 44 0l-8 4c-6-10-22-10-28 0z" fill="#a83826"/><circle cy="10" r="18" fill="#efe2c0"/><path d="M-8 12q8 8 16 0" stroke="#a83826" stroke-width="2.5" fill="none"/><circle cx="-6" cy="6" r="2" fill="#1b120d"/><circle cx="6" cy="6" r="2" fill="#1b120d"/><path d="M-26-8l-8-14M26-8l8-14M0-18v-16" stroke="${G}" stroke-width="3"/><circle cx="-34" cy="-22" r="4" fill="${G}"/><circle cx="34" cy="-22" r="4" fill="${G}"/><circle cy="-34" r="4" fill="${G}"/></g><text x="70" y="166" text-anchor="middle" font-family="Tahoma" font-weight="900" font-size="20" fill="#efe2c0">جوكر</text>`,
+  back:(W,H)=>`<rect x="2" y="2" width="${W-4}" height="${H-4}" rx="12" fill="#1b120d" stroke="#7a2f1e" stroke-width="2"/><rect x="8" y="8" width="${W-16}" height="${H-16}" rx="8" fill="url(#pksd)"/><rect x="22" y="40" width="${W-44}" height="${H-80}" rx="6" fill="#1b120d" stroke="#efe2c0" stroke-width="2"/><text x="70" y="96" text-anchor="middle" font-family="Tahoma" font-weight="900" font-size="16" fill="#efe2c0">حفر</text><text x="70" y="118" text-anchor="middle" font-family="Tahoma" font-weight="900" font-size="16" fill="#efe2c0">ودفن</text>`};
+// ---------- style 3: Modern bold (clean, huge index, flat colour courts) ----------
+const MOD={name:'عصري',bg:'#ffffff',edge:'#d9dde3',font:'Helvetica,Arial,sans-serif',ace:64,defs:`<linearGradient id="pknj" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff3d7f"/><stop offset=".5" stop-color="#7a3dff"/><stop offset="1" stop-color="#18c9e8"/></linearGradient>`,col:r=>r?'#e53935':'#1f2430',
+  frame:()=>'',aceDeco:()=>'',
+  court:(r,s,C,red,W,H)=>{const fill=red?'#e53935':'#1f2430',soft=red?'#ffe3e1':'#e6e9ef';
+    return `<rect x="30" y="44" width="80" height="112" rx="14" fill="${soft}"/><text x="70" y="128" text-anchor="middle" font-family="Helvetica,Arial" font-weight="900" font-size="78" fill="${fill}">${r}</text>${suit(s,70,62,22,fill)}<text x="70" y="148" text-anchor="middle" font-family="Tahoma" font-weight="900" font-size="12" fill="${fill}">${{K:'الشايب',Q:'البنت',J:'الولد'}[r]}</text>`},
+  joker:(W,H)=>`<rect x="12" y="12" width="${W-24}" height="${H-24}" rx="12" fill="url(#pknj)"/><g transform="translate(70 90)"><path d="M0-34l9 22 24 2-18 16 6 24-21-13-21 13 6-24-18-16 24-2z" fill="#fff"/></g><text x="70" y="160" text-anchor="middle" font-family="Helvetica,Arial" font-weight="900" font-size="26" fill="#fff">JOKER</text>`,
+  back:(W,H)=>`<rect x="2" y="2" width="${W-4}" height="${H-4}" rx="12" fill="#1f2430"/><rect x="10" y="10" width="${W-20}" height="${H-20}" rx="8" fill="none" stroke="#3a4152" stroke-width="2"/><circle cx="70" cy="100" r="30" fill="url(#pknj)"/><text x="70" y="106" text-anchor="middle" font-family="Tahoma" font-weight="900" font-size="15" fill="#fff">حفر ودفن</text>`};
+
+const NM={K:'الشايب',Q:'البنت',J:'الولد'};
+// ---------- 4. Noir gold ----------
+const g4=`<linearGradient id="pkg4" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff0b8"/><stop offset=".5" stop-color="#d4a640"/><stop offset="1" stop-color="#8a5c14"/></linearGradient>`;
+const G4='url(#pkg4)';
+const head=(kind,c,x=70,y=96)=>{ // simple Gulf silhouettes
+  if(kind==='K')return `<g transform="translate(${x} ${y})"><path d="M-30 40c0-18 12-28 30-28s30 10 30 28z" fill="${c}"/><path d="M-22 8c-4-26 8-42 22-42s26 16 22 42l-6-2c0-14-6-24-16-24s-16 10-16 24z" fill="${c}"/><ellipse cx="0" cy="-6" rx="13" ry="16" fill="${c}" opacity=".55"/><rect x="-17" y="-26" width="34" height="6" rx="3" fill="${c}"/><rect x="-17" y="-18" width="34" height="4" rx="2" fill="${c}"/><path d="M-6 6q6 6 12 0" stroke="#0d0d10" stroke-width="2" fill="none"/></g>`;
+  if(kind==='Q')return `<g transform="translate(${x} ${y})"><path d="M-30 40c0-20 12-30 30-30s30 10 30 30z" fill="${c}"/><path d="M-24 14c-6-30 8-48 24-48s30 18 24 48c-6-6-10-10-10-20 0-12-6-18-14-18s-14 6-14 18c0 10-4 14-10 20z" fill="${c}"/><ellipse cx="0" cy="-8" rx="12" ry="15" fill="${c}" opacity=".55"/><circle cx="0" cy="-34" r="4" fill="#b3171e"/></g>`;
+  return `<g transform="translate(${x} ${y})"><path d="M-28 40c0-18 12-28 28-28s28 10 28 28z" fill="${c}"/><ellipse cx="0" cy="-4" rx="14" ry="17" fill="${c}" opacity=".55"/><path d="M-16-12c0-14 8-22 16-22s16 8 16 22c-6-6-26-6-32 0z" fill="${c}"/><path d="M-4 40v-26h8v26" fill="#0d0d10" opacity=".5"/></g>`};
+const NOIR={name:'فاخر أسود',bg:'#121214',edge:'#c9a04a',font:'Georgia,serif',ace:60,defs:g4,col:r=>r?'#e0464a':'#e9c46a',
+  frame:(W,H)=>`<rect x="8" y="8" width="${W-16}" height="${H-16}" rx="8" fill="none" stroke="${G4}" stroke-width="1.2"/>${[[14,14],[W-14,14],[14,H-14],[W-14,H-14]].map(([x,y])=>`<path d="M${x} ${y-4}l4 4-4 4-4-4z" fill="${G4}"/>`).join('')}`,
+  aceDeco:()=>`<circle cx="70" cy="100" r="44" fill="none" stroke="${G4}" stroke-width="1.5"/>${[...Array(16)].map((_,i)=>{const a=i*Math.PI/8;return `<line x1="${70+Math.cos(a)*46}" y1="${100+Math.sin(a)*46}" x2="${70+Math.cos(a)*52}" y2="${100+Math.sin(a)*52}" stroke="${G4}" stroke-width="1.5"/>`}).join('')}`,
+  court:(r,s,C,red)=>`<rect x="32" y="44" width="76" height="112" rx="10" fill="#1d1d22" stroke="${G4}" stroke-width="1.5"/>${head(r,G4)}${suit(s,70,58,16,C)}<text x="70" y="150" text-anchor="middle" font-family="Tahoma" font-weight="900" font-size="12" fill="${G4}">${NM[r]}</text>`,
+  joker:(W,H)=>`<g transform="translate(70 92)"><path d="M-34 10C-40-20-20-40 0-30c20-10 40 10 34 40-10-12-22-14-34-4-12-10-24-8-34 4z" fill="#e0464a"/>${[[-34,10],[34,10],[0,-30]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="6" fill="${G4}"/>`).join('')}<circle cx="0" cy="22" r="18" fill="${G4}"/><path d="M-8 22q8 8 16 0" stroke="#121214" stroke-width="2.5" fill="none"/><circle cx="-6" cy="16" r="2" fill="#121214"/><circle cx="6" cy="16" r="2" fill="#121214"/></g><text x="70" y="166" text-anchor="middle" font-family="Tahoma" font-weight="900" font-size="22" fill="${G4}">جوكر</text>`,
+  back:(W,H)=>`<rect x="2" y="2" width="${W-4}" height="${H-4}" rx="12" fill="#121214" stroke="#c9a04a" stroke-width="2"/><rect x="10" y="10" width="${W-20}" height="${H-20}" rx="8" fill="none" stroke="${G4}" stroke-width="1.2"/>${[...Array(7)].map((_,i)=>`<path d="M70 ${40+i*20}l${30-Math.abs(3-i)*6} 10-${30-Math.abs(3-i)*6} 10-${30-Math.abs(3-i)*6}-10z" fill="none" stroke="${G4}" stroke-width=".8" opacity=".5"/>`).join('')}<circle cx="70" cy="100" r="28" fill="#121214" stroke="${G4}" stroke-width="2"/><text x="70" y="96" text-anchor="middle" font-family="Tahoma" font-weight="900" font-size="13" fill="${G4}">حفر</text><text x="70" y="113" text-anchor="middle" font-family="Tahoma" font-weight="900" font-size="13" fill="${G4}">ودفن</text>`};
+
+// ---------- 7. Cartoon / fun ----------
+const face=(r,red)=>{const sk='#f5c9a0',o='#2b2b2b';
+  let top='',extra='';
+  if(r==='K'){top=`<path d="M-26-4c0-26 52-26 52 0l4 30h-60z" fill="#fff" stroke="${o}" stroke-width="3"/><rect x="-24" y="-20" width="48" height="8" rx="4" fill="${o}"/>`;extra=`<path d="M-10 14q10 10 20 0" fill="#5a3a1a"/><path d="M-12 8h8M4 8h8" stroke="${o}" stroke-width="3"/>`}
+  if(r==='Q'){top=`<path d="M-28 30c-6-40 4-58 28-58s34 18 28 58l-8 0c2-22-4-36-20-36s-22 14-20 36z" fill="${red?'#e53950':'#3b6fd8'}" stroke="${o}" stroke-width="3"/>`;extra=`<circle cx="-12" cy="10" r="4" fill="#ff8fa3" opacity=".7"/><circle cx="12" cy="10" r="4" fill="#ff8fa3" opacity=".7"/>`}
+  if(r==='J'){top=`<path d="M-20-8c0-16 40-16 40 0z" fill="${red?'#e53950':'#3b6fd8'}" stroke="${o}" stroke-width="3"/><path d="M14-10h16" stroke="${o}" stroke-width="4" stroke-linecap="round"/>`}
+  return `<g transform="translate(70 98)">${r==='K'||r==='Q'?top:''}<circle r="20" fill="${sk}" stroke="${o}" stroke-width="3"/>${r==='J'?top:''}<circle cx="-7" cy="-2" r="2.6" fill="${o}"/><circle cx="7" cy="-2" r="2.6" fill="${o}"/><path d="M-7 8q7 6 14 0" stroke="${o}" stroke-width="2.5" fill="none" stroke-linecap="round"/>${extra}</g>`};
+const FUN={name:'كرتوني',bg:'#fffdf5',edge:'#2b2b2b',font:'Arial Black,Arial,sans-serif',ace:66,defs:'',col:r=>r?'#ef3b4f':'#2b2b2b',
+  frame:(W,H)=>`<rect x="2" y="2" width="${W-4}" height="${H-4}" rx="12" fill="none" stroke="#2b2b2b" stroke-width="3.5"/>`,
+  aceDeco:(s,C)=>`<circle cx="70" cy="100" r="40" fill="#ffd84d" stroke="#2b2b2b" stroke-width="3"/>`+suit(s,70,100,52,C),
+  court:(r,s,C,red)=>`<rect x="32" y="44" width="76" height="112" rx="16" fill="${red?'#ffe0e4':'#dfe9ff'}" stroke="#2b2b2b" stroke-width="3"/>${face(r,red)}<rect x="40" y="134" width="60" height="18" rx="9" fill="#ffd84d" stroke="#2b2b2b" stroke-width="2.5"/><text x="70" y="148" text-anchor="middle" font-family="Tahoma" font-weight="900" font-size="11" fill="#2b2b2b">${NM[r]}</text>`,
+  joker:(W,H)=>`<rect x="12" y="12" width="${W-24}" height="${H-24}" rx="14" fill="#ffd84d" stroke="#2b2b2b" stroke-width="3"/><g transform="translate(70 96)"><path d="M-34 0C-38-26-16-40 0-30c16-10 38 4 34 30-10-10-22-12-34-2-12-10-24-8-34 2z" fill="#8a4dff" stroke="#2b2b2b" stroke-width="3"/>${[[-34,0],[34,0],[0,-30]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="6" fill="#ef3b4f" stroke="#2b2b2b" stroke-width="2.5"/>`).join('')}<circle cx="0" cy="18" r="20" fill="#fff" stroke="#2b2b2b" stroke-width="3"/><path d="M-10 20q10 12 20 0" fill="#ef3b4f" stroke="#2b2b2b" stroke-width="2.5"/><circle cx="-7" cy="12" r="2.6" fill="#2b2b2b"/><circle cx="7" cy="12" r="2.6" fill="#2b2b2b"/></g><text x="70" y="168" text-anchor="middle" font-family="Tahoma" font-weight="900" font-size="22" fill="#2b2b2b">جوكر</text>`,
+  back:(W,H)=>`<rect x="2" y="2" width="${W-4}" height="${H-4}" rx="12" fill="#3b6fd8" stroke="#2b2b2b" stroke-width="3.5"/>${[...Array(40)].map((_,i)=>`<circle cx="${20+(i%5)*24+(Math.floor(i/5)%2)*12}" cy="${20+Math.floor(i/5)*22}" r="5" fill="#5b8bf0"/>`).join('')}<rect x="28" y="76" width="84" height="48" rx="24" fill="#ffd84d" stroke="#2b2b2b" stroke-width="3"/><text x="70" y="106" text-anchor="middle" font-family="Tahoma" font-weight="900" font-size="16" fill="#2b2b2b">حفر ودفن</text>`};
+
+const PACKS=[{id:'pkroyal',st:ROYAL,en:'Royal pack',ar:'حزمة ملكي',cost:2500},{id:'pkherit',st:HERIT,en:'Heritage pack',ar:'حزمة تراثي',cost:2000},
+  {id:'pkmod',st:MOD,en:'Modern pack',ar:'حزمة عصري',cost:1500},{id:'pknoir',st:NOIR,en:'Black & gold pack',ar:'حزمة فاخر أسود',cost:3000},{id:'pkfun',st:FUN,en:'Cartoon pack',ar:'حزمة كرتوني',cost:1500}];
+window.CARD_PACKS=PACKS;
+const DEFS=[...new Set(PACKS.map(p=>p.st.defs||''))].join('');
+function defsOnce(){if(document.getElementById('pkDefs'))return;const d=document.createElement('div');d.id='pkDefs';d.style.cssText='position:absolute;width:0;height:0;overflow:hidden';d.innerHTML=`<svg width="0" height="0" aria-hidden="true"><defs>${DEFS}</defs></svg>`;document.body.appendChild(d)}
+const W=150,L=55,C=75,R=95;
+function lay(H){const T=50,B=H-50,M=H/2;return {M,P:{2:[[C,T],[C,B]],3:[[C,T],[C,M],[C,B]],4:[[L,T],[R,T],[L,B],[R,B]],5:[[L,T],[R,T],[C,M],[L,B],[R,B]],
+6:[[L,T],[R,T],[L,M],[R,M],[L,B],[R,B]],7:[[L,T],[R,T],[C,(T+M)/2],[L,M],[R,M],[L,B],[R,B]],8:[[L,T],[R,T],[C,(T+M)/2],[L,M],[R,M],[C,(M+B)/2],[L,B],[R,B]],
+9:[[L,T],[R,T],[L,T+(B-T)/3],[R,T+(B-T)/3],[C,M],[L,B-(B-T)/3],[R,B-(B-T)/3],[L,B],[R,B]],10:[[L,T],[R,T],[C,T+(B-T)/6],[L,T+(B-T)/3],[R,T+(B-T)/3],[L,B-(B-T)/3],[R,B-(B-T)/3],[C,B-(B-T)/6],[L,B],[R,B]]}}}
+const isRed=s=>s==='♥'||s==='♦';
+function render1(st,c,H){const {M,P}=lay(H),red=isRed(c.s),col=st.col(red);
+  let g=`<rect x="1" y="1" width="${W-2}" height="${H-2}" rx="12" fill="${st.bg}" stroke="${st.edge}" stroke-width="2"/>`+(st.frame?st.frame(W,H,c.r==='JK'||red):'');
+  const box=(inner,k=1)=>`<g transform="translate(75 ${M}) scale(${k}) translate(-70 -100)">${inner}</g>`;
+  if(c.r==='JK')return g+box(st.joker(140,200),Math.min(W/140,H/200));
+  const ten=c.r==='10',ix=rot=>`<g${rot?` transform="rotate(180 75 ${M})"`:''}><text x="${ten?19:18}" y="37" text-anchor="middle" font-family="${st.font}" font-weight="900" font-size="${ten?30:38}" letter-spacing="${ten?-3:0}" fill="${col}">${c.r}</text>${suit(c.s,18,55,22,col)}</g>`;
+  g+=ix()+ix(1);
+  if(['K','Q','J'].includes(c.r))return g+box(st.court(c.r,c.s,col,red,140,200),H>213?1.1:1);
+  if(c.r==='A')return g+box((st.aceDeco?st.aceDeco(c.s,col):'')+suit(c.s,70,100,st.ace,col));
+  (P[c.r]||[]).forEach(([x,y])=>g+=suit(c.s,x,y,24,col,y>M+1));return g}
+const CACHE={};
+function packSVG(p,c,tall){const H=tall?236:213,k=p.id+c.r+c.s+H;return CACHE[k]||(CACHE[k]=`<svg class="hdsvg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${render1(p.st,c,H)}</svg>`)}
+const cur=()=>window.__forceFace?PACKS.find(p=>p.id===__forceFace):PACKS.find(p=>document.documentElement.classList.contains('cf-'+p.id));
+if(typeof FACES_STYLES!=='undefined')PACKS.forEach(p=>{if(!FACES_STYLES.some(f=>f.id===p.id))FACES_STYLES.push({id:p.id,en:p.en,ar:p.ar,cost:p.cost})});
+cardHTML=(function(prev){return function(c,extra='',attrs=''){const p=cur();
+  if(!c||c.r==='?'||!p)return prev(c,extra,attrs);
+  if(c.r==='JK'&&WAL.joker&&WAL.joker!=='jauto')return prev(c,extra,attrs);
+  defsOnce();const h=prev(c,extra,attrs);const m=h.match(/^<div class="card([^"]*)"([^>]*)>/);if(!m)return h;
+  return `<div class="card hd pk${m[1]}"${m[2]}>${packSVG(p,c,/\bbig\b/.test(extra)&&window.__hdTall&&__hdTall())}</div>`}})(cardHTML);
+// shop previews: SVG faces get real mini cards; the old CSS faces keep their own preview (drawn without the HD override)
+window.packCardSVG=(id,c)=>{const p=PACKS.find(x=>x.id===id);return p?packSVG(p,c,false):''};
+function mini(id,c){const svg=id==='fhd'?hdCardSVG(c):packCardSVG(id,c);return `<div class="fpchd">${svg}</div>`}
+renderShop=(function(prev){return function(){const r=prev.apply(this,arguments);try{defsOnce();document.querySelectorAll('#shop [data-face]').forEach(b=>{const p=b.querySelector('.fprevc2,.fprevc');if(!p)return;const id=b.dataset.face;
+  if(id==='fhd'||id.startsWith('pk')){p.className='fprevc2';p.innerHTML=mini(id,{r:'A',s:'♠'})+mini(id,{r:'K',s:'♥'})}
+  else if(typeof facePreview==='function'){window.__forceFace='__none';p.className='fprevc2';p.innerHTML=facePreview(id);window.__forceFace=null}})}catch(e){window.__forceFace=null}return r}})(renderShop);
+const st0=document.createElement('style');st0.textContent='.fpchd{width:48px;height:68px;position:relative;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))}.fpchd>svg{width:100%;height:100%;display:block}';document.head.appendChild(st0);
+// the matching backs, sold separately in the backs section
+const BK=PACKS.map(p=>({id:'b'+p.id,en:p.en.replace(' pack',''),ar:p.ar.replace('حزمة ',''),cost:Math.round(p.cost*.4/100)*100,svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 200" preserveAspectRatio="none"><defs>${p.st.defs||''}</defs>${p.st.back(140,200)}</svg>`}));
+if(typeof BACKS!=='undefined')BK.forEach(b=>{if(!BACKS.some(x=>x.id===b.id))BACKS.push({id:b.id,en:b.en,ar:b.ar,cost:b.cost})});
+const st=document.createElement('style');st.textContent=BK.map(b=>`html.cb-${b.id} :not(.cbprev)>.cardback.cardback,html .cbprev.cb-${b.id} .cardback.cardback{background:url("data:image/svg+xml,${encodeURIComponent(b.svg)}") center/100% 100%!important;box-shadow:0 0 0 1px rgba(0,0,0,.25),0 2px 4px rgba(0,0,0,.35)!important;border-radius:5px}`).join('\n');document.head.appendChild(st);
+})();
+// the yellow dot over cards that can eat becomes a small bobbing gold arrow (the hint card keeps its green arrow)
+(function(){const st=document.createElement('style');st.textContent=`
+html body .hand .card.can::after{content:"";position:absolute;left:calc((var(--cw) - var(--ov,0px)) / 2);right:auto;bottom:auto;top:-17px;width:0;height:0;margin-left:-8px;border-radius:0;background:none!important;
+  border-left:8px solid transparent;border-right:8px solid transparent;border-top:11px solid #ffd54a;box-shadow:none!important;
+  filter:drop-shadow(0 0 1.5px #6b5600) drop-shadow(0 0 6px rgba(255,213,74,.9));animation:canBob .6s ease-in-out infinite alternate;z-index:3;pointer-events:none}
+html body .hand .card.can.sel::after{display:none}
+html body .hand .card.hintcard::before{left:calc((var(--cw) - var(--ov,0px)) / 2);top:-16px;border-width:9px;border-top-width:13px;margin-left:-9px;animation:canBob .6s ease-in-out infinite alternate}
+html body .hand .card:last-child.can::after,html body .hand .card:last-child.hintcard::before{left:50%}
+html body .hand .card.hintcard.can::after{display:none}
+@keyframes canBob{from{transform:translateY(-3px)}to{transform:translateY(3px)}}
+@media (prefers-reduced-motion:reduce){html body .hand .card.can::after{animation:none}}`;document.head.appendChild(st)})();
+
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1107.1444';
+const EB_VERSION='v1107.1715';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
