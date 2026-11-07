@@ -9,6 +9,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { Game } = require('./game');
 const ACC = require('./accounts');
+const DW = require('./diwan');
 
 const PUBLIC = path.join(__dirname, 'public');
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.json': 'application/json' };
@@ -16,11 +17,12 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '
 const server = http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
   if (url === '/health') { res.end('ok'); return; }
+  if (url.startsWith('/api/dw/')) { let b = ''; req.on('data', d => { b += d; if (b.length > 20000) req.destroy() }); req.on('end', () => { let body = {}; try { body = b ? JSON.parse(b) : {} } catch (e) {} DW.http(req, res, url, body, live) }); return; }
   if (url.startsWith('/api/')) return ACC.http(req, res, url.split('?')[0]);
   if (url === '/rooms') { // live rooms list for the "rooms now" screen
-    const list = [...rooms.values()].filter(r => !r.priv).map(r => {
+    const list = [...rooms.values()].filter(r => !r.priv && !r.dw).map(r => {
       const players = r.members.filter(m => !m.watch), host = r.members.find(m => m.sid === r.host);
-      return { code: r.code, host: host ? host.name : '', players: players.map(m => m.name), watchers: r.members.filter(m => m.watch).length, started: !!r.started, free: r.started && r.n ? Math.max(0, r.n - players.length) : 0, away: players.filter(m => m.away).length };
+      return { code: r.code, host: host ? host.name : '', players: players.map(m => m.name), watchers: r.members.filter(m => m.watch).length, started: !!r.started, free: r.started && r.n ? Math.max(0, r.n - players.length) : 0, away: players.filter(m => m.away).length, quick: !!r.quick };
     }).sort((a, b) => (b.started - a.started) || (b.players.length - a.players.length)).slice(0, 50);
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(list)); return;
   }
@@ -86,13 +88,22 @@ const send = (c, type, data) => c && sendFrame(c, JSON.stringify({ type, data })
 // Keep connections alive behind hosting proxies
 setInterval(() => { for (const c of clients.values()) { if (!c.alive) { c.socket.destroy(); continue; } c.alive = false; sendFrame(c, Buffer.alloc(0), 9); } }, 25000);
 
+// ---------- Who is online (for diwaniyas) ----------
+const online = new Map(); // account id -> set of connections
+function goOnline(c, aid) { if (c.aid === aid) return; goOffline(c); c.aid = aid; if (!online.has(aid)) online.set(aid, new Set()); online.get(aid).add(c.id) }
+function goOffline(c) { if (!c.aid) return; const s = online.get(c.aid); if (s) { s.delete(c.id); if (!s.size) online.delete(c.aid) } c.aid = null }
+const live = {
+  status(aid) { for (const r of rooms.values()) if (r.started && r.members.some(m => m.aid === aid && !m.watch && !m.away)) return 'play'; return online.has(aid) || DW.recent(aid) ? 'on' : 'off' },
+  tables(dw) { return [...rooms.values()].filter(r => r.dw === dw).map(r => { const pl = r.members.filter(m => !m.watch); return { code: r.code, players: pl.map(m => ({ name: m.name, av: m.prof && /^p:/.test(m.prof.av || '') ? m.prof.av : 'p:0' })), started: !!r.started, n: r.n || 4, free: r.started && r.n ? Math.max(0, r.n - pl.length) : Math.max(0, 4 - pl.length), watchers: r.members.length - pl.length } }) }
+};
+
 // ---------- Rooms ----------
 const rooms = new Map();
 const clean = s => String(s || '').replace(/[<>]/g, '').trim().slice(0, 16) || 'لاعب';
 function newCode() { let c; do { c = Math.random().toString(36).slice(2, 7).toUpperCase(); } while (rooms.has(c)); return c; }
 const autoOf = a => { if (!a || typeof a !== 'object') return null; const k = v => { v = Math.floor(+v); return Number.isFinite(v) ? Math.max(-1, Math.min(300, v)) : -1; };
   return { def: k(a.def), save: k(a.save), took: k(a.took), win: k(a.win), snd: String(a.snd || '').replace(/[^a-z]/g, '').slice(0, 12) }; };
-const pub = r => ({ code: r.code, host: r.host, started: r.started, priv: !!r.priv, members: r.members.map(m => ({ sid: m.sid, name: m.name, seat: m.seat, mic: m.mic, away: !!m.away, watch: !!m.watch, prof: m.prof || null })) });
+const pub = r => ({ code: r.code, host: r.host, started: r.started, priv: !!r.priv, quick: !!r.quick, qIn: r.qAt && !r.started ? Math.max(0, r.qAt - Date.now()) : 0, dw: r.dw ? DW.name(r.dw) : '', members: r.members.map(m => ({ sid: m.sid, name: m.name, seat: m.seat, mic: m.mic, away: !!m.away, watch: !!m.watch, prof: m.prof || null })) });
 const GRACE = 3 * 60 * 1000; // keep a player's seat this long after they lose connection
 const token = () => crypto.randomBytes(12).toString('hex');
 const toRoom = (r, type, data) => r.members.forEach(m => send(clients.get(m.sid), type, data));
@@ -103,34 +114,33 @@ function onMessage2(c, { type, data = {}, rid }) {
   const r = rooms.get(c.room);
   switch (type) {
     case 'create': {
-      const tk = token();
-      const room = { code: newCode(), host: c.id, started: false, members: [{ sid: c.id, name: clean(data.name), seat: 0, mic: false, token: tk, atoken: c.atoken || null }] };
-      rooms.set(room.code, room); c.room = room.code;
-      return reply({ ok: true, room: pub(room), me: c.id, token: tk });
+      return whenAuthed(c, () => {
+        const dw = data.dw && c.aid && DW.isMember(String(data.dw), c.aid) ? String(data.dw) : null;
+        if (data.dw && !dw) return reply({ ok: false, err: 'dw' });
+        const tk = token();
+        const room = { code: newCode(), host: c.id, started: false, members: [member(c, data.name, 0, tk)] };
+        if (dw) { room.dw = dw; room.priv = true; }
+        rooms.set(room.code, room); c.room = room.code;
+        reply({ ok: true, room: pub(room), me: c.id, token: tk });
+      });
     }
     case 'join': {
       const room = rooms.get(String(data.code || '').toUpperCase().trim());
       if (!room) return reply({ ok: false, err: 'notfound' });
-      const players = room.members.filter(m => !m.watch).length;
-      if (room.started && !data.watch && room.n) { // take a computer's seat in a game that already started
-        const used = new Set(room.members.filter(m => !m.watch).map(m => m.seat)); let seat = 1; while (used.has(seat)) seat++;
-        if (seat < room.n) { const tk = token();
-          room.members.push({ sid: c.id, name: clean(data.name), seat, mic: false, token: tk , atoken: c.atoken || null }); c.room = room.code;
-          reply({ ok: true, room: pub(room), me: c.id, token: tk, late: true });
-          toRoom(room, 'room', pub(room)); if (room.game) { room.game.syncSeats(); room.game.flush(c.id); } return; }
-      }
-      if (room.started || players >= 6 || data.watch) { // watch the game instead of playing
-        if (room.members.filter(m => m.watch).length >= 30) return reply({ ok: false, err: 'full' });
-        const tw = token();
-        room.members.push({ sid: c.id, name: clean(data.name), seat: 99, watch: true, mic: false, token: tw , atoken: c.atoken || null }); c.room = room.code;
-        reply({ ok: true, room: pub(room), me: c.id, token: tw, watch: true });
-        toRoom(room, 'room', pub(room)); if (room.game) room.game.flush(c.id); return;
-      }
-      const used = new Set(room.members.map(m => m.seat)); let seat = 1; while (used.has(seat)) seat++;
-      const tk = token();
-      room.members.push({ sid: c.id, name: clean(data.name), seat, mic: false, token: tk , atoken: c.atoken || null }); c.room = room.code;
-      reply({ ok: true, room: pub(room), me: c.id, token: tk });
-      return toRoom(room, 'room', pub(room));
+      return whenAuthed(c, () => { if (room.dw && !DW.isMember(room.dw, c.aid)) return reply({ ok: false, err: 'dw' }); joinRoom(c, room, data, reply) });
+    }
+    case 'quick': { // quick game: sit at a table that is waiting for players, or open one that starts by itself
+      if (c.room) return reply({ ok: false, err: 'inroom' });
+      return whenAuthed(c, () => {
+        const avg = r => { const p = r.members.filter(m => !m.watch); return p.reduce((s, m) => s + ((m.prof && m.prof.rp) || 0), 0) / Math.max(1, p.length) }, my = c.rp || 0;
+        const wait = [...rooms.values()].filter(r => r.quick && !r.started && r.members.filter(m => !m.watch).length < 4).sort((a, b) => (Math.abs(avg(a) - my) > 1500) - (Math.abs(avg(b) - my) > 1500) || a.qAt - b.qAt)[0];
+        if (wait) { joinRoom(c, wait, data, reply); if (wait.members.filter(m => !m.watch).length >= 4) setTimeout(() => quickGo(wait), 1500); return; }
+        const tk = token();
+        const room = { code: newCode(), host: c.id, started: false, quick: true, qAt: Date.now() + QUICK_WAIT, members: [member(c, data.name, 0, tk)] };
+        rooms.set(room.code, room); c.room = room.code;
+        room.qt = setTimeout(() => quickGo(room), QUICK_WAIT);
+        reply({ ok: true, room: pub(room), me: c.id, token: tk });
+      });
     }
     case 'swap': { // host moves players between seats in the lobby
       if (!r || r.host !== c.id || r.started) return;
@@ -138,15 +148,16 @@ function onMessage2(c, { type, data = {}, rid }) {
       if (a) a.seat = data.b; if (b) b.seat = data.a;
       return toRoom(r, 'room', pub(r));
     }
-    case 'start': { if (!r || r.host !== c.id) return; const cfg = data.cfg || {};
-      const safe = { mode: ['solo', '2v2', '3v3'].includes(cfg.mode) ? cfg.mode : '2v2', decks: Math.min(6, Math.max(1, +cfg.decks || 4)), timer: Math.min(15, Math.max(2, +cfg.timer || 3)), level: ['easy', 'normal', 'hard'].includes(cfg.level) ? cfg.level : 'normal', hints: !!cfg.hints, lang: cfg.lang === 'en' ? 'en' : 'ar' };
-      if (r.game) r.game.stop();
-      try { r.game = new Game(r, safe, { send: (sid, type, d) => send(clients.get(sid), type, d), war: (seat, gain) => reward(r, seat, a => ACC.warWon(a, gain)), over: g => { for (const x of g.results()) reward(r, x.seat, a => ACC.gameOver(a, x)) } }); } catch (e) { console.error('game start', e); r.game = null; return; }
-      r.started = true; r.n = r.game.S.players.length; toRoom(r, 'room', pub(r)); toRoom(r, 'started', {}); r.game.flush(); return; }
+    case 'start': { if (!r || r.host !== c.id) return; return startGame(r, data.cfg || {}); }
     case 'reopen': if (!r || r.host !== c.id) return; if (r.game) { r.game.stop(); r.game = null; } r.started = false; return toRoom(r, 'room', pub(r));
     case 'up': return; // (old app versions) the server sends the table now
     case 'act': { // a player's move: the server checks it against the rules and plays it
       if (!r || !r.game) return; const m = r.members.find(x => x.sid === c.id); if (!m || m.watch) return;
+      if (data && data.a === 'slam') { // the fire button: take the rupees first
+        if (!m.atoken || Date.now() - (m.lastSlam || 0) < 1500) return; m.lastSlam = Date.now();
+        ACC.load(m.atoken).then(a => a && ACC.spend(a, ACC.SLAM_COST)).then(me => { if (!me) return; send(clients.get(m.sid), 'me', me); if (r.game) r.game.act(m.seat, { a: 'slam' }); }).catch(e => console.error('slam', e));
+        return;
+      }
       return r.game.act(m.seat, data || {});
     }
     case 'mic': { if (!r) return; const m = r.members.find(x => x.sid === c.id); if (m) { m.mic = !!data.on; toRoom(r, 'room', pub(r)); } return; }
@@ -160,7 +171,7 @@ function onMessage2(c, { type, data = {}, rid }) {
       const old = m.sid;
       if (m.timer) { clearTimeout(m.timer); m.timer = null; }
       const oc = clients.get(old); if (oc && oc !== c) { oc.room = null; try { oc.socket.destroy(); } catch (e) {} clients.delete(old); }
-      m.sid = c.id; m.away = false; m.mic = false; c.room = room.code; if (m.atoken && !c.atoken) c.atoken = m.atoken;
+      m.sid = c.id; m.away = false; m.mic = false; c.room = room.code; if (m.atoken && !c.atoken) c.atoken = m.atoken; if (m.aid && !c.aid) goOnline(c, m.aid);
       if (room.host === old) room.host = c.id;
       reply({ ok: true, room: pub(room), me: c.id, watch: !!m.watch });
       toRoom(room, 'room', pub(room));
@@ -174,26 +185,62 @@ function onMessage2(c, { type, data = {}, rid }) {
       if (av.length > 40000 || !(/^p:\d{1,2}$/.test(av) || av.startsWith('data:image/jpeg;base64,'))) return;
       const short = (v, n) => String(v || '').replace(/[<>"]/g, '').slice(0, n);
       const num = v => Math.max(0, Math.min(1e7, Math.floor(+v || 0)));
-      m.prof = { av, flag: short(p.flag, 8), frame: short(p.frame, 16), level: num(p.level), games: num(p.games), wins: num(p.wins), wars: num(p.wars), rp: num(p.rp), streak: num(p.streak), auto: autoOf(p.auto), efx: String(p.efx || '').replace(/[^a-z]/g, '').slice(0, 12), sfx: String(p.sfx || '').replace(/[^a-z]/g, '').slice(0, 12) };
+      m.prof = { av, flag: short(p.flag, 8), frame: short(p.frame, 16), level: num(p.level), games: num(p.games), wins: num(p.wins), wars: num(p.wars), rp: num(p.rp), streak: num(p.streak), auto: autoOf(p.auto), efx: String(p.efx || '').replace(/[^a-z]/g, '').slice(0, 12), sfx: String(p.sfx || '').replace(/[^a-z]/g, '').slice(0, 12), bub: String(p.bub || '').replace(/[^a-z]/g, '').slice(0, 12) };
       if (p.name) m.name = clean(p.name);
       if (r.game) r.game.syncSeats();
       return toRoom(r, 'room', pub(r));
     }
     case 'auth': { // link this player to their account (rank, rupees and rewards come from the server)
       const tok = String(data.token || '').slice(0, 80); c.atoken = tok;
-      ACC.load(tok).then(a => { if (!a) { c.atoken = null; return } const rr = rooms.get(c.room); const m = rr && rr.members.find(x => x.sid === c.id);
-        if (m) { m.atoken = tok; m.prof = ACC.pub(a); if (a.prof.name) m.name = clean(a.prof.name); if (rr.game) rr.game.syncSeats(); toRoom(rr, 'room', pub(rr)) } }).catch(() => {});
+      c.authP = ACC.load(tok).then(a => { if (!a) { c.atoken = null; return } goOnline(c, a.id); c.rp = a.st.rp || 0; c.pubProf = ACC.pub(a); const rr = rooms.get(c.room); const m = rr && rr.members.find(x => x.sid === c.id);
+        if (m) { m.atoken = tok; m.aid = a.id; m.prof = ACC.pub(a); if (a.prof.name) m.name = clean(a.prof.name); if (rr.game) rr.game.syncSeats(); toRoom(rr, 'room', pub(rr)) } }).catch(() => {});
       return reply && rid ? reply({ ok: true }) : undefined; }
     case 'priv': { if (!r || r.host !== c.id) return; r.priv = !!data.on; return toRoom(r, 'room', pub(r)); }
     case 'leave': return drop(c, true, true);
   }
 }
 
+function member(c, name, seat, tk, watch) { return { sid: c.id, name: clean(name), seat, mic: false, token: tk, atoken: c.atoken || null, aid: c.aid || null, prof: c.pubProf || null, ...(watch ? { watch: true } : {}) } }
+function whenAuthed(c, fn) { const p = c.authP || Promise.resolve(); p.catch(() => {}).then(() => { try { fn() } catch (e) { console.error('room', e) } }) }
+function joinRoom(c, room, data, reply) {
+  if (c.room === room.code) return reply({ ok: true, room: pub(room), me: c.id });
+  const players = room.members.filter(m => !m.watch).length;
+  if (room.started && !data.watch && room.n) { // take a computer's seat in a game that already started
+    const used = new Set(room.members.filter(m => !m.watch).map(m => m.seat)); let seat = 1; while (used.has(seat)) seat++;
+    if (seat < room.n) { const tk = token();
+      room.members.push(member(c, data.name, seat, tk)); c.room = room.code;
+      reply({ ok: true, room: pub(room), me: c.id, token: tk, late: true });
+      toRoom(room, 'room', pub(room)); if (room.game) { room.game.syncSeats(); room.game.flush(c.id); } return; }
+  }
+  if (room.started || players >= (room.quick ? 4 : 6) || data.watch) { // watch the game instead of playing
+    if (room.members.filter(m => m.watch).length >= 30) return reply({ ok: false, err: 'full' });
+    const tw = token();
+    room.members.push(member(c, data.name, 99, tw, true)); c.room = room.code;
+    reply({ ok: true, room: pub(room), me: c.id, token: tw, watch: true });
+    toRoom(room, 'room', pub(room)); if (room.game) room.game.flush(c.id); return;
+  }
+  const used = new Set(room.members.map(m => m.seat)); let seat = 1; while (used.has(seat)) seat++;
+  const tk = token();
+  room.members.push(member(c, data.name, seat, tk)); c.room = room.code;
+  reply({ ok: true, room: pub(room), me: c.id, token: tk });
+  toRoom(room, 'room', pub(room));
+}
+function startGame(r, cfg, ranked) {
+  r.ranked = !!ranked;
+  const safe = { mode: ['solo', '2v2', '3v3'].includes(cfg.mode) ? cfg.mode : '2v2', decks: Math.min(6, Math.max(1, +cfg.decks || 4)), timer: Math.min(15, Math.max(2, +cfg.timer || 3)), level: ['easy', 'normal', 'hard'].includes(cfg.level) ? cfg.level : 'normal', hints: !!cfg.hints, lang: cfg.lang === 'en' ? 'en' : 'ar' };
+  if (r.qt) { clearTimeout(r.qt); r.qt = null; }
+  if (r.game) r.game.stop();
+  try { r.game = new Game(r, safe, { send: (sid, type, d) => send(clients.get(sid), type, d), war: (seat, gain) => reward(r, seat, a => ACC.warWon(a, gain)), over: g => { const ranked = !!r.ranked; for (const x of g.results()) reward(r, x.seat, a => ACC.gameOver(a, { ...x, ranked })) } }); } catch (e) { console.error('game start', e); r.game = null; return; }
+  r.started = true; r.n = r.game.S.players.length; toRoom(r, 'room', pub(r)); toRoom(r, 'started', {}); r.game.flush();
+}
+const QUICK_WAIT = 15000;
+function quickGo(r) { if (!rooms.has(r.code) || r.started || !r.members.some(m => !m.watch)) return; startGame(r, { mode: '2v2', decks: 4, timer: 3, level: 'normal' }, true); }
+
 function reward(r, seat, fn) { const m = r.members.find(x => !x.watch && x.seat === seat); if (!m || !m.atoken) return;
   ACC.load(m.atoken).then(a => a && fn(a)).then(me => { if (!me) return; send(clients.get(m.sid), 'me', me); m.prof = { ...(m.prof || {}), level: me.st.level, rp: me.st.rp, streak: me.st.streak, wins: me.st.wins, games: me.st.games, wars: me.st.wars } }).catch(e => console.error('reward', e)); }
 function drop(c, keepSocket, now) {
   const r = rooms.get(c.room); c.room = null;
-  if (!keepSocket) clients.delete(c.id);
+  if (!keepSocket) { clients.delete(c.id); goOffline(c); }
   if (!r) return;
   const m = r.members.find(x => x.sid === c.id); if (!m) return;
   if (!now) { // lost connection: hold the seat for a while so they can come back
@@ -210,10 +257,10 @@ function remove(r, m) {
   r.members = r.members.filter(x => x !== m);
   if (r.host === m.sid) { // the room carries on with someone else in charge; it closes only when nobody is left
     const next = r.members.find(x => !x.watch && !x.away) || r.members.find(x => !x.watch) || r.members[0];
-    if (!next) { if (r.game) r.game.stop(); rooms.delete(r.code); return; }
+    if (!next) { if (r.game) r.game.stop(); if (r.qt) clearTimeout(r.qt); rooms.delete(r.code); return; }
     r.host = next.sid;
   }
-  if (!r.members.length) { if (r.game) r.game.stop(); rooms.delete(r.code); return; }
+  if (!r.members.length) { if (r.game) r.game.stop(); if (r.qt) clearTimeout(r.qt); rooms.delete(r.code); return; }
   if (r.game) r.game.syncSeats();
   toRoom(r, 'room', pub(r));
 }
