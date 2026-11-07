@@ -73,7 +73,7 @@ class Game {
         const incl = a.incl == null ? null : (a.incl + seat) % n; E.declareEat(seat, c, r, incl); break }
       case 'throw': { if (S.turn !== seat) return; const c = card(a.card); if (!c || !E.canThrow(seat) || !E.throwable(seat, c)) return; if (S.phase === 'choose' && E.mustNow(seat)) return; if (S.phase !== 'choose' && S.phase !== 'throw') return; E.throwCard(seat, c); break }
       case 'pass': if (S.turn === seat && S.phase === 'choose' && !E.mustNow(seat) && !E.canThrow(seat)) { S.lone ? E.passTurn(seat) : E.endTurn(seat) } break;
-      case 'cut': { const c = card(a.card); if (c && S.war && E.canIntercept(seat).includes(c)) E.intercept(seat, c, !!a.fire); break }
+      case 'cut': { const c = card(a.card); if (c && S.war && E.canIntercept(seat).includes(c)) E.intercept(seat, c, false); break } // fire only comes from the paid 'slam' act, never from a cut
       case 'gift': { const to = ((+a.to || 0) + seat) % n; if (to !== seat && /^[a-z0-9]{1,16}$/.test(String(a.id))) this.push({ t: 'gift', f: seat, to, id: String(a.id) }); break }
       case 'chat': this.push({ t: 'chat', s: seat, text: String(a.text || '').slice(0, 60) }); break;
       case 'say': this.push({ t: 'say', s: seat, text: String(a.text || '').slice(0, 40) }); break;
