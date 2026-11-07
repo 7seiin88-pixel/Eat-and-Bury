@@ -3720,7 +3720,7 @@ document.addEventListener('click',e=>{if(e.target.closest('#profClose,#pSave,#sh
 
 // ===================== Round 21: install as an app (home-screen icon, full screen) =====================
 const IS_IOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-const IS_APP=()=>(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
+const IS_APP=()=>!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform())||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
 let installEvt=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;if(!$('home').hidden)renderHome()});
 addEventListener('appinstalled',()=>{installEvt=null;toast(L('Installed!','تثبّتت اللعبة!'));if(!$('home').hidden)renderHome()});
 if(typeof ONLINE_BASE!=='undefined'&&ONLINE_BASE&&'serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
@@ -5900,7 +5900,8 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&ACCT.on)a
 html body .seat.s-left .tilewrap .lvl,html body .seat.s-left .tile .lvl{right:auto!important;left:-8%!important}
 html body .seat.s-right .tilewrap .lvl,html body .seat.s-right .tile .lvl{left:auto!important;right:-8%!important}
 html,body{background:#0e0705!important}
-html body #app{min-height:100vh;min-height:100dvh}
+html body #app{min-height:calc(100vh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));min-height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
+html.app-mode body .bottombar{padding-bottom:6px!important}
 @supports(padding:env(safe-area-inset-bottom)){html body .bottombar{padding-bottom:max(6px,env(safe-area-inset-bottom))!important}}`;document.head.appendChild(st)})();
 (function(){const st=document.createElement('style');st.textContent=`
 html body .seat.s-left .seatgift{right:auto!important;left:4px!important;bottom:-10%!important}
@@ -6736,12 +6737,14 @@ slapFx=(function(prev){return function(card,from,power){const s=window.__efSeat;
   if(power===3&&s!=null&&(sfxOf(s)||'plain')==='plain'){window.__efSeat=null;prev(card,from,power);if(typeof calm!=='undefined'&&calm)return;const id=efxOf(s);
     if(id&&id!=='none')setTimeout(()=>runEfx(id,$('fx'),stackAt||groundPt(),3),460*.78*(typeof ANIM==='number'?ANIM:1));return}
   return prev(card,from,power)}})(slapFx);
+// inside the iPhone app: no pinch zoom
+if(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform()){const m=document.querySelector('meta[name=viewport]');if(m)m.content='width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover'}
 // the ••• button in the game is the menu (new game, change cards, theme, leave)
 {const s=document.querySelector('#newBtn span');if(s){s.dataset.en='Menu';s.dataset.ar='القائمة';s.textContent=L('Menu','القائمة')}}
 })();
 
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1107.0426';
+const EB_VERSION='v1107.1341';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
