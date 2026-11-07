@@ -6760,6 +6760,11 @@ render=(function(prev){return function(){const r=prev.apply(this,arguments);try{
   if(!important)last=''}catch(e){}return r}})(render);
 const st=document.createElement('style');st.textContent=`
 html body #status{display:none!important}
+/* phones with the camera or clock on the side (folded screens, landscape): keep everything clear of it */
+html body #app{box-sizing:border-box;padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+html body .h2-page{padding-left:max(16px,calc(env(safe-area-inset-left,0px) + 8px))!important;padding-right:max(16px,calc(env(safe-area-inset-right,0px) + 8px))!important}
+html body .h2-tabs{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+html body #home .hm{padding-left:env(safe-area-inset-left,0px)!important;padding-right:env(safe-area-inset-right,0px)!important}
 #hintPop{position:fixed;left:50%;z-index:60;max-width:min(86vw,420px);transform:translate(-50%,-100%) scale(.9);opacity:0;pointer-events:none;
   padding:9px 14px;border-radius:14px;background:rgba(20,10,6,.94);color:#f4ead6;font-size:13.5px;font-weight:700;line-height:1.6;text-align:center;
   box-shadow:0 0 0 1px rgba(242,210,122,.5),0 8px 24px rgba(0,0,0,.5);transition:opacity .25s,transform .25s}
@@ -6809,7 +6814,7 @@ const st=document.createElement('style');st.textContent=`
 })();
 
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1107.1440';
+const EB_VERSION='v1107.1444';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
