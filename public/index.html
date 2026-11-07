@@ -7524,8 +7524,166 @@ html body .hand .card.hintcard.can::after{display:none}
 @keyframes canBob{from{transform:translateY(-3px)}to{transform:translateY(3px)}}
 @media (prefers-reduced-motion:reduce){html body .hand .card.can::after{animation:none}}`;document.head.appendChild(st)})();
 
+// ===================== Round 77: effect clash — when two rival players fire during the same war, their effects race from their seats and collide on the pile =====================
+(function(){
+const R=(a,b)=>a+Math.random()*(b-a);
+// colours and the way each effect travels
+const LOOK={
+  thunder:{a:'#d8ecff',b:'#5fb0ff',core:'#fff6c8',kind:'bolt'},
+  quake:{a:'#ffb15a',b:'#7a3b12',core:'#ffe2b0',kind:'crack'},
+  inferno:{a:'#ffb347',b:'#e8340f',core:'#fff1c0',kind:'comet'},
+  blaze:{a:'#ffd27a',b:'#ff6a00',core:'#fff4d0',kind:'comet'},
+  meteor:{a:'#ffc070',b:'#c2410c',core:'#fff',kind:'comet'},
+  ice:{a:'#d9fbff',b:'#38c6f4',core:'#ffffff',kind:'shard'},
+  royal:{a:'#f6d77e',b:'#7b3fe4',core:'#fff3c4',kind:'comet'},
+  money:{a:'#ffe27a',b:'#1f9d55',core:'#fffbe0',kind:'coin'},
+  plain:{a:'#ffffff',b:'#c9d3e0',core:'#ffffff',kind:'comet'}};
+const look=id=>LOOK[id]||LOOK.plain;
+// where a player sits on screen
+function seatPt(i){const me=S&&S.players&&S.players[i]&&S.players[i].human&&!(typeof NET!=='undefined'&&NET.on&&i!==0);
+  const el=document.querySelector(`.seat[data-seat="${i}"] .avatar`)||document.querySelector(`.seat[data-seat="${i}"]`);
+  if(el&&!me){const r=el.getBoundingClientRect();if(r.width)return {x:r.left+r.width/2,y:r.top+r.height/2}}
+  const h=document.querySelector('#myrow')||document.querySelector('.handzone');if(h){const r=h.getBoundingClientRect();return {x:r.left+r.width/2,y:r.top}}
+  return {x:innerWidth/2,y:innerHeight*.85}}
+function pilePt(){try{const box=$('fx'),at=(typeof stackAt!=='undefined'&&stackAt)||groundPt();const r=box.getBoundingClientRect();return {x:r.left+at.x,y:r.top+at.y}}catch(e){return {x:innerWidth/2,y:innerHeight/2}}}
+// a jagged path from p to q
+function jag(p,q,n,amp){const pts=[p];const dx=q.x-p.x,dy=q.y-p.y,L=Math.hypot(dx,dy)||1,nx=-dy/L,ny=dx/L;
+  for(let k=1;k<n;k++){const t=k/n,o=R(-amp,amp)*Math.sin(Math.PI*t);pts.push({x:p.x+dx*t+nx*o,y:p.y+dy*t+ny*o})}pts.push(q);return pts}
+let cv,cx,DPR=1;
+function canvas(){if(!cv){cv=document.createElement('canvas');cv.id='clashCanvas';cv.style.cssText='position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:9998';document.body.appendChild(cv);cx=cv.getContext('2d')}
+  DPR=Math.min(2,devicePixelRatio||1);cv.width=innerWidth*DPR;cv.height=innerHeight*DPR;cx.setTransform(DPR,0,0,DPR,0,0);return cx}
+function stroke(c,pts,w,col,blur,glow){c.save();c.lineJoin='round';c.lineCap='round';c.shadowBlur=blur;c.shadowColor=glow||col;c.strokeStyle=col;c.lineWidth=w;c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y));c.stroke();c.restore()}
+// draw one side travelling from s to the meeting point m, progress u (0..1)
+function side(c,L,s,m,u,crackPath,parts){const hx=s.x+(m.x-s.x)*u,hy=s.y+(m.y-s.y)*u,h={x:hx,y:hy};
+  if(L.kind==='bolt'){const p=jag(s,h,10,22);stroke(c,p,9,L.b,30);stroke(c,p,3.5,L.a,14);stroke(c,p,1.4,'#fff',4);
+    if(Math.random()<.6){const k=2+(Math.random()*6|0),f=jag(p[k],{x:p[k].x+R(-50,50),y:p[k].y+R(-50,50)},4,10);stroke(c,f,1.6,L.a,10)}}
+  else if(L.kind==='crack'){const n=Math.max(1,Math.round(crackPath.length*u)),p=crackPath.slice(0,n).concat([h]);stroke(c,p,10,'rgba(40,16,4,.85)',0);stroke(c,p,6,L.b,18,L.a);stroke(c,p,2,L.a,12);
+    if(Math.random()<.9)for(let k=0;k<3;k++)parts.push({x:hx,y:hy,vx:R(-2.5,2.5),vy:R(-4,-1),g:.25,r:R(1.5,4),life:1,col:Math.random()<.5?'#5a3416':'#c98b4a'})}
+  else{const tail=8;for(let k=tail;k>=0;k--){const t=Math.max(0,u-k*.03),x=s.x+(m.x-s.x)*t,y=s.y+(m.y-s.y)*t,r=(1-k/tail)*14+3;c.save();c.globalAlpha=(1-k/tail)*.9;c.shadowBlur=24;c.shadowColor=L.b;c.fillStyle=k?L.b:L.core;c.beginPath();c.arc(x,y,r,0,7);c.fill();c.restore()}
+    for(let k=0;k<2;k++)parts.push({x:hx,y:hy,vx:R(-1.5,1.5),vy:R(-1.5,1.5),g:0,r:R(1.5,3.5),life:1,col:Math.random()<.5?L.a:L.b,shape:L.kind})}
+  return h}
+let busy=false;
+function clash(sa,ida,sb,idb){if(busy||document.hidden)return;busy=true;const c=canvas();const A=look(ida),B=look(idb),pa=seatPt(sa),pb=seatPt(sb),m=pilePt();
+  const crA=A.kind==='crack'?jag(pa,m,14,26):null,crB=B.kind==='crack'?jag(pb,m,14,26):null;
+  const parts=[],rings=[];const T0=performance.now(),TRAVEL=520,PUSH=420,END=1900;let hit=false;
+  if(typeof fxSound==='function')try{fxSound(idb,2)}catch(e){}
+  function frame(now){const t=now-T0;c.clearRect(0,0,innerWidth,innerHeight);
+    if(t<TRAVEL+PUSH){
+      // both streams race in; then they push against each other — the meeting point wobbles between them
+      const u=Math.min(1,t/TRAVEL),wob=t>TRAVEL?Math.sin((t-TRAVEL)/38)*14:0,dx=pb.x-pa.x,dy=pb.y-pa.y,L0=Math.hypot(dx,dy)||1,mm={x:m.x+dx/L0*wob,y:m.y+dy/L0*wob};
+      side(c,A,pa,mm,u,crA,parts);side(c,B,pb,mm,u,crB,parts);
+      if(t>TRAVEL){c.save();const g=c.createRadialGradient(mm.x,mm.y,0,mm.x,mm.y,60);g.addColorStop(0,'#fff');g.addColorStop(.35,A.a);g.addColorStop(.7,B.b);g.addColorStop(1,'rgba(0,0,0,0)');c.globalAlpha=.85;c.fillStyle=g;c.beginPath();c.arc(mm.x,mm.y,60+Math.random()*10,0,7);c.fill();c.restore();
+        for(let k=0;k<4;k++){const L=k%2?A:B;parts.push({x:mm.x,y:mm.y,vx:R(-7,7),vy:R(-7,7),g:.12,r:R(1.5,3.5),life:1,col:L.a})}}}
+    else if(!hit){hit=true;
+      // the collision: double shockwave in both colours, a flash, sparks everywhere, the table shakes
+      rings.push({r:10,v:9,col:A.a,w:10},{r:10,v:6.5,col:B.a,w:7},{r:4,v:4,col:'#fff',w:4});
+      for(let k=0;k<70;k++){const L=k%2?A:B,a=R(0,6.3),v=R(3,13);parts.push({x:m.x,y:m.y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,g:.18,r:R(1.5,4.5),life:1,col:Math.random()<.5?L.a:L.b,shape:L.kind})}
+      if(typeof FXE!=='undefined'){try{FXE.shake(18,700)}catch(e){}}
+      if(typeof fxSound==='function')try{fxSound(ida,3);fxSound(idb,3)}catch(e){}
+      try{navigator.vibrate&&navigator.vibrate([60,40,120])}catch(e){}}
+    if(hit){const k=(t-TRAVEL-PUSH)/220;if(k<1){c.save();c.globalAlpha=(1-k)*.55;const g=c.createRadialGradient(m.x,m.y,0,m.x,m.y,innerWidth*.9);g.addColorStop(0,'#fff');g.addColorStop(.3,A.a);g.addColorStop(.6,B.b);g.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=g;c.fillRect(0,0,innerWidth,innerHeight);c.restore()}
+      rings.forEach(r=>{r.r+=r.v;r.v*=.97;const al=Math.max(0,1-r.r/(innerWidth*.75));if(al<=0)return;c.save();c.globalAlpha=al;c.strokeStyle=r.col;c.lineWidth=r.w*al+1;c.shadowBlur=20;c.shadowColor=r.col;c.beginPath();c.arc(m.x,m.y,r.r,0,7);c.stroke();c.restore()})}
+    for(let i=parts.length-1;i>=0;i--){const p=parts[i];p.x+=p.vx;p.y+=p.vy;p.vy+=p.g;p.life-=.022;if(p.life<=0){parts.splice(i,1);continue}
+      c.save();c.globalAlpha=p.life;c.fillStyle=p.col;c.shadowBlur=8;c.shadowColor=p.col;
+      if(p.shape==='shard'){c.translate(p.x,p.y);c.rotate(p.vx);c.fillRect(-p.r,-p.r*2.4,p.r*2,p.r*4.8)}
+      else if(p.shape==='coin'){c.beginPath();c.ellipse(p.x,p.y,p.r*1.6,p.r*1.1,p.vx,0,7);c.fill()}
+      else{c.beginPath();c.arc(p.x,p.y,p.r,0,7);c.fill()}c.restore()}
+    if(t<END||parts.length)requestAnimationFrame(frame);else{c.clearRect(0,0,innerWidth,innerHeight);busy=false}}
+  requestAnimationFrame(frame)}
+window.effectClash=clash;
+// remember who fired last during this war; a rival answering within a few seconds starts the clash
+let pend=null,last=null;
+const mark=i=>{pend={i,t:performance.now()}};
+slapFx=(function(prev){return function(card,from,power){if(power===3&&window.__efSeat!=null)mark(window.__efSeat);return prev.apply(this,arguments)}})(slapFx);
+if(typeof fireSlam==='function')fireSlam=(function(prev){return function(i){mark(i);return prev.apply(this,arguments)}})(fireSlam);
+runEfx=(function(prev){return function(id,box,at,p){const r=prev.apply(this,arguments);
+  try{if(p===3&&pend&&performance.now()-pend.t<1500&&S&&S.players){const i=pend.i;pend=null;const now=performance.now(),war=!!S.war;
+    if(war&&last&&now-last.t<8000&&last.i!==i&&S.players[last.i]&&S.players[i]&&S.players[last.i].team!==S.players[i].team&&!(typeof calm!=='undefined'&&calm)){const a=last;last=null;window.__clashAt=performance.now();setTimeout(()=>window.effectClash(a.i,a.id,i,id||'plain'),120)}
+    else last=war?{i,id:id||'plain',t:now}:null}}catch(e){}
+  return r}})(runEfx);
+})();
+
+// ===================== Round 78: flick to fire — swipe a card up FAST and it is played with fire; a calm drag or a double tap stays a normal play =====================
+(function(){
+const FAST=1.15;            // px per ms, measured over the last ~80 ms of the swipe
+let tr=null,auto=false;
+const cost=()=>window.SLAM_COST||30;
+const canPlay=()=>S&&((S.turn===0&&(S.phase==='choose'||S.phase==='throw'))||S.war);
+function setFire(on){if(on===auto)return;auto=on;slamArmed=on;try{slamIcon()}catch(e){}const g=document.querySelector('.dragghost');if(g)g.classList.toggle('onfire',on)}
+document.addEventListener('pointerdown',e=>{const el=e.target.closest('#myrow [data-card]');if(!el||!canPlay())return;
+  tr={pid:e.pointerId,pts:[{x:e.clientX,y:e.clientY,t:performance.now()}],pre:!!slamArmed,poorTold:false}},{capture:true,passive:true});
+window.addEventListener('pointermove',e=>{if(!tr||e.pointerId!==tr.pid)return;const now=performance.now();tr.pts.push({x:e.clientX,y:e.clientY,t:now});
+  while(tr.pts.length>2&&now-tr.pts[0].t>80)tr.pts.shift();
+  if(tr.pre)return; // the player already armed fire with the button
+  const a=tr.pts[0],b=tr.pts[tr.pts.length-1],dt=Math.max(1,b.t-a.t),vy=(a.y-b.y)/dt;
+  const hand=$('myrow');if(!hand)return;const above=e.clientY<hand.getBoundingClientRect().top+10;
+  const fast=vy>FAST&&above;
+  if(fast&&!auto){if((WAL.tokens||0)<cost()&&!(typeof NET!=='undefined'&&NET.on)){if(!tr.poorTold){tr.poorTold=true;toast(L(`Fire needs ${cost()} rupees`,`النار تحتاج ${cost()} روبية`))}return}setFire(true)}
+  else if(!fast&&auto&&vy<.25)setFire(false)},{capture:true,passive:true});
+// after the drag code has played (or not played) the card: drop the fire if it was not used
+// if the card went to the table (or a choice popup opened for it) the fire stays ready for that play; otherwise it is dropped
+let used=0;
+if(typeof quickPlay==='function')quickPlay=(function(prev){return function(){used=performance.now();return prev.apply(this,arguments)}})(quickPlay);
+const done=e=>{if(!tr||e.pointerId!==tr.pid)return;tr=null;if(!auto)return;
+  if(performance.now()-used<300){const t0=performance.now(),iv=setInterval(()=>{if(!auto){clearInterval(iv);return}
+      const idle=!S||(!S.war&&S.turn!==0)||S.phase==='over';if(idle||performance.now()-t0>15000){clearInterval(iv);setFire(false)}},300);return}
+  setFire(false)};
+window.addEventListener('pointerup',e=>setTimeout(()=>done(e),0),true);
+window.addEventListener('pointercancel',e=>{if(tr&&e.pointerId===tr.pid){tr=null;if(auto)setFire(false)}},true);
+intercept=(function(prev){return function(){used=performance.now();return prev.apply(this,arguments)}})(intercept);
+// useSlam clears slamArmed when the card is played; keep our flag in step
+useSlam=(function(prev){return function(){const r=prev.apply(this,arguments);auto=false;return r}})(useSlam);
+// one-time tip the first time a war starts
+let told=false;try{told=localStorage.getItem('flickTip')==='1'}catch(e){}
+render=(function(prev){return function(){const r=prev.apply(this,arguments);if(!told&&S&&S.war&&!S.players[0].remote){told=true;try{localStorage.setItem('flickTip','1')}catch(e){}
+  setTimeout(()=>toast(L('Tip: flick a card up fast to play it with fire 🔥','نصيحة: اسحب الورقة لفوق بسرعة وتنلعب بالنار 🔥')),400)}return r}})(render);
+const st=document.createElement('style');st.textContent=`
+.dragghost.onfire{box-shadow:0 0 0 3px #ffb02e,0 0 26px 8px rgba(255,110,20,.85),0 -10px 40px 6px rgba(255,60,0,.55)!important;transition:box-shadow .08s}
+.dragghost.onfire::before{content:"🔥";position:absolute;left:50%;top:-34px;transform:translateX(-50%);font-size:30px;filter:drop-shadow(0 0 8px #ff6a00);animation:none!important;border:0!important;margin:0!important;width:auto;height:auto}`;
+document.head.appendChild(st);
+})();
+// the orange quick-response button in a war ("طق") is a fast normal cut; it only brings out the paid fire effect when fire is ready (button or flick)
+(function(){
+intercept=(function(prev){return function(j,c,fire){const me=j===0&&S&&S.players&&S.players[0]&&!S.players[0].remote;if(me)fire=false;return prev.call(this,j,c,fire)}})(intercept);
+render=(function(prev){return function(){const r=prev.apply(this,arguments);try{if(S&&S.war&&LANG==='ar')document.querySelectorAll('[data-int][data-fire] span,[data-int][data-fire].pill').forEach(s=>{if(!slamArmed&&/^طق/.test(s.textContent))s.textContent=s.textContent.replace(/^طق بالجوكر/,'اقطع بالجوكر').replace(/^طق جوكر/,'اقطع بالجوكر').replace(/^طق /,'اقطع بالـ')})}catch(e){}return r}})(render);
+})();
+
+// ===================== Round 80: quick-response button in a war — one tap = normal cut, two quick taps = cut with fire (the button shakes, darkens and the phone buzzes) =====================
+(function(){
+const GAP=260; // ms to wait for a second tap
+let pend=null;
+const cost=()=>window.SLAM_COST||30;
+const online=()=>typeof NET!=='undefined'&&NET.on;
+function feel(btn){const r=btn.getBoundingClientRect();const g=document.createElement('div');g.className='qfire';g.innerHTML=`<b>🔥</b><span>${L('Fire!','نار!')}</span>`;
+  Object.assign(g.style,{left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px'});document.body.appendChild(g);setTimeout(()=>g.remove(),700);
+  btn.classList.add('qdbl');try{navigator.vibrate&&navigator.vibrate([25,35,70])}catch(e){}
+  try{if(SND.ok()){const t=SND.ctx.currentTime;SND.hit(t,{f:500,f2:2600,q:1,gain:.35,attack:.04,decay:.18});SND.hit(t+.05,{type:'lowpass',f:700,gain:.6,attack:.02,decay:.35})}}catch(e){}}
+function cut(id,fire,btn){if(!S||!S.war)return;const c=S.players[0].hand.find(x=>x.id===id);if(!c||!canIntercept(0).some(x=>x.id===c.id))return;
+  if(fire&&!slamArmed){if(!online()&&(WAL.tokens||0)<cost()){toast(L(`Fire needs ${cost()} rupees`,`النار تحتاج ${cost()} روبية`));fire=false}else{slamArmed=true;try{slamIcon()}catch(e){}}}
+  intercept(0,c)}
+window.addEventListener('click',e=>{const b=e.target.closest('[data-int]');if(!b||!S||!S.war)return;e.stopImmediatePropagation();e.preventDefault();
+  const id=+b.dataset.int,now=performance.now();
+  if(pend&&pend.id===id&&now-pend.t<GAP+120){clearTimeout(pend.tm);pend=null;feel(b);setTimeout(()=>cut(id,true,b),150);return}
+  if(pend){clearTimeout(pend.tm);pend=null}
+  b.classList.add('qtap');setTimeout(()=>b.classList.remove('qtap'),160);
+  pend={id,t:now,tm:setTimeout(()=>{pend=null;cut(id,false,b)},GAP)}},true);
+// labels: the button says what one tap does; a small line says two taps = fire
+render=(function(prev){return function(){const r=prev.apply(this,arguments);try{if(S&&S.war)document.querySelectorAll('button.fire[data-int]').forEach(b=>{if(b.querySelector('.qhint'))return;const h=document.createElement('i');h.className='qhint';h.textContent=L('2 taps = 🔥','ضغطتين = 🔥');b.appendChild(h)})}catch(e){}return r}})(render);
+const st=document.createElement('style');st.textContent=`
+button.fire[data-int]{position:relative}
+button.fire[data-int] .qhint{position:absolute;left:50%;bottom:-17px;transform:translateX(-50%);font:800 10px Tajawal,Tahoma,sans-serif;font-style:normal;white-space:nowrap;color:#ffe2a8;background:rgba(0,0,0,.55);padding:1px 7px;border-radius:8px;pointer-events:none}
+button[data-int].qtap{transform:scale(.92)!important;transition:transform .08s}
+button[data-int].qdbl{animation:qShake .32s linear!important;filter:brightness(.62) saturate(1.5)!important;background:radial-gradient(circle at 50% 70%,#ff5a1f,#9a1408 70%,#4a0603)!important;box-shadow:0 0 0 3px #ffb02e,0 0 26px 6px rgba(255,80,10,.9)!important}
+@keyframes qShake{0%{transform:translateX(0) scale(.95)}20%{transform:translateX(-6px) rotate(-4deg) scale(1.05)}40%{transform:translateX(6px) rotate(4deg) scale(1.05)}60%{transform:translateX(-4px) rotate(-2deg)}80%{transform:translateX(4px) rotate(2deg)}100%{transform:none}}
+.qfire{position:fixed;z-index:9990;pointer-events:none;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:4px;color:#fff;font:900 15px Tajawal,Tahoma,sans-serif;
+  background:radial-gradient(circle at 50% 70%,#ff5a1f,#9a1408 70%,#4a0603);box-shadow:0 0 0 3px #ffb02e,0 0 30px 10px rgba(255,80,10,.85);animation:qFire .7s ease-out forwards}
+.qfire b{font-size:20px}
+@keyframes qFire{0%{transform:scale(.9) translateX(0)}10%{transform:scale(1.12) translateX(-6px) rotate(-4deg)}22%{transform:scale(1.12) translateX(6px) rotate(4deg)}34%{transform:scale(1.1) translateX(-4px)}46%{transform:scale(1.1) translateX(3px)}70%{transform:scale(1.15);opacity:1}100%{transform:scale(1.5);opacity:0}}
+@media (prefers-reduced-motion:reduce){button[data-int].qdbl,.qfire{animation:none!important}}`;document.head.appendChild(st);
+})();
+
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1107.1715';
+const EB_VERSION='v1107.1810';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
