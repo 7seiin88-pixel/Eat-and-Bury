@@ -10,6 +10,7 @@ const crypto = require('crypto');
 const { Game } = require('./game');
 const ACC = require('./accounts');
 const DW = require('./diwan');
+const SO = require('./social');
 
 const PUBLIC = path.join(__dirname, 'public');
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.json': 'application/json' };
@@ -18,6 +19,7 @@ const server = http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
   if (url === '/health') { res.end('ok'); return; }
   if (url.startsWith('/api/dw/')) { let b = ''; req.on('data', d => { b += d; if (b.length > 20000) req.destroy() }); req.on('end', () => { let body = {}; try { body = b ? JSON.parse(b) : {} } catch (e) {} DW.http(req, res, url, body, live) }); return; }
+  if (url.startsWith('/api/so/')) { let b = ''; req.on('data', d => { b += d; if (b.length > 20000) req.destroy() }); req.on('end', () => { let body = {}; try { body = b ? JSON.parse(b) : {} } catch (e) {} SO.http(req, res, url, body, live) }); return; }
   if (url.startsWith('/api/')) return ACC.http(req, res, url.split('?')[0]);
   if (url === '/rooms') { // live rooms list for the "rooms now" screen
     const list = [...rooms.values()].filter(r => !r.priv && !r.dw).map(r => {
@@ -90,9 +92,10 @@ setInterval(() => { for (const c of clients.values()) { if (!c.alive) { c.socket
 
 // ---------- Who is online (for diwaniyas) ----------
 const online = new Map(); // account id -> set of connections
-function goOnline(c, aid) { if (c.aid === aid) return; goOffline(c); c.aid = aid; if (!online.has(aid)) online.set(aid, new Set()); online.get(aid).add(c.id) }
+function goOnline(c, aid) { try { SO.seenNow(aid) } catch (e) {} if (c.aid === aid) return; goOffline(c); c.aid = aid; if (!online.has(aid)) online.set(aid, new Set()); online.get(aid).add(c.id) }
 function goOffline(c) { if (!c.aid) return; const s = online.get(c.aid); if (s) { s.delete(c.id); if (!s.size) online.delete(c.aid) } c.aid = null }
 const live = {
+  push(aid, type, data) { const s = online.get(aid); if (s) for (const id of s) send(clients.get(id), type, data) },
   status(aid) { for (const r of rooms.values()) if (r.started && r.members.some(m => m.aid === aid && !m.watch && !m.away)) return 'play'; return online.has(aid) || DW.recent(aid) ? 'on' : 'off' },
   tables(dw) { return [...rooms.values()].filter(r => r.dw === dw).map(r => { const pl = r.members.filter(m => !m.watch); return { code: r.code, players: pl.map(m => ({ name: m.name, av: m.prof && /^p:/.test(m.prof.av || '') ? m.prof.av : 'p:0' })), started: !!r.started, n: r.n || 4, free: r.started && r.n ? Math.max(0, r.n - pl.length) : Math.max(0, 4 - pl.length), watchers: r.members.length - pl.length } }) }
 };
@@ -102,7 +105,7 @@ const rooms = new Map();
 const clean = s => String(s || '').replace(/[<>]/g, '').trim().slice(0, 16) || 'لاعب';
 function newCode() { let c; do { c = Math.random().toString(36).slice(2, 7).toUpperCase(); } while (rooms.has(c)); return c; }
 const autoOf = a => { if (!a || typeof a !== 'object') return null; const k = v => { v = Math.floor(+v); return Number.isFinite(v) ? Math.max(-1, Math.min(300, v)) : -1; };
-  return { def: k(a.def), save: k(a.save), took: k(a.took), win: k(a.win), snd: String(a.snd || '').replace(/[^a-z]/g, '').slice(0, 12) }; };
+  return { def: k(a.def), save: k(a.save), took: k(a.took), win: k(a.win), lost: k(a.lost), snd: String(a.snd || '').replace(/[^a-z]/g, '').slice(0, 12) }; };
 const pub = r => ({ code: r.code, host: r.host, started: r.started, priv: !!r.priv, quick: !!r.quick, qIn: r.qAt && !r.started ? Math.max(0, r.qAt - Date.now()) : 0, dw: r.dw ? DW.name(r.dw) : '', members: r.members.map(m => ({ sid: m.sid, name: m.name, seat: m.seat, mic: m.mic, away: !!m.away, watch: !!m.watch, prof: m.prof || null })) });
 const GRACE = 3 * 60 * 1000; // keep a player's seat this long after they lose connection
 const token = () => crypto.randomBytes(12).toString('hex');
@@ -230,7 +233,8 @@ function startGame(r, cfg, ranked) {
   const safe = { mode: ['solo', '2v2', '3v3'].includes(cfg.mode) ? cfg.mode : '2v2', decks: Math.min(12, Math.max(1, +cfg.decks || 4)), timer: Math.min(15, Math.max(2, +cfg.timer || 3)), level: ['easy', 'normal', 'hard'].includes(cfg.level) ? cfg.level : 'normal', hints: !!cfg.hints, lang: cfg.lang === 'en' ? 'en' : 'ar', fx: cfg.fx !== false };
   if (r.qt) { clearTimeout(r.qt); r.qt = null; }
   if (r.game) r.game.stop();
-  try { r.game = new Game(r, safe, { send: (sid, type, d) => send(clients.get(sid), type, d), war: (seat, gain) => reward(r, seat, a => ACC.warWon(a, gain)), over: g => { const ranked = !!r.ranked; for (const x of g.results()) reward(r, x.seat, a => ACC.gameOver(a, { ...x, ranked })) } }); } catch (e) { console.error('game start', e); r.game = null; return; }
+  try { r.game = new Game(r, safe, { send: (sid, type, d) => send(clients.get(sid), type, d), war: (seat, gain) => reward(r, seat, a => ACC.warWon(a, gain)), over: g => { const ranked = !!r.ranked, res = g.results(); const keyOf = seat => { const m = r.members.find(y => !y.watch && y.seat === seat); return m && m.atoken ? crypto.createHash('sha256').update(String(m.atoken)).digest('hex').slice(0, 12) : null };
+      for (const x of res) { const partners = res.filter(y => y.team === x.team && y.seat !== x.seat).map(y => keyOf(y.seat)).filter(Boolean); reward(r, x.seat, a => ACC.gameOver(a, { ...x, ranked, partners })) } } }); } catch (e) { console.error('game start', e); r.game = null; return; }
   r.started = true; r.n = r.game.S.players.length; toRoom(r, 'room', pub(r)); toRoom(r, 'started', {}); r.game.flush();
 }
 const QUICK_WAIT = 15000;
@@ -270,3 +274,5 @@ server.listen(PORT, () => console.log('Eat & Bury server running on port ' + POR
 // keep the game server running even if one room hits an unexpected error
 process.on('uncaughtException', e => console.error('uncaught', e));
 process.on('unhandledRejection', e => console.error('unhandled', e));
+// keep "last seen" fresh for everyone connected
+setInterval(() => { for (const aid of online.keys()) try { SO.seenNow(aid) } catch (e) {} }, 60000);

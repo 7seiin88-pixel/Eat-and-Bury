@@ -26,8 +26,8 @@ class Game {
     const d0 = E.declareEat; E.declareEat = function (i, card, r, incl = null) { const S = self.S; S.moves = (S.moves || 0) + 1; d0(i, card, r, incl); self.push({ t: 'eat', s: i, c: card }); sayT(i, card.r === 'JK' ? 'جوكر!' : 'آكل', card.r === 'JK' ? 'Joker!' : 'Eat!') };
     const c0 = E.intercept; E.intercept = function (j, card, fire = false) { const S = self.S; if (!S || !S.war) return; const w = S.war, pl = w.leader, vic = [...(w.victims || [])];
       c0(j, card); self.push({ t: 'cut', s: j, c: card, fire: !!fire }); sayT(j, fire ? 'طق!' : 'قطع!', fire ? 'Slap!' : 'Cut!'); self.autoEvents('cut', j, pl, vic) };
-    const r0 = E.resolveWar; E.resolveWar = function () { const S = self.S; if (!S || !S.war) return; S.moves = (S.moves || 0) + 1; const W = S.war.leader, fought = S.war.pot.length > 1, gain = E.__ctx().sum([...S.war.targets, ...S.war.pot]);
-      r0(); self.push({ t: 'win', s: W, gain }); if (fought) self.autoEvents('win', W); if (self.hooks.war) try { self.hooks.war(W, gain) } catch (e) { console.error(e) } };
+    const r0 = E.resolveWar; E.resolveWar = function () { const S = self.S; if (!S || !S.war) return; const lostTo = self.bigLoss(S.war); S.moves = (S.moves || 0) + 1; const W = S.war.leader, fought = S.war.pot.length > 1, gain = E.__ctx().sum([...S.war.targets, ...S.war.pot]);
+      r0(); self.push({ t: 'win', s: W, gain }); if (fought) self.autoEvents('win', W); lostTo.forEach(j => self.push({ t: 'auto', s: j, ev: 'lost' })); if (self.hooks.war) try { self.hooks.war(W, gain) } catch (e) { console.error(e) } };
     const t0 = E.throwCard; E.throwCard = function (i, c) { const S = self.S; S.moves = (S.moves || 0) + 1; const sleeping = S.players[i].hand.length === 2 && S.draw.length > 0; t0(i, c); self.push({ t: 'throw', s: i, c }); if (sleeping) sayT(i, 'على كرت', 'Sleeping') };
     const s0 = E.startTurn; E.startTurn = function (i) { const S = self.S; if (S) S.moves = (S.moves || 0) + 1; s0(i); const S2 = self.S; if (S2 && S2.turn === i && S2.phase === 'choose' && !S2.chain) self.push({ t: 'turn', s: i }) };
     // names and who is a person, then deal
@@ -74,13 +74,16 @@ class Game {
       case 'throw': { if (S.turn !== seat) return; const c = card(a.card); if (!c || !E.canThrow(seat) || !E.throwable(seat, c)) return; if (S.phase === 'choose' && E.mustNow(seat)) return; if (S.phase !== 'choose' && S.phase !== 'throw') return; E.throwCard(seat, c); break }
       case 'pass': if (S.turn === seat && S.phase === 'choose' && !E.mustNow(seat) && !E.canThrow(seat)) { S.lone ? E.passTurn(seat) : E.endTurn(seat) } break;
       case 'cut': { const c = card(a.card); if (c && S.war && E.canIntercept(seat).includes(c)) E.intercept(seat, c, false); break } // fire only comes from the paid 'slam' act, never from a cut
-      case 'gift': { const to = ((+a.to || 0) + seat) % n; if (to !== seat && /^[a-z0-9]{1,16}$/.test(String(a.id))) this.push({ t: 'gift', f: seat, to, id: String(a.id) }); break }
+      case 'gift': { const to = ((+a.to || 0) + seat) % n; if (to !== seat && /^[a-z0-9]{1,16}$/.test(String(a.id))) { this.push({ t: 'gift', f: seat, to, id: String(a.id) }); const st = this.statOf(seat); if (st) st.gifts = Math.min(60, (st.gifts || 0) + 1) } break }
       case 'chat': this.push({ t: 'chat', s: seat, text: String(a.text || '').slice(0, 60) }); break;
       case 'say': this.push({ t: 'say', s: seat, text: String(a.text || '').slice(0, 40) }); break;
-      case 'slam': this.push({ t: 'slam', s: seat }); this.push({ t: 'say', s: seat, text: this.ctx.LANG === 'ar' ? 'صفقة!' : 'SLAM!' }); break;
+      case 'slam': { const st = this.statOf(seat); if (st) st.fire = (st.fire || 0) + 1 } this.push({ t: 'slam', s: seat }); this.push({ t: 'say', s: seat, text: this.ctx.LANG === 'ar' ? 'صفقة!' : 'SLAM!' }); break;
     }
   }
   // automatic replies chosen by each player (fend off an attack, a partner rescue, a partner cutting over, winning a war)
+  // players who just lost more than 50 points from their own pile to the other side
+  bigLoss(w) { const S = this.S, E = this.ctx.__ctx(); if (!w || !w.fromPiles) return []; const W = w.leader;
+    return w.fromPiles.filter(x => x.j !== W && S.players[x.j] && S.players[W] && S.players[x.j].team !== S.players[W].team && E.sum(x.cards || []) > 50).map(x => x.j) }
   autoEvents(kind, j, pl, vic) {
     const S = this.S, mates = (a, b) => a !== b && S.players[a] && S.players[b] && S.players[a].team === S.players[b].team;
     const ev = (s, e) => this.push({ t: 'auto', s, ev: e });
@@ -104,8 +107,9 @@ class Game {
       const watcher = !!m.watch || m.seat >= S.players.length, k = watcher ? 0 : m.seat;
       this.hooks.send(m.sid, 'up', { v: this.viewFor(k, watcher), fx: fx.map(e => this.rotFx(e, k)) }) }
   }
+  statOf(i) { const S = this.S; if (!S || !S.players || !S.players[i]) return null; S.stats = S.stats || S.players.map(() => ({ wars: 0, best: 0 })); return S.stats[i] || (S.stats[i] = { wars: 0, best: 0 }) }
   results() { const S = this.S, E = this.ctx.__ctx(); const rows = S.teams.map((t, k) => ({ k, s: E.teamScore(k) })).sort((a, b) => b.s - a.s); const tie = rows[1] && rows[0].s === rows[1].s;
-    return S.players.map((p, i) => ({ seat: i, won: !tie && rows[0].k === p.team, wars: (S.stats && S.stats[i] && S.stats[i].wars) || 0, best: (S.stats && S.stats[i] && S.stats[i].best) || 0, tauf: (S.stats && S.stats[i] && S.stats[i].tauf) || 0 })) }
+    return S.players.map((p, i) => ({ seat: i, won: !tie && rows[0].k === p.team, wars: (S.stats && S.stats[i] && S.stats[i].wars) || 0, best: (S.stats && S.stats[i] && S.stats[i].best) || 0, tauf: (S.stats && S.stats[i] && S.stats[i].tauf) || 0, team: p.team, ...(() => { const t = (S.stats && S.stats[i]) || {}, won = !tie && rows[0].k === p.team; return { fire: t.fire || 0, bigwar: t.bigwar || 0, jk: t.jk || 0, pile: t.pile || 0, dig: t.dig || 0, gifts: t.gifts || 0, lastw: t.lastw || 0, tw: t.tw || 0, comeback: won && (t.low || 0) <= -300 ? 1 : 0 } })() })) }
   stop() { this.dead = true; clearInterval(this.clock); for (const h of this.timers) clearTimeout(h); this.timers.clear(); if (this.upT) clearTimeout(this.upT); try { this.ctx.__setGen() } catch (e) {} }
 }
 module.exports = { Game };

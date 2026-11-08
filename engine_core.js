@@ -72,7 +72,7 @@ const canThrow=i=>S.players[i].hand.length>=(S.draw.length?2:1);
 const onGround=r=>S.ground.some(g=>g.r===r);
 const throwable=(i,c)=>c.r==='JK'||!onGround(c.r)||S.players[i].hand.every(x=>x.r!=='JK'&&onGround(x.r));
 // Sleeping: with exactly two cards, you may keep one ground-matching card as your last card if you throw the other.
-const canSleep=i=>{const h=S.players[i].hand;if(h.length!==2||!S.draw.length)return false;return h.filter(c=>c.r!=='JK'&&onGround(c.r)).length===1};
+const canSleep=i=>{const h=S.players[i].hand;if(h.length!==2||!S.draw.length)return false;return h.filter(c=>onGround(c.r)).length===1};
 const mustNow=i=>mustEat(i)&&!canSleep(i);
 const mustEat=i=>options(i).some(o=>o.natural&&o.t.g.length>0);
 function take(i,card){const h=S.players[i].hand;const k=h.findIndex(c=>c.id===card.id);if(k>=0)h.splice(k,1)}
@@ -159,6 +159,7 @@ const lvl=()=>S.cfg.level||'normal';
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 function aiChoose(i){
   const p=S.players[i],opts=options(i),must=mustNow(i);
+  {const h=p.hand,k=h.filter(c=>c.r!=='JK'&&onGround(c.r));if(canSleep(i)&&k.length===1&&h.some(c=>c.r==='JK'))return declareEat(i,k[0],k[0].r)}
   if(lvl()==='easy'&&!p.human){ // Easy: plays any legal move, rarely thinks ahead
     const nat=opts.filter(o=>o.natural),gnat=nat.filter(o=>o.t.g.length);
     if(must&&gnat.length){const o=pick(gnat);return declareEat(i,p.hand.find(c=>c.r===o.r),o.r)}
@@ -231,4 +232,22 @@ const _rwT=resolveWar;resolveWar=function(){const w=S&&S.war;const orig=w?w.orig
   while(j!==W&&guard++<S.players.length){const p=S.players[j];if(p.hand.length===0&&S.draw.length>0){S.stats=S.stats||S.players.map(()=>({wars:0,best:0}));S.stats[j].tauf=(S.stats[j].tauf||0)+1;
       const jj=j;setTimeout(()=>{if(S)say(jj,L('Skipped','تطوف'))},250);log(L(`${p.name} had no cards and was about to draw 5, but the turn was cut: skipped.`,`${p.name} ${V(p,'كنت بتسحب ٥ أوراق وانقطع عليك الدور، طوّفت','كان بيسحب ٥ أوراق وانقطع عليه الدور، طوّف','كانت بتسحب ٥ أوراق وانقطع عليها الدور، طوّفت')}.`))}
     j=nextIdx(j)}};
+
+// ===================== Round 91: more achievement stats, counted by the rules engine itself (the same code runs on the phone and on the server) =====================
+(function(){
+const ST=i=>{if(typeof S==='undefined'||!S||!S.players)return null;S.stats=S.stats||S.players.map(()=>({wars:0,best:0}));return S.stats[i]||(S.stats[i]={wars:0,best:0})};
+// cuts with a joker
+const _int=intercept;intercept=function(j,card){const ok=!!(S&&S.war&&card);const r=_int.apply(this,arguments);try{if(ok&&card.r==='JK'){const s=ST(j);if(s)s.jk=(s.jk||0)+1}}catch(e){}return r};
+// every war: biggest war won (cuts), war won on your last card, opponents' piles taken, a war-won pile dug out, how far behind your team has been
+const _res=resolveWar;resolveWar=function(){const w=S&&S.war;let pre=null;
+  try{if(w){const W=w.leader,p=S.players[W];pre={W,lone:W!==w.orig&&p.hand.length===0,cuts:Math.max(0,w.pot.length-1),
+    tsum:(S.stats||[]).reduce((n,x)=>n+((x&&x.tauf)||0),0),opp:(w.fromPiles||[]).filter(x=>S.players[x.j]&&S.players[x.j].team!==p.team),cards:[...w.targets,...w.pot]}}}catch(e){pre=null}
+  const r=_res.apply(this,arguments);
+  try{if(pre){const s=ST(pre.W);if(s){s.bigwar=Math.max(s.bigwar||0,pre.cuts);if(pre.lone)s.lastw=(s.lastw||0)+1;
+      if(pre.opp.length){s.pile=(s.pile||0)+pre.opp.length;if(pre.opp.some(x=>(x.cards||[]).some(c=>c&&c.wl)))s.dig=(s.dig||0)+1}}
+    {const t2=(S.stats||[]).reduce((n,x)=>n+((x&&x.tauf)||0),0);if(t2>pre.tsum){const s=ST(pre.W);if(s)s.tw=(s.tw||0)+(t2-pre.tsum)}} // you jumped the turn past someone waiting to draw 5
+    if(pre.cuts>=1)pre.cards.forEach(c=>{if(c)c.wl=1}); // this loot was fought over: digging it out later counts
+    const ts=S.teams.map((t,k)=>teamScore(k));S.players.forEach((pl,i)=>{const others=ts.filter((_,k)=>k!==pl.team);if(!others.length)return;const st=ST(i);if(st)st.low=Math.min(st.low||0,ts[pl.team]-Math.max(...others))})}}catch(e){}
+  return r};
+})();
 

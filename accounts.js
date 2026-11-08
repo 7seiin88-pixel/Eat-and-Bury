@@ -47,7 +47,7 @@ function cleanProf(p, own) {
   const bb = String(p.bub || 'plain'); o.bub = bb === 'plain' || bb === 'royal' || own('bub-' + bb) ? bb : 'plain';
   const sf = String(p.sfx || 'plain'); o.sfx = own('sfx-' + sf) || CAT.items['sfx-' + sf] === 0 ? sf : 'plain';
   const ai = v => clamp(v, -1, CAT.emotes + 50);
-  o.auto = p.auto && typeof p.auto === 'object' ? { def: ai(p.auto.def), save: ai(p.auto.save), took: ai(p.auto.took), win: ai(p.auto.win), snd: '' } : { def: -1, save: -1, took: -1, win: -1, snd: '' };
+  o.auto = p.auto && typeof p.auto === 'object' ? { def: ai(p.auto.def), save: ai(p.auto.save), took: ai(p.auto.took), win: ai(p.auto.win), lost: ai(p.auto.lost), snd: '' } : { def: -1, save: -1, took: -1, win: -1, lost: -1, snd: '' };
   o.qp = Array.isArray(p.qp) ? p.qp.map(v => clamp(v, 0, CAT.emotes + 50)).slice(0, 80) : null;
   o.prefs = {}; if (p.prefs && typeof p.prefs === 'object') for (const k of ['theme', 'back', 'face', 'joker', 'lang']) if (p.prefs[k] != null) o.prefs[k] = short(p.prefs[k], 24);
   return o;
@@ -75,16 +75,29 @@ function season(a) { const m = new Date().toISOString().slice(0, 7), st = a.st;
   a.w.tokens += prize; st.seasons = (st.seasons || []).concat({ m: st.season, r: peak }).slice(-24);
   st.rp = Math.floor(st.rp / 2); st.peak = st.rp; st.season = m; st.shield = 0; return { r: peak, prize, m: st.seasons[st.seasons.length - 1].m } }
 // a title under your name, from your best badge
-const TITLES = ['legend', 'w50', 's5', 'war100', 'g100', 'gold', 'big', 'w10', 's3', 'war25', 'lv10', 'tauf', 'g10', 'w1'];
+
+// Round 91: more achievement stats
+const NEWST = ['fire', 'jk', 'pile', 'dig', 'gifts', 'lastw', 'comeback', 'tw'];
+function addStats(st, r, cap) { for (const k of NEWST) st[k] = (st[k] || 0) + clamp(r[k], 0, cap[k] || 60); st.bigwar = Math.max(st.bigwar || 0, clamp(r.bigwar, 0, 20)) }
+const OFF_CAP = { fire: 40, jk: 30, pile: 30, dig: 5, gifts: 20, lastw: 15, comeback: 1, tw: 10 }, ON_CAP = { fire: 200, jk: 60, pile: 60, dig: 20, gifts: 60, lastw: 30, comeback: 1, tw: 30 };
+function addPartners(st, r) { if (!r.won || !Array.isArray(r.partners)) return; st.pw = st.pw && typeof st.pw === 'object' ? st.pw : {};
+  for (const k of r.partners.slice(0, 2)) { if (typeof k !== 'string' || !/^[0-9a-f]{12}$/.test(k)) continue; st.pw[k] = (st.pw[k] || 0) + 1 }
+  const ks = Object.keys(st.pw); if (ks.length > 40) ks.sort((x, y) => st.pw[x] - st.pw[y]).slice(0, ks.length - 40).forEach(k => delete st.pw[k]) }
+const palBest = st => Math.max(0, ...Object.values(st.pw || {}))
+const TITLES = ['legend', 'w50', 's5', 'war100', 'g100', 'gold', 'war5', 'big200', 'comeback', 'pal10', 'dig', 'big', 'w10', 's3', 'war25', 'jk25', 'fire20', 'pile20', 'last10', 'fg10', 'tw5', 'lv10', 'g10', 'w1'];
 const titleOf = a => TITLES.find(k => a.st.ach && a.st.ach[k]) || '';
 const ACH = [['w1', s => s.wins >= 1, 50], ['w10', s => s.wins >= 10, 150], ['w50', s => s.wins >= 50, 500], ['g10', s => s.games >= 10, 100], ['g100', s => s.games >= 100, 600],
   ['war25', s => s.wars >= 25, 150], ['war100', s => s.wars >= 100, 400], ['big', s => s.best >= 100, 150], ['s3', s => s.bestStreak >= 3, 150], ['s5', s => s.bestStreak >= 5, 400],
-  ['tauf', s => s.tauf >= 5, 100], ['lv10', s => levelOf(s.xp) >= 10, 200], ['gold', s => s.rp >= 800, 300], ['legend', s => s.rp >= 4300, 2000]].map(([id, ok, r]) => ({ id, ok, r }));
+  ['fire20', s => (s.fire || 0) >= 20, 150], ['war5', s => (s.bigwar || 0) >= 5, 300], ['jk25', s => (s.jk || 0) >= 25, 200],
+  ['pile20', s => (s.pile || 0) >= 20, 150], ['big200', s => s.best >= 200, 300], ['dig', s => (s.dig || 0) >= 1, 200],
+  ['fg10', s => (s.fg || 0) >= 10, 200], ['gift20', s => (s.gifts || 0) >= 20, 100], ['pal10', s => palBest(s) >= 10, 300],
+  ['last10', s => (s.lastw || 0) >= 10, 200], ['comeback', s => (s.comeback || 0) >= 1, 300], ['tw5', s => (s.tw || 0) >= 5, 150],
+  ['lv10', s => levelOf(s.xp) >= 10, 200], ['gold', s => s.rp >= 800, 300], ['legend', s => s.rp >= 4300, 2000]].map(([id, ok, r]) => ({ id, ok, r }));
 function checkAch(a) { const got = []; for (const x of ACH) if (!a.st.ach[x.id] && x.ok(a.st)) { a.st.ach[x.id] = Date.now(); a.w.tokens += x.r; got.push({ id: x.id, r: x.r }) } return got }
 function daily(a) { const d = today(); if (a.w.day !== d) { a.w.day = d; const g = DAILY * (isVip(a) ? 2 : 1); a.w.tokens += g; return g } return 0 }
 // what the phone gets
 function me(a, note) { return { verified: !!a.verified, title: titleOf(a), season: a.st.season || '', seasons: a.st.seasons || [], shield: !!a.st.shield, id: a.id, prof: a.prof, st: { ...a.st, level: levelOf(a.st.xp) }, wal: { tokens: a.w.tokens, owned: a.w.owned, slams: a.w.slams }, note: note || null, test: TEST_MODE, vip: isVip(a) ? a.vip : 0, vipPrice: '$4.99', vipTest: TEST_MODE ? VIP_TEST_PRICE : 0 } }
-function pub(a) { return { name: a.prof.name, av: a.prof.av, flag: a.prof.flag, frame: a.prof.frame, efx: a.prof.efx, sfx: a.prof.sfx || 'plain', bub: a.prof.bub || 'plain', auto: a.prof.auto, level: levelOf(a.st.xp), games: a.st.games, wins: a.st.wins, wars: a.st.wars, rp: a.st.rp, streak: a.st.streak, tauf: a.st.tauf, vip: isVip(a), verified: !!a.verified, title: titleOf(a) } }
+function pub(a) { return { id: a.id, name: a.prof.name, av: a.prof.av, flag: a.prof.flag, frame: a.prof.frame, efx: a.prof.efx, sfx: a.prof.sfx || 'plain', bub: a.prof.bub || 'plain', auto: a.prof.auto, level: levelOf(a.st.xp), games: a.st.games, wins: a.st.wins, wars: a.st.wars, rp: a.st.rp, streak: a.st.streak, tauf: a.st.tauf, vip: isVip(a), verified: !!a.verified, title: titleOf(a) } }
 
 // ---------- what a phone may ask ----------
 async function load(token) { await ready; if (!token) return null; return store.byToken(hash(token)) }
@@ -115,7 +128,7 @@ async function sync(a, body) {
 // a game against the computer (results come from the phone, so the reward is small and capped each day)
 async function offline(a, r) {
   const won = !!r.won, wars = clamp(r.wars, 0, 60), best = clamp(r.best, 0, 2000), tauf = clamp(r.tauf, 0, 60);
-  a.st.games++; if (won) a.st.wins++; a.st.wars += wars; a.st.best = Math.max(a.st.best, best); a.st.tauf += tauf; a.st.xp += 10 + (won ? 25 : 0) + wars * 3;
+  a.st.games++; if (won) a.st.wins++; a.st.wars += wars; a.st.best = Math.max(a.st.best, best); a.st.tauf += tauf; addStats(a.st, r, OFF_CAP); a.st.xp += 10 + (won ? 25 : 0) + wars * 3;
   const d = today(); if (a.w.offDay !== d) { a.w.offDay = d; a.w.offGot = 0 } const give = Math.max(0, Math.min(won ? 15 : 5, OFFLINE_CAP - a.w.offGot)); a.w.offGot += give; a.w.tokens += give;
   const got = checkAch(a); await store.put(a); return me(a, { offline: give, ach: got });
 }
@@ -123,7 +136,7 @@ async function offline(a, r) {
 async function warWon(a, gain) { const n = Math.max(1, Math.round(gain / 20)); a.w.tokens += n; await store.put(a); return me(a, { war: n }) }
 async function gameOver(a, r) {
   const sz = season(a); const won = !!r.won, st = a.st, before = st.rp; let mult = 1, d = 0;
-  st.games++; st.wars += r.wars || 0; st.best = Math.max(st.best, r.best || 0); st.tauf += r.tauf || 0;
+  st.games++; st.wars += r.wars || 0; st.best = Math.max(st.best, r.best || 0); st.tauf += r.tauf || 0; addStats(st, r, ON_CAP); if (!r.ranked) st.fg = (st.fg || 0) + 1; addPartners(st, { ...r, won });
   if (won) { st.wins++; st.streak++; st.bestStreak = Math.max(st.bestStreak, st.streak); mult = 1 + Math.min(st.streak - 1, 4) * .25 } else st.streak = 0;
   let shielded = false;
   if (r.ranked) { // rank points move only in ranked games (the quick game), not in rooms with friends
@@ -137,7 +150,7 @@ async function gameOver(a, r) {
   const got = checkAch(a); await store.put(a); return me(a, { game: { won, rp: st.rp - before, mult, prize, ranked: !!r.ranked, shielded }, ach: got, season: sz });
 }
 async function save(a) { await store.put(a) }
-const SLAM_COST = 30; // the fire button costs rupees each time
+const SLAM_COST = 50; // the fire button costs rupees each time
 async function spend(a, n) { if (a.w.tokens < n) return null; a.w.tokens -= n; await store.put(a); return me(a) }
 
 // ---------- HTTP: /api/... ----------
@@ -163,4 +176,5 @@ async function http(req, res, url) {
     return send(404, { err: 'nf' });
   } catch (e) { console.error('api', e); return send(500, { err: 'server' }) }
 }
-module.exports = { titleOf, SLAM_COST, spend, isVip, http, load, pub, me, warWon, gameOver, save, CAT, ready };
+const byId = async id => { await ready; return /^[0-9a-f]{12}$/.test(String(id)) ? store.byId(String(id)) : null };
+module.exports = { byId, titleOf, SLAM_COST, spend, isVip, http, load, pub, me, warWon, gameOver, save, CAT, ready };
