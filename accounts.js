@@ -95,7 +95,13 @@ async function sync(a, body) {
   const wal = body.wal || {}, notes = [];
   const want = Array.isArray(wal.owned) ? [...new Set(wal.owned)].filter(id => typeof id === 'string' && CAT.items[id] != null && !a.w.owned.includes(id)) : [];
   let tokens = a.w.tokens;
-  for (const id of want) { const c = CAT.items[id]; if (tokens >= c) { tokens -= c; a.w.owned.push(id) } else notes.push('cant:' + id) }
+  // cards and jokers that match a theme the player owns cost less (same rule as the shop)
+  const priceOf = id => { const c = CAT.items[id]; if (!c || !CAT.match) return c;
+    for (const [th, m] of Object.entries(CAT.match)) { if (!m.includes(id)) continue; const vipT = (CAT.vipThemes || []).includes(th);
+      if (vipT ? isVip(a) : (CAT.items[th] > 0 && a.w.owned.includes(th))) return Math.round(c * (1 - (CAT.off || 0)) / 10) * 10 }
+    return c };
+  want.sort((x, y) => (CAT.match && CAT.match[x] ? -1 : 0) - (CAT.match && CAT.match[y] ? -1 : 0));
+  for (const id of want) { const c = priceOf(id); if (tokens >= c) { tokens -= c; a.w.owned.push(id) } else notes.push('cant:' + id) }
   // fire slams bought in packs, or used
   const sl = clamp(wal.slams, 0, 100000);
   if (sl > a.w.slams) { const add = sl - a.w.slams, pk = (CAT.slamPacks || []).find(([n]) => n === add), cost = pk ? pk[1] : Math.ceil(add * 8); if (tokens >= cost) { tokens -= cost; a.w.slams = sl } }

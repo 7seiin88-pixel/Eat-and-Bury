@@ -28,10 +28,10 @@ class Game {
       c0(j, card); self.push({ t: 'cut', s: j, c: card, fire: !!fire }); sayT(j, fire ? 'طق!' : 'قطع!', fire ? 'Slap!' : 'Cut!'); self.autoEvents('cut', j, pl, vic) };
     const r0 = E.resolveWar; E.resolveWar = function () { const S = self.S; if (!S || !S.war) return; S.moves = (S.moves || 0) + 1; const W = S.war.leader, fought = S.war.pot.length > 1, gain = E.__ctx().sum([...S.war.targets, ...S.war.pot]);
       r0(); self.push({ t: 'win', s: W, gain }); if (fought) self.autoEvents('win', W); if (self.hooks.war) try { self.hooks.war(W, gain) } catch (e) { console.error(e) } };
-    const t0 = E.throwCard; E.throwCard = function (i, c) { const S = self.S; S.moves = (S.moves || 0) + 1; const sleeping = S.players[i].hand.length === 2 && S.draw.length > 0; t0(i, c); self.push({ t: 'throw', s: i, c }); if (sleeping) sayT(i, 'نايم', 'Sleeping') };
+    const t0 = E.throwCard; E.throwCard = function (i, c) { const S = self.S; S.moves = (S.moves || 0) + 1; const sleeping = S.players[i].hand.length === 2 && S.draw.length > 0; t0(i, c); self.push({ t: 'throw', s: i, c }); if (sleeping) sayT(i, 'على كرت', 'Sleeping') };
     const s0 = E.startTurn; E.startTurn = function (i) { const S = self.S; if (S) S.moves = (S.moves || 0) + 1; s0(i); const S2 = self.S; if (S2 && S2.turn === i && S2.phase === 'choose' && !S2.chain) self.push({ t: 'turn', s: i }) };
     // names and who is a person, then deal
-    E.newGame({ mode: cfg.mode, decks: cfg.decks, timer: cfg.timer, level: cfg.level, hints: !!cfg.hints });
+    E.newGame({ mode: cfg.mode, decks: cfg.decks, timer: cfg.timer, level: cfg.level, hints: !!cfg.hints, fx: cfg.fx !== false });
     this.syncSeats(true);
     { const S = this.S, ar = this.ctx.LANG === 'ar'; S.log[0] = ar ? `توزّعت ${S.cfg.decks} شدّات. يبدأ ${S.players[0].name}.` : `Dealt ${S.cfg.decks} decks. ${S.players[0].name} goes first.`; }
     this.clock = setInterval(() => this.tick(), 200);
