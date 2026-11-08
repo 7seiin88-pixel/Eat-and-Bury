@@ -1367,7 +1367,7 @@ function arcFly(html,from,to,ms,after){if(calm||!from||!to){after&&after();retur
   const d=addFx(html,'flyer',to),dx=from.x-to.x,dy=from.y-to.y,lift=Math.min(160,40+Math.hypot(dx,dy)*.35);
   d.animate([{transform:`translate(-50%,-50%) translate(${dx}px,${dy}px) rotate(-40deg) scale(.6)`},{transform:`translate(-50%,-50%) translate(${dx*.5}px,${dy*.5-lift}px) rotate(160deg) scale(1)`,offset:.5},{transform:'translate(-50%,-50%) rotate(360deg) scale(1.1)'}],{duration:ms,easing:'cubic-bezier(.3,.1,.4,1)'}).onfinish=()=>{d.remove();after&&after()}}
 const SPLAT={egg:'<svg viewBox="0 0 80 64"><path d="M40 6c8 0 10 10 18 8s12 8 6 14 8 12 0 16-6 14-16 10-12 10-20 2-14-4-12-12-10-10 0-14 6-12 10-6 18-16z" fill="#fffdf2" stroke="#d8cfbd"/><circle cx="40" cy="32" r="11" fill="#f6b71b"/><circle cx="36" cy="28" r="3" fill="#ffe08a"/></svg>',
-  tomato:'<svg viewBox="0 0 80 64"><path d="M40 8c7 2 8 10 16 8s10 10 4 14 10 10 2 14-4 12-14 8-10 10-18 2-12-4-12-12-12-10 0-14 6-12 8-8 14-14z" fill="#e23a2a"/><circle cx="26" cy="20" r="3" fill="#e23a2a"/><circle cx="60" cy="48" r="2.5" fill="#e23a2a"/><circle cx="38" cy="30" r="4" fill="#f4c34a" opacity=".7"/></svg>'};
+  tomato:'<svg viewBox="0 0 80 64"><path d="M40 8c7 2 8 10 16 8s10 10 4 14 10 10 2 14-4 12-14 8-10 10-18 2-12-4-12-12-12-10 0-14 6-12 8-8z" fill="#e23a2a"/><circle cx="26" cy="20" r="3" fill="#e23a2a"/><circle cx="60" cy="48" r="2.5" fill="#e23a2a"/><circle cx="38" cy="30" r="4" fill="#f4c34a" opacity=".7"/></svg>'};
 const _send=sendGift;sendGift=function(from,to,id,free){const g=GIFTS.find(x=>x.id===id);if(!g||!S)return;
   if(!free){if(WAL.tokens<g.cost)return;WAL.tokens-=g.cost;saveWal()}
   const a=seatPt(from),b=seatPt(to);if(!b)return;SND.ok()&&SND.hit(SND.ctx.currentTime,{f:1500,f2:2600,q:1.5,gain:.12,attack:.12,decay:.25});
@@ -7473,7 +7473,8 @@ const st=document.createElement('style');st.textContent=`
 })();
 // phones / portrait: your hand cards ~15% bigger (landscape big screens keep their own size)
 (function(){const K=.255,DV=13.8,RT=1.48;
-const big=()=>!(innerWidth>=761&&innerWidth>innerHeight&&innerHeight>=560),tall=()=>big()&&innerHeight>=740;
+let VW=innerWidth,VH=innerHeight;addEventListener('resize',()=>{VW=innerWidth;VH=innerHeight});addEventListener('orientationchange',()=>setTimeout(()=>{VW=innerWidth;VH=innerHeight},200));
+const big=()=>!(VW>=761&&VW>VH&&VH>=560),tall=()=>big()&&VH>=740;
 const st=document.createElement('style');st.textContent=`
 @media not all and (min-width:761px) and (orientation:landscape) and (min-height:560px){
   html body #myrow .card.big{--cw:min(calc(var(--W) * ${K}),${DV}dvh)!important;--ch:calc(var(--cw) * ${RT})!important}
@@ -7483,7 +7484,7 @@ const st=document.createElement('style');st.textContent=`
   html body #myrow .card.big{--ch:calc(var(--cw) * 1.42)!important}
   html body .handzone{height:min(calc(var(--W) * ${K} * 1.42 + 18px),calc(${DV}dvh * 1.42 + 18px))!important}
 }`;document.head.appendChild(st);
-window.__hdTall=tall;const prev=overlap;overlap=function(n){if(!big())return prev(n);if(n<2)return 0;const W=Math.min(innerWidth-16,720,innerHeight*.6),cw=Math.min(W*K,innerHeight*DV/100),avail=W-16;return Math.max(cw*.28,Math.ceil((n*cw-avail)/(n-1)))};
+window.__hdTall=tall;const prev=overlap;overlap=function(n){if(!big())return prev(n);if(n<2)return 0;const W=Math.min(VW-16,720,VH*.6),cw=Math.min(W*K,VH*DV/100),avail=W-16;return Math.max(cw*.28,Math.ceil((n*cw-avail)/(n-1)))};
 })();
 // iPad / big screens: the home page, tab bar and setup sheet were phone-sized in the middle of a huge screen — scale them up
 (function(){const st=document.createElement('style');st.textContent=`
@@ -8595,7 +8596,7 @@ const st=document.createElement('style');st.textContent=`body>.bubble.mybub{z-in
 (function(){
 const vis=e=>{if(!e||e.hidden)return null;const r=e.getBoundingClientRect();return r.width&&r.height?r:null};
 const gb=window.__groundBottom;window.__groundBottom=()=>{let b=gb?gb():1e9;try{const w=document.getElementById('war'),r=vis(w);if(r&&w.dataset.lift)b=Math.min(b,r.top-6)}catch(e){}return b};
-render=(function(p){return function(){const r=p.apply(this,arguments);try{const w=document.getElementById('war');if(!w)return r;const was=w.dataset.lift||'';
+render=(function(p){return function(){const r=p.apply(this,arguments);try{const w=document.getElementById('war');if(!w)return r;if(!(S&&S.war)&&!w.dataset.lift&&!w.style.translate)return r;const was=w.dataset.lift||'';
   w.style.translate='';delete w.dataset.lift;const bt=document.querySelector('#actions button.fire[data-int]');if(bt)bt.style.translate='';const wr=vis(w),br=vis(bt);
   if(wr&&br&&innerWidth>innerHeight&&br.top<wr.bottom+4){const dx=Math.min(innerWidth-8-br.right,wr.right+12-br.left);if(dx>0){bt.style.translate=`${dx}px 0`;return r}}
   if(wr&&br){const ov=Math.ceil(wr.bottom+4-br.top);if(ov>0&&br.left<wr.right&&br.right>wr.left){w.style.translate=`0 ${-ov}px`;w.dataset.lift=ov}}
@@ -8620,7 +8621,7 @@ const ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-wi
 const place=()=>{const b=document.getElementById('exitBtn'),g=document.querySelector('.topbar .tbg');if(!b||!g||(innerHeight>innerWidth&&innerWidth<=700)){if(b)b.style.top='';return}b.style.top=(g.offsetTop+(g.offsetHeight-b.offsetHeight)/2)+'px'};
 addEventListener('resize',()=>setTimeout(place,80));
 const add=()=>{const t=document.querySelector('.topbar');if(!t||document.getElementById('exitBtn'))return;const b=document.createElement('button');b.id='exitBtn';b.type='button';b.dataset.gm='exit';b.innerHTML=ICON+`<span>${L('Exit','خروج')}</span>`;t.appendChild(b)};
-render=(function(p){return function(){const r=p.apply(this,arguments);try{add();place();const h=document.getElementById('home');document.documentElement.classList.toggle('ingame',!!S&&!(h&&!h.hidden))}catch(e){}return r}})(render);
+render=(function(p){return function(){const r=p.apply(this,arguments);try{add();{const b=document.getElementById('exitBtn');if(b&&!b.dataset.placed&&b.parentElement&&b.parentElement.classList.contains('topbar')){place();b.dataset.placed=1}}const h=document.getElementById('home');document.documentElement.classList.toggle('ingame',!!S&&!(h&&!h.hidden))}catch(e){}return r}})(render);
 try{add()}catch(e){}
 // in a game, short notes (tips, prices…) show just above your cards instead of over the top player
 toast=(function(p){return function(){const r=p.apply(this,arguments);try{const h=document.getElementById('home');if(S&&!(h&&!h.hidden)){const t=[...document.querySelectorAll('body>.toast')].pop(),c=document.querySelector('#myrow .card');
@@ -9194,7 +9195,7 @@ try{if(!EMOTES.some(e=>e[1]==='ملك الطاولة 👑'))EMOTES.push(['King o
 // the exit button sits right next to the menu button, same size as the other top buttons
 (function(){
 const move=()=>{const b=document.getElementById('exitBtn'),nb=document.getElementById('newBtn');if(!b||!nb)return;if(b.nextElementSibling!==nb){b.classList.add('gbtn');nb.parentNode.insertBefore(b,nb)}
-  const cs=getComputedStyle(nb),k=cs.width+cs.height+cs.font;if(b.dataset.k===k)return;b.dataset.k=k;
+  if(b.dataset.k)return;const cs=getComputedStyle(nb);b.dataset.k=1;
   let z=1;for(let e=nb;e;e=e.parentElement){const v=parseFloat(getComputedStyle(e).zoom);if(v&&v!==1)z*=v}
   const un=v=>String(v).replace(/(-?[\d.]+)px/g,(m,n)=>(parseFloat(n)/z)+'px');
   ['width','height','padding','border-radius','font','gap'].forEach(p=>b.style.setProperty(p,un(cs.getPropertyValue(p)),'important'));
@@ -9399,7 +9400,7 @@ try{[['Where are you going?','وين رايح؟'],['You think it is easy?','شع
 
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1108.1050';
+const EB_VERSION='v1108.1104';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
