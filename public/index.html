@@ -5716,8 +5716,8 @@ render=(function(prev){return function(){const r=prev.apply(this,arguments);try{
   document.querySelectorAll('.botchip').forEach(x=>x.remove());S.players.forEach((p,i)=>{const el=i===0?$('mebox'):document.querySelector(`#seats .seat[data-seat="${i}"]`);if(!el)return;
     const m=seatMember(i),timed=AUTOP[i]&&now-AUTOP[i]<6000;let txt='';
     if(online&&m===null&&i!==0)txt=L('🤖 Computer','🤖 كمبيوتر');
-    else if(online&&m&&m.away)txt=L('🤖 Away: computer plays','🤖 طالع: الكمبيوتر يلعب');
-    else if(timed)txt=i===0?L('🤖 Computer played for you','🤖 الكمبيوتر لعب عنك'):L('🤖 Computer played for them','🤖 الكمبيوتر لعب عنه');
+    else if(online&&m&&m.away)txt=L('🤖 Away','🤖 طالع');
+    else if(timed)txt=i===0?L('🤖 Computer played for you','🤖 الكمبيوتر لعب عنك'):L('🤖 Auto','🤖 لعب عنه');
     el.classList.toggle('botplay',!!txt);if(!txt)return;const c=document.createElement('span');c.className='botchip'+(timed?' hot':'');c.textContent=txt;if(i===0)el.appendChild(c);else{const nm=el.querySelector('.name');nm?nm.after(c):el.appendChild(c)}})}catch(e){}return r}})(render);
 
 // ---------- 3. The mic closes when you leave the page or switch apps ----------
@@ -9440,10 +9440,14 @@ const refit=()=>{try{const s=document.getElementById('setup');if(!s||s.hidden)re
 const later3=()=>[80,350,800,1500].forEach(t=>setTimeout(refit,t));
 addEventListener('orientationchange',later3);addEventListener('resize',later3);try{visualViewport&&visualViewport.addEventListener('resize',later3)}catch(e){}
 })();
+// the "computer / away" chip under a side player never leaves the screen
+(function(){const fix=()=>{document.querySelectorAll('#seats .botchip').forEach(c=>{c.style.translate='';const r=c.getBoundingClientRect();let d=0;if(r.left<4)d=4-r.left;else if(r.right>innerWidth-4)d=innerWidth-4-r.right;if(d)c.style.translate=d+'px 0'})};
+render=(function(p){return function(){const r=p.apply(this,arguments);try{fix()}catch(e){}return r}})(render);
+const st=document.createElement('style');st.textContent='#seats .botchip{white-space:nowrap;max-width:46vw;overflow:hidden;text-overflow:ellipsis}';document.head.appendChild(st)})();
 
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1108.1306';
+const EB_VERSION='v1108.1334';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
