@@ -8682,13 +8682,13 @@ const st=document.createElement('style');st.textContent=`.bubble.chatsay{white-s
 (function(){
 const SEL='.table .seat .who .tilewrap,.table .seat .who .name,.table .seat .pilebox .card,.table .seat .handfan .cardback,.table .seat .tags .tag,.table .seat .seatgift,.table .seat .doneplate,#war,#ground>.card,#actions button,#myrow .card,.bottombar button,.bottombar .badge,.topbar button,.topbar .score,.drawrow .stack,#exitBtn,body>.toast';
 const EXT={pow:[40,24],boom:[54,36],zap:[46,32],shout:[38,26],cloud:[0,26],comic:[0,16],scroll:[14,8]};window.__bubExt=EXT;
-const ext=b=>{if(b.classList.contains('bcompact'))return [0,0];for(const k in EXT)if(b.classList.contains('bub-'+k))return EXT[k];return [0,0]};
+const ext=b=>{if(b.classList.contains('bcompact'))return /bub-(boom|zap|shout|pow)/.test(b.className)&&!b.classList.contains('bflat')?[22,14]:[0,0];for(const k in EXT)if(b.classList.contains('bub-'+k))return EXT[k];return [0,0]};
 function place(b){const q=b.getBoundingClientRect(),cx=(q.left+q.right)/2,cy=(q.top+q.bottom)/2,[ex,ey]=ext(b),W=b.offsetWidth+ex,H=b.offsetHeight+ey;if(!b.offsetWidth)return;
   const obs=[...document.querySelectorAll(SEL+',.bubble:not(.bwait)')].filter(e=>e!==b&&!b.contains(e)).map(e=>{const o0=e.getBoundingClientRect(),isB=e.classList.contains('bubble'),[x2,y2]=isB?ext(e):[0,0],o={left:o0.left-x2/2,right:o0.right+x2/2,top:o0.top-y2/2,bottom:o0.bottom+y2/2,width:o0.width},p=isB?10:3;return o.width?{l:o.left-p,r:o.right+p,t:o.top-p,b:o.bottom+p}:null}).filter(Boolean);
   const M=6,cost=(x,y)=>{const l=x-W/2,r=x+W/2,t=y-H/2,bb=y+H/2;if(l<M||r>innerWidth-M||t<M||bb>innerHeight-M)return Infinity;let a=0;for(const o of obs){const w=Math.min(r,o.r)-Math.max(l,o.l),h=Math.min(bb,o.b)-Math.max(t,o.t);if(w>0&&h>0)a+=w*h}return a};
   if(cost(cx,cy)===0)return;
-  let best=null;for(let dy=-180;dy<=180;dy+=8)for(let dx=-260;dx<=260;dx+=10){const d=Math.hypot(dx,dy*1.25);if(best&&best.a===0&&d>=best.d)continue;const a=cost(cx+dx,cy+dy);if(a===Infinity)continue;
-    if(!best||a<best.a||(a===best.a&&d<best.d))best={dx,dy,a,d}}
+  let best=null;const scan=(RX,RY)=>{for(let dy=-RY;dy<=RY;dy+=8)for(let dx=-RX;dx<=RX;dx+=10){const d=Math.hypot(dx,dy*1.25);if(best&&best.a===0&&d>=best.d)continue;const a=cost(cx+dx,cy+dy);if(a===Infinity)continue;
+    if(!best||a<best.a||(a===best.a&&d<best.d))best={dx,dy,a,d}}};scan(150,110);if(!best||best.a>0)scan(260,180);
   if(!best)return;b.style.left=(parseFloat(b.style.left)||0)+best.dx+'px';b.style.top=(parseFloat(b.style.top)||0)+best.dy+'px';
   if(best.a>0&&/bub-(boom|zap|shout|pow)/.test(b.className)&&!b.classList.contains('bcompact')){b.classList.add('bcompact');return place(b)}
   if(best.a>0&&b.classList.contains('chatsay')&&!(b.dataset.narrow>=2)){b.dataset.narrow=(+b.dataset.narrow||0)+1;b.style.setProperty('max-width',(b.dataset.narrow==1?150:118)+'px','important');b.style.setProperty('font-size','12px','important');place(b)}
@@ -8697,7 +8697,7 @@ window.__placeBubble=place;
 // two messages at once: if there is no free spot, the newer one waits (hidden) until the other has gone, then pops up
 const box=b=>{const q=b.getBoundingClientRect(),cx=(q.left+q.right)/2,cy=(q.top+q.bottom)/2,[ex,ey]=ext(b),W=b.offsetWidth+ex,H=b.offsetHeight+ey;return {l:cx-W/2,r:cx+W/2,t:cy-H/2,b:cy+H/2}};
 const clash=b=>{const r=box(b);return [...document.querySelectorAll('.bubble:not(.bwait)')].some(o=>{if(o===b||!o.isConnected)return false;const q=box(o);return r.l<q.r+8&&r.r>q.l-8&&r.t<q.b+8&&r.b>q.t-8})};
-function settle(b){if(!b.dataset.t)b.dataset.t=performance.now();if(/bub-(boom|zap|shout|pow)/.test(b.className)&&(b.textContent||'').trim().length>12)b.classList.add('bcompact');place(b);if(!clash(b))return;if(b.classList.contains('bwait'))return;
+function settle(b){if(!b.dataset.t)b.dataset.t=performance.now();if(/bub-(boom|zap|shout|pow)/.test(b.className)&&(b.textContent||'').trim().length>12)b.classList.add('bcompact','bflat');place(b);if(!clash(b))return;if(b.classList.contains('bwait'))return;
   const anims=b.getAnimations().filter(a=>!(a instanceof CSSAnimation));anims.forEach(a=>a.pause());b.classList.add('bwait');const t0=performance.now();
   const tick=()=>{if(!b.isConnected)return;place(b);if(!clash(b)){b.classList.remove('bwait');b.getAnimations().forEach(a=>{if(a instanceof CSSAnimation)return;try{a.currentTime=0;a.play()}catch(e){}});return}
     if(performance.now()-t0>6000){b.remove();return}setTimeout(tick,250)};setTimeout(tick,250)}
@@ -8746,9 +8746,12 @@ const st=document.createElement('style');st.textContent=`
 .bubble.bub-scroll::before,.bubble.bub-scroll::after{content:'';position:absolute;top:-4px;bottom:-4px;width:9px;border-radius:5px;background:linear-gradient(90deg,#8a5a24,#e2b878 45%,#7a4a18);box-shadow:0 2px 3px rgba(0,0,0,.35)}
 .bubble.bub-scroll::before{left:-6px}.bubble.bub-scroll::after{right:-6px}
 .bubdemo .bubble.bub-boom,.bubdemo .bubble.bub-zap,.bubdemo .bubble.bub-shout{transform:scale(.8)!important}
-.bubble.bcompact{padding:5px 11px!important;white-space:normal;font-style:normal}
-.bubble.bcompact::before{inset:-3px!important;clip-path:inset(0 round 14px)!important;animation:none!important}
-.bubble.bcompact::after{inset:-6px!important;clip-path:inset(0 round 16px)!important}
+.bubble.bcompact{padding:6px 12px!important;white-space:normal;font-size:12.5px!important}
+.bubble.bcompact::before{inset:-7px -11px!important;animation:none!important}
+.bubble.bcompact::after{inset:-10px -14px!important}
+
+.bubble.bflat::before{inset:-3px!important;clip-path:inset(0 round 14px)!important}
+.bubble.bflat::after{inset:-6px!important;clip-path:inset(0 round 16px)!important}
 @media (prefers-reduced-motion:reduce){.bubble.bub-boom::before,.bubble.bub-zap::before{animation:none}}`;
 document.head.appendChild(st);
 
@@ -9441,13 +9444,43 @@ const later3=()=>[80,350,800,1500].forEach(t=>setTimeout(refit,t));
 addEventListener('orientationchange',later3);addEventListener('resize',later3);try{visualViewport&&visualViewport.addEventListener('resize',later3)}catch(e){}
 })();
 // the "computer / away" chip under a side player never leaves the screen
-(function(){const fix=()=>{document.querySelectorAll('#seats .botchip').forEach(c=>{c.style.translate='';const r=c.getBoundingClientRect();let d=0;if(r.left<4)d=4-r.left;else if(r.right>innerWidth-4)d=innerWidth-4-r.right;if(d)c.style.translate=d+'px 0'})};
+(function(){const fix=()=>{document.querySelectorAll('#seats .botchip,#seats .seat .who .name,#seats .seat .tags').forEach(c=>{c.style.translate='';const r=c.getBoundingClientRect();let d=0;if(r.left<4)d=4-r.left;else if(r.right>innerWidth-4)d=innerWidth-4-r.right;if(d)c.style.translate=d+'px 0'})};
 render=(function(p){return function(){const r=p.apply(this,arguments);try{fix()}catch(e){}return r}})(render);
 const st=document.createElement('style');st.textContent='#seats .botchip{white-space:nowrap;max-width:46vw;overflow:hidden;text-overflow:ellipsis}';document.head.appendChild(st)})();
+(function(){const st=document.createElement('style');st.textContent=`html body #seats .seat .who .name{display:block!important;direction:rtl;unicode-bidi:plaintext;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:min(104px,30vw)!important;width:auto!important}
+html body #seats .seat .who .name .flag{display:inline-block;vertical-align:-2px;margin-inline-end:3px}`;document.head.appendChild(st)})();
+// the hint bubble: smaller, and it picks the free spot (above your cards, under the top bar, or beside your cards) so it does not sit on the ground cards or players
+(function(){const st=document.createElement('style');st.textContent=`#hintPop{max-width:min(78vw,380px)!important;font-size:12.5px!important;padding:7px 12px!important;line-height:1.5!important}`;document.head.appendChild(st);
+const SEL='#ground>.card,#seats .seat .who,#seats .seat .pilebox .card,#seats .seat .tags .tag,#war,#actions button,.drawrow .stack,#myrow .card,.topbar,.bottombar';
+function placeHint(){const d=document.getElementById('hintPop');if(!d||!d.classList.contains('on'))return;
+  d.style.transform='none';const W=d.offsetWidth,H=d.offsetHeight;
+  const obs=[...document.querySelectorAll(SEL)].map(e=>e.getBoundingClientRect()).filter(r=>r.width);
+  const hand=[...document.querySelectorAll('#myrow .card')].map(e=>e.getBoundingClientRect());const ht=hand.length?Math.min(...hand.map(r=>r.top)):innerHeight*.7;
+  const hl=hand.length?Math.min(...hand.map(r=>r.left)):innerWidth/2,hr=hand.length?Math.max(...hand.map(r=>r.right)):innerWidth/2;
+  const tb=document.querySelector('.topbar'),tbb=tb?tb.getBoundingClientRect().bottom:50;
+  const C=[[innerWidth/2-W/2,ht-H-8],[innerWidth/2-W/2,tbb+6],[hr+10,ht],[hl-10-W,ht],[innerWidth/2-W/2,(tbb+ht)/2-H/2]];
+  const cost=([x,y])=>{if(x<4||y<4||x+W>innerWidth-4||y+H>innerHeight-4)return Infinity;let a=0;for(const o of obs){const w=Math.min(x+W,o.right)-Math.max(x,o.left),h=Math.min(y+H,o.bottom)-Math.max(y,o.top);if(w>0&&h>0)a+=w*h}return a};
+  let best=C[0],bc=Infinity;for(const c of C){const v=cost(c);if(v<bc){bc=v;best=c}}if(bc===Infinity)best=[Math.max(4,innerWidth/2-W/2),Math.max(4,ht-H-8)];
+  d.style.left=best[0]+'px';d.style.top=best[1]+'px'}
+new MutationObserver(()=>{try{placeHint()}catch(e){}}).observe(document.body,{subtree:false,childList:true});
+const iv=setInterval(()=>{const d=document.getElementById('hintPop');if(!d)return;clearInterval(iv);new MutationObserver(()=>{try{if(d.classList.contains('on'))placeHint()}catch(e){}}).observe(d,{attributes:true,attributeFilter:['class'],childList:true})},300);
+const st2=document.createElement('style');st2.textContent=`#hintPop.on{transform:none!important}#hintPop{transform:scale(.9)!important}`;document.head.appendChild(st2);
+})();
+// light message styles (pearl, rose, hearts, cloud, comic, scroll) keep their look when space is tight; only the big comic shapes shrink
+(function(){const st=document.createElement('style');st.textContent=`
+.bubble.bcompact.bub-pearl::before,.bubble.bcompact.bub-pearl::after,.bubble.bcompact.bub-rosebub::before,.bubble.bcompact.bub-hearts::before,.bubble.bcompact.bub-hearts::after,
+.bubble.bcompact.bub-scroll::before,.bubble.bcompact.bub-scroll::after,.bubble.bcompact.bub-comic::before,.bubble.bcompact.bub-comic::after,.bubble.bcompact.bub-cloud::before,.bubble.bcompact.bub-cloud::after,
+.bubble.bcompact.bub-falcon::before,.bubble.bcompact.bub-carbon::before,.bubble.bcompact.bub-ember::before,.bubble.bcompact.bub-ember::after{display:block!important}
+.bubble.bcompact.bub-falcon{padding:7px 16px 7px 30px!important}`;document.head.appendChild(st)})();
+// "on one card" / "friend" / "done": one tidy row right under the player's name, in the theme's gold
+(function(){const st=document.createElement('style');st.textContent=`
+html body #seats .seat.s-left .tags,html body #seats .seat.s-right .tags{top:calc(100% + 2px)!important;bottom:auto!important;left:50%!important;right:auto!important;transform:translateX(-50%)!important;flex-direction:row!important;align-items:center!important;gap:4px!important;justify-content:center}
+html body #seats .seat .tag.soft.onecard{background:linear-gradient(180deg,#3a2414,#160a05)!important;color:#f6d77e!important;box-shadow:0 0 0 1.2px var(--mjt,#c9a04a),0 2px 6px rgba(0,0,0,.4)!important;font-size:9.5px!important;padding:1px 8px!important}
+html body #seats .seat .tag.soft.friend{font-size:9.5px!important;padding:1px 8px!important}`;document.head.appendChild(st)})();
 
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1108.1334';
+const EB_VERSION='v1108.1421';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
