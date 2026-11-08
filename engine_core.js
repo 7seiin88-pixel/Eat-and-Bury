@@ -250,4 +250,11 @@ const _res=resolveWar;resolveWar=function(){const w=S&&S.war;let pre=null;
     const ts=S.teams.map((t,k)=>teamScore(k));S.players.forEach((pl,i)=>{const others=ts.filter((_,k)=>k!==pl.team);if(!others.length)return;const st=ST(i);if(st)st.low=Math.min(st.low||0,ts[pl.team]-Math.max(...others))})}}catch(e){}
   return r};
 })();
+// a player who wins a war on his last card draws 5 new cards: the computer takes a moment before it plays them, and everyone sees "drew 5"
+(function(){
+const _res=resolveWar;resolveWar=function(){const w=S&&S.war;let five=null;try{if(w){const W=w.leader;if(W!==w.orig&&S.players[W].hand.length===0&&S.draw.length>0)five=W}}catch(e){}
+  const r=_res.apply(this,arguments);try{if(five!=null&&S){S.slowAI=five;try{say(five,L('Drew 5 🃏','سحب ٥ 🃏'))}catch(e){}}}catch(e){}return r};
+const wrap=n=>{const f=this&&this[n]||eval(n);return function(i){if(S&&S.slowAI===i&&!(S.players[i]&&S.players[i].human)){S.slowAI=null;const g=gen;setTimeout(()=>{if(g===gen&&S&&S.turn===i)f.apply(this,arguments)},1400);return}return f.apply(this,arguments)}};
+aiChoose=wrap('aiChoose');aiThrow=wrap('aiThrow');
+})();
 

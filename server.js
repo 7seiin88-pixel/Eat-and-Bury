@@ -105,7 +105,7 @@ const rooms = new Map();
 const clean = s => String(s || '').replace(/[<>]/g, '').trim().slice(0, 16) || 'لاعب';
 function newCode() { let c; do { c = Math.random().toString(36).slice(2, 7).toUpperCase(); } while (rooms.has(c)); return c; }
 const autoOf = a => { if (!a || typeof a !== 'object') return null; const k = v => { v = Math.floor(+v); return Number.isFinite(v) ? Math.max(-1, Math.min(300, v)) : -1; };
-  return { def: k(a.def), save: k(a.save), took: k(a.took), win: k(a.win), lost: k(a.lost), snd: String(a.snd || '').replace(/[^a-z]/g, '').slice(0, 12) }; };
+  return { def: k(a.def), save: k(a.save), took: k(a.took), win: k(a.win), lost: k(a.lost), winbig: k(a.winbig), tauf: k(a.tauf), snd: String(a.snd || '').replace(/[^a-z]/g, '').slice(0, 12) }; };
 const pub = r => ({ code: r.code, host: r.host, started: r.started, priv: !!r.priv, quick: !!r.quick, qIn: r.qAt && !r.started ? Math.max(0, r.qAt - Date.now()) : 0, dw: r.dw ? DW.name(r.dw) : '', members: r.members.map(m => ({ sid: m.sid, name: m.name, seat: m.seat, mic: m.mic, away: !!m.away, watch: !!m.watch, prof: m.prof || null })) });
 const GRACE = 3 * 60 * 1000; // keep a player's seat this long after they lose connection
 const token = () => crypto.randomBytes(12).toString('hex');
@@ -178,6 +178,7 @@ function onMessage2(c, { type, data = {}, rid }) {
       if (room.host === old) room.host = c.id;
       reply({ ok: true, room: pub(room), me: c.id, watch: !!m.watch });
       toRoom(room, 'room', pub(room));
+      if (room.game && !m.watch && m.wasAway) { try { room.game.push({ t: 'say', s: m.seat, text: 'رجعت 👋' }) } catch (e) {} } m.wasAway = false;
       if (room.game) { room.game.changed(); room.game.flush(c.id); }
       return;
     }
@@ -248,7 +249,7 @@ function drop(c, keepSocket, now) {
   if (!r) return;
   const m = r.members.find(x => x.sid === c.id); if (!m) return;
   if (!now) { // lost connection: hold the seat for a while so they can come back
-    m.away = true; m.mic = false;
+    m.away = true; m.mic = false; m.wasAway = true; if (r.game && !m.watch) { try { r.game.push({ t: 'say', s: m.seat, text: 'طلع 🚪' }) } catch (e) {} }
     m.timer = setTimeout(() => remove(r, m), r.started ? 15 * 60 * 1000 : GRACE); // a game in progress keeps the seat 15 minutes
     if (r.game) r.game.changed();
     return toRoom(r, 'room', pub(r));
