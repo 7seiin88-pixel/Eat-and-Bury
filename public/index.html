@@ -5227,7 +5227,9 @@ const ASND={
 function playASnd(id){const s=ASND[id];if(!s||!SND.ok())return;try{s.play(SND.ctx.currentTime+.05)}catch(e){}}
 
 // ---------- The moments ----------
-const AUTO_EV=[['lost','When someone takes a loot of 50+ from me','لما أحد ياخذ مني أكلة فوق الخمسين'],['def','When I fend off an attack on my pile','لما أردع هجوم على كومتي'],['save','When my partner rescues my pile','لما صاحبي يفزع لي'],['took','When my partner cuts over me','لما صاحبي يقطع عليّ'],['win','When I win a war','لما أفوز بالحرب']];
+const AUTO_EV=[['lost','When someone takes a loot of 50+ from me','في حالة أحد أخذ مني أكلة فوق الخمسين'],['def','When I fend off an attack on my pile','في حالة ردعت هجوم على كومتي'],
+  ['save','When my partner rescues my pile','في حالة صاحبي فزع لي'],['took','When my partner cuts over me','في حالة صاحبي قطع عليّ'],['win','When I win a war','في حالة فزت بالحرب'],
+  ['winbig','When I win a war worth 50+','في حالة فزت بحرب فوق الخمسين'],['tauf','When I skip someone\'s turn','في حالة طوّفت دور أحد']];
 if(!MYPROF.auto){MYPROF.auto={def:-1,save:-1,took:-1,win:-1,snd:'fanfare'};try{saveProf()}catch(e){}}
 profPublic=(function(prev){return function(){const p=prev();p.auto=MYPROF.auto||null;return p}})(profPublic);
 function autoOf(j){if(typeof NET!=='undefined'&&NET.on){const m=NET.members.find(x=>x.seat===j&&!x.watch);if(!m)return null;if(m.sid===NET.me)return MYPROF.auto;return m.prof&&m.prof.auto}return j===0?MYPROF.auto:null}
@@ -5242,12 +5244,13 @@ intercept=(function(prev){return function(j,card,fire){const w=S&&S.war;const pl
 resolveWar=(function(prev){return function(){const w=S&&S.war;const W=w?w.leader:null,fought=w&&w.pot&&w.pot.length>1;
   const lost=w&&w.fromPiles?w.fromPiles.filter(x=>x.j!==W&&S.players[x.j]&&S.players[W]&&S.players[x.j].team!==S.players[W].team&&sum(x.cards||[])>50).map(x=>x.j):[];prev();
   try{if(!(typeof NET!=='undefined'&&NET.on&&!NET.host))lost.forEach(j=>autoSay(j,'lost'))}catch(e){}
+  try{if(!(typeof NET!=='undefined'&&NET.on&&!NET.host)&&W!=null&&w){const g=sum([...w.targets,...w.pot]);if(g>50)setTimeout(()=>autoSay(W,'winbig'),fought?900:0)}}catch(e){}
   if(W==null||!fought||(typeof NET!=='undefined'&&NET.on&&!NET.host))return;autoSay(W,'win');autoSound(W)}})(resolveWar);
 if(typeof playFx==='function')playFx=(function(prev){return function(e){if(e&&e.t==='asnd'){playASnd(e.snd);return}return prev(e)}})(playFx);
 
 // ---------- Profile: choose a phrase for each moment, and a victory sound ----------
 renderProfile=(function(prev){return function(i){prev(i);if(i!==0||!profEdit)return;const box=$('profBox');if(!box||box.querySelector('.autobox'))return;
-  const a=profEdit.auto=Object.assign({def:-1,save:-1,took:-1,win:-1,lost:-1,snd:'fanfare'},profEdit.auto||{});
+  const a=profEdit.auto=Object.assign({def:-1,save:-1,took:-1,win:-1,lost:-1,winbig:-1,tauf:-1,snd:'fanfare'},profEdit.auto||{});
   const opts=sel=>`<option value="-1">${L('Nothing','بدون')}</option>`+EMOTES.map((e,k)=>`<option value="${k}" ${+sel===k?'selected':''}>${esc(L(e[0],e[1]))}</option>`).join('');
   const f=document.createElement('div');f.className='fieldset autobox';
   f.innerHTML=`<div class="label">${L('My automatic replies','ردودي التلقائية')}</div><p class="note">${L('The phrase pops up over your name for everyone at the table.','العبارة تطلع فوق اسمك عند كل اللي على الطاولة.')}</p>
@@ -6854,7 +6857,7 @@ html body .h2-tabs>button{max-width:120px}html body .h2-tabs{justify-content:cen
 const st2=document.createElement('style');st2.textContent=`#hintPop{position:fixed;left:50%;z-index:60;max-width:min(86vw,420px);transform:translate(-50%,-100%) scale(.9);opacity:0;pointer-events:none;
   padding:9px 14px;border-radius:14px;background:rgba(20,10,6,.94);color:#f4ead6;font-size:13.5px;font-weight:700;line-height:1.6;text-align:center;
   box-shadow:0 0 0 1px rgba(242,210,122,.5),0 8px 24px rgba(0,0,0,.5);transition:opacity .25s,transform .25s}
-#hintPop b{color:#f2d27a}#hintPop.on{opacity:1;transform:translate(-50%,-100%) scale(1)}`;document.head.appendChild(st);
+#hintPop b{color:#f2d27a}#hintPop.on{opacity:1;transform:translate(-50%,-100%) scale(1)}`;document.head.appendChild(st2);
 })();
 
 </script><script>
@@ -7823,7 +7826,7 @@ const st=document.createElement('style');st.textContent=`@media (min-width:700px
 // setup page: shrink it to fit when the screen is shorter than the page (Safari bars, iPad split view)
 function fitSetup(){const f=document.getElementById('setupForm'),o=document.getElementById('setup');if(!f||!o||o.hidden)return;if(innerWidth<600||innerHeight<600){['zoom','width','max-width'].forEach(k=>f.style.removeProperty(k));return}
   // fill the screen: wide sheet, then the biggest zoom whose height still fits
-  const W=innerWidth*.94,Hh=innerHeight-24;let z=1.6;f.style.setProperty('box-sizing','border-box','important');
+  const vh=(window.visualViewport&&visualViewport.height)||innerHeight,W=innerWidth*.94,Hh=Math.min(innerHeight,vh)-24;let z=1.6;f.style.setProperty('box-sizing','border-box','important');
   for(let k=0;k<4;k++){f.style.setProperty('max-width',(W/z)+'px','important');f.style.setProperty('width',(W/z)+'px','important');f.style.setProperty('zoom',z,'important');
     const h=f.getBoundingClientRect().height;const nz=Math.max(.7,Math.min(1.9,z*Hh/h));if(Math.abs(nz-z)<.02)break;z=nz}
   if(f.getBoundingClientRect().height>Hh){z=z*Hh/f.getBoundingClientRect().height;f.style.setProperty('zoom',z,'important');f.style.setProperty('max-width',(W/z)+'px','important');f.style.setProperty('width',(W/z)+'px','important')}}
@@ -8485,6 +8488,13 @@ const _res=resolveWar;resolveWar=function(){const w=S&&S.war;let pre=null;
     if(pre.cuts>=1)pre.cards.forEach(c=>{if(c)c.wl=1}); // this loot was fought over: digging it out later counts
     const ts=S.teams.map((t,k)=>teamScore(k));S.players.forEach((pl,i)=>{const others=ts.filter((_,k)=>k!==pl.team);if(!others.length)return;const st=ST(i);if(st)st.low=Math.min(st.low||0,ts[pl.team]-Math.max(...others))})}}catch(e){}
   return r};
+})();
+// a player who wins a war on his last card draws 5 new cards: the computer takes a moment before it plays them, and everyone sees "drew 5"
+(function(){
+const _res=resolveWar;resolveWar=function(){const w=S&&S.war;let five=null;try{if(w){const W=w.leader;if(W!==w.orig&&S.players[W].hand.length===0&&S.draw.length>0)five=W}}catch(e){}
+  const r=_res.apply(this,arguments);try{if(five!=null&&S){S.slowAI=five;try{say(five,L('Drew 5 🃏','سحب ٥ 🃏'))}catch(e){}}}catch(e){}return r};
+const wrap=n=>{const f=this&&this[n]||eval(n);return function(i){if(S&&S.slowAI===i&&!(S.players[i]&&S.players[i].human)){S.slowAI=null;const g=gen;setTimeout(()=>{if(g===gen&&S&&S.turn===i)f.apply(this,arguments)},1400);return}return f.apply(this,arguments)}};
+aiChoose=wrap('aiChoose');aiThrow=wrap('aiThrow');
 })();
 
 </script><script>
@@ -9399,8 +9409,41 @@ try{[['Where are you going?','وين رايح؟'],['You think it is easy?','شع
   ["I want to see what you'll do with it",'ابي اشوف شنو بتسوي فيه؟'],["I want to see how you'll bury them",'ابي اشوف شلون بتدفنهم']].forEach(p=>{if(!EMOTES.some(e=>e[1]===p[1]))EMOTES.push(p)})}catch(e){}
 
 </script><script>
+// ===================== Round 99: phrases, girls' rooms get their own card backs, bigger open piles in phone landscape, a clean table after coming back to the app =====================
+try{[['Why?!','ولييه!'],['Never mind','معلش']].forEach(p=>{if(!EMOTES.some(e=>e[1]===p[1]))EMOTES.push(p)})}catch(e){}
+// "theme colours" card back for the three new rooms: their own pack backs
+(function(){try{Object.assign(window.BACKPAL||{},{rosegold:['e8b4b8','fff6f4'],henna:['6e1520','d9a640'],diamond:['1d1b22','e8d3a0']})}catch(e){}
+  const map={rosegold:'bpkrose',henna:'bpkhenna',diamond:'bkchev'};
+  const st=document.createElement('style');st.id='bk99';document.head.appendChild(st);
+  function upd(){const t=WAL&&WAL.theme,id=map[t];if(!id||WAL.back!=='ebtheme'){st.textContent='';return}
+    const src=[...document.styleSheets].length&&(window.__BK93||[]).concat(window.__BK92||[]).find(x=>x.id===id);if(!src){st.textContent='';return}
+    st.textContent=`html.cb-ebtheme :not(.cbprev)>.cardback.cardback{background:url("data:image/svg+xml,${encodeURIComponent(src.svg)}") center/100% 100%!important}`}
+  try{applySkin=(function(p){return function(){const r=p.apply(this,arguments);try{upd()}catch(e){}return r}})(applySkin)}catch(e){}
+  setTimeout(()=>{try{upd()}catch(e){}},400);
+})();
+// phone landscape: the players' open cards were too small
+(function(){const st=document.createElement('style');st.textContent=`@media (orientation:landscape) and (max-height:600px){
+  html body .table .seat .pilebox .card,html body .table .seat .card.mini,html body #seats .seat .pilebox .card.mini{--cw:min(calc(var(--SW) * .092),17dvh)!important}}`;document.head.appendChild(st)})();
+// leaving the app (Safari in the background) and coming back: no pile of cards flying in at once
+(function(){let hid=0;
+document.addEventListener('visibilitychange',()=>{if(document.hidden){hid=Date.now();return}
+  try{document.getAnimations().forEach(a=>{if(a instanceof CSSAnimation)return;const t=a.effect&&a.effect.target;if(!t)return;try{a.finish()}catch(e){try{a.cancel()}catch(_){}}})}catch(e){}
+  try{clearFx()}catch(e){}try{document.querySelectorAll('body>.flyer,body>.giftpop,body>.emo98,body>.bubble').forEach(e=>e.remove())}catch(e){}
+  try{if(S)render()}catch(e){}});
+})();
+// auto reply when I skip someone's turn (games against the computer; online the server sends it)
+(function(){try{resolveWar=(function(p){return function(){const w=S&&S.war,W=w?w.leader:null,b=W!=null&&S.stats&&S.stats[W]?S.stats[W].tw||0:0;const r=p.apply(this,arguments);
+  try{if(W!=null&&!(typeof NET!=='undefined'&&NET.on)&&S.stats&&S.stats[W]&&(S.stats[W].tw||0)>b)setTimeout(()=>autoSay(W,'tauf'),1200)}catch(e){}return r}})(resolveWar)}catch(e){}})();
+// setup page after rotating the iPad: it kept the old height (bottom cut off, black band). Re-fit after Safari finishes rotating, using the real visible height
+(function(){const st=document.createElement('style');st.textContent=`html body #setup{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;height:auto!important;max-height:none!important;padding-bottom:env(safe-area-inset-bottom,0px)!important}`;document.head.appendChild(st);
+const refit=()=>{try{const s=document.getElementById('setup');if(!s||s.hidden)return;if(window.fitSetup)fitSetup();s.scrollTop=Math.min(s.scrollTop,s.scrollHeight)}catch(e){}};
+const later3=()=>[80,350,800,1500].forEach(t=>setTimeout(refit,t));
+addEventListener('orientationchange',later3);addEventListener('resize',later3);try{visualViewport&&visualViewport.addEventListener('resize',later3)}catch(e){}
+})();
+
+</script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1108.1104';
+const EB_VERSION='v1108.1232';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
