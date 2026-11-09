@@ -10009,7 +10009,7 @@ const st=document.createElement('style');st.textContent='.hx-fan .hxfix{display:
 try{if(typeof renderHome==='function'&&document.getElementById('home')&&!document.getElementById('home').hidden)renderHome()}catch(e){}
 // the friends button gets its own row under the top bar (same size), and the rest of the page sits in the middle of the screen
 const lay=()=>{const all=document.querySelectorAll('#home #soBtn');for(let k=1;k<all.length;k++)all[k].remove();const p=document.getElementById('h2Page'),so=document.getElementById('soBtn'),top=p&&p.querySelector('.hx-top');if(!p||!so||!top)return;
-  let row=p.querySelector('.h2-sorow');if(!row){row=document.createElement('div');row.className='h2-sorow';top.after(row)}if(so.parentElement!==row)row.appendChild(so)};
+  if(so.parentElement!==top){const tok=top.querySelector('.hx-tok');tok?top.insertBefore(so,tok):top.appendChild(so)}const row=p.querySelector('.h2-sorow');if(row)row.remove()}; // friends stays in the top bar
 if(typeof renderHome==='function'){const rh=renderHome;renderHome=function(){const r=rh.apply(this,arguments);try{lay()}catch(e){}return r}}
 setInterval(()=>{try{const h=document.getElementById('home');if(h&&!h.hidden)lay()}catch(e){}},700);
 const st2=document.createElement('style');st2.textContent=`.h2-sorow{display:flex;justify-content:center;margin:-2px 0 2px}.h2-sorow #soBtn{position:static!important;transform:none!important;margin:0!important}
@@ -10017,7 +10017,7 @@ const st2=document.createElement('style');st2.textContent=`.h2-sorow{display:fle
 })();
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1109.1129';
+const EB_VERSION='v1109.1137';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
