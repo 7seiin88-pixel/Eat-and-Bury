@@ -1,0 +1,21 @@
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>حفر ودفن · الإدارة</title>
+<style>body{margin:0;background:#140c08;color:#f4ead6;font:15px/1.6 Tahoma,Arial,sans-serif}main{max-width:820px;margin:0 auto;padding:16px}h1{color:#f2d27a;font-size:22px}
+input,button{font:inherit;border:0;border-radius:10px;padding:10px 12px}input{background:#f8f4e8;color:#1c120c;width:100%;box-sizing:border-box}
+button{background:#e2bd5c;color:#2a1606;font-weight:bold}.tabs{display:flex;gap:8px;margin:12px 0}.tabs button{flex:1;background:#2a1b13;color:#e9dcc2}.tabs button.on{background:#e2bd5c;color:#2a1606}
+.it{background:#22140f;border:1px solid rgba(242,210,122,.25);border-radius:12px;padding:12px;margin:10px 0}.it small{opacity:.7;display:block}.it p{margin:6px 0;white-space:pre-wrap;word-break:break-word}.k{display:inline-block;border-radius:8px;padding:1px 8px;background:#3a2414;color:#f6d77e;font-size:12px}</style></head><body><main>
+<h1>حفر ودفن · الاقتراحات والبلاغات</h1>
+<form id="f"><input id="key" type="password" placeholder="مفتاح الإدارة (ADMIN_KEY)" autocomplete="off"><div class="tabs"><button type="submit">افتح</button></div></form>
+<div class="tabs" id="tabs" hidden><button type="button" data-t="feedbacks" class="on">الاقتراحات والتواصل</button><button type="button" data-t="reports">البلاغات</button></div><div id="out"></div></main>
+<script>
+var key='',tab='feedbacks';var esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
+var KIND={idea:'💡 اقتراح',bug:'🛠 مشكلة',contact:'✉️ تواصل'},WHY={cheat:'غش',abuse:'إساءة',spam:'إزعاج',name:'اسم غير لائق',other:'أخرى'};
+function when(t){return new Date(t).toLocaleString('ar')}
+function load(){var out=document.getElementById('out');out.textContent='لحظة…';fetch('/api/so/'+tab,{headers:{'x-admin-key':key}}).then(function(r){return r.json()}).then(function(d){
+ if(d.err){out.textContent='المفتاح غلط، أو ما انضاف ADMIN_KEY بإعدادات Render.';return}document.getElementById('tabs').hidden=false;
+ if(!d.list.length){out.textContent='ما في شي للحين.';return}
+ out.innerHTML='<p>العدد: '+d.n+'</p>'+d.list.map(function(x){return tab==='feedbacks'?
+  '<div class="it"><span class="k">'+(KIND[x.kind]||x.kind)+'</span> <b>'+esc(x.name||'لاعب')+'</b><small>'+when(x.ts)+' · '+esc(x.ver||'')+' · '+esc(x.by)+'</small><p>'+esc(x.text)+'</p>'+(x.contact?'<small>للتواصل: '+esc(x.contact)+'</small>':'')+'<small dir="ltr">'+esc(x.ua||'')+'</small></div>':
+  '<div class="it"><span class="k">'+esc(WHY[x.reason]||x.reason||'')+'</span> <b>'+esc(x.whoName||x.who)+'</b> ← بلّغ عنه '+esc(x.byName||x.by)+'<small>'+when(x.ts)+'</small><p>'+esc(x.note||'')+'</p><small dir="ltr">'+esc(JSON.stringify(x.ctx||{})).slice(0,900)+'</small></div>'}).join('')}).catch(function(){out.textContent='ما قدرنا نتصل.'})}
+document.getElementById('f').addEventListener('submit',function(e){e.preventDefault();key=document.getElementById('key').value.trim();load()});
+document.getElementById('tabs').addEventListener('click',function(e){var b=e.target.closest('[data-t]');if(!b)return;tab=b.dataset.t;[].forEach.call(document.querySelectorAll('[data-t]'),function(x){x.classList.toggle('on',x===b)});load()});
+</script></body></html>

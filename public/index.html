@@ -1665,7 +1665,10 @@ const _renderSetupO=renderSetup;renderSetup=function(){_renderSetupO();const f=$
   b.textContent=L('Play online with friends','العب أونلاين مع ربعك');$('startBtn').before(b)};
 
 // ---------- Lobby ----------
-let lobbyErr='',lobbyCode=(new URLSearchParams(location.search).get('room')||'').toUpperCase();
+// the app on the home screen can remember the link of an old room: opening the app always starts on the main screen
+const __standalone=(()=>{try{return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}catch(e){return false}})();
+if(__standalone&&/[?&]room=/.test(location.search)){try{history.replaceState(null,'',location.pathname)}catch(e){}}
+let lobbyErr='',lobbyCode=__standalone?'':(new URLSearchParams(location.search).get('room')||'').toUpperCase();
 function myName(){try{return localStorage.getItem('eb-name')||''}catch(e){return ''}}
 function seatLabel(i){const count=nPlayersForLobby();const mode2=count===4;if(i===0)return L('Seat 1 (host)','المقعد ١ (المضيف)');
   return L(`Seat ${i+1}`,`المقعد ${i+1}`)+(i%2===0?L(' · host\'s partner',' · شريك المضيف'):L(' · other team',' · الفريق الثاني'))}
@@ -8791,6 +8794,21 @@ const ext=b=>{if(b.classList.contains('bcompact'))return /bub-(boom|zap|shout|po
 function place(b){const q=b.getBoundingClientRect(),cx=(q.left+q.right)/2,cy=(q.top+q.bottom)/2,[ex,ey]=ext(b),W=b.offsetWidth+ex,H=b.offsetHeight+ey;if(!b.offsetWidth)return;
   const obs=[...document.querySelectorAll(SEL+',.bubble:not(.bwait)')].filter(e=>e!==b&&!b.contains(e)).map(e=>{const o0=e.getBoundingClientRect(),isB=e.classList.contains('bubble'),[x2,y2]=isB?ext(e):[0,0],o={left:o0.left-x2/2,right:o0.right+x2/2,top:o0.top-y2/2,bottom:o0.bottom+y2/2,width:o0.width},p=isB?10:3;return o.width?{l:o.left-p,r:o.right+p,t:o.top-p,b:o.bottom+p}:null}).filter(Boolean);
   const M=6,cost=(x,y)=>{const l=x-W/2,r=x+W/2,t=y-H/2,bb=y+H/2;if(l<M||r>innerWidth-M||t<M||bb>innerHeight-M)return Infinity;let a=0;for(const o of obs){const w=Math.min(r,o.r)-Math.max(l,o.l),h=Math.min(bb,o.b)-Math.max(t,o.t);if(w>0&&h>0)a+=w*h}return a};
+  // fixed spots (agreed with the players): top player -> on his right; upper side players -> above them; lower side players -> below them (outside the table is fine).
+  // The message only slides along that same direction to stay off names, faces, piles and other messages; it may sit on the player's own hidden cards.
+  if(b.dataset.anchor){const se=document.querySelector(`.seat[data-seat="${b.dataset.seat}"] .who`);if(se){const w=se.getBoundingClientRect(),A=b.dataset.anchor;let x,y;
+    if(!b.dataset.fitted){b.dataset.fitted=1;const tw=document.querySelector('.seat.s-top .who'),tr=tw?tw.getBoundingClientRect():null;let lim=0;
+      if(A==='right')lim=innerWidth-w.right-18;else if(tr&&A==='up'){const mid=w.left+w.width/2;lim=mid<innerWidth/2?tr.left-14:innerWidth-tr.right-14}else lim=innerWidth*.46;
+      if(lim>0&&b.offsetWidth>lim){b.style.setProperty('max-width',Math.max(84,Math.floor(lim-(b.offsetWidth-b.clientWidth)-parseFloat(getComputedStyle(b).paddingLeft)-parseFloat(getComputedStyle(b).paddingRight)))+'px','important');b.style.setProperty('box-sizing','content-box');b.style.setProperty('white-space','normal','important');if(lim<150)b.style.setProperty('font-size','12px','important');return place(b)}}
+    if(A==='right'){x=w.right+10+W/2;y=w.top+w.height*.45}else if(A==='down'){x=w.left+w.width/2;y=w.bottom+10+H/2}else{x=w.left+w.width/2;y=w.top-12-H/2}
+    x=Math.max(M+W/2,Math.min(innerWidth-M-W/2,x));y=Math.max(M+H/2,Math.min(innerHeight-M-H/2,y));
+    const obs2=[...document.querySelectorAll(SEL.replace('.table .seat .handfan .cardback,','')+',.bubble:not(.bwait)')].filter(e=>e!==b&&!b.contains(e)).map(e=>{const o=e.getBoundingClientRect();return o.width?{l:o.left-3,r:o.right+3,t:o.top-3,b:o.bottom+3}:null}).filter(Boolean);
+    const c2=(x,y)=>{const l=x-W/2,r=x+W/2,t=y-H/2,bb=y+H/2;if(t<M||bb>innerHeight-M||l<M||r>innerWidth-M)return Infinity;let a=0;for(const o of obs2){const ww=Math.min(r,o.r)-Math.max(l,o.l),h=Math.min(bb,o.b)-Math.max(t,o.t);if(ww>0&&h>0)a+=ww*h}return a};
+    // side players: first choice is just above their fan of hidden cards (covers nothing); only if that spot is taken does the message sit on the cards
+    if(A==='up'){const fan=[...document.querySelectorAll(`.seat[data-seat="${b.dataset.seat}"] .handfan .cardback`)].map(e=>e.getBoundingClientRect()).filter(r=>r.width);
+      if(fan.length){const ft=Math.min(...fan.map(r=>r.top)),y2=ft-6-H/2;if(y2-H/2>=M&&c2(x,y2)===0){b.style.left=(parseFloat(b.style.left)||0)+(x-cx)+'px';b.style.top=(parseFloat(b.style.top)||0)+(y2-cy)+'px';return}}}
+    let bx=x,by=y,bc=c2(x,y);for(let k=1;k<=(A==='right'?10:2)&&bc>0;k++){const d=k*8;const tries=A==='up'?[[0,-d]]:A==='down'?[[0,d]]:[[0,-d],[0,d],[d,0]];for(const [dx,dy] of tries){const v=c2(x+dx,y+dy);if(v<bc){bc=v;bx=x+dx;by=y+dy}}}
+    b.style.left=(parseFloat(b.style.left)||0)+(bx-cx)+'px';b.style.top=(parseFloat(b.style.top)||0)+(by-cy)+'px';return}}
   if(cost(cx,cy)===0)return;
   let best=null;const scan=(RX,RY)=>{for(let dy=-RY;dy<=RY;dy+=8)for(let dx=-RX;dx<=RX;dx+=10){const d=Math.hypot(dx,dy*1.25);if(best&&best.a===0&&d>=best.d)continue;const a=cost(cx+dx,cy+dy);if(a===Infinity)continue;
     if(!best||a<best.a||(a===best.a&&d<best.d))best={dx,dy,a,d}}};const TOP=b.dataset.top==='1';scan(TOP?56:150,TOP?130:110);if(!best||best.a>0)scan(TOP?80:260,TOP?200:180);
@@ -9699,7 +9717,7 @@ intercept=(function(prev){return function(j,card,fire){try{if(fire==null&&BOTFX&
 // 5) every message shows who said it: a small name line on top of the bubble (with the team colour)
 (function(){
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-window.__bubHook=function(b,i){try{const se=document.querySelector(`.seat[data-seat="${i}"]`);if(se&&se.classList.contains('s-top'))b.dataset.top='1'}catch(_){}if(!S||!S.players||i==null||!S.players[i]||b.querySelector('.bwho'))return;const p=S.players[i];
+window.__bubHook=function(b,i){try{const se=document.querySelector(`.seat[data-seat="${i}"]`);if(se&&se.classList.contains('s-top'))b.dataset.top='1';if(se&&i!==0){b.dataset.seat=i;b.dataset.anchor=se.classList.contains('s-top')?'right':(se.classList.contains('s-left')||se.classList.contains('s-right'))?(se.classList.contains('lo')?'down':'up'):''}}catch(_){}if(!S||!S.players||i==null||!S.players[i]||b.querySelector('.bwho'))return;const p=S.players[i];
   const me=i===0&&!(typeof NET!=='undefined'&&NET.on&&S.players[0].remote);let nm=me?L('You','أنت'):(p.name||'');nm=nm.length>12?nm.slice(0,11)+'…':nm;
   const col=S.teams&&S.teams[p.team]?S.teams[p.team].color:'#ccc';
   b.insertAdjacentHTML('afterbegin',`<span class="bwho"><i style="background:${col}"></i>${esc(nm)}</span>`)};
@@ -9760,7 +9778,7 @@ html body #setupForm.fit3>.fieldset{grid-column:auto!important}`;document.head.a
 
 // 12) "تحت الهجوم" is never covered (the cards in your hand were drawn over it): it is shown on its own top layer, at the same spot, kept inside the screen
 (function(){let layer=null;
-function sync(){try{const tags=[...document.querySelectorAll('#seats .tag.alert')];if(!layer){const o=document.createElement('div');o.id='alertLayer';o.dir='rtl';layer=document.createElement('div');layer.className='seat';o.appendChild(layer);document.body.appendChild(o)}
+function sync(){try{const hm=document.getElementById('home'),gone=typeof S==='undefined'||!S||!S.war||(hm&&!hm.hidden);const tags=gone?[]:[...document.querySelectorAll('#seats .tag.alert')];if(!layer){const o=document.createElement('div');o.id='alertLayer';o.dir='rtl';layer=document.createElement('div');layer.className='seat';o.appendChild(layer);document.body.appendChild(o)}
   const want=tags.filter(t=>{const r=t.getBoundingClientRect();return r.width>0});
   while(layer.children.length>want.length)layer.lastChild.remove();while(layer.children.length<want.length){const d=document.createElement('span');d.className='tag alert alertfloat';layer.appendChild(d)}
   want.forEach((t,k)=>{const r=t.getBoundingClientRect(),d=layer.children[k];if(d.innerHTML!==t.innerHTML)d.innerHTML=t.innerHTML;t.style.visibility='hidden';
@@ -10015,9 +10033,184 @@ setInterval(()=>{try{const h=document.getElementById('home');if(h&&!h.hidden)lay
 const st2=document.createElement('style');st2.textContent=`.h2-sorow{display:flex;justify-content:center;margin:-2px 0 2px}.h2-sorow #soBtn{position:static!important;transform:none!important;margin:0!important}
 .h2-page{justify-content:flex-start!important}.h2-page>.h2-hero{margin-top:auto!important}.h2-page>.h2-ver{margin-bottom:auto!important}`;document.head.appendChild(st2);try{lay()}catch(e){}
 })();
+// ===================== the game always fills the whole screen, also in the home-screen app after turning the iPad/phone =====================
+(function(){const de=document.documentElement;
+function fit(){try{const vv=window.visualViewport;const w=Math.round(Math.max(innerWidth,vv?vv.width:0)),h=Math.round(Math.max(innerHeight,vv?vv.height:0));
+  if(de.__fw===w&&de.__fh===h)return;de.__fw=w;de.__fh=h;de.style.setProperty('--appW',w+'px');de.style.setProperty('--appH',h+'px');
+  try{if(typeof S!=='undefined'&&S&&typeof render==='function')render()}catch(e){}try{window.scrollTo(0,0)}catch(e){}}catch(e){}}
+const burst=()=>[0,80,250,600,1200,2000].forEach(d=>setTimeout(fit,d));
+addEventListener('resize',burst);addEventListener('orientationchange',burst);addEventListener('pageshow',burst);try{visualViewport.addEventListener('resize',burst)}catch(e){}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)burst()});fit();
+const st=document.createElement('style');st.textContent=`html,body{width:100%!important;min-height:100%}
+html body #app{width:var(--appW,100%)!important;max-width:none!important;height:calc(var(--appH,100dvh) - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))!important}`;document.head.appendChild(st);
+})();
+
+// ===================== table shape for every theme: square (default) or round — the player's own choice, in the themes page =====================
+(function(){const de=document.documentElement;let ON=false;try{ON=localStorage.getItem('eb-round')==='on'}catch(e){}
+const apply=()=>de.classList.toggle('roundtable',ON);apply();
+window.__setRound=v=>{ON=!!v;try{localStorage.setItem('eb-round',ON?'on':'off')}catch(e){}apply();try{if(typeof S!=='undefined'&&S)render()}catch(e){}};
+const st=document.createElement('style');st.textContent=`
+html.roundtable body .table .stage .rug{border-radius:50%!important;overflow:hidden!important}
+html.roundtable body .table .stage .rug .field{border-radius:50%!important;overflow:hidden!important}
+html.roundtable body .table .stage .rug::before,html.roundtable body .table .stage .rug::after{border-radius:50%!important}
+html.roundtable body .table .stage .rug .field::before,html.roundtable body .table .stage .rug .field::after{border-radius:50%!important}
+.rt104{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0 10px;flex-wrap:wrap}
+.rt104>span{font-weight:800;color:#f2d27a}.rt104>div{display:flex;gap:6px}
+.rt104 button{display:flex;align-items:center;gap:7px;border:0;border-radius:10px;padding:9px 14px;font:inherit;font-weight:800;font-size:14px;background:rgba(255,255,255,.06);color:#e9dcc2;box-shadow:inset 0 0 0 1px rgba(242,210,122,.35)}
+.rt104 button i{display:block;width:22px;height:15px;border:2px solid currentColor;border-radius:3px}.rt104 button[data-rt="on"] i{border-radius:50%}
+.rt104 button.on{background:linear-gradient(180deg,#f8e3a0,#e2bd5c 55%,#c9a04a);color:#2a1606}`;document.head.appendChild(st);
+if(typeof renderShop==='function')renderShop=(function(p){return function(){const r=p.apply(this,arguments);try{const s=document.getElementById('shop');if(!s||s.querySelector('.rt104'))return r;
+  const tab=s.querySelector('.tabs button.on');if(!tab||tab.dataset.tab!=='skins')return r;const row=document.createElement('div');row.className='rt104';
+  row.innerHTML=`<span>${L('Table shape','شكل الطاولة')}</span><div><button type="button" data-rt="off" class="${ON?'':'on'}"><i></i>${L('Square','مربعة')}</button><button type="button" data-rt="on" class="${ON?'on':''}"><i></i>${L('Round','دائرية')}</button></div>`;
+  s.querySelector('.tabs').after(row)}catch(e){}return r}})(renderShop);
+window.addEventListener('click',e=>{const t=e.target.closest('[data-rt]');if(!t)return;e.stopPropagation();__setRound(t.dataset.rt==='on');document.querySelectorAll('[data-rt]').forEach(x=>x.classList.toggle('on',x===t))},true);
+})();
+
+// ===================== invite a friend into my room from inside the game (no WhatsApp needed) =====================
+(function(){
+const logged=()=>typeof ACCT!=='undefined'&&ACCT.on;const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const st=document.createElement('style');st.textContent=`
+#lobby .lbwa{display:block!important;width:100%!important;box-sizing:border-box!important;margin-left:0!important;margin-right:0!important;text-align:center}
+#lbInvite{display:block;width:100%;box-sizing:border-box;margin:8px 0 0;border:0;border-radius:14px;padding:13px;font:inherit;font-weight:900;font-size:16px;color:#2a1606;background:linear-gradient(180deg,#f8e3a0,#e2bd5c 55%,#c9a04a);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 3px 0 #8a6a1f}
+#invSheet{position:fixed;inset:0;z-index:130;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px}
+#invSheet[hidden]{display:none}
+#invBox{width:min(440px,100%);max-height:80%;overflow:auto;background:linear-gradient(180deg,#22140f,#100906);border-radius:18px;padding:16px;box-shadow:inset 0 0 0 1px rgba(242,210,122,.4),0 20px 50px rgba(0,0,0,.7);color:#f4ead6}
+#invBox h3{margin:0 0 10px;font-size:19px;color:#f2d27a}
+.invrow{display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px solid rgba(242,210,122,.12)}
+.invrow b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.invrow small{opacity:.7;font-size:12px}
+.invrow i{width:9px;height:9px;border-radius:50%;background:#666;flex:none}.invrow i.on{background:#3ddc84}.invrow i.play{background:#ffb02e}
+.invrow button,#invBox .invx{border:0;border-radius:10px;padding:8px 16px;font:inherit;font-weight:800;background:linear-gradient(180deg,#f8e3a0,#e2bd5c 55%,#c9a04a);color:#2a1606}
+.invrow button[disabled]{opacity:.55}#invBox .invx{display:block;width:100%;margin-top:12px;background:rgba(255,255,255,.07);color:#e9dcc2;box-shadow:inset 0 0 0 1px rgba(242,210,122,.35)}`;document.head.appendChild(st);
+const sh=document.createElement('div');sh.id='invSheet';sh.hidden=true;sh.innerHTML='<div id="invBox"></div>';document.body.appendChild(sh);
+async function openInv(){const box=document.getElementById('invBox');sh.hidden=false;box.dir=LANG==='ar'?'rtl':'ltr';box.innerHTML=`<h3>${L('Invite a friend','ادعُ صديق')}</h3><p>${L('Loading…','لحظة…')}</p>`;
+  let d=null;try{d=await api('/api/so/list')}catch(e){}const fr=d&&d.friends||[];
+  box.innerHTML=`<h3>${L('Invite a friend','ادعُ صديق')}</h3>${fr.length?fr.map(f=>`<div class="invrow"><i class="${f.st||'off'}"></i><b>${esc(f.name||'')}</b><small>${f.st==='play'?L('playing','يلعب الحين'):f.st==='on'?L('online','متصل'):L('offline','مو متصل')}</small><button type="button" data-inv="${f.id}">${L('Invite','ادعُ')}</button></div>`).join(''):`<p>${L('You have no friends yet. Add friends from the Friends button on the main screen, then invite them here.','ما عندك أصدقاء للحين. ضيفهم من زر "الأصدقاء" بالشاشة الرئيسية، وبعدها تدعوهم من هني.')}</p>`}
+    <button type="button" class="invx">${L('Close','إغلاق')}</button>`}
+sh.addEventListener('click',async e=>{if(e.target===sh||e.target.closest('.invx')){sh.hidden=true;return}const b=e.target.closest('[data-inv]');if(!b||b.disabled)return;b.disabled=true;
+  try{const r=await api('/api/so/invite',{id:b.dataset.inv,code:NET.room});if(r&&r.ok){b.textContent=L('Sent ✓','انرسلت ✓');toast(r.st==='off'?L('Invite sent. Your friend is offline: he will see it when he opens the game (3 minutes).','انرسلت الدعوة. صاحبك مو متصل الحين، بتطلع له إذا فتح اللعبة خلال ٣ دقايق.'):L('Invite sent','انرسلت الدعوة'))}else{b.disabled=false;toast(L('Could not send','ما انرسلت الدعوة'))}}catch(err){b.disabled=false}});
+// the button in the room page
+const add=()=>{try{const lb=document.getElementById('lobby');if(!lb||lb.hidden||document.getElementById('lbInvite'))return;if(typeof NET==='undefined'||!NET.on||!NET.room||!logged())return;
+  const wa=[...lb.querySelectorAll('.lbwa')].pop()||document.getElementById('lbCopy');if(!wa)return;const b=document.createElement('button');b.type='button';b.id='lbInvite';b.textContent=L('Invite from my friends','ادعُ من أصدقائك');(wa.closest('.lbrow')||wa).after(b)}catch(e){}};
+if(typeof renderLobby==='function')renderLobby=(function(p){return function(){const r=p.apply(this,arguments);add();return r}})(renderLobby);setInterval(add,800);
+document.addEventListener('click',e=>{if(e.target.closest('#lbInvite'))openInv()});
+// receiving an invite: a pop-up with "join"
+let seen=0;
+async function join(code){try{if(typeof S!=='undefined'&&S&&typeof leaveGame==='function'&&!(typeof NET!=='undefined'&&NET.on))leaveGame()}catch(e){}
+  try{document.getElementById('home').hidden=true;document.getElementById('setup').hidden=true;lobbyCode=code;renderLobby();document.getElementById('lobby').hidden=false;
+    const n=document.getElementById('lbName');if(n&&!n.value.trim())n.value=(typeof MYPROF!=='undefined'&&MYPROF.name)||(typeof myName==='function'&&myName())||L('Player','لاعب');const c=document.getElementById('lbCode');if(c)c.value=code;doEnter(false)}catch(e){}}
+async function poll(){if(!logged()||document.hidden)return;if(typeof NET!=='undefined'&&NET.on)return;try{const r=await api('/api/so/ping');const v=r&&r.inv;if(!v||v.ts===seen)return;seen=v.ts;
+  const nm=v.name||L('Your friend','صاحبك');const ok=await ebAsk(L(`${nm} invites you to his room. Join?`,`${nm} يدعوك لغرفته. تدخل؟`),L('Join','ادخل'),L('Not now','مو الحين'));try{api('/api/so/invdone',{})}catch(e){}if(ok)join(v.code)}catch(e){}}
+setInterval(poll,7000);setTimeout(poll,3000);
+})();
+
+// the top player's pile score sat under his name plate (and under the "computer" chip online): push it clear
+(function(){const st=document.createElement('style');st.textContent=`
+html body #seats .seat.s-top .pilebox{translate:0 9px}
+html body #seats .seat.s-top:has(.botchip) .pilebox{translate:0 30px}
+@media (orientation:landscape) and (max-height:460px){html body #seats .seat.s-top .pilebox,html body #seats .seat.s-top:has(.botchip) .pilebox{translate:none}}`;document.head.appendChild(st)})();
+
+// ===================== the room page fills the screen, says where the game options are, and the computers' shop effects also work in online rooms =====================
+(function(){
+const st=document.createElement('style');st.textContent=`
+html body #lobby{padding:0!important;align-items:stretch!important;justify-content:stretch!important}
+html body #lobby>.sheet{width:100%!important;max-width:none!important;height:100%!important;max-height:none!important;margin:0!important;border-radius:0!important;transform:none!important;zoom:1!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch;box-sizing:border-box!important;
+  padding:max(18px,env(safe-area-inset-top)) max(18px,calc((100vw - 760px)/2)) max(18px,env(safe-area-inset-bottom))!important}
+#lbOptHint{margin:6px 0 2px;text-align:center;font-size:13px;line-height:1.6;color:#d6bd85}`;document.head.appendChild(st);
+const hint=()=>{try{const b=document.getElementById('lbStart');if(!b||document.getElementById('lbOptHint'))return;const p=document.createElement('p');p.id='lbOptHint';
+  p.textContent=L('Next page: players, decks, cut time, effects, computer style and your theme — then deal.','بالصفحة الجاية تختار: عدد اللاعبين، الشدّات، وقت القطع، التأثيرات، الكمبيوتر مع تأثيرات المتجر أو بدون، والثيم — وبعدها توزّع.');b.after(p)}catch(e){}};
+if(typeof renderLobby==='function')renderLobby=(function(p){return function(){const r=p.apply(this,arguments);hint();return r}})(renderLobby);setInterval(hint,900);
+// online rooms: seats played by the computer get shop styles too (same pick for the whole game, chosen from the room code and the seat's name)
+const BOY={bub:['comic','pow','shout','zap','boom','gold','fire','neon','royal','shemagh','falcon','carbon','ember','scroll','sadu'],efx:['gold','blue','purple','green','smoke','stars','money','frost','firering','halo'],sfx:['inferno','thunder','ice','meteor','royal','money','quake','missile','tank','flip']};
+const GIRL={bub:['pearl','rosebub','hearts','cloud','sticker','jelly','gold','royal'],efx:['pink','hearts','petals','butterflies','diamonds','stars','glow'],sfx:['petals','butterflies','diamonds','royal','ice','halo']};
+const hash=s=>{let h=7;for(let k=0;k<s.length;k++)h=(h*31+s.charCodeAt(k))>>>0;return h};
+const ok=(list,id)=>typeof list==='undefined'||!Array.isArray(list)||list.some(x=>x.id===id);
+function onCos(i){try{if(typeof NET==='undefined'||!NET.on||!S||!S.players||!S.players[i])return null;if(!(window.__botFxOn&&__botFxOn()))return null;if(typeof seatMember!=='function'||seatMember(i))return null;
+  const p=S.players[i],set=p.f?GIRL:BOY,h=hash((NET.room||'')+':'+(p.name||i));const pick=(a,l,n)=>{const v=a.filter(id=>ok(l,id));return v.length?v[(h>>>n)%v.length]:null};
+  return {bub:pick(set.bub,typeof BUBS!=='undefined'?BUBS:undefined,0)||'plain',efx:pick(set.efx,typeof EFX!=='undefined'?EFX:undefined,4),sfx:pick(set.sfx,typeof SFX!=='undefined'?SFX:undefined,8)}}catch(e){return null}}
+const c0=window.__botCos;window.__botCos=i=>onCos(i)||(c0?c0(i):null);
+if(typeof efxOf==='function')efxOf=(function(p){return function(i){const c=onCos(i);return c&&c.efx?c.efx:p.apply(this,arguments)}})(efxOf);
+if(typeof sfxOf==='function')sfxOf=(function(p){return function(i){const c=onCos(i);return c&&c.sfx?c.sfx:p.apply(this,arguments)}})(sfxOf);
+})();
+
+// ===================== first game: a short "how to play" for new players (6 cards, once; also from the menu) =====================
+(function(){
+const STEPS=()=>[
+ ['🍽️',L('Eat','الأكل'),L('If you hold a card that matches a card on the ground, tap your card twice (or drag it to the ground) to eat. You also take every pile whose top card is the same rank.','إذا عندك ورقة نفس رقم ورقة على الأرض، اضغط على ورقتك مرتين (أو اسحبها للأرض) وتاكلها. وتاخذ معاها كل كومة أعلاها نفس الرقم.')],
+ ['⚔️',L('Cut','القطع'),L('When someone eats, a short war starts. If you hold the same rank or a joker, tap it fast to cut and take everything. The last one to cut wins.','لما أحد ياكل تبدأ حرب قصيرة. إذا عندك نفس الرقم أو جوكر، اضغط عليه بسرعة وتقطع وتاخذ كل شي. آخر واحد يقطع هو اللي يفوز.')],
+ ['🔥',L('The fire button','زر النار'),L('Press the fire button, then play your card: it lands with your effect and a loud slam. It costs 50 rupees each time. Buy new effects from the shop.','اضغط زر النار وبعدها العب ورقتك: تنزل بتأثيرك وبصفقة قوية. كل مرة بـ٥٠ روبية. وتشتري تأثيرات جديدة من المتجر.')],
+ ['⛏️',L('Bury your points','ادفن نقاطك'),L('10, J, Q, K and A are worth 10 points, a joker 50. The top of your pile is exposed: anyone can take it. Eat a small card on top to bury your points.','العشرة والولد والبنت والشايب والآص كل وحدة بعشر نقاط، والجوكر بخمسين. أعلى كومتك مكشوف وأي أحد ياخذه. كُل ورقة صغيرة فوقه عشان تدفن نقاطك.')],
+ ['🃏',L('Last card','على كرت'),L('With one card left you are "on one card". If you win a war with it you draw five new cards. Sleeping on a joker is the strongest move.','إذا بقت معاك ورقة وحدة صرت "على كرت". وإذا فزت فيها بحرب تسحب خمس أوراق جديدة. وأقوى شي إنك تنام على الجوكر.')],
+ ['🏆',L('Win','الفوز'),L('When the cards run out, the team with more points in its piles wins. Play for your partner: do not expose his pile, and defend it.','لما يخلص الورق، الفريق اللي نقاط كوماته أكثر يفوز. العب لصاحبك: لا تكشف كومته ودافع عنها.')]];
+let k=0;const d=document.createElement('div');d.id='tut104';d.hidden=true;document.body.appendChild(d);
+const draw=()=>{const S2=STEPS(),[ic,t,x]=S2[k];d.dir=LANG==='ar'?'rtl':'ltr';d.innerHTML=`<div class="tutbox"><div class="tutic">${ic}</div><h3>${t}</h3><p>${x}</p><div class="tutdots">${S2.map((_,i)=>`<i class="${i===k?'on':''}"></i>`).join('')}</div>
+  <div class="tutrow"><button type="button" data-tut="skip">${L('Skip','تخطّي')}</button><button type="button" class="go" data-tut="next">${k===S2.length-1?L('Start playing','يلا نلعب'):L('Next','التالي')}</button></div></div>`};
+window.openTutorial=()=>{k=0;draw();d.hidden=false};
+d.addEventListener('click',e=>{const b=e.target.closest('[data-tut]');if(!b)return;if(b.dataset.tut==='next'&&k<STEPS().length-1){k++;draw();return}d.hidden=true;try{localStorage.setItem('eb-tut','1')}catch(err){}});
+const st=document.createElement('style');st.textContent=`#tut104{position:fixed;inset:0;z-index:140;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:18px}#tut104[hidden]{display:none}
+.tutbox{width:min(420px,100%);background:linear-gradient(180deg,#22140f,#100906);border-radius:20px;padding:22px 20px 16px;text-align:center;color:#f4ead6;box-shadow:inset 0 0 0 1.5px rgba(242,210,122,.5),0 20px 50px rgba(0,0,0,.7)}
+.tutic{font-size:54px;line-height:1.1}.tutbox h3{margin:8px 0 6px;font-size:23px;color:#f2d27a}.tutbox p{margin:0;font-size:15.5px;line-height:1.75}
+.tutdots{display:flex;gap:6px;justify-content:center;margin:14px 0}.tutdots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.2)}.tutdots i.on{background:#f2d27a;width:20px;border-radius:4px}
+.tutrow{display:flex;gap:10px}.tutrow button{flex:1;border:0;border-radius:12px;padding:12px;font:inherit;font-weight:800;font-size:15px;background:rgba(255,255,255,.07);color:#e9dcc2;box-shadow:inset 0 0 0 1px rgba(242,210,122,.35)}
+.tutrow button.go{flex:2;background:linear-gradient(180deg,#f8e3a0,#e2bd5c 55%,#c9a04a);color:#2a1606;box-shadow:none}`;document.head.appendChild(st);
+// first game ever: show it once
+newGame=(function(p){return function(){const r=p.apply(this,arguments);try{if(!localStorage.getItem('eb-tut')&&!(typeof NET!=='undefined'&&NET.on))setTimeout(()=>{if(typeof S!=='undefined'&&S)openTutorial()},900)}catch(e){}return r}})(newGame);
+// and always reachable from the game menu
+if(typeof openGameMenu==='function')openGameMenu=(function(p){return function(btn){p.apply(this,arguments);try{const m=document.getElementById('gameMenu');if(!m||m.querySelector('[data-gm="tut"]'))return;const b=document.createElement('button');b.type='button';b.dataset.gm='tut';b.innerHTML=`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 1-1 1.7M12 17h.01"/></svg>${L('How to play','شلون ألعب؟')}`;const ex=m.querySelector('[data-gm="exit"]');ex?m.insertBefore(b,ex):m.appendChild(b)}catch(e){}}})(openGameMenu);
+window.addEventListener('click',e=>{if(!e.target.closest('[data-gm="tut"]'))return;e.stopImmediatePropagation();const m=document.getElementById('gameMenu');if(m)m.hidden=true;openTutorial()},true);
+})();
+
+// ===================== VIP themes: say clearly why you land on the profile page, show the VIP card, and come back to the themes after buying =====================
+(function(){let want=false;
+let lastGo=0;const onGo=e=>{const v=e.target.closest&&e.target.closest('[data-vipgo]');if(!v||Date.now()-lastGo<700)return;lastGo=Date.now();
+  if(typeof ACCT==='undefined'||!ACCT.on){setTimeout(()=>toast(L('VIP needs an internet connection and your account','الـVIP يحتاج اتصال بالنت وحسابك')),300);return}
+  want=true;setTimeout(()=>{try{toast(L('This theme is for VIP members. Get VIP here, then you go back to the themes.','هالثيم لأعضاء الـVIP. اشترك من هني وبعدها ترجع للثيمات على طول.'));
+    const c=document.querySelector('#h2Page .vip-card');if(c){c.scrollIntoView({block:'center',behavior:'smooth'});c.classList.add('vipflash');setTimeout(()=>c.classList.remove('vipflash'),2600)}}catch(err){}},650)};
+['pointerup','touchend','mouseup'].forEach(ev=>window.addEventListener(ev,onGo,true));
+// after VIP is bought from that path: straight back to the themes
+setInterval(()=>{try{if(!want)return;if(typeof ACCT!=='undefined'&&ACCT.me&&ACCT.me.vip>Date.now()){want=false;setTimeout(()=>{try{if(window.h2Tab)h2Tab('home');openShop('skins')}catch(e){}},900)}}catch(e){}},600);
+document.addEventListener('click',e=>{if(e.target.closest('.h2-tabs [data-tab]')&&!e.target.closest('[data-tab="me"]'))want=false},true);
+const st=document.createElement('style');st.textContent=`.vip-card.vipflash{animation:vipfl104 .65s ease-in-out 4}@keyframes vipfl104{50%{box-shadow:0 0 0 3px #f2d27a,0 0 26px rgba(242,210,122,.7)}}`;document.head.appendChild(st);
+})();
+
+// the effect preview stays in view while you scroll down the list of effects
+(function(){const st=document.createElement('style');st.textContent=`
+html body #shop .efshop #efDemo{position:sticky!important;top:0;z-index:6;box-shadow:0 10px 18px rgba(0,0,0,.55)}
+@media (max-height:520px){html body #shop .efshop #efDemo{height:120px!important;min-height:0!important}}`;document.head.appendChild(st)})();
+
+// ===================== suggestions & contact: a button on the main screen and in the profile page =====================
+(function(){
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const sh=document.createElement('div');sh.id='fbSheet';sh.hidden=true;sh.innerHTML='<form id="fbBox"></form>';document.body.appendChild(sh);let kind='idea';
+const draw=()=>{const b=document.getElementById('fbBox');b.dir=LANG==='ar'?'rtl':'ltr';
+  b.innerHTML=`<h3>${L('Suggestions & contact','اقتراحات وتواصل')}</h3><p class="fbnote">${L('Your message goes straight to the game team.','رسالتك توصل لفريق اللعبة مباشرة.')}</p>
+   <div class="fbkinds">${[['idea','💡',L('Suggestion','اقتراح')],['bug','🛠',L('Problem','مشكلة')],['contact','✉️',L('Contact','تواصل')]].map(([k,i,t])=>`<button type="button" data-fbk="${k}" class="${k===kind?'on':''}">${i} ${t}</button>`).join('')}</div>
+   <textarea id="fbText" maxlength="600" rows="5" placeholder="${L('Write here…','اكتب هني…')}"></textarea>
+   <input id="fbContact" maxlength="80" placeholder="${L('Phone or email if you want a reply (optional)','رقمك أو إيميلك إذا تبي نرد عليك (اختياري)')}">
+   <div class="fbrow"><button type="button" data-fbx="1">${L('Close','إغلاق')}</button><button type="submit" class="go">${L('Send','إرسال')}</button></div>`};
+window.openFeedback=()=>{draw();sh.hidden=false};
+sh.addEventListener('click',e=>{if(e.target===sh||e.target.closest('[data-fbx]')){sh.hidden=true;return}const k=e.target.closest('[data-fbk]');if(k){kind=k.dataset.fbk;sh.querySelectorAll('[data-fbk]').forEach(x=>x.classList.toggle('on',x===k))}});
+sh.addEventListener('submit',async e=>{e.preventDefault();const t=(document.getElementById('fbText').value||'').trim(),c=(document.getElementById('fbContact').value||'').trim();
+  if(t.length<3){toast(L('Write your message first','اكتب رسالتك أول'));return}
+  if(typeof ACCT==='undefined'||!ACCT.on){toast(L('No connection: try again when you are online','ما في اتصال: جرب مرة ثانية وانت متصل'));return}
+  const go=sh.querySelector('.go');go.disabled=true;let ver='';try{ver=EB_VERSION}catch(_){}
+  try{const r=await api('/api/so/feedback',{kind,text:t,contact:c,ver});if(r&&r.ok){sh.hidden=true;toast(L('Sent. Thank you!','وصلت رسالتك، مشكور!'))}else toast(r&&r.err==='slow'?L('You sent a lot. Try later.','دزيت وايد، جرب بعدين.'):L('Could not send','ما انرسلت'))}catch(err){toast(L('Could not send','ما انرسلت'))}go.disabled=false});
+// the button: main screen footer + profile page
+const add=()=>{try{const f=document.querySelector('#home .h2-foot');if(f&&!f.querySelector('[data-fb]')){const b=document.createElement('button');b.type='button';b.dataset.fb='1';b.innerHTML=`<svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg>${L('Suggestions','اقتراحات وتواصل')}`;f.appendChild(b)}}catch(e){}};
+if(typeof renderHome==='function')renderHome=(function(p){return function(){const r=p.apply(this,arguments);add();return r}})(renderHome);setInterval(add,900);
+document.addEventListener('click',e=>{if(e.target.closest('[data-fb]'))openFeedback()});
+const st=document.createElement('style');st.textContent=`#fbSheet{position:fixed;inset:0;z-index:135;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:16px}#fbSheet[hidden]{display:none}
+#fbBox{width:min(460px,100%);max-height:92%;overflow:auto;background:linear-gradient(180deg,#22140f,#100906);border-radius:18px;padding:18px;color:#f4ead6;box-shadow:inset 0 0 0 1px rgba(242,210,122,.45),0 20px 50px rgba(0,0,0,.7);display:flex;flex-direction:column;gap:10px}
+#fbBox h3{margin:0;font-size:20px;color:#f2d27a}#fbBox .fbnote{margin:0;font-size:13px;opacity:.75}
+.fbkinds{display:flex;gap:6px}.fbkinds button{flex:1;border:0;border-radius:10px;padding:10px 4px;font:inherit;font-weight:800;font-size:14px;background:rgba(255,255,255,.06);color:#e9dcc2;box-shadow:inset 0 0 0 1px rgba(242,210,122,.3)}
+.fbkinds button.on{background:linear-gradient(180deg,#f8e3a0,#e2bd5c 55%,#c9a04a);color:#2a1606}
+#fbBox textarea,#fbBox input{width:100%;box-sizing:border-box;border:0;border-radius:12px;padding:12px;font:inherit;font-size:16px;background:#f8f4e8;color:#1c120c;resize:vertical}
+.fbrow{display:flex;gap:10px}.fbrow button{flex:1;border:0;border-radius:12px;padding:12px;font:inherit;font-weight:800;font-size:15px;background:rgba(255,255,255,.07);color:#e9dcc2;box-shadow:inset 0 0 0 1px rgba(242,210,122,.35)}
+.fbrow button.go{flex:2;background:linear-gradient(180deg,#f8e3a0,#e2bd5c 55%,#c9a04a);color:#2a1606;box-shadow:none}.fbrow button[disabled]{opacity:.6}`;document.head.appendChild(st);
+})();
+
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1109.1137';
+const EB_VERSION='v1110.0214';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
