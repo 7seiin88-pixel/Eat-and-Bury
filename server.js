@@ -231,7 +231,7 @@ function joinRoom(c, room, data, reply) {
 }
 function startGame(r, cfg, ranked) {
   r.ranked = !!ranked;
-  const safe = { mode: ['solo', '2v2', '3v3'].includes(cfg.mode) ? cfg.mode : '2v2', decks: Math.min(12, Math.max(1, +cfg.decks || 4)), timer: Math.min(15, Math.max(2, +cfg.timer || 3)), level: ['easy', 'normal', 'hard'].includes(cfg.level) ? cfg.level : 'normal', hints: !!cfg.hints, lang: cfg.lang === 'en' ? 'en' : 'ar', fx: cfg.fx !== false };
+  const safe = { mode: ['solo', '2v2', '3v3'].includes(cfg.mode) ? cfg.mode : '2v2', decks: Math.min(12, Math.max(1, +cfg.decks || 4)), timer: Math.min(15, Math.max(2, +cfg.timer || 3)), level: cfg.level === 'easy' ? 'easy' : 'normal' /* online computers stay at the middle level */, hints: !!cfg.hints, lang: cfg.lang === 'en' ? 'en' : 'ar', fx: cfg.fx !== false };
   if (r.qt) { clearTimeout(r.qt); r.qt = null; }
   if (r.game) r.game.stop();
   try { r.game = new Game(r, safe, { send: (sid, type, d) => send(clients.get(sid), type, d), war: (seat, gain) => reward(r, seat, a => ACC.warWon(a, gain)), over: g => { const ranked = !!r.ranked, res = g.results(); const keyOf = seat => { const m = r.members.find(y => !y.watch && y.seat === seat); return m && m.atoken ? crypto.createHash('sha256').update(String(m.atoken)).digest('hex').slice(0, 12) : null };

@@ -233,6 +233,107 @@ const _rwT=resolveWar;resolveWar=function(){const w=S&&S.war;const orig=w?w.orig
       const jj=j;setTimeout(()=>{if(S)say(jj,L('Skipped','تطوف'))},250);log(L(`${p.name} had no cards and was about to draw 5, but the turn was cut: skipped.`,`${p.name} ${V(p,'كنت بتسحب ٥ أوراق وانقطع عليك الدور، طوّفت','كان بيسحب ٥ أوراق وانقطع عليه الدور، طوّف','كانت بتسحب ٥ أوراق وانقطع عليها الدور، طوّفت')}.`))}
     j=nextIdx(j)}};
 
+// ===================== Round 100: smarter computer players (same code on the phone and on the server) =====================
+// Levels: easy (سهل) · normal (عادي) · hard (صعب) · pro (محترف). Online the server keeps its computers at normal.
+// normal: plays for the team: never opens a war on a teammate's pile without a reason, defends a teammate's pile, sleeps on a joker.
+// hard:   + pulls a teammate who is on his last card (opens a ground war he can cut), buries its own exposed points, smarter jokers.
+// pro:    + counts the cards it has seen to judge who can cut, throws the cards nobody can use, cuts faster.
+(function(){
+const LVN={easy:0,normal:1,hard:2,pro:3};
+const lvOf=i=>{const p=S.players[i];if(p.human)return 1;const v=LVN[p.lv||(S.cfg&&S.cfg.level)||'normal'];return v==null?1:v};
+const kn=(i,n,d)=>{const k=S.players[i].k;return k&&k[n]!=null?k[n]:d};
+const mate=(i,j)=>i!==j&&S.players[i].team===S.players[j].team;
+const opp=(i,j)=>S.players[i].team!==S.players[j].team;
+const lone=j=>S.players[j].hand.length===1&&S.draw.length>0;
+const decks=()=>(S.cfg&&+S.cfg.decks)||4;
+// how many cards of rank r this player has not seen yet (hard: what lies open now; pro: everything it has watched go by)
+function unseen(i,r,L){const total=r==='JK'?2*decks():4*decks();let seen=0;const cnt=cs=>{for(const c of cs)if(c.r===r)seen++};
+  cnt(S.ground);cnt(S.players[i].hand);
+  for(const p of S.players){if(L>=3)cnt(p.pile);else{const e=exposed(p.pile);if(e)cnt(e.cards)}}
+  return Math.max(0,total-seen)}
+// chance that at least one opponent holds rank r or a joker (the cards that could cut a war on r)
+function oppCan(i,r,L){if(L<2)return .5;const pool=S.draw.length+S.players.reduce((n,p,j)=>j===i?n:n+p.hand.length,0);if(!pool)return 0;
+  const u=unseen(i,r,L)+(r==='JK'?0:unseen(i,'JK',L)),q=Math.min(1,u/pool);
+  const oc=S.players.reduce((n,p,j)=>opp(i,j)?n+p.hand.length:n,0);return 1-Math.pow(1-q,oc)}
+const loneMate=i=>S.players.some((p,j)=>mate(i,j)&&lone(j));
+
+// score one way of eating: rank r with card c
+function evalEat(i,o,c,L){const me=S.players[i],h=me.hand,r=o.r,t=o.t;
+  let gain=sum(t.g),mateVal=0,oppVal=0;const mates=[];
+  t.piles.forEach(x=>{const v=sum(x.cards);if(mate(i,x.j)){mateVal+=v;mates.push(x.j)}else oppVal+=v});
+  gain+=oppVal+pts(c);
+  const useJ=c.r==='JK'&&r!=='JK';
+  const def=h.filter(x=>x!==c&&(x.r===r||x.r==='JK')).length; // cards left to hit back if someone cuts
+  let sc=gain+t.count*.4;
+  const p=oppCan(i,r,L),stake=gain+mateVal;
+  if(L>=2)sc-=p*stake*(def?.25:.6)*kn(i,'risk',0);
+  if(useJ)sc-=kn(i,'jkEat',L>=3?Math.max(12,30-oppCan(i,r,L)*10):L>=2?22:30); // a joker is a cut kept in the hand
+  if(mateVal>0){ // opening a war on a teammate's pile puts his points up for grabs
+    const pull=L>=2&&kn(i,'mpull',1)&&mates.some(lone),bury=L>=2&&kn(i,'mbury',1)&&def>=1&&h.some(x=>x!==c&&x.r!==r&&x.r!=='JK'&&onGround(x.r));
+    if(!(pull||bury))sc-=(mateVal*(L>=2?1.2:1)+15)*kn(i,'mate',1)}
+  if(L>=2){const own=exposed(me.pile);if(own&&own.rank!==r&&r!=='JK'){const ov=sum(own.cards);if(ov)sc+=ov*oppCan(i,own.rank,L)*.5*kn(i,'bury',1)}} // burying our open points
+  if(L>=2&&t.g.length&&!useJ&&loneMate(i))sc+=kn(i,'pull',10); // a war on the ground gives the teammate on his last card a chance to cut
+  return sc}
+
+function bestEat(i,L,allowJ){const h=S.players[i].hand,jk=h.find(c=>c.r==='JK');let best=null,score=-Infinity;
+  for(const o of options(i)){
+    const nat=o.r==='JK'?(o.natural?jk:null):h.find(c=>c.r===o.r);
+    if(nat){const s=evalEat(i,o,nat,L);if(s>score){score=s;best={card:nat,r:o.r,nat:true}}}
+    if(allowJ&&jk&&o.r!=='JK'){const s=evalEat(i,o,jk,L);if(s>score){score=s;best={card:jk,r:o.r,nat:false}}}}
+  return best?{...best,score}:null}
+
+const _choose=aiChoose;
+aiChoose=function(i){const p=S.players[i],L=lvOf(i);if(L===0)return _choose.apply(this,arguments);
+  const h=p.hand,must=mustNow(i),jk=h.find(c=>c.r==='JK');
+  {const k=h.filter(c=>c.r!=='JK'&&onGround(c.r));if(canSleep(i)&&k.length===1&&jk)return declareEat(i,k[0],k[0].r)}
+  // keep the joker as the last card: it can cut any war and brings five new cards
+  const twoJ=kn(i,'sleepJ',1)&&h.length===2&&jk&&S.draw.length>0;
+  const best=bestEat(i,L,!must&&!twoJ&&!(h.length<=2&&S.draw.length));
+  if(must){const b=best&&best.nat?best:bestEat(i,L,false);if(b)return declareEat(i,b.card,b.r)}
+  if(twoJ&&!must){const other=h.find(c=>c!==jk);if(!(best&&best.nat&&best.score>=20)&&other&&throwable(i,other)&&canThrow(i)){S.phase='throw';return throwCard(i,other)}}
+  if(canSleep(i)&&!(best&&best.score>=10)&&canThrow(i)){S.phase='throw';return aiThrow(i)}
+  if(best&&best.score>kn(i,'eatMin',0))return declareEat(i,best.card,best.r);
+  if(canThrow(i)){S.phase='throw';return aiThrow(i)}
+  if(best&&best.nat)return declareEat(i,best.card,best.r);
+  if(S.lone)return passTurn(i);return endTurn(i)};
+
+const _throw=aiThrow;
+aiThrow=function(i){const p=S.players[i],L=lvOf(i);if(L===0)return _throw.apply(this,arguments);
+  const h=p.hand;if(!canThrow(i))return endTurn(i);
+  const pool=h.filter(c=>throwable(i,c)),list=pool.length?pool:h;
+  const keep=c=>{let s=pts(c)*3+(c.r==='JK'?200:0)+(h.filter(x=>x.r===c.r).length-1)*5;
+    S.players.forEach((q,j)=>{if(q.team!==p.team)return;const e=exposed(q.pile);if(e&&e.rank===c.r)s+=(j===i?25:14)}); // a card that matches our open pile would invite a war on it
+    if(S.ground.some(g=>g.r===c.r))s+=3;
+    if(L>=3&&kn(i,'cnt',1))s+=oppCan(i,c.r,L)*(pts(c)+4)*1.5; // nobody can use it: safe to throw
+    else if(L>=2&&kn(i,'tp',1))s+=pts(c)?4:0;
+    return s+Math.random()*(L>=3?.3:1)};
+  throwCard(i,[...list].sort((a,b)=>keep(a)-keep(b))[0])};
+
+const _want=aiWantsIntercept;
+aiWantsIntercept=function(j){const L=lvOf(j);if(L===0)return _want.apply(this,arguments);
+  const w=S.war,p=S.players[j],h=p.hand;
+  const nat=h.find(c=>c.r===w.rank&&c.r!=='JK'),jk=h.find(c=>c.r==='JK');
+  const ln=isLone(j),value=sum([...w.targets,...w.pot]);
+  const leadMate=mate(j,w.leader)||j===w.leader,mineHit=w.victims.includes(j),mateHit=w.victims.some(v=>mate(j,v));
+  if(leadMate){ // never fight a teammate, except to get five new cards on the last card
+    if(ln&&nat)return nat;return null}
+  const wantDef=mineHit||(mateHit&&((L>=2&&kn(j,'dall',1))||Math.random()<.6));
+  if(nat&&(value>0||ln||wantDef||kn(j,'natAll',L>=2?1:0)||(L===1&&Math.random()<.4)))return nat;
+  if(jk){
+    if(ln&&value>=kn(j,'jkLone',L>=2?5:10))return jk; // sleeping on a joker pays off now
+    if(wantDef&&value>=kn(j,'jkDef',L>=2?15:25))return jk;
+    if(value>=kn(j,'jkCut',L>=3?25:L>=2?30:40))return jk}
+  return null};
+
+// pro cuts quicker
+const _ow=openWindow;openWindow=function(){_ow.apply(this,arguments);try{if(!S||!S.war)return;
+  const fast=S.players.some((p,j)=>!p.human&&!p.remote&&lvOf(j)>=3&&kn(j,'fast',0)&&j!==S.war.leader);if(!fast)return;
+  S.aiTimers.forEach(clearTimeout);S.aiTimers=[];const ms=S.cfg.timer*1000;
+  S.players.forEach((p,j)=>{if(p.human||p.remote||j===S.war.leader)return;const c=aiWantsIntercept(j);if(!c)return;
+    const g=gen,L=lvOf(j),lo=L>=3?250:L===2?350:L===0?900:600;const d=Math.min(ms-150,lo+Math.random()*Math.max(200,Math.min(ms-500,L>=3?1600:2600)-lo));
+    S.aiTimers.push(setTimeout(()=>{if(g===gen&&S.war&&S.war.leader!==j&&S.players[j].hand.includes(c))intercept(j,c)},d))})}catch(e){}};
+})();
+
 // ===================== Round 91: more achievement stats, counted by the rules engine itself (the same code runs on the phone and on the server) =====================
 (function(){
 const ST=i=>{if(typeof S==='undefined'||!S||!S.players)return null;S.stats=S.stats||S.players.map(()=>({wars:0,best:0}));return S.stats[i]||(S.stats[i]={wars:0,best:0})};
