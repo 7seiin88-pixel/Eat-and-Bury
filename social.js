@@ -23,12 +23,12 @@ const ready = (async () => {
   } else {
     const file = path.join(__dirname, 'data', 'social.json');
     try { const o = JSON.parse(fs.readFileSync(file, 'utf8')); for (const k in o) load1(k, o[k]) } catch (e) {}
-    save = async () => { const o = {}; for (const [k, v] of rec) o['u:' + k] = v; for (const [k, v] of dms) o['d:' + k] = v; o.reports = reports; fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, JSON.stringify(o)) };
+    save = async () => { const o = {}; for (const [k, v] of rec) o['u:' + k] = v; for (const [k, v] of dms) o['d:' + k] = v; o.reports = reports; o.feedback = feedback; fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, JSON.stringify(o)) };
   }
   console.log('social:', rec.size, 'players,', dms.size, 'chats,', reports.length, 'reports');
 })().catch(e => console.error('social store', e));
-function load1(k, v) { if (k.startsWith('u:')) rec.set(k.slice(2), v); else if (k.startsWith('d:')) dms.set(k.slice(2), v); else if (k === 'reports') reports = Array.isArray(v) ? v : [] }
-function val(k) { if (k.startsWith('u:')) return rec.get(k.slice(2)) || null; if (k.startsWith('d:')) return dms.get(k.slice(2)) || null; if (k === 'reports') return reports; return null }
+function load1(k, v) { if (k.startsWith('u:')) rec.set(k.slice(2), v); else if (k.startsWith('d:')) dms.set(k.slice(2), v); else if (k === 'reports') reports = Array.isArray(v) ? v : []; else if (k === 'feedback') feedback = Array.isArray(v) ? v : [] }
+function val(k) { if (k.startsWith('u:')) return rec.get(k.slice(2)) || null; if (k.startsWith('d:')) return dms.get(k.slice(2)) || null; if (k === 'reports') return reports; if (k === 'feedback') return feedback; return null }
 function touch(k) { dirty.add(k); if (timer) return; timer = setTimeout(() => { timer = null; const ks = [...dirty]; dirty.clear(); Promise.resolve(save(ks)).catch(e => console.error('social put', e)) }, 800) }
 
 const R = id => { let r = rec.get(id); if (!r) { r = { friends: {}, inReq: {}, outReq: {}, blocked: {}, dm: 'friends', seen: 0, read: {} }; rec.set(id, r) } return r };
@@ -40,10 +40,16 @@ async function cardOf(id) { const c = cache.get(id); if (c && Date.now() - c.at 
 const canDm = (from, to) => { const t = R(to); if (t.blocked[from] || R(from).blocked[to]) return false; if (t.dm === 'all') return true; if (t.dm === 'none') return false; return !!t.friends[from] };
 
 // ---------- what a phone may ask ----------
+const invites = new Map();
+let feedback = []; // suggestions and messages to the owner
 async function http(req, res, url, body, live) {
   const send = (code, obj) => { res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(obj)) };
   await ready;
   const act = url.slice('/api/so/'.length).split('?')[0];
+  if (act === 'feedbacks') { // the owner reads suggestions and messages: same ADMIN_KEY
+    if (!process.env.ADMIN_KEY || req.headers['x-admin-key'] !== process.env.ADMIN_KEY) return send(403, { err: 'no' });
+    return send(200, { n: feedback.length, list: feedback.slice(-500).reverse() });
+  }
   if (act === 'reports') { // the owner reads reports: ADMIN_KEY on Render, sent as the x-admin-key header
     if (!process.env.ADMIN_KEY || req.headers['x-admin-key'] !== process.env.ADMIN_KEY) return send(403, { err: 'no' });
     const list = await Promise.all(reports.slice(-300).reverse().map(async x => ({ ...x, byName: ((await cardOf(x.by)) || {}).name, whoName: ((await cardOf(x.who)) || {}).name })));
@@ -55,7 +61,8 @@ async function http(req, res, url, body, live) {
   try {
     if (act === 'ping') { // badge numbers for the home page
       let unread = 0; for (const f of new Set([...Object.keys(me.friends), ...Object.keys(me.read)])) { const d = dms.get(pairKey(a.id, f)); if (d && d.length) { const last = d[d.length - 1]; if (last.f !== a.id && last.ts > (me.read[f] || 0)) unread++ } }
-      return send(200, { req: Object.keys(me.inReq).length, unread });
+      const iv = invites.get(a.id); const inv = iv && now - iv.ts < 180000 ? iv : null; if (iv && !inv) invites.delete(a.id);
+      return send(200, { req: Object.keys(me.inReq).length, unread, inv });
     }
     if (act === 'list') {
       const ids = [...new Set([...Object.keys(me.friends), ...Object.keys(me.inReq), ...Object.keys(me.outReq), ...Object.keys(me.read)])];
@@ -89,6 +96,13 @@ async function http(req, res, url, body, live) {
       return send(200, { who: { ...c, st: status(id), seen: R(id).seen || 0, friend: !!me.friends[id] }, canDm: canDm(a.id, id), why: canDm(a.id, id) ? '' : (me.blocked[id] ? 'blockedByMe' : R(id).blocked[a.id] ? 'blocked' : R(id).dm === 'none' ? 'closed' : 'friendsOnly'),
         msgs: d.filter(m => m.ts > after).map(m => ({ t: m.t, ts: m.ts, mine: m.f === a.id })), seenUpTo: theirRead });
     }
+    if (act === 'invite') { // invite a friend to my room: he gets a pop-up with a "join" button (kept 3 minutes, in memory only)
+      const id = String(body.id || ''), code = String(body.code || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
+      if (!isId(id) || !code || !me.friends[id]) return send(200, { err: 'nf' }); if (R(id).blocked[a.id]) return send(200, { err: 'closed' });
+      const old = invites.get(id); if (old && old.from === a.id && now - old.ts < 5000) return send(200, { err: 'slow' });
+      invites.set(id, { from: a.id, name: a.prof.name, code, ts: now }); live && live.push && live.push(id, 'social', { k: 'invite', from: a.id, name: a.prof.name, code });
+      return send(200, { ok: true, st: status(id) }) }
+    if (act === 'invdone') { invites.delete(a.id); return send(200, { ok: true }) }
     if (act === 'send') { const id = String(body.id || ''); const t = short(body.text, DM_LEN); if (!isId(id) || !t) return send(200, { err: 'empty' });
       if (!canDm(a.id, id)) return send(200, { err: 'closed' });
       const k = pairKey(a.id, id); const d = dms.get(k) || []; const last = d.filter(m => m.f === a.id).slice(-5);
@@ -96,6 +110,10 @@ async function http(req, res, url, body, live) {
       d.push({ f: a.id, t, ts: now }); if (d.length > DM_KEEP) d.splice(0, d.length - DM_KEEP); dms.set(k, d); me.read[id] = now; const tr = R(id); if (!tr.read[a.id]) tr.read[a.id] = 0;
       touch('d:' + k); touch('u:' + a.id); touch('u:' + id); live && live.push && live.push(id, 'social', { k: 'dm', from: a.id, name: a.prof.name, t: t.slice(0, 60) });
       return send(200, { ok: true, ts: now }) }
+    if (act === 'feedback') { const kind = ['idea', 'bug', 'contact'].includes(body.kind) ? body.kind : 'idea', t = short(body.text, 600), c = short(body.contact, 80);
+      if (!t || t.length < 3) return send(200, { err: 'empty' }); const mine = feedback.filter(x => x.by === a.id && now - x.ts < 3600e3); if (mine.length >= 5) return send(200, { err: 'slow' });
+      feedback.push({ ts: now, by: a.id, name: a.prof.name || '', kind, text: t, contact: c, ver: short(body.ver, 16), ua: short(req.headers['user-agent'], 120) }); if (feedback.length > 2000) feedback.splice(0, feedback.length - 2000);
+      touch('feedback'); return send(200, { ok: true }) }
     if (act === 'report') { const id = String(body.id || ''); if (!isId(id) || id === a.id) return send(200, { err: 'nf' }); const why = REASONS.includes(body.reason) ? body.reason : 'other';
       const recent = reports.filter(x => x.by === a.id && x.who === id && now - x.ts < 3600e3); if (recent.length) return send(200, { ok: true, dup: true });
       const ctx = { room: short(body.room, 8), where: short(body.where, 12) };
