@@ -1,4 +1,4 @@
-<!doctype html><html><head><script>window.__errs=[];addEventListener('error',function(e){try{__errs.push((e.message||'error')+' @'+(e.lineno||'?')+':'+(e.colno||'?'))}catch(_){}});setTimeout(function(){try{if(!__errs.length)return;var d=document.createElement('div');d.style.cssText='position:fixed;left:6px;right:6px;bottom:6px;z-index:999999;background:#b3150c;color:#fff;font:12px/1.4 Tahoma,sans-serif;padding:8px 10px;border-radius:10px;direction:ltr;text-align:left;box-shadow:0 4px 14px rgba(0,0,0,.5)';d.textContent='Error ('+navigator.userAgent.replace(/.*(Android [^;]*).*?(Chrome\/[0-9.]+|SamsungBrowser\/[0-9.]+|Version\/[0-9.]+).*/,'$1 $2')+'): '+__errs.slice(0,3).join(' | ');d.onclick=function(){d.remove()};document.body.appendChild(d)}catch(_){}},3000)</script><meta name="color-scheme" content="dark only"><meta name="darkreader-lock"><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><script>document.documentElement.classList.add('booting')</script><style>html.booting,html.booting body{background:#140a08!important}html.booting body>*{visibility:hidden!important}html.booting::after{content:"حفر ودفن";position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font:900 44px Cairo,Tahoma,sans-serif;color:#e2b54e;text-shadow:0 2px 18px rgba(226,181,78,.35);animation:bootIn .9s ease-out both}@keyframes bootIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}</style><style>:root{color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><script>window.__errs=[];addEventListener('error',function(e){try{__errs.push((e.message||'error')+' @'+(e.lineno||'?')+':'+(e.colno||'?'))}catch(_){}});setTimeout(function(){try{if(!__errs.length)return;var d=document.createElement('div');d.style.cssText='position:fixed;left:6px;right:6px;bottom:6px;z-index:999999;background:#b3150c;color:#fff;font:12px/1.4 Tahoma,sans-serif;padding:8px 10px;border-radius:10px;direction:ltr;text-align:left;box-shadow:0 4px 14px rgba(0,0,0,.5)';d.textContent='Error ('+navigator.userAgent.replace(/.*(Android [^;]*).*?(Chrome\/[0-9.]+|SamsungBrowser\/[0-9.]+|Version\/[0-9.]+).*/,'$1 $2')+'): '+__errs.slice(0,3).join(' | ');d.onclick=function(){d.remove()};document.body.appendChild(d)}catch(_){}},3000)</script><meta name="color-scheme" content="dark only"><meta name="darkreader-lock"><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><script>document.documentElement.classList.add('booting');setTimeout(function(){document.documentElement.classList.remove('booting')},5000)</script><style>html.booting,html.booting body{background:#140a08!important}html.booting body>*{visibility:hidden!important}html.booting::after{content:"حفر ودفن";position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font:900 44px Cairo,Tahoma,sans-serif;color:#e2b54e;text-shadow:0 2px 18px rgba(226,181,78,.35);animation:bootIn .9s ease-out both}@keyframes bootIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}</style><style>:root{color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>حفر ودفن</title>
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="حفر ودفن"><meta name="theme-color" content="#5e0f14"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="icon" href="/icon-192.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Bodoni+Moda:opsz,wght@6..96,600;6..96,700&family=Cairo:wght@400;600;700;800;900&family=Orbitron:wght@700&display=swap">
@@ -1083,8 +1083,8 @@ setInterval(()=>{
   const left=turnDeadline-performance.now();
   const seat=document.querySelector(`[data-seat="${S.turn}"]`);
   if(seat){const arc=seat.querySelector('.tring .arc'),sec=seat.querySelector('.tsec');
-    if(arc){arc.style.strokeDashoffset=(100-Math.max(0,left/TURN_MS*100)).toFixed(1);arc.parentNode.classList.toggle('low',left<3000)}
-    if(sec)sec.textContent=Math.max(0,Math.ceil(left/1000))}
+    if(arc){const v=String(Math.round(100-Math.max(0,left/TURN_MS*100))/1);if(arc.__v!==v){arc.__v=v;arc.style.strokeDashoffset=v}const lo=left<3000;if(arc.__lo!==lo){arc.__lo=lo;arc.parentNode.classList.toggle('low',lo)}}
+    if(sec){const t=String(Math.max(0,Math.ceil(left/1000)));if(sec.textContent!==t)sec.textContent=t}}
   if(S.turn!==0)return;
   const s=Math.ceil(left/1000);if(s!==turnSec){turnSec=s;if(s>0&&s<=3)SND.tick()}
   if(left<=0){turnDeadline=0;S.sel=null;if(window.NET_ON)return;log(L('Your time ran out, so the computer played for you.','خلص وقتك، الكمبيوتر لعب عنك.'));say(0,L('Time!','الوقت!'));
@@ -1189,7 +1189,7 @@ function renderSetup(){
     <div class="fieldset"><div class="label">${L('Language','اللغة')}</div>${seg('lang',[['ar','العربية','العربية'],['en','English','English']],LANG)}</div>
     <div class="fieldset"><div class="label">${L('Players','اللاعبين')}</div>${seg('mode',[['2v2','2 vs 2','٢ ضد ٢'],['3v3','3 vs 3','٣ ضد ٣'],['solo','Everyone alone (4)','كل واحد لحاله (٤)']],c.mode)}</div>
     <div class="fieldset"><div class="label">${L('Decks','عدد الشدّات')}</div>${seg('decks',[[4,'4','٤'],[8,'8','٨'],[10,'10','١٠'],[12,'12','١٢']],[4,8,10,12].includes(+c.decks)?c.decks:4)}</div>
-    <div class="fieldset"><div class="label">${L('Computer players','مستوى الكمبيوتر')}</div>${seg('level',[['easy','Easy','سهل'],['normal','Normal','عادي'],['hard','Hard','صعب']],c.level||'normal')}</div>
+    <div class="fieldset"><div class="label">${L('Computer players','مستوى الكمبيوتر')}</div>${seg('level',[['easy','Easy','سهل'],['normal','Normal','عادي'],['hard','Hard','صعب'],['pro','Pro','محترف']],c.level||'normal')}</div>
     <div class="fieldset"><div class="label">${L('Intercept timer','وقت القطع')}</div>${seg('timer',[[2,'2 s','٢ ث'],[3,'3 s','٣ ث'],[5,'5 s','٥ ث'],[8,'8 s','٨ ث']],c.timer||2)}</div>
     <div class="fieldset"><div class="label">${L('Hints','التلميحات')}</div>${seg('hints',[['on','Show hints','أظهر التلميحات'],['off','No hints','بدون تلميحات']],c.hints?'on':'off')}</div>
     <details><summary>${L('How to play','طريقة اللعب')}</summary><ul>${(LANG==='ar'?[
@@ -2242,7 +2242,7 @@ sendGift=function(from,to,id,free){const g=GIFTS.find(x=>x.id===id);if(!g||!S)re
       if(g.troll)setTimeout(()=>shakeSeat(to),200)}
     const pr=PARTS[id];if(pr&&typeof particles==='function'){particles(b,pr[0],pr[1],pr[2]);setTimeout(()=>S&&particles(b,pr[0],pr[1],pr[2]),900)}
     if(GIFT_DECOR[id]){S.decor=S.decor||{};S.decor[to]={id,until:Date.now()+9000};render();setTimeout(()=>{if(S)render()},9100)}
-    say(to,`${L(g.en,g.ar)}${from===0?'':' · '+S.players[from].name}`)});
+    void 0 /* no message for gifts: the gift itself says it */});
   if(from===0)log(L(`You sent ${S.players[to].name} a ${g.en.toLowerCase()}.`,`أرسلت ${g.ar} لـ${S.players[to].name}.`));
   else log(L(`${S.players[from].name} sent ${S.players[to].human?'you':S.players[to].name} a ${g.en.toLowerCase()}.`,`${S.players[from].name} ${V(S.players[from],'أرسلت','أرسل','أرسلت')} ${g.ar} لـ${(S.players[to].human&&!window.NET_ON)?'ك':S.players[to].name}.`));
   render()};
@@ -3009,7 +3009,7 @@ const _sendG4=sendGift;sendGift=function(from,to,id,free){if(!SHOWS2[id])return 
   const a=seatPt(from),b=seatPt(to);if(!b)return;SND.ok()&&SND.hit(SND.ctx.currentTime,{f:1500,f2:2600,q:1.5,gain:.12,attack:.12,decay:.3});
   arcFly(`<div style="width:58px;height:58px">${GIFT_SVG[id]}</div>`,a||b,b,900,()=>{if(!S)return;SHOWS2[id](to,b);if(g.troll&&to===0)buzz([30,40,30]);
     if(GIFT_DECOR[id])setTimeout(()=>{if(!S)return;S.decor=S.decor||{};S.decor[to]={id,until:Date.now()+9000};render();setTimeout(()=>{if(S)render()},9100)},2200);
-    say(to,`${L(g.en,g.ar)}${from===0?'':' · '+S.players[from].name}`)});
+    void 0 /* no message for gifts: the gift itself says it */});
   if(from===0)log(L(`You sent ${S.players[to].name} a ${g.en.toLowerCase()}.`,`أرسلت ${g.ar} لـ${S.players[to].name}.`));
   else log(L(`${S.players[from].name} sent ${S.players[to].name} a ${g.en.toLowerCase()}.`,`${S.players[from].name} ${V(S.players[from],'أرسلت','أرسل','أرسلت')} ${g.ar} لـ${(S.players[to].human&&!window.NET_ON)?'ك':S.players[to].name}.`));
   render()};
@@ -4432,7 +4432,7 @@ ART.fmed={court(r,s){const red=s==='♥'||s==='♦',f=red?'#9e1b1b':'#1d3a6e',g=
     ${[[6,6],[54,6],[6,84],[54,84]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="2.4" fill="${f}" stroke="${g}" stroke-width=".8"/>`).join('')}${shield(inner)}
     <text x="30" y="84" text-anchor="middle" font-family="'Bodoni Moda',Georgia,serif" font-style="italic" font-weight="700" font-size="7" fill="${ink}">${{K:'Rex',Q:'Regina',J:'Eques'}[r]}</text></svg>`},
   joker:`<svg viewBox="0 0 60 80"><rect x="6" y="6" width="48" height="68" fill="#efe1bf" stroke="#c9a04a" stroke-width="1.6"/><path d="M14 54 Q12 26 20 18 Q22 32 28 38 Q26 16 30 8 Q34 16 32 38 Q38 32 40 18 Q48 26 46 54Z" fill="#9e1b1b" stroke="#2a1a0c" stroke-width="1.4"/><path d="M28 38 Q26 16 30 8 Q34 16 32 38Z" fill="#1d3a6e"/><circle cx="20" cy="17" r="3" fill="#c9a04a" stroke="#2a1a0c"/><circle cx="30" cy="7" r="3" fill="#c9a04a" stroke="#2a1a0c"/><circle cx="40" cy="17" r="3" fill="#c9a04a" stroke="#2a1a0c"/><rect x="12" y="52" width="36" height="8" fill="#c9a04a" stroke="#2a1a0c" stroke-width="1.2"/></svg>`};
-const curFace=()=>[...document.documentElement.classList].find(c=>/^cf-/.test(c))?.slice(3);
+const curFace=()=>{const c=[...document.documentElement.classList].find(c=>/^cf-/.test(c));return c?c.slice(3):undefined};
 courtSVG=(function(prev){return function(r,s){const a=ART[curFace()];return a?a.court(r,s):prev(r,s)}})(courtSVG);
 cardHTML=(function(prev){return function(c,extra='',attrs=''){const h=prev(c,extra,attrs);const a=ART[curFace()];if(!c||c.r!=='JK'||!a)return h;
   return h.replace(/<div class="jart[^"]*">[\s\S]*?<\/svg><\/div>/,`<div class="jart toonjk">${a.joker}</div>`)}})(cardHTML);
@@ -5389,7 +5389,9 @@ function voiceBusy(){return typeof VOICE!=='undefined'&&(!!VOICE.stream||VOICE.p
 function reroute(){if(!gBus||!SND.ctx)return;const c=SND.ctx,want=IS_IOS2&&voiceBusy()?'el':'dest';if(want===gMode)return;gMode=want;try{gBus.disconnect()}catch(e){}
   if(want==='el'){if(!gOut||gOut.context!==c)gOut=c.createMediaStreamDestination();_aConn.call(gBus,gOut);
     if(!gEl){gEl=document.createElement('audio');gEl.setAttribute('playsinline','');gEl.autoplay=true;gEl.id='gameOut';document.body.appendChild(gEl)}gEl.srcObject=gOut.stream;gEl.play().catch(()=>{})}
-  else{_aConn.call(gBus,c.destination);if(gEl)try{gEl.pause()}catch(e){}}}
+  else{_aConn.call(gBus,limOf(c));if(gEl)try{gEl.pause()}catch(e){}}}
+// a final limiter: loud effects never clip (clipping sounded like a buzz)
+let gLim=null;function limOf(c){if(gLim&&gLim.context===c)return gLim;const l=c.createDynamicsCompressor();l.threshold.value=-6;l.knee.value=4;l.ratio.value=20;l.attack.value=.002;l.release.value=.12;l.__direct=1;_aConn.call(l,c.destination);gLim=l;return l}
 function wakeAudio(){try{if(typeof SND==='undefined')return;if(!SND.ctx&&SND.on)SND.init();const c=SND.ctx;if(!c)return;if(c.state!=='running'&&SND.on)c.resume().catch(()=>{});gameBus(c);reroute();if(gEl&&gMode==='el'&&gEl.paused)gEl.play().catch(()=>{})}catch(e){}}
 ['touchstart','pointerdown','click','keydown'].forEach(ev=>document.addEventListener(ev,wakeAudio,{capture:true,passive:true}));
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(wakeAudio,200)});
@@ -5845,7 +5847,7 @@ window.addEventListener('click',e=>{const el=e.target.closest('#myrow [data-card
   if(S.war&&typeof canIntercept==='function'&&canIntercept(0).some(x=>x.id===id))return;
   e.stopImmediatePropagation();e.preventDefault();PEEK=PEEK===id?null:id;
   try{if(typeof playSample==='function')playSample('card'+(1+Math.floor(Math.random()*3)),0,.55)}catch(err){}markPeek()},true);
-function markPeek(){document.querySelectorAll('#myrow [data-card]').forEach(el=>{const on=PEEK!=null&&+el.dataset.card===PEEK&&!myActTurn();el.classList.toggle('peek',on);if(on){el.classList.add('sel');el.style.setProperty('--dy','-18px')}else if(el.classList.contains('peekd')){}})}
+function markPeek(){document.querySelectorAll('#myrow [data-card]').forEach(el=>{const on=PEEK!=null&&+el.dataset.card===PEEK&&!myActTurn();el.classList.toggle('peek',on);if(on){el.classList.add('sel');el.style.setProperty('--dy','-18px');el.dataset.pk=1}else if(el.dataset.pk){delete el.dataset.pk;if(!(S&&S.sel&&+el.dataset.card===S.sel.id)){el.classList.remove('sel');el.style.removeProperty('--dy')}}})}
 render=(function(prev){return function(){const r=prev.apply(this,arguments);try{if(!S||!S.players)return r;
   if(PEEK!=null&&!S.players[0].hand.some(c=>c.id===PEEK))PEEK=null;
   if(PEEK!=null&&myActTurn()&&S.phase==='choose'&&!S.sel){const c=S.players[0].hand.find(x=>x.id===PEEK);PEEK=null;if(c){S.sel=c;setTimeout(()=>{if(S)render()},0)}}
@@ -5981,7 +5983,7 @@ html body .seat.s-right .seatgift{left:auto!important;right:4px!important;bottom
   Object.entries(fix).forEach(([k,v])=>{if(EMOTES[k])EMOTES[k][1]=v});if(EMOTES[22])EMOTES[22][0]='Careful, he\'s on one card!';
   if(EMOTES[14])EMOTES[14].hidden=true;EMOTES.push(['Come on!','تعال!'],['What can I do? No cards','وش أسوي؟ ماكو ورق'])})();
 const emoHidden=k=>!!(EMOTES[k]&&EMOTES[k].hidden);
-function dropHidden(root){if(!root)return;root.querySelectorAll('[data-qp],[data-qpk],[data-emote]').forEach(el=>{const k=+(el.dataset.qp??el.dataset.qpk??el.dataset.emote);if(emoHidden(k))(el.closest('.qpi')||el).remove()});
+function dropHidden(root){if(!root)return;root.querySelectorAll('[data-qp],[data-qpk],[data-emote]').forEach(el=>{const d=el.dataset,k=+(d.qp!=null?d.qp:d.qpk!=null?d.qpk:d.emote);if(emoHidden(k))(el.closest('.qpi')||el).remove()});
   root.querySelectorAll('select[data-auto] option').forEach(o=>{if(emoHidden(+o.value))o.remove()})}
 chatChips=(function(prev){return function(){prev();dropHidden($('chatBar'))}})(chatChips);
 renderQp=(function(prev){return function(){prev();dropHidden($('qpBox'))}})(renderQp);
@@ -6121,7 +6123,7 @@ renderHome=function(){const h=$('homeIn');if(!h)return;h.dir=LANG==='ar'?'rtl':'
   h.innerHTML=`<div class="h2-page" id="h2Page"></div><nav class="h2-tabs">${[['home',L('Home','الرئيسية')],['diwan',L('Diwaniyas','الديوانيات')],['cup',L('Top','الأوائل')],['shop',L('Shop','المتجر')],['me',L('Me','ملفي')]].map(([id,t,soon])=>
     `<button type="button" class="${id===TAB?'on':''}" ${id==='shop'?'data-hm="gifts"':`data-tab="${id}"`}>${soon?`<i>${L('soon','قريباً')}</i>`:''}${svg(TB[id])}<span>${t}</span></button>`).join('')}</nav>`;
   drawTab()};
-function drawTab(){const p=$('h2Page');if(!p)return;p.scrollTop=0;
+function drawTab(){const p=$('h2Page');if(!p)return;p.scrollTop=0;if(!['home','me','cup','diwan'].includes(TAB)){TAB='home';document.querySelectorAll('.h2-tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab==='home'))}
   if(TAB==='home')return homeTab(p);if(TAB==='me')return meTab(p);if(TAB==='cup')return cupTab(p);if(TAB==='diwan')return dwOpen(p)}
 function topBar(){const pr=profPublic();return `<div class="hx-top"><button type="button" class="hx-me" data-hm="prof"><span class="hx-av">${avInner(pr)}</span><span><b>${esc(MYPROF.name||L('Your profile','ملفك'))}${vipB()}</b><small>${rankIcon(MYPROF.rp||0)}${L('Level ','المستوى ')+levelOf(MYPROF.xp)}${(MYPROF.streak||0)>=2?' · 🔥'+MYPROF.streak:''}</small></span></button>
   <button type="button" class="hx-tok" data-hm="store"><i class="cn"></i><b>${(WAL.tokens||0).toLocaleString('en')}</b><span>+</span></button></div>`}
@@ -6146,7 +6148,7 @@ function cupTab(p){if(window.h2Top)return h2Top(p);p.innerHTML=`<div class="h2-h
   <div class="h2-soon"><div class="h2-big">🏆</div><b>${L('Coming soon','قريباً')}</b><p>${L('Cups inside your diwaniya with rupee prizes, cups for your trophy shelf and champion badges.','كؤوس داخل ديوانيتك، جوايزها روبيات وكؤوس لخزانتك وشارة البطل.')}</p>
   <div class="h2-feat">${[['🥇',L('Knockout cups','كأس خروج المغلوب')],['📊',L('Monthly league','دوري شهري')],['🏅',L('Champion badges','شارات الأبطال')],['🗄',L('Trophy shelf','خزانة الكؤوس')]].map(([i,t])=>`<div>${i} ${t}</div>`).join('')}</div></div>`}
 window.h2Tab=id=>{TAB=id;renderHome()};
-document.addEventListener('click',e=>{const t=e.target.closest('[data-tab]');if(!t)return;TAB=t.dataset.tab;document.querySelectorAll('.h2-tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===TAB));drawTab()});
+document.addEventListener('click',e=>{const t=e.target.closest('.h2-tabs [data-tab]');if(!t)return;TAB=t.dataset.tab;document.querySelectorAll('.h2-tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===TAB));drawTab()});
 
 // ---------- my page: profile, rank, stats, badges, VIP, settings ----------
 const isVipMe=()=>typeof ACCT!=='undefined'&&ACCT.me&&ACCT.me.vip>Date.now();
@@ -6598,6 +6600,7 @@ const FXSND={
   royal(t,k){SB.boom(t,k);SB.gong(t+.02,98,k*1.15,3.2);SB.shimmer(t+.08,k,2.2)},
   money(t,k){SB.boom(t,k);for(let i=0;i<14;i++)SB.metal(t+.06+i*R(.03,.08),k*.55,R(3600,5200));SB.shimmer(t+.1,k*.5,1.2)},
   quake(t,k){SB.rumble(t,k*1.5,2.8);SB.boom(t,k*1.2);for(let i=0;i<12;i++)H(t+Math.random()*1.4,{type:'lowpass',f:R(300,800),gain:.55*k,decay:R(.08,.2)});SB.boom(t+.65,k*.8)}};
+window.__SB=SB;window.__FXSND=FXSND;
 window.fxSound=function(id,p){try{if(!SND.ok())return;const f=FXSND[id];if(!f)return;f(SND.ctx.currentTime+.01,p===3?1:p===2?.75:.5)}catch(e){}};
 
 // ---------- stronger visuals ----------
@@ -6654,7 +6657,7 @@ window.BUBS=BUBS;
 const vipOn=()=>typeof ACCT!=='undefined'&&ACCT.me&&ACCT.me.vip>Date.now();
 const ownBub=b=>b.vip?vipOn():(b.cost===0||WAL.owned.includes('bub-'+b.id));
 if(MYPROF.bub==null)MYPROF.bub='plain';
-function bubOf(i){if(i==null||!S||!S.players)return null;if(typeof NET!=='undefined'&&NET.on&&typeof seatMember==='function'){const m=seatMember(i);if(!m)return null;return m.sid===NET.me?MYPROF.bub:(m.prof&&m.prof.bub)}return i===0?MYPROF.bub:null}
+function bubOf(i){if(i==null||!S||!S.players)return null;if(window.__botCos){const c=window.__botCos(i);if(c)return c.bub}if(typeof NET!=='undefined'&&NET.on&&typeof seatMember==='function'){const m=seatMember(i);if(!m)return null;return m.sid===NET.me?MYPROF.bub:(m.prof&&m.prof.bub)}return i===0?MYPROF.bub:null}
 say=(function(prev){return function(i,t){prev.apply(this,arguments);try{const id=bubOf(i);if(!id||id==='plain')return;const b=[...document.querySelectorAll('#fx .bubble')].pop();if(!b||b.dataset.bub)return;b.dataset.bub=id;b.classList.add('bub-'+id);
   if(id==='fire')b.insertAdjacentHTML('afterbegin','<span class="bfl" style="right:12%"></span><span class="bfl" style="right:45%;animation-delay:.2s"></span><span class="bfl" style="right:75%;animation-delay:.35s"></span>');
   if(id==='royal')b.insertAdjacentHTML('afterbegin','<span class="bcr">👑</span><span class="bsp" style="left:4px;top:-6px">✦</span><span class="bsp" style="left:45%;bottom:-9px;animation-delay:.4s">✦</span><span class="bsp" style="right:-6px;bottom:3px;animation-delay:.7s">✦</span>')}catch(e){}}})(say);
@@ -7824,12 +7827,12 @@ try{refreshThemeBtn()}catch(e){}
 const st=document.createElement('style');st.textContent=`@media (min-width:700px){html body #setupForm{display:grid!important;grid-template-columns:1fr 1fr;column-gap:24px;row-gap:4px;align-content:start}html body #setupForm>*{grid-column:1/-1}html body #setupForm>.fieldset{grid-column:auto}html body #setupForm>#homeBack{justify-self:start;width:auto!important}}
 .tprev.tshot{box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}.tprev.tshot>*{display:none}`;document.head.appendChild(st);
 // setup page: shrink it to fit when the screen is shorter than the page (Safari bars, iPad split view)
-function fitSetup(){const f=document.getElementById('setupForm'),o=document.getElementById('setup');if(!f||!o||o.hidden)return;if(innerWidth<600||innerHeight<600){['zoom','width','max-width'].forEach(k=>f.style.removeProperty(k));return}
+function fitSetup(){const f=document.getElementById('setupForm'),o=document.getElementById('setup');if(!f||!o||o.hidden)return;const land=innerWidth>innerHeight;f.classList.toggle('fit3',land&&innerWidth>=640);
   // fill the screen: wide sheet, then the biggest zoom whose height still fits
-  const vh=(window.visualViewport&&visualViewport.height)||innerHeight,W=innerWidth*.94,Hh=Math.min(innerHeight,vh)-24;let z=1.6;f.style.setProperty('box-sizing','border-box','important');
+  const vh=(window.visualViewport&&visualViewport.height)||innerHeight,W=Math.min(innerWidth*.96,1300),Hh=Math.min(innerHeight,vh)-24;let z=1.2;const ZMIN=land?.5:1,ZMAX=land?1.6:(innerWidth<600?1.3:1.6);f.style.setProperty('box-sizing','border-box','important');
   for(let k=0;k<4;k++){f.style.setProperty('max-width',(W/z)+'px','important');f.style.setProperty('width',(W/z)+'px','important');f.style.setProperty('zoom',z,'important');
-    const h=f.getBoundingClientRect().height;const nz=Math.max(.7,Math.min(1.9,z*Hh/h));if(Math.abs(nz-z)<.02)break;z=nz}
-  if(f.getBoundingClientRect().height>Hh){z=z*Hh/f.getBoundingClientRect().height;f.style.setProperty('zoom',z,'important');f.style.setProperty('max-width',(W/z)+'px','important');f.style.setProperty('width',(W/z)+'px','important')}}
+    const h=f.getBoundingClientRect().height;const nz=Math.max(ZMIN,Math.min(ZMAX,z*Hh/h));if(Math.abs(nz-z)<.02)break;z=nz}
+  if(f.getBoundingClientRect().height>Hh&&z*Hh/f.getBoundingClientRect().height>=ZMIN){z=z*Hh/f.getBoundingClientRect().height;f.style.setProperty('zoom',z,'important');f.style.setProperty('max-width',(W/z)+'px','important');f.style.setProperty('width',(W/z)+'px','important')}}
 window.fitSetup=fitSetup;
 if(typeof showSetupLocal==='function')showSetupLocal=(function(p){return function(){const r=p.apply(this,arguments);requestAnimationFrame(fitSetup);setTimeout(fitSetup,250);return r}})(showSetupLocal);
 addEventListener('resize',()=>setTimeout(fitSetup,60));
@@ -7997,7 +8000,7 @@ renderShop=(function(prev){return function(){try{prices()}catch(e){}const r=prev
     if(!x||!x.offBy||WAL.owned.includes(id)||b.querySelector('.mtag'))return;const th=THEMES.find(t=>t.id===x.offBy);
     b.insertAdjacentHTML('beforeend',`<span class="mtag">−30٪ · ${th?L(th.en,th.ar):''}</span>`);const pr=b.querySelector('.price');if(pr)pr.insertAdjacentHTML('afterbegin',`<s class="was">${x.base}</s>`)})}catch(e){}return r}})(renderShop);
 // after buying a theme: tell the player about the matching cards
-let lastOwned=null;setInterval(()=>{try{const n=WAL.owned.length;if(lastOwned!=null&&n>lastOwned){const id=WAL.owned[n-1],m=MATCH[id];if(m){const names=m.map(id=>[...FACES_STYLES,...JOKERS,...BACKS].find(x=>x.id===id)).filter(x=>x&&(x.base??x.cost)>0&&!WAL.owned.includes(x.id));if(names.length)toast(L(`Matching ${names.map(x=>x.en).join(', ')}: now 30% off`,`اللي يناسب الثيم صار عليه خصم ٣٠٪: ${names.map(x=>x.ar).join('، ')}`))}}lastOwned=n}catch(e){}},1200);
+let lastOwned=null;setInterval(()=>{try{const n=WAL.owned.length;if(lastOwned!=null&&n>lastOwned){const id=WAL.owned[n-1],m=MATCH[id];if(m){const names=m.map(id=>[...FACES_STYLES,...JOKERS,...BACKS].find(x=>x.id===id)).filter(x=>x&&(x.base!=null?x.base:x.cost)>0&&!WAL.owned.includes(x.id));if(names.length)toast(L(`Matching ${names.map(x=>x.en).join(', ')}: now 30% off`,`اللي يناسب الثيم صار عليه خصم ٣٠٪: ${names.map(x=>x.ar).join('، ')}`))}}lastOwned=n}catch(e){}},1200);
 const st=document.createElement('style');st.textContent=`#shop .item{position:relative}#shop .mtag{display:block;margin-top:3px;font:800 10px Cairo,Tahoma,sans-serif;color:#1d1408;background:linear-gradient(180deg,#ffe08a,#e2b54e);border-radius:8px;padding:1px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #shop .price s.was{opacity:.55;margin-inline-end:4px;font-size:.85em}`;document.head.appendChild(st);
 })();
@@ -8237,7 +8240,7 @@ document.addEventListener('submit',e=>{if(!e.target||e.target.id!=='setupForm')r
 })();
 // old saved settings (e.g. 6 decks or 3 decks, removed since) left no option ticked, so the game started with 0 decks and ended at once
 (function(){
-const fix=c=>{c=Object.assign({},c||{});if(![4,8,10,12].includes(+c.decks))c.decks=4;if(![2,3,5,8].includes(+c.timer))c.timer=3;if(!['solo','2v2','3v3'].includes(c.mode))c.mode='2v2';if(!['easy','normal','hard'].includes(c.level))c.level='normal';return c};
+const fix=c=>{c=Object.assign({},c||{});if(![4,8,10,12].includes(+c.decks))c.decks=4;if(![2,3,5,8].includes(+c.timer))c.timer=3;if(!['solo','2v2','3v3'].includes(c.mode))c.mode='2v2';if(!['easy','normal','hard','pro'].includes(c.level))c.level='normal';return c};
 newGame=(function(p){return function(cfg){return p.call(this,fix(cfg))}})(newGame);
 try{const raw=localStorage.getItem('eb-cfg');if(raw){const c=JSON.parse(raw),f=fix(c);if(JSON.stringify(c)!==JSON.stringify(f))localStorage.setItem('eb-cfg',JSON.stringify(f))}}catch(e){}
 const tick=()=>{const f=document.getElementById('setupForm');if(!f)return;['mode','decks','timer','level'].forEach(n=>{const r=[...f.querySelectorAll(`input[name="${n}"]`)];if(r.length&&!r.some(x=>x.checked))r[0].checked=true})};
@@ -8472,6 +8475,108 @@ html body #slamBtn.poor .fbx svg{filter:grayscale(1) brightness(.7)}
 @media (prefers-reduced-motion:reduce){html body #slamBtn .fbx *{animation:none!important}}`;document.head.appendChild(st)})();
 
 </script><script>
+// ===================== Round 100: smarter computer players (same code on the phone and on the server) =====================
+// Levels: easy (سهل) · normal (عادي) · hard (صعب) · pro (محترف). Online the server keeps its computers at normal.
+// normal: plays for the team: never opens a war on a teammate's pile without a reason, defends a teammate's pile, sleeps on a joker.
+// hard:   + pulls a teammate who is on his last card (opens a ground war he can cut), buries its own exposed points, smarter jokers.
+// pro:    + counts the cards it has seen to judge who can cut, throws the cards nobody can use, cuts faster.
+(function(){
+const LVN={easy:0,normal:1,hard:2,pro:3};
+const lvOf=i=>{const p=S.players[i];if(p.human)return 1;const v=LVN[p.lv||(S.cfg&&S.cfg.level)||'normal'];return v==null?1:v};
+const kn=(i,n,d)=>{const k=S.players[i].k;return k&&k[n]!=null?k[n]:d};
+const mate=(i,j)=>i!==j&&S.players[i].team===S.players[j].team;
+const opp=(i,j)=>S.players[i].team!==S.players[j].team;
+const lone=j=>S.players[j].hand.length===1&&S.draw.length>0;
+const decks=()=>(S.cfg&&+S.cfg.decks)||4;
+// how many cards of rank r this player has not seen yet (hard: what lies open now; pro: everything it has watched go by)
+function unseen(i,r,L){const total=r==='JK'?2*decks():4*decks();let seen=0;const cnt=cs=>{for(const c of cs)if(c.r===r)seen++};
+  cnt(S.ground);cnt(S.players[i].hand);
+  for(const p of S.players){if(L>=3)cnt(p.pile);else{const e=exposed(p.pile);if(e)cnt(e.cards)}}
+  return Math.max(0,total-seen)}
+// chance that at least one opponent holds rank r or a joker (the cards that could cut a war on r)
+function oppCan(i,r,L){if(L<2)return .5;const pool=S.draw.length+S.players.reduce((n,p,j)=>j===i?n:n+p.hand.length,0);if(!pool)return 0;
+  const u=unseen(i,r,L)+(r==='JK'?0:unseen(i,'JK',L)),q=Math.min(1,u/pool);
+  const oc=S.players.reduce((n,p,j)=>opp(i,j)?n+p.hand.length:n,0);return 1-Math.pow(1-q,oc)}
+const loneMate=i=>S.players.some((p,j)=>mate(i,j)&&lone(j));
+
+// score one way of eating: rank r with card c
+function evalEat(i,o,c,L){const me=S.players[i],h=me.hand,r=o.r,t=o.t;
+  let gain=sum(t.g),mateVal=0,oppVal=0;const mates=[];
+  t.piles.forEach(x=>{const v=sum(x.cards);if(mate(i,x.j)){mateVal+=v;mates.push(x.j)}else oppVal+=v});
+  gain+=oppVal+pts(c);
+  const useJ=c.r==='JK'&&r!=='JK';
+  const def=h.filter(x=>x!==c&&(x.r===r||x.r==='JK')).length; // cards left to hit back if someone cuts
+  let sc=gain+t.count*.4;
+  const p=oppCan(i,r,L),stake=gain+mateVal;
+  if(L>=2)sc-=p*stake*(def?.25:.6)*kn(i,'risk',0);
+  if(useJ)sc-=kn(i,'jkEat',L>=3?Math.max(12,30-oppCan(i,r,L)*10):L>=2?22:30); // a joker is a cut kept in the hand
+  if(mateVal>0){ // opening a war on a teammate's pile puts his points up for grabs
+    const pull=L>=2&&kn(i,'mpull',1)&&mates.some(lone),bury=L>=2&&kn(i,'mbury',1)&&def>=1&&h.some(x=>x!==c&&x.r!==r&&x.r!=='JK'&&onGround(x.r));
+    if(!(pull||bury))sc-=(mateVal*(L>=2?1.2:1)+15)*kn(i,'mate',1)}
+  if(L>=2){const own=exposed(me.pile);if(own&&own.rank!==r&&r!=='JK'){const ov=sum(own.cards);if(ov)sc+=ov*oppCan(i,own.rank,L)*.5*kn(i,'bury',1)}} // burying our open points
+  if(L>=2&&t.g.length&&!useJ&&loneMate(i))sc+=kn(i,'pull',10); // a war on the ground gives the teammate on his last card a chance to cut
+  return sc}
+
+function bestEat(i,L,allowJ){const h=S.players[i].hand,jk=h.find(c=>c.r==='JK');let best=null,score=-Infinity;
+  for(const o of options(i)){
+    const nat=o.r==='JK'?(o.natural?jk:null):h.find(c=>c.r===o.r);
+    if(nat){const s=evalEat(i,o,nat,L);if(s>score){score=s;best={card:nat,r:o.r,nat:true}}}
+    if(allowJ&&jk&&o.r!=='JK'){const s=evalEat(i,o,jk,L);if(s>score){score=s;best={card:jk,r:o.r,nat:false}}}}
+  return best?{...best,score}:null}
+
+const _choose=aiChoose;
+aiChoose=function(i){const p=S.players[i],L=lvOf(i);if(L===0)return _choose.apply(this,arguments);
+  const h=p.hand,must=mustNow(i),jk=h.find(c=>c.r==='JK');
+  {const k=h.filter(c=>c.r!=='JK'&&onGround(c.r));if(canSleep(i)&&k.length===1&&jk)return declareEat(i,k[0],k[0].r)}
+  // keep the joker as the last card: it can cut any war and brings five new cards
+  const twoJ=kn(i,'sleepJ',1)&&h.length===2&&jk&&S.draw.length>0;
+  const best=bestEat(i,L,!must&&!twoJ&&!(h.length<=2&&S.draw.length));
+  if(must){const b=best&&best.nat?best:bestEat(i,L,false);if(b)return declareEat(i,b.card,b.r)}
+  if(twoJ&&!must){const other=h.find(c=>c!==jk);if(!(best&&best.nat&&best.score>=20)&&other&&throwable(i,other)&&canThrow(i)){S.phase='throw';return throwCard(i,other)}}
+  if(canSleep(i)&&!(best&&best.score>=10)&&canThrow(i)){S.phase='throw';return aiThrow(i)}
+  if(best&&best.score>kn(i,'eatMin',0))return declareEat(i,best.card,best.r);
+  if(canThrow(i)){S.phase='throw';return aiThrow(i)}
+  if(best&&best.nat)return declareEat(i,best.card,best.r);
+  if(S.lone)return passTurn(i);return endTurn(i)};
+
+const _throw=aiThrow;
+aiThrow=function(i){const p=S.players[i],L=lvOf(i);if(L===0)return _throw.apply(this,arguments);
+  const h=p.hand;if(!canThrow(i))return endTurn(i);
+  const pool=h.filter(c=>throwable(i,c)),list=pool.length?pool:h;
+  const keep=c=>{let s=pts(c)*3+(c.r==='JK'?200:0)+(h.filter(x=>x.r===c.r).length-1)*5;
+    S.players.forEach((q,j)=>{if(q.team!==p.team)return;const e=exposed(q.pile);if(e&&e.rank===c.r)s+=(j===i?25:14)}); // a card that matches our open pile would invite a war on it
+    if(S.ground.some(g=>g.r===c.r))s+=3;
+    if(L>=3&&kn(i,'cnt',1))s+=oppCan(i,c.r,L)*(pts(c)+4)*1.5; // nobody can use it: safe to throw
+    else if(L>=2&&kn(i,'tp',1))s+=pts(c)?4:0;
+    return s+Math.random()*(L>=3?.3:1)};
+  throwCard(i,[...list].sort((a,b)=>keep(a)-keep(b))[0])};
+
+const _want=aiWantsIntercept;
+aiWantsIntercept=function(j){const L=lvOf(j);if(L===0)return _want.apply(this,arguments);
+  const w=S.war,p=S.players[j],h=p.hand;
+  const nat=h.find(c=>c.r===w.rank&&c.r!=='JK'),jk=h.find(c=>c.r==='JK');
+  const ln=isLone(j),value=sum([...w.targets,...w.pot]);
+  const leadMate=mate(j,w.leader)||j===w.leader,mineHit=w.victims.includes(j),mateHit=w.victims.some(v=>mate(j,v));
+  if(leadMate){ // never fight a teammate, except to get five new cards on the last card
+    if(ln&&nat)return nat;return null}
+  const wantDef=mineHit||(mateHit&&((L>=2&&kn(j,'dall',1))||Math.random()<.6));
+  if(nat&&(value>0||ln||wantDef||kn(j,'natAll',L>=2?1:0)||(L===1&&Math.random()<.4)))return nat;
+  if(jk){
+    if(ln&&value>=kn(j,'jkLone',L>=2?5:10))return jk; // sleeping on a joker pays off now
+    if(wantDef&&value>=kn(j,'jkDef',L>=2?15:25))return jk;
+    if(value>=kn(j,'jkCut',L>=3?25:L>=2?30:40))return jk}
+  return null};
+
+// pro cuts quicker
+const _ow=openWindow;openWindow=function(){_ow.apply(this,arguments);try{if(!S||!S.war)return;
+  const fast=S.players.some((p,j)=>!p.human&&!p.remote&&lvOf(j)>=3&&kn(j,'fast',0)&&j!==S.war.leader);if(!fast)return;
+  S.aiTimers.forEach(clearTimeout);S.aiTimers=[];const ms=S.cfg.timer*1000;
+  S.players.forEach((p,j)=>{if(p.human||p.remote||j===S.war.leader)return;const c=aiWantsIntercept(j);if(!c)return;
+    const g=gen,L=lvOf(j),lo=L>=3?250:L===2?350:L===0?900:600;const d=Math.min(ms-150,lo+Math.random()*Math.max(200,Math.min(ms-500,L>=3?1600:2600)-lo));
+    S.aiTimers.push(setTimeout(()=>{if(g===gen&&S.war&&S.war.leader!==j&&S.players[j].hand.includes(c))intercept(j,c)},d))})}catch(e){}};
+})();
+
+</script><script>
 // ===================== Round 91: more achievement stats, counted by the rules engine itself (the same code runs on the phone and on the server) =====================
 (function(){
 const ST=i=>{if(typeof S==='undefined'||!S||!S.players)return null;S.stats=S.stats||S.players.map(()=>({wars:0,best:0}));return S.stats[i]||(S.stats[i]={wars:0,best:0})};
@@ -8688,7 +8793,7 @@ function place(b){const q=b.getBoundingClientRect(),cx=(q.left+q.right)/2,cy=(q.
   const M=6,cost=(x,y)=>{const l=x-W/2,r=x+W/2,t=y-H/2,bb=y+H/2;if(l<M||r>innerWidth-M||t<M||bb>innerHeight-M)return Infinity;let a=0;for(const o of obs){const w=Math.min(r,o.r)-Math.max(l,o.l),h=Math.min(bb,o.b)-Math.max(t,o.t);if(w>0&&h>0)a+=w*h}return a};
   if(cost(cx,cy)===0)return;
   let best=null;const scan=(RX,RY)=>{for(let dy=-RY;dy<=RY;dy+=8)for(let dx=-RX;dx<=RX;dx+=10){const d=Math.hypot(dx,dy*1.25);if(best&&best.a===0&&d>=best.d)continue;const a=cost(cx+dx,cy+dy);if(a===Infinity)continue;
-    if(!best||a<best.a||(a===best.a&&d<best.d))best={dx,dy,a,d}}};scan(150,110);if(!best||best.a>0)scan(260,180);
+    if(!best||a<best.a||(a===best.a&&d<best.d))best={dx,dy,a,d}}};const TOP=b.dataset.top==='1';scan(TOP?56:150,TOP?130:110);if(!best||best.a>0)scan(TOP?80:260,TOP?200:180);
   if(!best)return;b.style.left=(parseFloat(b.style.left)||0)+best.dx+'px';b.style.top=(parseFloat(b.style.top)||0)+best.dy+'px';
   if(best.a>0&&/bub-(boom|zap|shout|pow)/.test(b.className)&&!b.classList.contains('bcompact')){b.classList.add('bcompact');return place(b)}
   if(best.a>0&&b.classList.contains('chatsay')&&!(b.dataset.narrow>=2)){b.dataset.narrow=(+b.dataset.narrow||0)+1;b.style.setProperty('max-width',(b.dataset.narrow==1?150:118)+'px','important');b.style.setProperty('font-size','12px','important');place(b)}
@@ -8702,10 +8807,10 @@ function settle(b){if(!b.dataset.t)b.dataset.t=performance.now();if(/bub-(boom|z
   const tick=()=>{if(!b.isConnected)return;place(b);if(!clash(b)){b.classList.remove('bwait');b.getAnimations().forEach(a=>{if(a instanceof CSSAnimation)return;try{a.currentTime=0;a.play()}catch(e){}});return}
     if(performance.now()-t0>6000){b.remove();return}setTimeout(tick,250)};setTimeout(tick,250)}
 say=(function(p){return function(i,text){const before=new Set(document.querySelectorAll('.bubble'));const r=p.apply(this,arguments);
-  try{[...document.querySelectorAll('.bubble')].filter(x=>!before.has(x)).forEach(x=>{if(window.__forceBub)x.classList.add('bub-'+window.__forceBub);settle(x)})}catch(e){}return r}})(say);
+  try{[...document.querySelectorAll('.bubble')].filter(x=>!before.has(x)).forEach(x=>{if(window.__forceBub)x.classList.add('bub-'+window.__forceBub);try{window.__bubHook&&window.__bubHook(x,i)}catch(e){}settle(x)})}catch(e){}return r}})(say);
 // safety net: if two visible messages ever touch, the newer one steps aside or waits
 setInterval(()=>{try{const v=[...document.querySelectorAll('.bubble:not(.bwait)')].filter(b=>b.dataset.t).sort((x,y)=>x.dataset.t-y.dataset.t);
-  for(let k=1;k<v.length;k++){const b=v[k],r=box(b);if(v.slice(0,k).some(o=>{const q=box(o);return r.l<q.r+4&&r.r>q.l-4&&r.t<q.b+4&&r.b>q.t-4}))settle(b)}}catch(e){}},100);
+  for(let k=1;k<v.length;k++){const b=v[k],r=box(b);if(v.slice(0,k).some(o=>{const q=box(o);return r.l<q.r+4&&r.r>q.l-4&&r.t<q.b+4&&r.b>q.t-4}))settle(b)}}catch(e){}},200);
 const st=document.createElement('style');st.textContent='.bubble.bwait{visibility:hidden!important}';document.head.appendChild(st);
 })();
 
@@ -9451,8 +9556,8 @@ const st=document.createElement('style');st.textContent='#seats .botchip{white-s
 html body #seats .seat .who .name .flag{display:inline-block;vertical-align:-2px;margin-inline-end:3px}`;document.head.appendChild(st)})();
 // the hint bubble: smaller, and it picks the free spot (above your cards, under the top bar, or beside your cards) so it does not sit on the ground cards or players
 (function(){const st=document.createElement('style');st.textContent=`#hintPop{max-width:min(78vw,380px)!important;font-size:12.5px!important;padding:7px 12px!important;line-height:1.5!important}`;document.head.appendChild(st);
-const SEL='#ground>.card,#seats .seat .who,#seats .seat .pilebox .card,#seats .seat .tags .tag,#war,#actions button,.drawrow .stack,#myrow .card,.topbar,.bottombar';
-function placeHint(){const d=document.getElementById('hintPop');if(!d||!d.classList.contains('on'))return;
+const SEL='#ground>.card,#seats .seat .who,#seats .seat .pilebox .card,#seats .seat .tags .tag,#war,#actions button,.drawrow .stack,#myrow .card,#seats .seat .handfan>.cardback,.topbar,.bottombar>*,.bottombar .gbtn,.bottombar .mine';
+window.__placeHint=()=>placeHint();function placeHint(){const d=document.getElementById('hintPop');if(!d||!d.classList.contains('on'))return;
   d.style.transform='none';const W=d.offsetWidth,H=d.offsetHeight;
   const obs=[...document.querySelectorAll(SEL)].map(e=>e.getBoundingClientRect()).filter(r=>r.width);
   const hand=[...document.querySelectorAll('#myrow .card')].map(e=>e.getBoundingClientRect());const ht=hand.length?Math.min(...hand.map(r=>r.top)):innerHeight*.7;
@@ -9460,7 +9565,8 @@ function placeHint(){const d=document.getElementById('hintPop');if(!d||!d.classL
   const tb=document.querySelector('.topbar'),tbb=tb?tb.getBoundingClientRect().bottom:50;
   const C=[[innerWidth/2-W/2,ht-H-8],[innerWidth/2-W/2,tbb+6],[hr+10,ht],[hl-10-W,ht],[innerWidth/2-W/2,(tbb+ht)/2-H/2]];
   const cost=([x,y])=>{if(x<4||y<4||x+W>innerWidth-4||y+H>innerHeight-4)return Infinity;let a=0;for(const o of obs){const w=Math.min(x+W,o.right)-Math.max(x,o.left),h=Math.min(y+H,o.bottom)-Math.max(y,o.top);if(w>0&&h>0)a+=w*h}return a};
-  let best=C[0],bc=Infinity;for(const c of C){const v=cost(c);if(v<bc){bc=v;best=c}}if(bc===Infinity)best=[Math.max(4,innerWidth/2-W/2),Math.max(4,ht-H-8)];
+  let best=C[0],bc=Infinity;for(const c of C){const v=cost(c);if(v<bc){bc=v;best=c}}
+  if(bc>0){const cx=innerWidth/2-W/2,cy=ht-H-8;let bd=Infinity;for(let y=tbb+4;y+H<=innerHeight-4;y+=8)for(let x=4;x+W<=innerWidth-4;x+=12){const v=cost([x,y]);if(v>bc)continue;const dd=Math.abs(x-cx)+Math.abs(y-cy);if(v<bc||dd<bd){bc=v;bd=dd;best=[x,y]}}}if(bc===Infinity)best=[Math.max(4,innerWidth/2-W/2),Math.max(4,ht-H-8)];
   d.style.left=best[0]+'px';d.style.top=best[1]+'px'}
 new MutationObserver(()=>{try{placeHint()}catch(e){}}).observe(document.body,{subtree:false,childList:true});
 const iv=setInterval(()=>{const d=document.getElementById('hintPop');if(!d)return;clearInterval(iv);new MutationObserver(()=>{try{if(d.classList.contains('on'))placeHint()}catch(e){}}).observe(d,{attributes:true,attributeFilter:['class'],childList:true})},300);
@@ -9477,10 +9583,425 @@ const st2=document.createElement('style');st2.textContent=`#hintPop.on{transform
 html body #seats .seat.s-left .tags,html body #seats .seat.s-right .tags{top:calc(100% + 2px)!important;bottom:auto!important;left:50%!important;right:auto!important;transform:translateX(-50%)!important;flex-direction:row!important;align-items:center!important;gap:4px!important;justify-content:center}
 html body #seats .seat .tag.soft.onecard{background:linear-gradient(180deg,#3a2414,#160a05)!important;color:#f6d77e!important;box-shadow:0 0 0 1.2px var(--mjt,#c9a04a),0 2px 6px rgba(0,0,0,.4)!important;font-size:9.5px!important;padding:1px 8px!important}
 html body #seats .seat .tag.soft.friend{font-size:9.5px!important;padding:1px 8px!important}`;document.head.appendChild(st)})();
+// speed: the always-running decorations (fire button flame and glow, rank glint, eating glow) were repainting the whole screen every frame on phones.
+// They now move only things the graphics chip can move cheaply (opacity / transform of one layer), and slower.
+(function(){const st=document.createElement('style');st.textContent=`
+html body #slamBtn .fbx .f1,html body #slamBtn .fbx .f2,html body #slamBtn .fbx .f3,html body #slamBtn .fbx .sp{animation:none!important}
+html body #slamBtn .fbx svg{filter:none!important}
+html body #slamBtn .fbx{will-change:transform;animation:fb99 .9s ease-in-out infinite alternate!important;transform-origin:50% 100%}
+@keyframes fb99{from{transform:scale(.97,.95)}to{transform:scale(1.02,1.05)}}
+html body .gbtn,html body #slamBtn{animation-name:none!important}
+html body #slamBtn{position:relative}
+html body #slamBtn::after{content:'';position:absolute;inset:-3px;border-radius:inherit;box-shadow:0 0 18px 4px rgba(255,130,30,.55);opacity:.35;pointer-events:none;will-change:opacity;animation:sg99 1.6s ease-in-out infinite alternate}
+@keyframes sg99{to{opacity:1}}
+.rkic svg{animation:none!important}
+html body .card.eating{animation:none!important;box-shadow:0 0 0 3px #ffd400,0 0 0 6px #ff5a1f,0 0 16px 5px #ff5a1f!important}
+html body .card.eating::after{content:'';position:absolute;inset:-4px;border-radius:inherit;box-shadow:0 0 22px 8px rgba(255,90,31,.8);opacity:.3;pointer-events:none;will-change:opacity;animation:sg99 .55s ease-in-out infinite alternate}
+@media (prefers-reduced-motion:reduce){html body #slamBtn .fbx,html body #slamBtn::after,html body .card.eating::after{animation:none!important}}`;document.head.appendChild(st)})();
+
+// Round 99c: phone held sideways (short landscape) — the top & bottom bars were eating the table. Icons only, slimmer bars, compact score.
+(function(){const st=document.createElement('style');st.textContent=`
+@media (orientation:landscape) and (max-height:460px){
+html body .topbar{padding-top:max(3px,env(safe-area-inset-top))!important;padding-bottom:3px!important;min-height:0!important;align-items:center!important}
+html body .topbar .gbtn{height:32px!important;min-height:32px!important;min-width:36px!important;width:auto!important;padding:0 8px!important}
+html body .topbar .gbtn>span{display:none!important}
+html body .topbar .gbtn svg{width:17px!important;height:17px!important}
+html body .topbar{display:flex!important;flex-direction:row!important;align-items:center!important;gap:8px!important;justify-content:center!important;grid-template-columns:none!important;zoom:1!important;width:auto!important;max-width:none!important}
+html body .topbar .tbg{gap:8px!important;flex:0 0 auto!important;width:auto!important;align-items:center!important}
+html body .topbar>*{margin:0!important}
+html body .topbar .score{transform:none!important;scale:none!important;flex:0 0 auto!important;width:auto!important;max-width:none!important;height:32px!important;box-sizing:border-box!important;padding:0 10px!important;border-radius:10px!important;display:flex!important;flex-direction:row!important;align-items:center!important;gap:8px!important;min-height:0!important}
+html body .topbar .score #board{margin:0!important}
+html body .topbar .score .col{display:flex!important;flex-direction:row!important;align-items:center!important;gap:6px!important;width:auto!important;min-width:0!important;flex:0 0 auto!important}
+html body .topbar .score #board{width:auto!important;gap:12px!important}
+html body .topbar .score .col .n{font-size:15px!important;line-height:22px!important;height:22px!important;width:36px!important;min-width:36px!important;padding:0!important;border-radius:7px!important;box-sizing:border-box!important}
+html body .topbar .score .col .t{font-size:11px!important}
+html body .topbar .score .sub{display:none!important}
+html body #hintPop{max-width:min(37vw,310px)!important;width:max-content!important;box-sizing:border-box!important;font-size:11px!important;padding:5px 9px!important;line-height:1.45!important}
+html body .bottombar{padding-top:2px!important;padding-bottom:max(2px,env(safe-area-inset-bottom))!important;min-height:0!important}
+}`;document.head.appendChild(st)})();
+// the hint re-checks its spot while it is showing: if cards landed under it after it appeared, it moves to a free spot
+(function(){const SEL='#ground>.card,#seats .seat .who,#seats .seat .handfan>.cardback,#seats .seat .tags .tag,#myrow .card,.drawrow .stack,#war';
+setInterval(()=>{try{const d=document.getElementById('hintPop');if(!d||!d.classList.contains('on')||document.hidden)return;const a=d.getBoundingClientRect();
+  for(const e of document.querySelectorAll(SEL)){const o=e.getBoundingClientRect();if(Math.min(a.right,o.right)-Math.max(a.left,o.left)>4&&Math.min(a.bottom,o.bottom)-Math.max(a.top,o.top)>4){window.__placeHint&&window.__placeHint();return}}}catch(e){}},600)})();
+
+</script><script>
+// ===================== Round 100: sound after Safari, clean home after leaving, money sound, computers that show off the shop =====================
+// 1) iPhone/iPad: after Safari goes to the background the sound engine can come back silent. On the first touch after coming back we wake it,
+//    and if it is still not playing we build a fresh one (every sound part already rebuilds itself for a new engine).
+(function(){
+const IOS=typeof IS_IOS2!=='undefined'?IS_IOS2:/iP(hone|ad|od)/.test(navigator.userAgent);
+let away=0,need=false;
+document.addEventListener('visibilitychange',()=>{if(document.hidden){away=Date.now();return}if(Date.now()-away>800)need=true});
+addEventListener('pageshow',e=>{if(e.persisted)need=true});
+function rebuild(){try{const old=SND.ctx;const musicOn=typeof MUSIC!=='undefined'&&MUSIC.playing;
+  if(typeof MUSIC!=='undefined'){try{clearInterval(MUSIC.timer)}catch(e){}MUSIC.playing=false;MUSIC.bus=null;MUSIC.vol=null;MUSIC.lim=null}
+  SND.ctx=null;SND.master=null;SND.nb=null;try{old&&old.close()}catch(e){}
+  SND.init();if(typeof wakeAudio==='function')wakeAudio();
+  if(musicOn)setTimeout(()=>{try{MUSIC.start()}catch(e){}},120)}catch(e){}}
+function fix(){if(!need||typeof SND==='undefined'||!SND.on)return;need=false;const c=SND.ctx;if(!c){SND.init();return}
+  // silent kick inside the touch: resumes the audio session on iOS
+  try{const b=c.createBuffer(1,1,22050),s=c.createBufferSource();s.buffer=b;s.connect(c.destination);s.start(0)}catch(e){}
+  if(c.state!=='running'){c.resume().catch(()=>{});setTimeout(()=>{if(SND.ctx===c&&c.state!=='running'&&IOS)rebuild()},350)}
+  else if(IOS){c.suspend().then(()=>c.resume()).catch(()=>{});setTimeout(()=>{if(SND.ctx===c&&c.state!=='running')rebuild()},450)}}
+['touchend','click','keydown'].forEach(ev=>document.addEventListener(ev,fix,{capture:true,passive:true}));
+})();
+
+// 2) leaving a game: the tip bubble must not stay on the main screen
+(function(){const hide=()=>{const d=document.getElementById('hintPop');if(d)d.classList.remove('on')};
+if(typeof leaveGame==='function')leaveGame=(function(p){return function(){const r=p.apply(this,arguments);hide();return r}})(leaveGame);
+if(typeof showHome==='function')showHome=(function(p){return function(){const r=p.apply(this,arguments);hide();return r}})(showHome);
+})();
+
+// 3) the money sound: keep the bright "ka-ching", replace the hissy coin rain at the end with soft coin clinks
+(function(){const _fs=window.fxSound;window.fxSound=function(id,p){if(id!=='money')return _fs(id,p);try{if(!SND.ok())return;const t=SND.ctx.currentTime+.01,k=p===3?1:p===2?.75:.5;
+  SND.hit(t,{type:'lowpass',f:150,q:.8,gain:1.1*k,attack:.003,decay:.45});SND.tone(t,72,30,.55,{gain:1*k});
+  SND.tone(t+.05,2093,2093,.6,{type:'triangle',gain:.4*k});SND.tone(t+.12,2637,2637,.75,{type:'triangle',gain:.4*k});
+  [[.24,3136],[.33,2794],[.41,3520],[.52,3136],[.64,3951]].forEach(([d,f],n)=>{const g=.11*k*(1-n*.13);SND.tone(t+d,f,f*.998,.28,{gain:g});SND.tone(t+d,f*2.76,f*2.76,.09,{gain:g*.35})})}catch(e){}};
+try{if(typeof fxSound!=='undefined')fxSound=window.fxSound}catch(e){}})();
+
+// 4) games against the computer: each computer player gets shop items (message style, eat effect, fire effect) and its own replies, like real players
+(function(){
+const off=()=>typeof NET!=='undefined'&&NET.on;
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const BOY={bub:['comic','pow','shout','zap','boom','gold','fire','neon','royal','shemagh','falcon','carbon','ember','scroll','sadu'],efx:['gold','blue','purple','green','smoke','stars','money','frost'],sfx:['inferno','thunder','ice','meteor','royal','money','quake']};
+const GIRL={bub:['pearl','rosebub','hearts','cloud','sticker','jelly','gold','royal'],efx:['pink','hearts','petals','butterflies','diamonds','stars'],sfx:['petals','butterflies','diamonds','royal','ice']};
+const has=(list,id)=>Array.isArray(list)&&list.some(x=>x.id===id);
+let BOTFX=false;try{BOTFX=localStorage.getItem('eb-botfx')==='on'}catch(e){}
+window.__setBotFx=v=>{BOTFX=!!v;try{localStorage.setItem('eb-botfx',v?'on':'off')}catch(e){}};window.__botFxOn=()=>BOTFX;
+function dress(){if(!S||!S.players||off())return;if(!BOTFX){S.players.forEach(p=>{if(p.cos)delete p.cos});return}S.players.forEach((p,i)=>{if(i===0||p.human||p.cos)return;const set=p.f?GIRL:BOY;
+  p.cos={bub:pick(set.bub.filter(id=>typeof BUBS==='undefined'||has(BUBS,id))||['plain']),efx:pick(set.efx.filter(id=>typeof EFX==='undefined'||has(EFX,id))),sfx:pick(set.sfx.filter(id=>typeof SFX==='undefined'||has(SFX,id)))}})}
+const cos=i=>!off()&&S&&S.players&&S.players[i]&&i!==0&&!S.players[i].human?S.players[i].cos:null;
+newGame=(function(p){return function(){const r=p.apply(this,arguments);try{dress()}catch(e){}return r}})(newGame);
+window.__botCos=cos;
+if(typeof efxOf==='function')efxOf=(function(p){return function(i){const c=cos(i);if(c)return c.efx;return p.apply(this,arguments)}})(efxOf);
+if(typeof sfxOf==='function')sfxOf=(function(p){return function(i){const c=cos(i);if(c)return c.sfx;return p.apply(this,arguments)}})(sfxOf);
+// replies: a different good line each time, not every time
+const E=t=>{if(typeof EMOTES==='undefined')return -1;return EMOTES.findIndex(e=>e[1]===t)};
+const LINES={
+  lost:['لا تفرح وايد!','افاا؟','ولييه!','وما راح تشمهم!','مردودين صدقني','معوض خير'],
+  def:['انسى!','استريييح','اقعد بس اقعد','وين رايح؟','لا يا حبيبي'],
+  save:['كفو!','فنان!','أسطورة!','يا حلوكم'],
+  took:['معلش','لا تحاتي','مجبور يا صاحبي','تفضّل'],
+  win:['استريييح','تستاهل!','يا ويلكم مني','تعلم بس تعلم','فرحان؟'],
+  winbig:['يتربون بعزك','اذكروا الله وصلّوا على الحبيب','هذي حركاتي 💅','ملك الطاولة 👑'],
+  tauf:['وين رايح؟','صب جاي بس','شعبالك سبهلله؟','استريييح']};
+const GIRLX={win:['هذي حركاتي 💅','تراني مو سهلة','يا ويلكم مني'],winbig:['ملكة الطاولة 👑','هذي حركاتي 💅','اذكروا الله وصلّوا على الحبيب'],save:['فديتكم','يا عمري عليكم','برافو عليج']};
+const BOYX={winbig:['ملك الطاولة 👑','يتربون بعزك','اذكروا الله وصلّوا على الحبيب']};
+function botAuto(i){const p=S.players[i],o={snd:''};
+  Object.keys(LINES).forEach(ev=>Object.defineProperty(o,ev,{enumerable:true,get(){if(Math.random()>(ev==='winbig'||ev==='lost'?.8:.45))return -1;
+    const list=(p.f?GIRLX[ev]:BOYX[ev])||LINES[ev];const k=E(pick(list));return k}}));return o}
+if(typeof autoOf==='function'){const _ao=autoOf;autoOf=function(j){if(!off()&&S&&S.players&&S.players[j]&&j!==0&&!S.players[j].human){const p=S.players[j];return p.__auto||(p.__auto=botAuto(j))}return _ao.apply(this,arguments)}}
+// now and then a computer cuts with the fire button, so its fire effect shows (it costs them nothing; with effects off you only see the usual fire)
+intercept=(function(prev){return function(j,card,fire){try{if(fire==null&&BOTFX&&!off()&&S&&S.war&&j!==0&&S.players[j]&&!S.players[j].human){const v=sum([...S.war.targets,...S.war.pot]);
+  if(v>=40?Math.random()<.55:v>=20?Math.random()<.25:Math.random()<.08)fire=true}}catch(e){}return prev.call(this,j,card,fire)}})(intercept);
+})();
+
+// 5) every message shows who said it: a small name line on top of the bubble (with the team colour)
+(function(){
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+window.__bubHook=function(b,i){try{const se=document.querySelector(`.seat[data-seat="${i}"]`);if(se&&se.classList.contains('s-top'))b.dataset.top='1'}catch(_){}if(!S||!S.players||i==null||!S.players[i]||b.querySelector('.bwho'))return;const p=S.players[i];
+  const me=i===0&&!(typeof NET!=='undefined'&&NET.on&&S.players[0].remote);let nm=me?L('You','أنت'):(p.name||'');nm=nm.length>12?nm.slice(0,11)+'…':nm;
+  const col=S.teams&&S.teams[p.team]?S.teams[p.team].color:'#ccc';
+  b.insertAdjacentHTML('afterbegin',`<span class="bwho"><i style="background:${col}"></i>${esc(nm)}</span>`)};
+const st=document.createElement('style');st.textContent=`
+.bubble .bwho{display:flex;align-items:center;justify-content:center;gap:4px;font-size:9.5px;line-height:1.1;font-weight:800;opacity:.82;margin:-1px 0 2px;white-space:nowrap;letter-spacing:0;text-shadow:none;position:relative;z-index:2}
+.bubble .bwho i{width:6px;height:6px;border-radius:50%;flex:none;box-shadow:0 0 0 1px rgba(255,255,255,.6)}
+.bubble.bcompact .bwho{display:inline-flex;font-size:8.5px;margin:0;margin-inline-end:5px;vertical-align:1px}`;document.head.appendChild(st);
+})();
+
+// 6) kiss gift: the "mwaah" and the little hearts were not positioned (they showed as a red bar at the top). Now: a lipstick print on the player, hearts and a soft "مواااح"
+(function(){const st=document.createElement('style');st.textContent=`
+#fx .mwah98,#fx .heart98,#fx .kmark100{position:absolute;pointer-events:none;z-index:40}
+#fx .mwah98{background:none!important;box-shadow:none!important;padding:0!important;font:900 21px Cairo,Tahoma!important;color:#ff4d7d!important;
+  text-shadow:0 0 2px #fff,0 0 6px #fff,0 0 14px rgba(255,77,125,.85),0 2px 0 #9e1238!important;letter-spacing:.5px}
+#fx .mwah98 b{font:inherit}
+#fx .heart98{font-size:17px;filter:drop-shadow(0 0 4px rgba(255,80,130,.7))}
+#fx .kmark100{width:46px;height:34px;transform:translate(-50%,-50%);animation:km100 1.9s ease-out forwards}
+#fx .kmark100 svg{width:100%;height:100%;filter:drop-shadow(0 0 6px rgba(255,60,110,.6))}
+@keyframes km100{0%{transform:translate(-50%,-50%) scale(1.8) rotate(-14deg);opacity:0}14%{transform:translate(-50%,-50%) scale(.9) rotate(-8deg);opacity:1}22%{transform:translate(-50%,-50%) scale(1.05) rotate(-8deg)}75%{opacity:1}100%{transform:translate(-50%,-50%) scale(1) rotate(-8deg);opacity:0}}`;document.head.appendChild(st);
+const LIPS='<svg viewBox="0 0 64 44"><path d="M4 22C10 10 19 5 25 7c3 1 5 3 7 5 2-2 4-4 7-5 6-2 15 3 21 15-7 11-17 18-28 18S11 33 4 22z" fill="#e0204f"/><path d="M4 22c9 3 19 4 28 4s19-1 28-4" stroke="#8e0f22" stroke-width="2.2" fill="none"/><path d="M12 18c5-4 9-5 13-4" stroke="#ff9db4" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M36 33c5 0 9-2 12-4" stroke="#ff9db4" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".7"/></svg>';
+if(typeof SHOWS2!=='undefined'&&SHOWS2.kiss){const k0=SHOWS2.kiss;SHOWS2.kiss=function(to,b){k0.apply(this,arguments);setTimeout(()=>{if(!S)return;try{const m=addFx(LIPS,'kmark100',{x:b.x+8,y:b.y+4});setTimeout(()=>m.remove(),1950)}catch(e){}},1000);setTimeout(()=>{document.querySelectorAll('#fx .mwah98').forEach(e=>{const r=e.getBoundingClientRect(),w=r.width/ (r.width?1:1);let dx=0;if(r.right>innerWidth-6)dx=innerWidth-6-r.right;if(r.left<6)dx=6-r.left;if(dx)e.style.left=(parseFloat(e.style.left)+dx)+'px'})},1120)}}
+})();
+
+// 7) phrases for gifts, and computers thank you for a gift
+(function(){const P=[['Thank you 🎁','تسلم يدك 🎁'],['Thanks for the gift 🌹','مشكور على الهدية 🌹'],['So thoughtful','من ذوقك'],['Your gift is on my head','هديتك على راسي'],['You deserve more','تستاهل أكثر'],['So sweet 😍','يا حلو الهدايا 😍'],['May we never lose you','الله لا يحرمنا منك']];
+try{P.forEach(p=>{if(!EMOTES.some(e=>e[1]===p[1]))EMOTES.push(p)})}catch(e){}
+const off=()=>typeof NET!=='undefined'&&NET.on;let last=0;
+if(typeof sendGift==='function')sendGift=(function(p){return function(from,to,id){const r=p.apply(this,arguments);
+  try{if(!off()&&S&&to>0&&S.players[to]&&!S.players[to].human&&from===0&&Date.now()-last>2500&&Math.random()<.75){last=Date.now();const t=to;const ln=P[Math.floor(Math.random()*P.length)];setTimeout(()=>{if(S)say(t,L(ln[0],ln[1]))},2200)}}catch(e){}return r}})(sendGift);
+})();
+
+// 8) the settings page (second page): bigger choices, using more of the width when the phone is sideways
+(function(){const st=document.createElement('style');st.textContent=`
+html body #setupForm .seg label span{font-size:15px!important;min-height:40px!important;padding:0 15px!important;display:inline-flex!important;align-items:center;justify-content:center}
+html body #setupForm .label{font-size:14px!important;margin-bottom:6px!important}
+html body #setupForm .fieldset{margin-bottom:8px!important}
+@media (orientation:landscape) and (min-width:700px){html body #setupForm{max-width:min(1000px,calc(100vw - 32px))!important;column-gap:40px!important}}`;document.head.appendChild(st)})();
+
+// 9) eating again in the same turn: first "آكل", second "وباكل", then "باكل"
+(function(){let word=null;
+intercept=(function(p){return function(){try{if(S)S.eatCut=true}catch(e){}return p.apply(this,arguments)}})(intercept);
+declareEat=(function(p){return function(i){try{if(S){const n=(S.chain&&!S.eatCut)?(S.eatN||1)+1:1;S.eatN=n;S.eatCut=false;word=n===1?null:['Eat again!','وباكل']}}catch(e){}try{return p.apply(this,arguments)}finally{word=null}}})(declareEat);
+say=(function(p){return function(i,t){if(word&&(t==='آكل'||t==='Eat!'))t=L(word[0],word[1]);return p.apply(this,[i,t].concat([].slice.call(arguments,2)))}})(say);
+})();
+
+// 10) a choice on the settings page: the computers show off shop effects (for fun), or play plain (default)
+(function(){
+renderSetup=(function(p){return function(){const r=p.apply(this,arguments);try{const f=document.getElementById('setupForm');if(!f||f.querySelector('[name="botfx"]'))return r;
+  const fx=f.querySelector('[name="fx"]'),fs=fx?fx.closest('.fieldset'):null;if(!fs)return r;const on=window.__botFxOn&&__botFxOn();
+  const d=document.createElement('div');d.className='fieldset';d.innerHTML=`<div class="label">${L('Computer players','الكمبيوتر')}</div>${seg('botfx',[['off','Plain','عادي'],['on','Show off shop effects ✨','يستعرض تأثيرات المتجر ✨']],on?'on':'off')}`;fs.after(d)}catch(e){}return r}})(renderSetup);
+document.addEventListener('change',e=>{if(e.target&&e.target.name==='botfx'&&window.__setBotFx)__setBotFx(e.target.value==='on')});
+})();
+
+// 11) settings page sideways: three columns so everything fits on one screen
+(function(){const st=document.createElement('style');st.textContent=`
+html body #setupForm.fit3{grid-template-columns:repeat(3,1fr)!important;column-gap:26px!important}
+html body #setupForm.fit3>.fieldset{grid-column:auto!important}`;document.head.appendChild(st)})();
+
+// 12) "تحت الهجوم" is never covered (the cards in your hand were drawn over it): it is shown on its own top layer, at the same spot, kept inside the screen
+(function(){let layer=null;
+function sync(){try{const tags=[...document.querySelectorAll('#seats .tag.alert')];if(!layer){const o=document.createElement('div');o.id='alertLayer';o.dir='rtl';layer=document.createElement('div');layer.className='seat';o.appendChild(layer);document.body.appendChild(o)}
+  const want=tags.filter(t=>{const r=t.getBoundingClientRect();return r.width>0});
+  while(layer.children.length>want.length)layer.lastChild.remove();while(layer.children.length<want.length){const d=document.createElement('span');d.className='tag alert alertfloat';layer.appendChild(d)}
+  want.forEach((t,k)=>{const r=t.getBoundingClientRect(),d=layer.children[k];if(d.innerHTML!==t.innerHTML)d.innerHTML=t.innerHTML;t.style.visibility='hidden';
+    const W=Math.max(r.width,d.offsetWidth),x=Math.max(4,Math.min(innerWidth-4-W,r.left)),y=Math.max(4,Math.min(innerHeight-4-r.height,r.top));d.style.setProperty('left',Math.round(x)+'px','important');d.style.setProperty('top',Math.round(y)+'px','important')})}catch(e){}}
+render=(function(p){return function(){const r=p.apply(this,arguments);requestAnimationFrame(sync);return r}})(render);
+setInterval(()=>{if(document.querySelector('#seats .tag.alert')||(layer&&layer.children.length))sync()},250);
+const st=document.createElement('style');st.textContent=`#alertLayer{position:fixed;left:0;top:0;width:0;height:0;z-index:46;pointer-events:none}
+#alertLayer>.seat{all:unset!important;display:block!important}
+#alertLayer .alertfloat{position:fixed!important;overflow:visible!important;white-space:nowrap;max-width:none!important}
+html body #seats .tag.alert{overflow:visible!important}`;document.head.appendChild(st);
+})();
+
+// 13) the shop opened from inside a game: full screen like on the main screen (it was a narrow box with its top cut), and the tip bubble stays behind it
+(function(){const st=document.createElement('style');st.textContent=`
+html body #shopSheet>.sheet{width:100%!important;max-width:none!important;height:100%!important;max-height:none!important;margin:0!important;top:0!important;left:0!important;border-radius:0!important;transform:none!important;
+  box-sizing:border-box!important;padding-top:max(14px,env(safe-area-inset-top))!important;padding-bottom:max(14px,env(safe-area-inset-bottom))!important;padding-left:max(14px,env(safe-area-inset-left))!important;padding-right:max(14px,env(safe-area-inset-right))!important}
+html body #shopSheet{padding:0!important;align-items:stretch!important;justify-content:stretch!important}
+body:has(#shopSheet:not([hidden])) #hintPop,body:has(#shopSheet:not([hidden])) #alertLayer{display:none!important}`;document.head.appendChild(st)})();
+// a close button always visible at the top of the shop
+(function(){const b=document.createElement('button');b.type='button';b.id='shopX';b.setAttribute('aria-label','إغلاق');b.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+document.body.appendChild(b);b.addEventListener('click',()=>{const c=[...document.querySelectorAll('#shopSheet button')].find(x=>/إغلاق|Close/.test(x.textContent));if(c)c.click();else{const s=document.getElementById('shopSheet');if(s)s.hidden=true}});
+const st=document.createElement('style');st.textContent=`#shopX{display:none;position:fixed;z-index:120;top:calc(10px + env(safe-area-inset-top,0px));left:calc(10px + env(safe-area-inset-left,0px));width:40px;height:40px;border-radius:50%;border:0;align-items:center;justify-content:center;
+  background:rgba(20,12,8,.85);color:#f2d27a;box-shadow:inset 0 0 0 1.5px rgba(242,210,122,.55),0 4px 12px rgba(0,0,0,.5)}
+body:has(#shopSheet:not([hidden])) #shopX{display:flex}
+html body #shopSheet>.sheet>.head{padding-left:50px!important}`;document.head.appendChild(st)})();
+
+</script><script>
+// ===================== Round 101: new effects — fire ring, halo, soft glow, war pack (missiles, tank shell, machine gun), card flip slam; a real inferno; a richer meteor =====================
+(function(){
+if(typeof FXS==='undefined'||typeof FXB==='undefined'||typeof FXE==='undefined')return;
+const R=FXE.R,TAU=Math.PI*2,W=()=>innerWidth,Hh=()=>innerHeight;
+const SB=window.__SB,FS=window.__FXSND||{};
+const tone=(t,a,b,d,o)=>SND.tone(t,a,b,d,o||{}),hit=(t,o)=>SND.hit(t,o);
+
+// ---------- eat effects (also usable on the fire button) ----------
+// fire ring: a circle of flames that opens out from the cards
+FXS.firering=function(x,y,p){const n=18+p*10,r0=14,r1=60+p*38;FXB.core(x,y,'rgba(255,120,30,0.8)',p);
+  for(let k=0;k<n;k++){const a=k/n*TAU,sp=(r1-r0)/.45;FXE.add({type:'glow',x:x+Math.cos(a)*r0,y:y+Math.sin(a)*r0,col:CA(R(14,38),100,56,1),size:R(9,15)+p*2,size2:3,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,drag:.9,ay:-60,life:R(.55,.8)+p*.08,fade:1.1});
+    if(k%2===0)FXE.add({type:'glow',x:x+Math.cos(a)*r0,y:y+Math.sin(a)*r0,col:CA(R(30,45),100,62,1),size:R(4,7),vx:Math.cos(a)*sp*.8,vy:Math.sin(a)*sp*.8-R(40,120),ay:-180,drag:.93,life:R(.7,1.1),delay:.08,fade:1})}
+  FXE.add({type:'ring',x,y,col:'rgba(255,160,60,0.95)',size:r0,size2:r1+10,w:8+p*2,life:.55+p*.08,fade:1});
+  FXB.embers(x,y,6+p*8,220+p*70);if(p===3){FXE.flash('rgba(255,120,30,0.3)',1,.3);FXE.shake(8,380);setTimeout(()=>FXS.firering(x,y,2),180)}};
+// halo: wide rings packed close together, like ripples of light
+FXS.halo=function(x,y,p){const n=3+p,base=50+p*30;FXB.core(x,y,'rgba(255,225,150,0.85)',p);
+  for(let k=0;k<n;k++)FXE.add({type:'ring',x,y,col:k%2?'rgba(255,240,200,0.9)':'rgba(255,200,110,0.9)',size:8+k*5,size2:base+k*12,w:12+p*3,life:.6+k*.05+p*.08,delay:k*.045,fade:.9});
+  for(let k=0;k<8*p;k++)FXE.add({type:'glow',x:x+R(-50,50),y:y+R(-40,40),col:'rgba(255,240,200,1)',size:R(1.5,3),life:R(.5,1),delay:R(.1,.4)});
+  if(p===3)FXE.flash('rgba(255,220,140,0.25)',1,.35)};
+// soft glow: just a warm bloom
+FXS.glow=function(x,y,p){FXE.add({type:'glow',x,y,col:'rgba(255,215,140,0.85)',size:30,size2:90+p*45,life:.6+p*.12,fade:1.4});FXE.add({type:'glow',x,y,col:'rgba(255,255,255,0.7)',size:14,size2:40+p*15,life:.35+p*.08,fade:1.2});
+  FXE.add({type:'ring',x,y,col:'rgba(255,230,180,0.5)',size:20,size2:70+p*40,w:3,life:.55+p*.1,fade:1})};
+
+// ---------- the inferno, made into real hellfire (much stronger than the free blaze) ----------
+FXS.inferno=function(x,y,p){if(p<3){FXS.firering(x,y,p);FXB.flames(x,y,10+p*8,24,40);return}
+  FXE.flash('rgba(160,0,0,0.55)',1,.25);setTimeout(()=>FXE.flash('rgba(255,70,0,0.5)',1,.45),120);FXE.shake(20,900);
+  // the ground cracks open
+  for(let k=0;k<10;k++){const a=R(0,TAU),len=R(60,150);for(let s=0;s<9;s++){const f=s/9;FXE.add({type:'glow',x:x+Math.cos(a)*len*f+R(-4,4),y:y+Math.sin(a)*len*f*.6+R(-3,3),col:'rgba(255,90,10,1)',size:R(3,6),life:1.6,delay:f*.25,fade:2})}}
+  FXE.decal(x,y,170,'rgba(40,0,0,0.75)',3.6);
+  // a wall of fire around the pile
+  for(let k=0;k<40;k++){const a=k/40*TAU,r=95;FXE.add({type:'glow',x:x+Math.cos(a)*r,y:y+Math.sin(a)*r*.6,col:CA(R(0,25),100,50,1),size:R(16,26),size2:4,vy:R(-300,-160),ay:-120,drag:.96,life:R(.7,1.2),delay:R(0,.5),fade:1.1})}
+  // pillars of flame that keep rising
+  for(let w=0;w<4;w++)setTimeout(()=>{for(let k=0;k<26;k++)FXE.add({type:'glow',x:x+R(-36,36),y:y+R(-6,10),col:CA(R(0,30),100,R(45,58),1),size:R(16,30),size2:4,vx:R(-30,30),vy:R(-640,-320),ay:-60,drag:.97,life:R(.6,1.05),fade:1.15})},w*140);
+  for(let k=0;k<60;k++){const a=R(0,TAU),v=R(260,760);FXE.add({type:'spark',x,y,col:CA(R(5,35),100,60,1),size:R(1.6,3.4),vx:Math.cos(a)*v,vy:Math.sin(a)*v-200,ay:700,drag:.95,life:R(.6,1.3),trail:.05})}
+  FXB.embers(x,y,90,640);FXE.add({type:'ring',x,y,col:'rgba(255,60,0,1)',size:20,size2:280,w:14,life:.7,fade:1});setTimeout(()=>FXE.add({type:'ring',x,y,col:'rgba(140,0,0,1)',size:20,size2:220,w:20,life:.8,fade:1}),160);
+  setTimeout(()=>FXB.smoke(x,y-40,16,60,'rgba(25,8,6,0.6)'),500)};
+FS.inferno=function(t,k){if(!SB)return;SB.whoosh(t,k*1.2,.35,120,1600);SB.boom(t+.08,k*1.6);SB.boom(t+.3,k*1.1);SB.rumble(t+.1,k*1.3,2.6);SB.fire(t+.1,k*1.5,2.4);SB.crackle(t+.15,k*1.2,60,2,2000);tone(t+.1,48,24,2,{gain:.9*k})};
+
+// ---------- the meteor: a burning rock with a long tail, a crater and flying stones ----------
+const ROCK='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M3 8l5-5 7 1 3 6-3 7-8 1-4-5z" fill="#4a3426"/><path d="M8 3l7 1 3 6-6-2z" fill="#6b4c36"/></svg>';
+FXS.meteor=function(x,y,p){const T=p===3?.5:.34,sx=x+R(160,260)*(Math.random()<.5?-1:1),sy=y-Math.max(380,Hh()*.6);
+  for(let k=0;k<40;k++){const f=k/40;FXE.add({type:'glow',x:sx+(x-sx)*f,y:sy+(y-sy)*f,col:CA(15+f*25,100,55+f*10,1),size:(p===3?26:16)*(1-f*.35),size2:2,life:.45,delay:T*f,fade:1});
+    if(k%3===0)FXE.add({type:'spark',x:sx+(x-sx)*f,y:sy+(y-sy)*f,col:'rgba(255,200,120,1)',size:2,vx:R(-80,80),vy:R(-60,40),ay:300,life:.5,delay:T*f})}
+  FXE.add({type:'glow',x:sx,y:sy,col:'rgba(255,230,160,1)',size:p===3?40:24,vx:(x-sx)/T,vy:(y-sy)/T,life:T,drag:1,fade:.01});
+  setTimeout(()=>{FXE.flash('rgba(255,180,90,'+(p===3?.6:.3)+')',1,.4);FXE.shake(p===3?22:10,p===3?900:420);FXS.fire(x,y,p);
+    FXE.add({type:'ring',x,y,col:'rgba(255,240,210,1)',size:10,size2:p===3?320:160,w:p===3?18:10,life:.6,fade:1});FXB.dust(x,y,p===3?30:12);
+    FXB.sprites(x,y,ROCK,p===3?18:6,16,p===3?620:380,900);FXE.decal(x,y,p===3?160:100,'rgba(15,5,0,0.7)',3.4);if(p===3)setTimeout(()=>FXB.smoke(x,y-30,14,56,'rgba(40,25,18,0.6)'),300)},T*1000);
+  if(p===3)[160,300].forEach(d=>setTimeout(()=>{const ox=x+R(-200,200),oy=y+R(-60,60),ax=ox+R(-200,200),ay=oy-460;for(let k=0;k<18;k++){const f=k/18;FXE.add({type:'glow',x:ax+(ox-ax)*f,y:ay+(oy-ay)*f,col:'rgba(255,160,70,1)',size:12*(1-f*.4),size2:2,life:.3,delay:.3*f,fade:1})}
+    setTimeout(()=>{FXB.ring(ox,oy,'rgba(255,200,120,1)',2,1);FXB.sparks(ox,oy,'rgba(255,190,100,1)',16,380)},300)},d+T*1000))};
+FS.meteor=function(t,k){if(!SB)return;SB.whoosh(t,k*1.3,.5,140,3200);tone(t,900,180,.5,{gain:.14*k,type:'sawtooth'});SB.boom(t+.48,k*1.7);SB.rumble(t+.5,k*1.3,2.4);SB.crackle(t+.55,k,34,1.2,2000);SB.boom(t+.8,k*.6);SB.boom(t+.95,k*.5)};
+
+// ---------- war pack ----------
+// missiles: three rockets with smoke trails, one after the other
+function rocket(x,y,from,delay,big){setTimeout(()=>{const sx=from==null?x+R(-1,1)*W()*.45:from,sy=-40,T=.42;
+  for(let k=0;k<30;k++){const f=k/30;FXE.add({type:'smoke',add:false,x:sx+(x-sx)*f,y:sy+(y-sy)*f,col:'rgba(200,200,205,0.55)',size:4,size2:R(14,22),life:R(.9,1.4),delay:T*f,fade:1,vx:R(-10,10),vy:R(-10,10)});
+    FXE.add({type:'glow',x:sx+(x-sx)*f,y:sy+(y-sy)*f,col:'rgba(255,190,90,1)',size:7,size2:1,life:.15,delay:T*f})}
+  setTimeout(()=>{FXE.flash('rgba(255,170,80,0.35)',1,.25);FXE.shake(big?16:9,500);FXS.fire(x+R(-20,20),y+R(-10,10),big?3:2);FXE.add({type:'ring',x,y,col:'rgba(255,230,190,1)',size:10,size2:big?220:150,w:10,life:.5,fade:1});FXB.dust(x,y,10);FXE.decal(x,y,90,'rgba(15,10,5,0.6)',2.6)},T*1000)},delay)}
+FXS.missile=function(x,y,p){if(p<3){rocket(x,y,null,0,false);return}[0,260,520].forEach((d,i)=>rocket(x+(i-1)*R(20,50),y+R(-20,20),null,d,i===2))};
+FS.missile=function(t,k){if(!SB)return;const n=k>=1?3:1;for(let i=0;i<n;i++){const s=t+i*.26;SB.whoosh(s,k*.9,.4,300,2600);tone(s,1900,600,.42,{gain:.1*k,type:'triangle'});SB.boom(s+.42,k*(i===n-1?1.5:1.1));SB.crackle(s+.45,k*.8,14,.6,2200)}if(n===3)SB.rumble(t+1,k,2)};
+// tank shell: muzzle flash from the side, a fast shell, a big blast with flying debris
+FXS.tank=function(x,y,p){const left=Math.random()<.5,mx=left?-20:W()+20,my=y-R(20,60),T=.22;
+  FXE.add({type:'glow',x:left?10:W()-10,y:my,col:'rgba(255,220,140,1)',size:60,size2:10,life:.25});FXB.smoke(left?20:W()-20,my,6,40,'rgba(150,150,150,0.5)');
+  FXE.add({type:'glow',x:mx,y:my,col:'rgba(255,240,200,1)',size:9,vx:(x-mx)/T,vy:(y-my)/T,life:T,drag:1,fade:.01});
+  for(let k=0;k<14;k++){const f=k/14;FXE.add({type:'spark',x:mx+(x-mx)*f,y:my+(y-my)*f,col:'rgba(255,230,170,1)',size:3,vx:(x-mx)/T*.02,vy:0,life:.18,delay:T*f})}
+  setTimeout(()=>{FXE.flash('rgba(255,200,120,'+(p===3?.6:.35)+')',1,.35);FXE.shake(p===3?24:12,p===3?950:500);FXS.fire(x,y,3);
+    FXE.add({type:'ring',x,y,col:'rgba(255,255,230,1)',size:10,size2:p===3?340:180,w:16,life:.55,fade:1});FXB.sprites(x,y,ROCK,p===3?22:10,14,700,1100);FXB.dust(x,y,p===3?32:14);
+    FXE.decal(x,y,p===3?170:110,'rgba(10,8,5,0.75)',3.4);if(p===3){setTimeout(()=>FXB.smoke(x,y-40,18,64,'rgba(45,40,38,0.6)'),250);setTimeout(()=>FXB.embers(x,y,60,480),120)}},T*1000)};
+FS.tank=function(t,k){if(!SB)return;SB.boom(t,k*1.4);SB.crack(t,k*1.1);tone(t,90,40,.5,{gain:.8*k});SB.whoosh(t+.03,k*.6,.2,800,3000);SB.boom(t+.22,k*1.9);SB.crack(t+.22,k*.9);SB.rumble(t+.24,k*1.5,2.8);SB.crackle(t+.3,k,40,1.4,1800)};
+// machine gun: tracers rattle into the pile, sparks and shells everywhere
+FXS.gunfire=function(x,y,p){const n=p===3?16:6,left=Math.random()<.5,gx=left?-10:W()+10,gy=y-R(40,90);
+  for(let i=0;i<n;i++)setTimeout(()=>{const tx=x+R(-40,40),ty=y+R(-30,30),T=.08;FXE.add({type:'spark',x:gx,y:gy+R(-6,6),col:'rgba(255,230,150,1)',size:3,vx:(tx-gx)/T,vy:(ty-gy)/T,life:T,drag:1,trail:.025});
+    setTimeout(()=>{FXB.sparks(tx,ty,'rgba(255,210,120,1)',6,300,900);FXE.add({type:'glow',x:tx,y:ty,col:'rgba(255,220,150,1)',size:16,size2:2,life:.12});FXE.decal(tx,ty,10,'rgba(20,15,10,0.7)',2.5)},T*1000);
+    FXE.add({type:'glow',x:left?14:W()-14,y:gy,col:'rgba(255,240,180,1)',size:22,size2:4,life:.06})},i*70);
+  if(p===3)setTimeout(()=>{FXE.shake(10,420);FXB.dust(x,y,10);FXB.ring(x,y,'rgba(255,220,170,1)',3,2)},n*70+80)};
+FS.gunfire=function(t,k){if(!SB)return;const n=k>=1?16:6;for(let i=0;i<n;i++){const s=t+i*.07;SB.crack(s,k*.7);hit(s,{type:'lowpass',f:220,gain:.9*k,decay:.07});if(i%3===0&&SB.metal)SB.metal(s+.15,k*.25,R(5200,7000))}if(k>=1)SB.boom(t+n*.07+.08,k*.9)};
+// card flip: the card jumps up, spins and slams down hard
+FXS.flip=function(x,y,p){const cards=[...document.querySelectorAll('#ground>.card,.drawrow .stack .card,.card')].filter(e=>{const r=e.getBoundingClientRect();return r.width&&x>=r.left-4&&x<=r.right+4&&y>=r.top-4&&y<=r.bottom+4});
+  const el=cards.pop();const done=()=>{FXE.flash('rgba(255,255,255,'+(p===3?.35:.18)+')',1,.2);FXE.shake(p===3?20:9,p===3?700:380);for(let k=0;k<(p===3?3:2);k++)FXE.add({type:'ring',x,y,col:k%2?'rgba(255,240,210,0.95)':'rgba(255,255,255,1)',size:16+k*6,size2:(p===3?280:150)+k*28,w:(p===3?30:20)-k*5,life:.55+k*.08,delay:k*.06,fade:.9});FXB.dust(x,y,p===3?22:10);FXB.sparks(x,y,'rgba(255,245,220,1)',p===3?30:12,520,1000)};
+  if(!el||!el.animate){done();return}const r=el.getBoundingClientRect(),c=el.cloneNode(true);c.classList.remove('peek','sel','eating');
+  Object.assign(c.style,{position:'fixed',left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px',margin:'0',zIndex:60,pointerEvents:'none',transformStyle:'preserve-3d'});document.body.appendChild(c);el.style.visibility='hidden';
+  const up=p===3?120:70;const a=c.animate([{transform:'translateY(0) scale(1) rotateY(0) rotateZ(0)',offset:0},{transform:`translateY(${-up}px) scale(${p===3?1.45:1.25}) rotateY(360deg) rotateZ(-8deg)`,offset:.45},{transform:`translateY(${-up*.85}px) scale(${p===3?1.5:1.28}) rotateY(720deg) rotateZ(6deg)`,offset:.7,easing:'cubic-bezier(.6,0,1,1)'},{transform:'translateY(0) scale(1) rotateY(720deg) rotateZ(0)',offset:1}],{duration:p===3?900:620});
+  const fin=()=>{try{c.remove()}catch(e){}el.style.visibility=''};a.onfinish=()=>{done();fin()};setTimeout(fin,1400)};
+FS.flip=function(t,k){if(!SB)return;const d=k>=1?.9:.62;SB.whoosh(t,k*.5,.35,300,1800);for(let i=0;i<6;i++)hit(t+.08+i*d*.08,{f:2600+i*200,q:3,gain:.12*k,decay:.03});
+  SND.slap&&setTimeout(()=>{try{SND.slap(3);SND.slap(3)}catch(e){}},d*1000-10);SB.boom(t+d,k*1.3);SB.crack(t+d,k*1.3)};
+
+// short sounds for the light effects
+FS.firering=function(t,k){if(!SB)return;SB.whoosh(t,k*.8,.3,200,1400);SB.fire(t+.05,k,1);SB.crackle(t+.05,k*.7,14,.6)};
+FS.halo=function(t,k){[523.25,659.25,783.99,1046.5].forEach((f,i)=>tone(t+i*.04,f,f,.9,{gain:.07*k}));SB&&SB.shimmer(t,k*.5,1.2)};
+FS.glow=function(t,k){tone(t,659.25,659.25,.7,{gain:.08*k});tone(t+.05,987.77,987.77,.6,{gain:.05*k})};
+
+// ---------- into the shop ----------
+const NEWE=[['firering','Fire ring','حلقة نار',2500,2],['halo','Halo','وهج الحلقات',1500,1],['glow','Soft glow','وهج',800,0]];
+const NEWS=[['firering','Fire ring','حلقة نار',4000,2],['halo','Halo','وهج الحلقات',2500,1],['glow','Soft glow','وهج',1500,0],['missile','Missiles','صواريخ',8000,4],['tank','Tank shell','قذيفة دبابة',9000,4],['flip','Card flip slam','قلبة الورقة',6000,3]];
+NEWE.forEach(([id,en,ar,cost,tier])=>{if(!EFX.some(x=>x.id===id))EFX.push({id,en,ar,cost,tier})});
+if(typeof SFX!=='undefined')NEWS.forEach(([id,en,ar,cost,tier])=>{if(!SFX.some(x=>x.id===id))SFX.push({id,en,ar,cost,tier})});
+try{const fi=fxIcon;fxIcon=function(id){const m={firering:'⭕',halo:'🌟',glow:'✨',missile:'🚀',tank:'💣',gunfire:'🔫',flip:'🃏'};return m[id]?`<b>${m[id]}</b>`:fi(id)}}catch(e){}
+})();
+
+// ===================== Round 103: cleaner, richer effect sounds (no more buzzy low sweeps) =====================
+(function(){
+if(typeof SND==='undefined')return;const SB=window.__SB,FS=window.__FXSND;if(!SB||!FS)return;
+const R=(a,b)=>a+Math.random()*(b-a);
+// 1) any long falling low tone (it sounded like a buzz on phone speakers) becomes a short, round sub thump
+const _tone=SND.tone.bind(SND);SND.tone=function(t,f0,f1,dur,o){o=o||{};if(f0<=170&&f1<f0&&dur>.2&&(!o.type||o.type==='sine'||o.type==='triangle')){f1=Math.max(f1,f0*.78);dur=Math.min(dur,.32);o=Object.assign({},o,{type:'sine',gain:(o.gain||.5)*.85})}return _tone(t,f0,f1,dur,o)};
+const T=(t,a,b,d,o)=>SND.tone(t,a,b,d,o||{}),H=(t,o)=>SND.hit(t,o);
+// 2) a cinematic impact: transient click, tight body, round sub, air
+SB.boom=function(t,k=1){H(t,{type:'highpass',f:3000,gain:.3*k,decay:.025});H(t,{f:180,q:.9,gain:.9*k,attack:.002,decay:.22});H(t,{type:'lowpass',f:110,q:.7,gain:1.1*k,attack:.004,decay:.55});
+  T(t,62,50,.3,{gain:.9*k});H(t+.01,{f:900,q:.6,gain:.25*k,decay:.12})};
+SB.rumble=function(t,k=1,d=1.6){H(t,{type:'lowpass',f:160,q:.5,gain:.8*k,attack:.08,decay:d})};
+// bell partials (a real cash-register / coin ring, not a beep)
+const bell=(t,f,g,d=.9)=>[[1,1],[2.76,.45],[5.4,.22],[8.9,.1]].forEach(([m,a])=>T(t,f*m,f*m*.999,d*(1-Math.log(m)*.18),{gain:g*a}));
+const coin=(t,g)=>{const f=R(2600,4200);T(t,f,f*.997,.16,{gain:g});T(t,f*1.48,f*1.47,.1,{gain:g*.5})};
+// money: soft thump, a bright two-note register bell, then a cascade of real coin pings
+FS.money=function(t,k){H(t,{type:'lowpass',f:200,gain:.6*k,decay:.25});bell(t+.02,1046.5,.16*k,1.1);bell(t+.14,1318.5,.15*k,1.3);
+  for(let i=0;i<10;i++)coin(t+.22+i*R(.05,.09),.07*k*(1-i*.06));H(t+.2,{type:'highpass',f:7000,gain:.06*k,attack:.05,decay:.5})};
+window.fxSound=(function(prev){return function(id,p){if(id==='money'){try{if(SND.ok())FS.money(SND.ctx.currentTime+.01,p===3?1:p===2?.75:.5)}catch(e){}return}return prev(id,p)}})(window.fxSound);
+try{fxSound=window.fxSound}catch(e){}
+// machine gun: each shot is a crack + punch + a little room, then brass shells tinkling on the floor
+const shot=(t,k)=>{H(t,{type:'highpass',f:1800,gain:.55*k,decay:.03});H(t,{f:520,q:.8,gain:.7*k,attack:.001,decay:.07});H(t,{type:'lowpass',f:160,gain:.6*k,decay:.09});T(t,95,78,.07,{gain:.5*k});H(t+.02,{f:1200,q:.5,gain:.12*k,decay:.18})};
+FS.gunfire=function(t,k){const n=k>=1?16:6;for(let i=0;i<n;i++)shot(t+i*.068+R(0,.008),k*(.85+Math.random()*.15));
+  for(let i=0;i<Math.min(8,n);i++)coin(t+.25+i*R(.07,.13),.035*k);if(k>=1)SB.boom(t+n*.068+.06,k*.8)};
+// missile: a real whistle (narrow filtered air that falls), then the blast
+const whistle=(t,k,d,f0,f1)=>{H(t,{f:f0,f2:f1,q:14,gain:.5*k,attack:d*.9,decay:d*.15});H(t,{f:f0*.5,f2:f1*.5,q:2,gain:.15*k,attack:d*.8,decay:d*.2})};
+FS.missile=function(t,k){const n=k>=1?3:1;for(let i=0;i<n;i++){const s=t+i*.26;whistle(s,k*.8,.42,3200,900);SB.boom(s+.42,k*(i===n-1?1.4:1.05));SB.crackle(s+.45,k*.6,10,.5,2400)}if(n===3)SB.rumble(t+1,k*.8,1.6)};
+FS.tank=function(t,k){SB.boom(t,k*1.3);H(t,{type:'highpass',f:2000,gain:.7*k,decay:.06});whistle(t+.03,k*.5,.2,2600,1600);SB.boom(t+.22,k*1.7);H(t+.22,{type:'highpass',f:2500,gain:.5*k,decay:.1});SB.rumble(t+.24,k*1.2,2.2);SB.crackle(t+.3,k*.8,30,1.2,1800)};
+FS.meteor=function(t,k){H(t,{f:400,f2:2600,q:.7,gain:.6*k,attack:.45,decay:.12});whistle(t,k*.5,.48,1800,500);SB.boom(t+.48,k*1.6);SB.rumble(t+.5,k*1.1,2);SB.crackle(t+.55,k*.8,30,1.1,2000);SB.boom(t+.8,k*.5)};
+FS.flip=function(t,k){const d=k>=1?.9:.62;H(t,{f:500,f2:2200,q:.6,gain:.35*k,attack:.3,decay:.1});for(let i=0;i<6;i++)H(t+.1+i*d*.08,{f:2600+i*180,q:3,gain:.1*k,decay:.03});
+  setTimeout(()=>{try{SND.slap&&SND.slap(3)}catch(e){}},d*1000-10);SB.boom(t+d,k*1.25);H(t+d,{type:'highpass',f:2200,gain:.8*k,decay:.07});H(t+d,{f:1400,q:.8,gain:.6*k,decay:.12})};
+FS.inferno=function(t,k){H(t,{f:300,f2:1800,q:.6,gain:.6*k,attack:.3,decay:.15});SB.boom(t+.08,k*1.5);SB.boom(t+.3,k*1.0);SB.rumble(t+.1,k*1.1,2.2);SB.fire(t+.1,k*1.4,2.2);SB.crackle(t+.15,k*1.1,55,2,2000)};
+FS.firering=function(t,k){H(t,{f:300,f2:1400,q:.6,gain:.45*k,attack:.25,decay:.12});SB.fire(t+.05,k,1);SB.crackle(t+.05,k*.7,14,.6)};
+FS.halo=function(t,k){[523.25,659.25,783.99,1046.5].forEach((f,i)=>bell(t+i*.05,f,.045*k,1.2));SB.shimmer(t,k*.4,1.2)};
+FS.glow=function(t,k){bell(t,659.25,.06*k,1);bell(t+.06,987.77,.04*k,.9)};
+})();
+
+// ===================== Round 104: real-sounding coins, harp and glass for the soft effects, a rose with its own sound =====================
+(function(){
+if(typeof SND==='undefined')return;const SB=window.__SB,FS=window.__FXSND;if(!SB||!FS)return;
+const R=(a,b)=>a+Math.random()*(b-a),T=(t,a,b,d,o)=>SND.tone(t,a,b,d,o||{}),H=(t,o)=>SND.hit(t,o);
+// a coin: a tiny click and five inharmonic metal modes that die away at different speeds
+const MODES=[[1,1,.42],[2.32,.55,.3],[4.25,.4,.2],[6.63,.26,.13],[9.38,.16,.08]];
+function coin(t,g,f){f=f||R(2200,3400);H(t,{type:'highpass',f:6500,gain:g*1.4,decay:.006});MODES.forEach(([m,a,d])=>T(t,f*m*R(.997,1.003),f*m,d,{gain:g*a}))}
+// one coin dropped on a hard floor: quicker and quicker bounces, softer each time
+function drop(t,g,f){let d=.13,k=1;for(let i=0;i<7;i++){coin(t,g*k,f);t+=d;d*=.72;k*=.72}}
+// a harp / qanun glissando
+function harp(t,notes,g,step=.055){notes.forEach((f,i)=>{try{SND.pluck(t+i*step,f,g*(1-i*.05))}catch(e){}})}
+// glass bells (long, pure, a little shimmer)
+function glass(t,f,g,d=1.6){[[1,1],[2.01,.35],[3.03,.15],[4.2,.08]].forEach(([m,a])=>T(t,f*m,f*m*1.0005,d*(1-m*.12),{gain:g*a}))}
+// money: the bright register bell at the start (kept), then two coins dropping on the floor
+FS.money=function(t,k){H(t,{type:'lowpass',f:200,gain:.55*k,decay:.22});H(t,{f:1200,q:.7,gain:.25*k,decay:.05});
+  [[2093,0],[2637,.11]].forEach(([f,d])=>glass(t+d,f,.12*k,1.1));
+  drop(t+.32,.11*k,R(2600,3000));drop(t+.47,.08*k,R(2100,2400));H(t+.3,{type:'highpass',f:8000,gain:.04*k,attack:.1,decay:.6})};
+FS.petals=function(t,k){harp(t,[587.33,739.99,880,1174.66,1479.98],.22*k,.07);glass(t+.32,1760,.035*k,1.4)};
+FS.butterflies=function(t,k){for(let i=0;i<10;i++)H(t+i*.032,{f:R(900,1500),q:.8,gain:.05*k,attack:.008,decay:.03});harp(t+.05,[880,1108.73,1318.51,1760,2217.46],.18*k,.05);SB.shimmer(t+.2,k*.35,1.1)};
+FS.diamonds=function(t,k){[2093,2637,3136,4186].forEach((f,i)=>glass(t+i*.07,f,.07*k,1.8));SB.shimmer(t,k*.5,1.6);H(t,{type:'highpass',f:9000,gain:.08*k,attack:.002,decay:.15})};
+// route the girls' effects through these (they had their own old beeps)
+window.fxSound=(function(prev){return function(id,p){if(['petals','butterflies','diamonds','money'].includes(id)){try{if(SND.ok())FS[id](SND.ctx.currentTime+.01,p===3?1:p===2?.75:.5)}catch(e){}return}return prev(id,p)}})(window.fxSound);
+try{fxSound=window.fxSound}catch(e){}
+// the rose gift: a soft harp rising, not the money bell
+if(typeof giftSound==='function'){const gs=giftSound;giftSound=function(id){if(id==='rose'||id==='bouquet'){try{if(SND.ok()){const t=SND.ctx.currentTime+.01;harp(t,[523.25,659.25,783.99,1046.5,1318.51],.2,.08);glass(t+.4,2093,.03,1.2)}}catch(e){}return}return gs.apply(this,arguments)}}
+})();
+
+// machine gun removed from the shop (players did not like it); anyone who had it gets the free blaze
+(function(){try{const k=SFX.findIndex(x=>x.id==='gunfire');if(k>=0)SFX.splice(k,1);if(typeof MYPROF!=='undefined'&&MYPROF.sfx==='gunfire'){MYPROF.sfx='blaze';try{saveProf()}catch(e){}}}catch(e){}})();
+
+</script><script>
+// ===================== Round 105: luxury sound kit (FM bells + a real room for the soft effects) and a second lounge track "سهرة" =====================
+(function(){
+if(typeof SND==='undefined')return;
+const R=(a,b)=>a+Math.random()*(b-a);
+// ---------- a lush stereo room just for the sparkle effects ----------
+let REV=null;
+function room(){const c=SND.ctx;if(REV&&REV.c===c)return REV.in;const len=Math.floor(c.sampleRate*2.6),ir=c.createBuffer(2,len,c.sampleRate);
+  for(let ch=0;ch<2;ch++){const d=ir.getChannelData(ch);for(let k=0;k<len;k++){const x=k/len;d[k]=(Math.random()*2-1)*Math.pow(1-x,2.6)*(x<.01?x*100:1)}}
+  const cv=c.createConvolver();cv.buffer=ir;const wet=c.createGain();wet.gain.value=.55;const inp=c.createGain();const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=7000;
+  inp.connect(lp).connect(cv).connect(wet).connect(SND.out());REV={c,in:inp};return inp}
+// ---------- FM bell: the rich, glassy, expensive bell sound ----------
+function bell(t,f,g,dur,ratio=3.5,index=2.2,wet=.5){const c=SND.ctx,car=c.createOscillator(),mod=c.createOscillator(),mg=c.createGain(),out=c.createGain();
+  car.frequency.value=f;mod.frequency.value=f*ratio;mg.gain.setValueAtTime(f*ratio*index,t);mg.gain.exponentialRampToValueAtTime(f*ratio*index*.04+.01,t+dur*.6);
+  out.gain.setValueAtTime(0,t);out.gain.linearRampToValueAtTime(g,t+.003);out.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  mod.connect(mg).connect(car.frequency);car.connect(out);out.connect(SND.out());if(wet){const s=c.createGain();s.gain.value=wet;out.connect(s).connect(room())}
+  car.start(t);mod.start(t);car.stop(t+dur+.05);mod.stop(t+dur+.05)}
+const air=(t,g,d,f0=2000,f1=6000)=>SND.hit(t,{f:f0,f2:f1,q:.6,gain:g,attack:d*.7,decay:d*.5});
+const N=n=>440*Math.pow(2,(n-69)/12); // midi to Hz
+const KIT={
+  // money: "ka" (the drawer) + "ching" (two bright bells) + coins landing
+  money(t,k){SND.hit(t,{f:2200,q:5,gain:.35*k,decay:.018});SND.hit(t,{type:'lowpass',f:240,gain:.4*k,decay:.12});
+    bell(t+.06,N(96),.16*k,1.6,2.4,3.2,.45);bell(t+.16,N(100),.14*k,1.9,2.4,3,.5);
+    let tt=t+.42,d=.12,a=1;for(let i=0;i<6;i++){bell(tt,R(2500,3100),.05*k*a,.25,2.76,2.5,.25);tt+=d;d*=.72;a*=.75}},
+  // rose petals: a soft falling celesta line
+  petals(t,k){[84,81,79,76,74,72].forEach((n,i)=>bell(t+i*.09,N(n),.07*k,1.6,1,1.1,.6));air(t,.05*k,.9,1500,4000)},
+  // butterflies: quick light flutters, high and airy
+  butterflies(t,k){for(let i=0;i<9;i++)bell(t+i*.045+R(0,.01),N([88,91,93,96,98][i%5]),.065*k,.45,7,.8,.6);air(t,.06*k,.7,3000,9000);bell(t+.45,N(91),.05*k,1.5,3.5,1.5,.7)},
+  // diamonds: crystal bells, bright and long
+  diamonds(t,k){[91,95,98,103].forEach((n,i)=>bell(t+i*.08,N(n),.06*k,2.2,3.5,2.8,.7));SND.hit(t,{type:'highpass',f:9000,gain:.06*k,attack:.002,decay:.12})},
+  // halo: a rising major-nine shimmer
+  halo(t,k){[72,76,79,83,86].forEach((n,i)=>bell(t+i*.06,N(n),.06*k,2,3.5,1.4,.7));air(t,.05*k,1.2)},
+  // soft glow: one warm bloom
+  glow(t,k){bell(t,N(76),.12*k,2.2,1,.9,.7);bell(t+.04,N(83),.085*k,2,1,.8,.7);air(t,.04*k,1,1200,3500)}};
+// the players prefer the same hit as the other effects: a clean impact for all the soft ones
+const SBk=window.__SB,FSb=window.__FXSND||{},BLZ=FSb.blaze;const hitOnly=(t,k)=>{const g=Math.max(.6,k);SND.hit(t,{type:'highpass',f:4200,gain:.32*g,decay:.008});SND.hit(t,{f:2300,q:1.1,gain:.32*g,decay:.03});SND.hit(t+.002,{f:1050,q:1.3,gain:.36*g,decay:.055});SND.hit(t+.004,{type:'lowpass',f:380,gain:.5*g,decay:.11})}; // like the gold glow (just the card slap), a little louder
+['money','petals','butterflies','diamonds','halo','glow'].forEach(id=>KIT[id]=hitOnly);
+const FS=window.__FXSND||{};Object.keys(KIT).forEach(id=>FS[id]=KIT[id]);
+window.fxSound=(function(prev){return function(id,p){if(KIT[id]){try{if(SND.ok())KIT[id](SND.ctx.currentTime+.01,p===3?1:p===2?.75:.5)}catch(e){}return}return prev(id,p)}})(window.fxSound);
+try{fxSound=window.fxSound}catch(e){}
+// the rose gift: the petals bells
+if(typeof giftSound==='function'){const gs=giftSound;giftSound=function(id){if(id==='rose'||id==='bouquet'){try{if(SND.ok())KIT.petals(SND.ctx.currentTime+.01,.9)}catch(e){}return}return gs.apply(this,arguments)}}
+
+// ---------- music: only the first track (the second one was removed) ----------
+try{localStorage.removeItem('eb-track')}catch(e){}if(typeof MUSIC!=='undefined')MUSIC.track='lounge';
+})();
 
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1108.1421';
+const EB_VERSION='v1109.1056';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
