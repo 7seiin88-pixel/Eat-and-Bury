@@ -7653,7 +7653,7 @@ const LOOK={
   royal:{a:'#f6d77e',b:'#7b3fe4',core:'#fff3c4',kind:'comet'},
   money:{a:'#ffe27a',b:'#1f9d55',core:'#fffbe0',kind:'coin'},
   plain:{a:'#ffffff',b:'#c9d3e0',core:'#ffffff',kind:'comet'}};
-const look=id=>LOOK[id]||LOOK.plain;
+const look=id=>{if(LOOK[id])return LOOK[id];const x=window.__LOOKX&&window.__LOOKX[id];return x?{a:x.a,b:x.b,core:x.c,kind:x.k}:LOOK.plain};
 // where a player sits on screen
 function seatPt(i){const me=S&&S.players&&S.players[i]&&S.players[i].human&&!(typeof NET!=='undefined'&&NET.on&&i!==0);
   const el=document.querySelector(`.seat[data-seat="${i}"] .avatar`)||document.querySelector(`.seat[data-seat="${i}"]`);
@@ -10230,8 +10230,8 @@ function show(W,gain){try{if(!S||!S.players||!S.players[W])return;const now=Date
 const on=()=>typeof NET!=='undefined'&&NET.on;
 declareEat=(function(p){return function(){if(!on())cuts=0;return p.apply(this,arguments)}})(declareEat);
 intercept=(function(p){return function(){if(!on())cuts++;return p.apply(this,arguments)}})(intercept);
-resolveWar=(function(p){return function(){const w=S&&S.war,W=w?w.leader:null,g=w?sum([...w.targets,...w.pot]):0,c=cuts;const r=p.apply(this,arguments);if(!on()&&W!=null&&c>=5)setTimeout(()=>show(W,g),450);cuts=0;return r}})(resolveWar);
-if(typeof playFx==='function')playFx=(function(p){return function(e){try{if(e&&on()){if(e.t==='eat')cuts=0;else if(e.t==='cut')cuts++;else if(e.t==='win'){const c=cuts;cuts=0;if(c>=5)setTimeout(()=>show(e.s,e.gain||0),450)}}}catch(_){}return p.apply(this,arguments)}})(playFx);
+resolveWar=(function(p){return function(){const w=S&&S.war,W=w?w.leader:null,g=w?sum([...w.targets,...w.pot]):0,c=cuts;const r=p.apply(this,arguments);if(!on()&&W!=null&&c>=4)setTimeout(()=>show(W,g),450);cuts=0;return r}})(resolveWar);
+if(typeof playFx==='function')playFx=(function(p){return function(e){try{if(e&&on()){if(e.t==='eat')cuts=0;else if(e.t==='cut')cuts++;else if(e.t==='win'){const c=cuts;cuts=0;if(c>=4)setTimeout(()=>show(e.s,e.gain||0),450)}}}catch(_){}return p.apply(this,arguments)}})(playFx);
 const st=document.createElement('style');st.textContent=`
 .warwin104{position:fixed;left:50%;top:44%;z-index:70;transform:translate(-50%,-50%);display:flex;align-items:center;gap:12px;padding:10px 18px 10px 14px;border-radius:18px;pointer-events:none;white-space:nowrap;
   background:linear-gradient(180deg,rgba(34,20,15,.97),rgba(14,8,5,.97));color:#f4ead6;box-shadow:0 0 0 2px #f2d27a,0 0 34px rgba(242,190,100,.55),0 14px 30px rgba(0,0,0,.6);animation:ww104 .42s cubic-bezier(.2,1.4,.4,1) both}
@@ -10522,10 +10522,24 @@ if(typeof renderShop==='function')renderShop=(function(p){return function(){cons
   const lab=document.createElement('div');lab.className='label';lab.style.marginTop='14px';lab.textContent=L('Hit counter (the number on every cut)','عدّاد الضربات (الرقم اللي يطلع مع كل قطعة)');const g=document.createElement('div');g.className='hngrid';
   g.innerHTML=HITNUMS.map(h=>{const own=h.cost===0||WAL.owned.includes('hit-'+h.id),on=c===h.id;return `<button type="button" class="hnit ${on?'sel':''}" data-hit="${h.id}"><span class="hnd"><span style="font-size:${(PV[h.id]||h.pv||[44,54])[0]}px;line-height:1">${h.html(3)}</span><span style="font-size:${(PV[h.id]||h.pv||[44,54])[1]}px;line-height:1">${h.html(5)}</span></span><b class="nm">${L(h.en,h.ar)}</b>${on?`<small class="own">${L('In use','مستخدم')}</small>`:own?`<small class="own">${L('Use','استخدم')}</small>`:`<small><i class="cn"></i>${h.cost.toLocaleString('en')}</small>`}</button>`}).join('');
   ef.appendChild(lab);ef.appendChild(g)}catch(e){}return r}})(renderShop);
-window.addEventListener('click',async e=>{const t=e.target.closest('#shop [data-hit]');if(!t)return;e.stopImmediatePropagation();const h=HITNUMS.find(x=>x.id===t.dataset.hit);if(!h)return;
-  if(!(h.cost===0||WAL.owned.includes('hit-'+h.id))){if((WAL.tokens||0)<h.cost){toast(L('Not enough rupees','ما عندك روبيات كافية'));return}
-    if(!await ebAsk(L(`Buy the ${h.en} counter for ${h.cost.toLocaleString('en')} rupees?`,`تشتري عدّاد "${h.ar}" بـ ${h.cost.toLocaleString('en')} روبية؟`),L('Buy','اشترِ'),L('No','لا')))return;WAL.tokens-=h.cost;WAL.owned.push('hit-'+h.id)}
-  WAL.hit=h.id;saveWal();renderShop()},true);
+// tapping a counter shows it on the preview card first (2, 3, 4, 5, 6 like a real war); owned ones are switched on, the others get a buy bar
+let hnRun=0;
+function hnDemo(h){const box=document.getElementById('efDemo');if(!box)return;const my=++hnRun;try{box.scrollIntoView({block:'nearest'})}catch(e){}
+  document.querySelectorAll('.hnpop').forEach(x=>x.remove());const cd=box.querySelector('.efcard');
+  [2,3,4,5,6].forEach((n,k)=>setTimeout(()=>{if(my!==hnRun||!document.getElementById('efDemo')||document.getElementById('shop').hidden)return;const r=box.getBoundingClientRect();if(!r.width)return;
+    document.querySelectorAll('.hnpop').forEach(x=>x.remove());const d=document.createElement('div');d.className='hnpop';d.style.zIndex=10050;d.style.left=(r.left+r.width/2)+'px';d.style.top=(r.top+r.height*.3)+'px';
+    d.style.fontSize=Math.round(Math.min(h.size(n),r.height*.5)*(h.id==='roman'?.7:1))+'px';d.innerHTML=h.html(n);document.body.appendChild(d);setTimeout(()=>d.remove(),k===4?1350:640);
+    try{cd&&cd.animate([{transform:'translate(-50%,-50%) scale(1.25) rotate(-14deg)'},{transform:'translate(-50%,-50%) scale(1) rotate(-6deg)'}],{duration:200,easing:'ease-out'});SND.ok()&&SND.slap&&SND.slap(2)}catch(e){}},k*600))}
+function hnBar(h){document.querySelectorAll('#shop .hnbar').forEach(x=>x.remove());if(!h)return;const box=document.getElementById('efDemo');if(!box)return;const bar=document.createElement('div');bar.className='efbar hnbar';
+  const poor=(WAL.tokens||0)<h.cost;bar.innerHTML=`<span>${L(h.en,h.ar)}</span><button type="button" data-hitbuy="${h.id}">${poor?L('Need ','ينقصك ')+(h.cost-(WAL.tokens||0)).toLocaleString('en'):L('Buy for ','اشترِ بـ ')+h.cost.toLocaleString('en')}</button>`;(document.getElementById('shop')||box.parentNode).appendChild(bar)}
+window.addEventListener('click',async e=>{const tb=e.target.closest('#shop [data-hitbuy]');
+  if(tb){e.stopImmediatePropagation();const h=HITNUMS.find(x=>x.id===tb.dataset.hitbuy);if(!h)return;if((WAL.tokens||0)<h.cost){toast(L('Not enough rupees','ما عندك روبيات كافية'));return}
+    if(!await ebAsk(L(`Buy the ${h.en} counter for ${h.cost.toLocaleString('en')} rupees?`,`تشتري عدّاد "${h.ar}" بـ ${h.cost.toLocaleString('en')} روبية؟`),L('Buy','اشترِ'),L('No','لا')))return;
+    WAL.tokens-=h.cost;WAL.owned.push('hit-'+h.id);WAL.hit=h.id;saveWal();renderShop();hnDemo(h);return}
+  const t=e.target.closest('#shop [data-hit]');if(!t)return;e.stopImmediatePropagation();const h=HITNUMS.find(x=>x.id===t.dataset.hit);if(!h)return;
+  if(h.cost===0||WAL.owned.includes('hit-'+h.id)){if(WAL.hit!==h.id&&!(h.id==='classic'&&!WAL.hit)){WAL.hit=h.id;saveWal();renderShop()}hnBar(null);hnDemo(h);return}
+  document.querySelectorAll('#shop .hnit').forEach(x=>x.classList.toggle('try',x===t));hnBar(h);hnDemo(h)},true);
+{const st=document.createElement('style');st.textContent='#shop .hnit.try{box-shadow:inset 0 0 0 2px #7fd0ff,0 0 12px rgba(127,208,255,.35)}#shop .hnbar{position:fixed;left:14px;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:10040;max-width:520px;margin:0 auto!important;background:#2a161a!important;box-shadow:inset 0 0 0 1.5px #f2d27a,0 8px 24px rgba(0,0,0,.6)!important;display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0;padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(242,210,122,.35);font-weight:800}#shop .hnbar button{border:0;border-radius:10px;padding:9px 14px;font:inherit;font-weight:800;background:linear-gradient(180deg,#f8e3a0,#e2bd5c 55%,#c9a04a);color:#2a1606}';document.head.appendChild(st)}
 })();
 
 // ===================== Round 107: comic hit sounds (normal = the plain card slap, richer; fire = a fuller, cleaner punch); "drew 5" always shows first =====================
@@ -10636,9 +10650,293 @@ const st=document.createElement('style');st.textContent=`
 .hnpop .hx-glove{animation:hyglove .42s cubic-bezier(.2,1.4,.4,1) both}@keyframes hyglove{0%{transform:translateX(-70px) scale(.6)}100%{transform:translateX(0) scale(1)}}`;document.head.appendChild(st);
 })();
 
+// ===================== Round 110: shop items you cannot afford stay in full colour (they looked broken when dimmed); tapping one says how many rupees are missing =====================
+(function(){if(typeof renderShop!=='function')return;
+const fix=()=>{try{document.querySelectorAll('#shop .item[disabled][data-skin]').forEach(b=>{b.disabled=false;b.dataset.poorskin=b.dataset.skin;delete b.dataset.skin;b.classList.add('poor110')})}catch(e){}};
+renderShop=(function(p){return function(){const r=p.apply(this,arguments);fix();return r}})(renderShop);
+window.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('#shop [data-poorskin]');if(!t)return;e.stopImmediatePropagation();e.preventDefault();
+  const m=(t.querySelector('.price')||t).textContent.replace(/[^\d]/g,' ').trim().split(/\s+/).map(Number).filter(Boolean),c=m.length?Math.min(...m):0,need=Math.max(0,c-(WAL.tokens||0));
+  toast(need?L(`You need ${need.toLocaleString('en')} more rupees`,`ينقصك ${need.toLocaleString('en')} روبية عشان تشتريه`):L('Not enough rupees','روبياتك ما تكفي'));t.classList.remove('shk110');void t.offsetWidth;t.classList.add('shk110')},true);
+const st=document.createElement('style');st.textContent=`#shop .item.poor110{opacity:1!important;filter:none!important}#shop .item.poor110 .price{color:#ff9a8a}
+#shop .item.shk110{animation:shk110 .32s linear}@keyframes shk110{20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}`;document.head.appendChild(st);
+})();
+
+// ===================== Round 112: every hit counter shows the × sign; the boxing glove lands with an impact mark =====================
+(function(){const H=window.HITNUMS;if(!H)return;
+const X='<i class="hx-x">×</i>';
+const BANG='<svg class="hx-bang" viewBox="0 0 60 44"><path d="M30 2l5 11 9-8-2 12 13-2-9 9 11 6-13 2 4 10-11-6-7 8-3-11-12 4 6-10-11-6 13-3-5-11 11 6z" fill="#ffd400" stroke="#111" stroke-width="2.2" stroke-linejoin="round"/><path d="M30 13l3 6 5-3-1 6 7 0-5 4 5 4-7 0-2 5-5-4z" fill="#fff"/><path d="M4 6l7 5M56 6l-7 5M30 -6v6M-2 24h7M62 24h-7" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><path d="M4 6l7 5M56 6l-7 5M30 -6v6M-2 24h7M62 24h-7" stroke="#111" stroke-width="1" stroke-linecap="round" stroke-dasharray="0"/></svg>';
+H.forEach(h=>{if(h.xdone)return;h.xdone=1;const f=h.html;
+  h.html=function(n){let s=f(n);
+    if(h.id==='roman')s=s.replace(/<b>([IVXLC]+)<\/b>/,(m,r)=>`<b style="font-size:${r.length>=4?.38:r.length===3?.45:.5}em">${X}${r}</b>`);
+    else if(h.id==='dice'&&!/<b/.test(s))s=s.replace(/<\/span>\s*$/,'<i class="hx-x hx-dx">×</i></span>');
+    else if(s.indexOf('×')<0)s=s.replace(/(<b\b[^>]*>)([^<]+)(<\/b>)/,(m,a,t,z)=>a+X+t+z);
+    if(h.id==='glove')s=s.replace(/<svg /,BANG+'<svg ');
+    return s}});
+const st=document.createElement('style');st.textContent=`.hx-x{font-style:normal;font-size:.68em;margin-inline-end:.03em;display:inline-block;transform:translateY(-.06em);font-family:"Arial Black",Tahoma,sans-serif}
+.hn-roman b .hx-x{font-size:.8em;letter-spacing:0;margin-inline-end:.12em}.hn-flame b i.hx-x{font-size:.7em;font-family:Georgia,serif;transform:none;position:relative;left:auto;right:auto;bottom:auto;height:auto;background:none;filter:none;opacity:1}
+.hx .hx-dx{position:absolute;left:-.3em;top:.3em;font-size:.34em;font-weight:900;color:#fff;-webkit-text-stroke:.1em #111;paint-order:stroke fill;text-shadow:0 .06em 0 #111;transform:none;direction:ltr}
+.hn-roman b .hx-x,.hx-crown b .hx-x,.hx b.hy-g .hx-x,.hx-shield b .hx-x,.hx-ar b .hx-x{color:#f6dc8a;-webkit-text-fill-color:#f6dc8a}.hn-flame b .hx-x{color:#ffd24a;-webkit-text-fill-color:#ffd24a}
+.hx-pearl b{font-size:.26em!important}.hx-gem b{font-size:.31em!important}
+.hx .hx-bang{position:absolute!important;inset:auto!important;left:.3em!important;top:-.3em!important;width:.72em!important;height:.53em!important;overflow:visible;z-index:-1}
+.hnpop .hx-bang{animation:hxbang .5s cubic-bezier(.2,1.6,.4,1) .3s both}@keyframes hxbang{0%{transform:scale(0) rotate(-30deg);opacity:0}60%{transform:scale(1.25) rotate(6deg);opacity:1}100%{transform:scale(1) rotate(0)}}
+.hx-glove{isolation:isolate}`;document.head.appendChild(st);
+})();
+
+// ===================== Round 113: the knight's shield counter shows crossed swords instead of a plain × =====================
+// creative × signs for the hit counters: each counter draws its own × (swords, sparks, bandages…)
+(function(){const H=window.HITNUMS;if(!H)return;
+const L=(x1,y1,x2,y2,c,w,cap='round')=>`<path d="M${x1} ${y1}L${x2} ${y2}" stroke="${c}" stroke-width="${w}" stroke-linecap="${cap}"/>`;
+const X2=(c,w,o='#111',ow=1.6,cap='round')=>L(4,4,16,16,o,w+ow*2,cap)+L(16,4,4,16,o,w+ow*2,cap)+L(4,4,16,16,c,w,cap)+L(16,4,4,16,c,w,cap);
+const GD='<defs><linearGradient id="xgG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6c8"/><stop offset=".5" stop-color="#f2d27a"/><stop offset="1" stop-color="#b9862a"/></linearGradient></defs>';
+const both=f=>f+`<g transform="matrix(-1 0 0 1 20 0)">${f}</g>`;
+const GL={
+ gold:GD+X2('url(#xgG)',3,'#3a1c02',1.2)+'<path d="M10 7.200L12.800 10L10 12.800L7.200 10Z" fill="#fff6c8" stroke="#3a1c02" stroke-width=".8"/>',
+ swords:GD+both('<path d="M15.800 2.200L17.800 2.200L17.800 4.200L8 14L6 12Z" fill="#eef2f7" stroke="#2a1a08" stroke-width=".9" stroke-linejoin="round"/><path d="M4.200 10.800L9.200 15.800" stroke="#2a1a08" stroke-width="3.2" stroke-linecap="round"/><path d="M4.200 10.800L9.200 15.800" stroke="url(#xgG)" stroke-width="1.8" stroke-linecap="round"/><path d="M6.200 13.800L3 17" stroke="#2a1a08" stroke-width="3" stroke-linecap="round"/><path d="M6.200 13.800L3 17" stroke="#7a1220" stroke-width="1.6" stroke-linecap="round"/><circle cx="2.600" cy="17.400" r="1.500" fill="url(#xgG)" stroke="#2a1a08" stroke-width=".7"/>'),
+ ribbon:both('<path d="M3 2.500L7 2.500L17.500 15L15.500 18.500L13.500 16.500L11 18Z" fill="#d01c2c" stroke="#5a060c" stroke-width="1" stroke-linejoin="round"/><path d="M5 3.500L14.500 16" stroke="#ff8a8a" stroke-width=".9"/>'),
+ emboss:c=>L(5,5.800,15,15.800,c[1],3.200)+L(15,5.800,5,15.800,c[1],3.200)+L(5,5,15,15,c[0],3.200)+L(15,5,5,15,c[0],3.200),
+ spark:'<path d="M10 0L11.800 8.200L20 10L11.800 11.800L10 20L8.200 11.800L0 10L8.200 8.200Z" transform="rotate(45 10 10)" fill="#fff" stroke="#0a2f6e" stroke-width="1.2" stroke-linejoin="round"/><circle cx="10" cy="10" r="1.600" fill="#bfe9ff"/>',
+ star:GD+'<path d="M10 0L11.800 8.200L20 10L11.800 11.800L10 20L8.200 11.800L0 10L8.200 8.200Z" transform="rotate(45 10 10)" fill="url(#xgG)" stroke="#06242f" stroke-width="1.1" stroke-linejoin="round"/>',
+ sadu:'<path d="M2 2L8.500 4.500L4.500 8.500ZM18 2L15.500 8.500L11.500 4.500ZM2 18L4.500 11.500L8.500 15.500ZM18 18L11.500 15.500L15.500 11.500Z" fill="#fff" stroke="#111" stroke-width="1.1" stroke-linejoin="round"/><path d="M10 7L13 10L10 13L7 10Z" fill="#111" stroke="#fff" stroke-width=".8"/>',
+ pips:[[4,4],[16,4],[10,10],[4,16],[16,16]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="3" fill="#7a0a14"/><circle cx="${x}" cy="${y-.5}" r="2.500" fill="#e0243a"/><circle cx="${x-.8}" cy="${y-1.300}" r=".8" fill="#fff" opacity=".7"/>`).join(''),
+ match:both('<path d="M4 16.500L15 5.500" stroke="#3a2412" stroke-width="3.400" stroke-linecap="round"/><path d="M4 16.500L15 5.500" stroke="#e8c48a" stroke-width="2" stroke-linecap="round"/><ellipse cx="15.800" cy="4.600" rx="2.900" ry="2.300" transform="rotate(-45 15.800 4.600)" fill="#e0243a" stroke="#3a0308" stroke-width=".9"/>')+'<path d="M10 2l1 2.500 2.500-1-1 2.500" fill="none" stroke="#ffd400" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>',
+ plaster:both('<rect x="-1" y="7" width="22" height="6" rx="3" transform="rotate(45 10 10)" fill="#f3d2a8" stroke="#6b4a2a" stroke-width="1.1"/>')+'<rect x="7.200" y="7.200" width="5.600" height="5.600" rx="1" transform="rotate(45 10 10)" fill="#fff4e2" stroke="#6b4a2a" stroke-width=".7"/><circle cx="4.500" cy="4.500" r=".6" fill="#6b4a2a"/><circle cx="15.500" cy="4.500" r=".6" fill="#6b4a2a"/><circle cx="4.500" cy="15.500" r=".6" fill="#6b4a2a"/><circle cx="15.500" cy="15.500" r=".6" fill="#6b4a2a"/>',
+ bolts:c=>both(`<path d="M3 2L9.500 7.500L8 10.500L17 18L10.500 12L12 9Z" fill="${c}" stroke="#111" stroke-width="1.1" stroke-linejoin="round"/>`),
+ comic:'<g transform="rotate(-8 10 10)">'+L(4.500,5.500,16.500,17.500,'#111',6.400,'square')+L(16.500,5.500,4.500,17.500,'#111',6.400,'square')+X2('#fff',3.600,'#111',1.300,'square')+'</g>',
+ flame:both('<path d="M3.500 17C6 14 6 11 9 9C12 7 13 5 16.500 2.500C16 6.500 14.500 8.500 12 11C9.500 13.500 8 15.500 3.500 17Z" fill="#ff7a1a" stroke="#5a1204" stroke-width="1" stroke-linejoin="round"/><path d="M6.500 14.500C9 12.500 10.500 10.500 14 6.500" stroke="#ffe08a" stroke-width="1.300" fill="none" stroke-linecap="round"/>'),
+ sceptre:GD+both('<path d="M4 16L15 5" stroke="#3a1c02" stroke-width="3.200" stroke-linecap="round"/><path d="M4 16L15 5" stroke="url(#xgG)" stroke-width="1.900" stroke-linecap="round"/><circle cx="15.800" cy="4.200" r="2.600" fill="#e0182d" stroke="#3a1c02" stroke-width=".9"/><circle cx="15.100" cy="3.500" r=".8" fill="#fff" opacity=".7"/>'),
+ neon:c=>L(4,4,16,16,c,3.600)+L(16,4,4,16,c,3.600)+L(4,4,16,16,'#fff',1.400)+L(16,4,4,16,'#fff',1.400),
+ chip:X2('#fff',3,'#111',1.400)+[[4,4],[16,4],[4,16],[16,16]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="1.300" fill="#f2d27a" stroke="#111" stroke-width=".6"/>`).join(''),
+ pearl:X2('#2a3a6e',2.200,'#fff',1),
+ leaf:GD+both('<path d="M4 16.500Q10 12 16 3.500" stroke="#6b4a10" stroke-width="1.300" fill="none"/>'+[[5.500,14.200,-50],[8,11.600,-55],[10.600,8.700,-58],[13,5.800,-62]].map(([x,y,r])=>`<ellipse cx="${x}" cy="${y}" rx="2.900" ry="1.300" transform="rotate(${r} ${x} ${y}) translate(0 -1.500)" fill="url(#xgG)" stroke="#6b4a10" stroke-width=".6"/><ellipse cx="${x}" cy="${y}" rx="2.900" ry="1.300" transform="rotate(${r} ${x} ${y}) translate(0 1.500)" fill="url(#xgG)" stroke="#6b4a10" stroke-width=".6"/>`).join(''))};
+const PICK=(id,n)=>({classic:GL.gold,roman:GL.gold,medal:GL.leaf,comic:GL.comic,flame:GL.flame,neon:GL.neon(n>=4?'#ff3fa4':'#29e6ff'),shield:GL.swords,crown:GL.sceptre,seal:GL.emboss(['#8e0c16','#ff9a8c']),gem:GL.spark,arabic:GL.gold,coin:GL.emboss(['#8a5f14','#fff6c8']),
+  chip:GL.chip,star8:GL.star,sadu:GL.sadu,dice:GL.pips,bomb:GL.match,pearl:GL.pearl,glove:GL.plaster,bolt:GL.bolts(n>=5?'#bfe9ff':'#ffe14d')})[id];
+const SZ={shield:1.15,crown:.62,medal:1.05,glove:1.05,bomb:1.05,dice:1,flame:.62,classic:.62,neon:.62,roman:.72,comic:.8,sadu:.9,gem:.95,star8:.9,bolt:.95};
+window.__xGlyph=function(id,n){const g=PICK(id,n);if(!g)return '×';return `<svg class="hx-gs" viewBox="-1 -1 22 22" style="width:${SZ[id]||.85}em;height:${SZ[id]||.85}em">${g.replace(/(\d)\.(\d)00\b/g,'$1.$2')}</svg>`};
+const USE=['shield']; // the player kept the plain × everywhere except the knight's shield (crossed swords)
+H.forEach(h=>{if(h.gdone||!USE.includes(h.id))return;h.gdone=1;const f=h.html;h.html=function(n){const g=window.__xGlyph(h.id,n);let s=f(n);
+  if(s.indexOf('<i class="hx-x')>=0)return s.replace(/(<i class="hx-x[^"]*)(">)×(<\/i>)/,(m,a,b,c)=>a+' hx-g'+b+g+c);
+  return s.replace('×',`<i class="hx-x hx-g">${g}</i>`)}});
+const st=document.createElement('style');st.textContent=`.hx-x.hx-g{display:inline-flex;align-items:center;transform:none;margin-inline-end:.06em;vertical-align:middle;background:none;-webkit-text-fill-color:initial;filter:none}.hx-gs{display:block;overflow:visible}.hx svg.hx-gs,.hn-roman svg.hx-gs,.hn-medal svg.hx-gs,.hn-comic svg.hx-gs,.hx-crown svg.hx-gs{position:static!important;inset:auto!important;margin:0!important;flex:none}.hx b,.hn-roman b,.hn-medal b,.hn-comic b,.hx-crown b,.hn-flame b{display:inline-flex;align-items:center}
+.hn-neon .hx-gs{filter:drop-shadow(0 0 3px currentColor)}.hn-classic .hx-x.hx-g,.hn-neon .hx-x.hx-g{font-size:1em;-webkit-text-stroke:0}.hx .hx-dx.hx-g{left:-.34em;top:.02em;font-size:.4em}`;document.head.appendChild(st);
+})();
+
+</script><script>
+// ===================== Round 111: studio sound files (public/sounds.js) for the fire effects and the soft effects; ten new fire-button effects (lightning, thunder, shock, storm, sky wrath, crystal, icicles, gong, two card flips), each with its own animation and sound =====================
+(function(){
+if(typeof SND==='undefined'||typeof FXS==='undefined'||typeof FXE==='undefined'||typeof FXB==='undefined')return;
+const R=(a,b)=>a+Math.random()*(b-a);
+// ---------- the sample player: files arrive in window.__SMPDATA (sounds.js, loaded after the game is up); until then the old synthesised sound plays ----------
+const SMP={buf:{},pend:{},
+  vol(){try{return typeof AUD!=='undefined'&&AUD.game!=null?Math.max(0,Math.min(1.5,+AUD.game)):1}catch(e){return 1}},
+  load(id){const d=window.__SMPDATA,c=SND.ctx;if(this.buf[id]||this.pend[id]||!d||!d[id]||!c)return;this.pend[id]=1;
+    try{const bin=atob(d[id]),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+      const ok=b=>{this.buf[id]=b;this.pend[id]=0},bad=()=>{this.pend[id]=0};const pr=c.decodeAudioData(u.buffer,ok,bad);if(pr&&pr.catch)pr.catch(bad)}catch(e){this.pend[id]=0}},
+  all(){const d=window.__SMPDATA;if(d&&SND.ctx)Object.keys(d).forEach(k=>this.load(k))},
+  play(id,g=1,off=0){try{const c=SND.ctx;if(!c||!SND.ok())return false;const b=this.buf[id];if(!b){this.all();return false}
+    const s=c.createBufferSource();s.buffer=b;const gn=c.createGain();gn.gain.value=g*this.vol()*.85;s.connect(gn).connect(c.destination);s.start(c.currentTime+.01,off);return true}catch(e){return false}}};
+window.__SMP=SMP;
+const getFile=()=>{if(window.__SMPDATA||document.getElementById('smpjs'))return;const s=document.createElement('script');s.id='smpjs';s.src='sounds.js';s.async=true;s.onload=()=>SMP.all();document.head.appendChild(s)};
+if(document.readyState==='complete')setTimeout(getFile,1500);else window.addEventListener('load',()=>setTimeout(getFile,1500));
+['pointerdown','touchend','keydown'].forEach(ev=>window.addEventListener(ev,()=>{try{SMP.all()}catch(e){}},{passive:true}));
+
+// ---------- trial variants: id -> [sample, the effect it falls back to] ----------
+const VAR={th1:['thunder_1','thunder'],th2:['thunder_2','thunder'],th3:['thunder_3','thunder'],th4:['thunder_4','thunder'],th5:['thunder_5','thunder'],
+  ice1:['ice_1','ice'],ice4:['ice_4','ice'],roy1:['royal_1','royal'],flip1:['flip_1','flip'],flip4:['flip_4','flip']};
+// every effect with fire in it: [sample, start offset so the hit lands with the picture]. The fire button plays it at full level, a normal eat plays it softer.
+const FIRE={plain:['blaze',0],blaze:['blaze',0],fire:['blaze',0],inferno:['inferno',.2],meteor:['meteor',.05],quake:['quake',0],firering:['ring',0]};
+const SOFT={diamonds:'diamond_b',petals:'rose_b',butterflies:'butterfly_a'};
+window.fxSound=(function(prev){return function(id,p){try{
+    if(SOFT[id]&&SMP.play(SOFT[id],p===3?1:p===2?.8:.65))return;
+    if(FIRE[id]&&SMP.play(FIRE[id][0],p===3?1:p===2?.7:.55,p===3?FIRE[id][1]:Math.max(FIRE[id][1],id==='meteor'?.2:0)))return;
+    if(VAR[id]){if(VAR[id][0]&&SMP.play(VAR[id][0],1))return;return prev(VAR[id][1],p)}}catch(e){}
+  return prev(id,p)}})(window.fxSound);
+try{fxSound=window.fxSound}catch(e){}
+try{const FS=window.__FXSND;if(FS)Object.keys(VAR).forEach(k=>{if(!FS[k])FS[k]=FS[VAR[k][1]]})}catch(e){}
+
+// ---------- animations ----------
+const WHITE='rgba(255,255,255,1)',ICE='rgba(215,240,255,1)';
+const strike=(x,y,col=WHITE,n=3,life=.42,delay=0)=>{for(let k=0;k<n;k++)FXE.add({type:'bolt',x:x+R(-3,3),y,col,ang:-Math.PI/2+R(-.12,.12),len:y+40,size:1,life:life*R(.8,1.1),delay:delay+k*.03})};
+const rings=(x,y,col,n,big,gap=.07,life=.6)=>{for(let k=0;k<n;k++)FXE.add({type:'ring',x,y,col,size:14+k*6,size2:big+k*30,w:22-k*3,life:life+k*.08,delay:k*gap,fade:.9})};
+const hitGround=(x,y,pow)=>{FXS.bolt(x,y,3);FXB.dust(x,y,8+pow*4);FXB.sparks(x,y,'rgba(220,240,255,1)',20+pow*10,520,900);FXE.decal(x,y,70+pow*20,'rgba(10,20,40,0.55)',2.4)};
+// 1) close strike: one blinding bolt straight down on the card
+FXS.th1=function(x,y){FXE.flash('rgba(235,245,255,0.8)',1,.14);strike(x,y,WHITE,4,.45);rings(x,y,WHITE,3,260);hitGround(x,y,3);FXE.shake(18,520);setTimeout(()=>{FXE.flash('rgba(200,230,255,0.4)',1,.2);strike(x,y,'rgba(190,225,255,1)',2,.25)},130)};
+// 2) rolling thunder: sheet lightning travelling across the sky, the table trembling under it
+FXS.th2=function(x,y){const W=innerWidth,dir=Math.random()<.5?1:-1;FXS.bolt(x,y,2);FXB.dust(x,y,8);FXE.shake(6,1900);
+  for(let i=0;i<6;i++)setTimeout(()=>{const f=i/5,bx=dir>0?W*(.1+.8*f):W*(.9-.8*f);FXE.flash('rgba(200,225,255,'+R(.18,.38).toFixed(2)+')',1,R(.12,.3));
+    for(let k=0;k<2;k++)FXE.add({type:'bolt',x:bx+R(-40,40),y:-10,col:'rgba(215,235,255,1)',ang:Math.PI/2+R(-.5,.5),len:R(90,190),size:1,life:R(.18,.3)});
+    FXE.add({type:'glow',x:bx,y:30,col:'rgba(190,220,255,1)',size:90,size2:160,life:.3,fade:1})},i*300+R(0,80))};
+// 3) electric: arcs crawl around the card, then it discharges
+FXS.th3=function(x,y){const C='rgba(110,225,255,1)';FXE.add({type:'glow',x,y,col:'rgba(90,200,255,1)',size:30,size2:95,life:.34,fade:.6});
+  for(let k=0;k<16;k++){const a=R(0,6.28),r=R(55,95);FXE.add({type:'bolt',x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,col:C,ang:a+Math.PI+R(-.7,.7),len:r*R(.6,1),size:1,life:R(.08,.16),delay:R(0,.28)})}
+  setTimeout(()=>{FXE.flash('rgba(120,225,255,0.6)',1,.16);strike(x,y,'rgba(200,245,255,1)',3,.35);rings(x,y,C,2,220);hitGround(x,y,2);FXB.sparks(x,y,C,50,640,500);FXE.shake(14,420);
+    for(let k=0;k<10;k++){const a=R(0,6.28);FXE.add({type:'bolt',x,y,col:C,ang:a,len:R(50,120),size:1,life:R(.1,.2),delay:R(.15,.8)})}},300)};
+// 4) double strike: one lands beside the card, the next one right on it
+FXS.th4=function(x,y){const sx=x+(Math.random()<.5?-1:1)*R(90,140),sy=y+R(-20,30);FXE.flash('rgba(200,230,255,0.35)',1,.12);strike(sx,sy,'rgba(200,230,255,1)',2,.3);FXB.sparks(sx,sy,'rgba(220,240,255,1)',14,380,900);FXB.dust(sx,sy,6);FXE.shake(7,260);
+  setTimeout(()=>{FXE.flash('rgba(240,248,255,0.8)',1,.15);strike(x,y,WHITE,4,.45);rings(x,y,WHITE,3,270);hitGround(x,y,3);FXE.shake(18,560)},550)};
+// 5) cinematic: the room goes dark, then a pillar of light
+FXS.th5=function(x,y){FXE.flash('rgba(0,0,10,0.6)',1,.5);
+  setTimeout(()=>{FXE.flash('rgba(255,255,255,0.9)',1,.6);for(let k=0;k<16;k++)FXE.add({type:'glow',x:x+R(-6,6),y:y*(k/15),col:'rgba(225,240,255,1)',size:46,size2:14,life:.7,delay:k*.004,fade:1});
+    FXE.add({type:'glow',x,y,col:WHITE,size:60,size2:240,life:.8,fade:1});rings(x,y,WHITE,4,380,.1,.9);FXB.dust(x,y,26);FXB.sparks(x,y,'rgba(230,242,255,1)',60,760,700);FXE.decal(x,y,150,'rgba(8,14,30,0.6)',3.2);FXE.shake(22,950)},70)};
+// ice 1) shatter: everything breaks at once
+FXS.ice1=function(x,y){FXE.flash('rgba(225,245,255,0.45)',1,.22);FXE.shake(10,380);FXS.frost(x,y,3);FXB.shards(x,y,56,760);rings(x,y,WHITE,3,230);
+  for(let k=0;k<30;k++)FXE.add({type:'glow',x:x+R(-130,130),y:y+R(-100,100),col:ICE,size:R(2,4.5),life:R(.4,1.3),delay:R(.05,.7)})};
+// ice 4) the crack: cracks run out from the card, then icicles drop one by one
+FXS.ice4=function(x,y){FXE.flash('rgba(210,238,255,0.4)',1,.14);FXE.shake(13,320);FXB.ring(x,y,WHITE,3,1);
+  for(let k=0;k<8;k++)FXE.add({type:'bolt',x,y,col:'rgba(200,235,255,1)',ang:k/8*6.28+R(-.25,.25),len:R(110,210),size:1,life:R(.7,1.1)});
+  FXB.shards(x,y,14,420);FXB.smoke(x,y,5,30,'rgba(225,240,255,0.35)');
+  for(let k=0;k<9;k++){const ix=x+R(-110,110),T=.34,d=.25+k*.2+R(-.05,.05);FXE.add({type:'shard',add:false,x:ix,y:y-300,col:k%2?'rgba(215,240,255,0.95)':'rgba(150,205,255,0.95)',size:R(12,20),vx:0,vy:(300+R(-20,30))/T,life:T,delay:d,drag:1,fade:.01});
+    setTimeout(()=>{const iy=y+R(-20,30);FXB.shards(ix,iy,5,260);FXE.add({type:'glow',x:ix,y:iy,col:ICE,size:14,size2:3,life:.18})},(d+T)*1000)}};
+// royal 1) the gong: slow golden waves, a crown, gold dust settling
+const CROWN='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 60"><path d="M10 46L14 14L32 32L50 6L68 32L86 14L90 46Z" fill="#f2c94e" stroke="#5a3d0c" stroke-width="3" stroke-linejoin="round"/><rect x="9" y="44" width="82" height="11" rx="3" fill="#f2c94e" stroke="#5a3d0c" stroke-width="3"/><circle cx="50" cy="6" r="5" fill="#e0182d" stroke="#5a3d0c" stroke-width="2"/><circle cx="14" cy="13" r="4" fill="#fff3b8" stroke="#5a3d0c" stroke-width="2"/><circle cx="86" cy="13" r="4" fill="#fff3b8" stroke="#5a3d0c" stroke-width="2"/><circle cx="50" cy="49.500" r="3.500" fill="#e0182d"/><circle cx="30" cy="49.500" r="2.800" fill="#2f7bff"/><circle cx="70" cy="49.500" r="2.800" fill="#1fae5a"/></svg>';
+FXS.roy1=function(x,y){FXE.flash('rgba(255,215,100,0.4)',1,.4);FXE.shake(9,460);FXS.gold(x,y,3);
+  for(let k=0;k<5;k++)FXE.add({type:'ring',x,y,col:k%2?'rgba(255,240,180,0.95)':'rgba(255,205,80,0.95)',size:16,size2:230+k*36,w:16-k*2,life:1.1+k*.1,delay:k*.2,fade:.9});
+  FXE.add({type:'img',add:false,svg:CROWN,x,y:y-66,size:26,size2:112,ar:.6,vy:-16,life:1.7,fade:3});
+  for(let k=0;k<70;k++)FXE.add({type:'glow',x:x+R(-170,170),y:y-R(120,260),col:k%3?'rgba(255,220,120,1)':'rgba(255,245,200,1)',size:R(1.5,3.6),vx:R(-12,12),vy:R(50,110),drag:.99,life:R(1.2,2.2),delay:R(.1,1.2)})};
+// card flip, two timings: 1) up, spin, slap on wood   4) slow motion and a giant landing
+function flipV(x,y,dur,slow){const cards=[...document.querySelectorAll('#ground>.card,.drawrow .stack .card,.card')].filter(e=>{const r=e.getBoundingClientRect();return r.width&&x>=r.left-4&&x<=r.right+4&&y>=r.top-4&&y<=r.bottom+4});const el=cards.pop();
+  const done=()=>{FXE.flash('rgba(255,255,255,'+(slow?.5:.3)+')',1,slow?.3:.18);FXE.shake(slow?26:16,slow?900:520);rings(x,y,'rgba(255,245,220,1)',slow?4:3,slow?340:240,.06,slow?.75:.5);FXB.dust(x,y,slow?32:18);FXB.sparks(x,y,'rgba(255,245,220,1)',slow?44:24,slow?640:500,1000);
+    if(slow){FXE.decal(x,y,130,'rgba(15,10,6,0.55)',2.6);for(let k=0;k<7;k++)FXE.add({type:'bolt',x,y,col:'rgba(40,28,18,1)',ang:k/7*6.28+R(-.3,.3),len:R(70,130),size:1,life:R(.8,1.2)})}};
+  if(!el||!el.animate){setTimeout(done,dur);return}const r=el.getBoundingClientRect(),c=el.cloneNode(true);c.classList.remove('peek','sel','eating');
+  Object.assign(c.style,{position:'fixed',left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px',margin:'0',zIndex:60,pointerEvents:'none',transformStyle:'preserve-3d'});document.body.appendChild(c);el.style.visibility='hidden';
+  const kf=slow?[{transform:'translateY(0) scale(1) rotateY(0) rotateZ(0)',offset:0,easing:'cubic-bezier(.1,.7,.3,1)'},{transform:'translateY(-150px) scale(1.7) rotateY(300deg) rotateZ(-10deg)',offset:.62,easing:'linear'},{transform:'translateY(-158px) scale(1.75) rotateY(360deg) rotateZ(4deg)',offset:.86,easing:'cubic-bezier(.8,0,1,1)'},{transform:'translateY(0) scale(1) rotateY(360deg) rotateZ(0)',offset:1}]
+    :[{transform:'translateY(0) scale(1) rotateY(0) rotateZ(0)',offset:0},{transform:'translateY(-110px) scale(1.4) rotateY(360deg) rotateZ(-8deg)',offset:.45},{transform:'translateY(-95px) scale(1.45) rotateY(720deg) rotateZ(6deg)',offset:.74,easing:'cubic-bezier(.6,0,1,1)'},{transform:'translateY(0) scale(1) rotateY(720deg) rotateZ(0)',offset:1}];
+  const a=c.animate(kf,{duration:dur});const fin=()=>{try{c.remove()}catch(e){}el.style.visibility=''};a.onfinish=()=>{done();fin()};setTimeout(fin,dur+500)}
+FXS.flip1=function(x,y){flipV(x,y,620,false)};FXS.flip4=function(x,y){flipV(x,y,820,true)};
+
+// ---------- in the shop ----------
+const LIST=[['th1','Lightning strike','برق خاطف',4500,2],['th2','Rolling thunder','رعد',4500,2],['th3','Electric shock','صعقة كهربا',5000,2],['th4','Storm','عاصفة',5000,2],['th5','Wrath of the sky','غضب السما',7000,3],
+  ['ice1','Crystal shatter','تكسير الكريستال',3500,1],['ice4','Icicles','أنياب الجليد',4000,2],['roy1','Gong of kings','غونغ الملوك',3500,1],['flip1','Spin and slap','لفّة وصفقة',6000,3],['flip4','Slow-motion slam','الصفقة البطيئة',7500,4]];
+if(typeof SFX!=='undefined'){const k=SFX.findIndex(x=>x.id==='roy0');if(k>=0)SFX.splice(k,1);LIST.forEach(([id,en,ar,cost,tier])=>{if(!SFX.some(x=>x.id===id))SFX.push({id,en,ar,cost,tier})})}
+try{if(typeof MYPROF!=='undefined'&&MYPROF.sfx==='roy0'){MYPROF.sfx='royal';saveProf()}}catch(e){}
+// each new effect has its own picture in the shop
+const CL=(f,st='#0c0f18')=>`<path d="M14 30a8 8 0 0 1 1-16a11 11 0 0 1 21-3a8.500 8.500 0 0 1 0 19z" fill="${f}" stroke="${st}" stroke-width="1.6" stroke-linejoin="round"/>`;
+const BO=(x,y,s=1,f='#ffd400')=>`<path transform="translate(${x} ${y}) scale(${s})" d="M5 0L-3 10h5L-1 20L9 7H3.500Z" fill="${f}" stroke="#3a2a00" stroke-width="1.2" stroke-linejoin="round"/>`;
+const CARD=(x,y,r)=>`<g transform="rotate(${r} ${x+8} ${y+11})"><rect x="${x}" y="${y}" width="16" height="22" rx="2.500" fill="#fffdf6" stroke="#2a1606" stroke-width="1.5"/><path d="M${x+8} ${y+6}l3.500 5-3.500 5-3.500-5z" fill="#d01c2c"/></g>`;
+const ICON={
+  th1:`<path d="M30 2L10 26h11L15 46L40 18H27Z" fill="#ffe14d" stroke="#3a2a00" stroke-width="2" stroke-linejoin="round"/><path d="M28 7L16 23h8" stroke="#fff" stroke-width="1.6" fill="none"/>`,
+  th2:`${CL('#2a2f3d')}<path d="M10 38q4-3 8 0t8 0t8 0M14 44q3-2.500 6 0t6 0t6 0" stroke="#c9d6ea" stroke-width="2.200" fill="none" stroke-linecap="round"/>`,
+  th3:`<circle cx="24" cy="24" r="9" fill="#0b3550" stroke="#5fe3ff" stroke-width="1.6"/><path d="M24 4l2 9M24 44l-2-9M4 24l9-2M44 24l-9 2M9 9l7 6M39 39l-7-6M39 9l-6 7M9 39l6-7" stroke="#5fe3ff" stroke-width="2.200" stroke-linecap="round"/><path d="M26 16l-6 9h5l-3 8l8-10h-5z" fill="#eaffff" stroke="#0b3550" stroke-width="1"/>`,
+  th4:`${CL('#8793a8')}${BO(12,27,.95)}${BO(27,27,.95)}`,
+  th5:`<circle cx="24" cy="20" r="21" fill="rgba(255,225,90,.22)"/>${CL('#11131c','#000')}${BO(7,28,.85,'#fff3a0')}${BO(20,28,1,'#fff3a0')}${BO(33,28,.85,'#fff3a0')}`,
+  ice1:`<path d="M24 3L38 16L24 45L10 16Z" fill="#bfe9ff" stroke="#0a3a66" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 16H38M24 3L19 16L24 45L29 16Z" stroke="#0a3a66" stroke-width="1" fill="none" opacity=".6"/><path d="M24 12L20 22L27 26L22 36" stroke="#fff" stroke-width="2.200" fill="none" stroke-linejoin="round"/><path d="M4 30l5 2-4 4zM41 26l4 4-6 1zM38 40l3 4-5-1z" fill="#dff4ff" stroke="#0a3a66" stroke-width="1"/>`,
+  ice4:`<rect x="3" y="3" width="42" height="7" rx="3" fill="#eaf8ff" stroke="#0a3a66" stroke-width="1.6"/>${[[7,26],[16,40],[25,30],[34,44],[41,24]].map(([x,y])=>`<path d="M${x-4} 9L${x} ${y}L${x+4} 9Z" fill="#aee0ff" stroke="#0a3a66" stroke-width="1.4" stroke-linejoin="round"/><path d="M${x-1.500} 11L${x} ${y-6}" stroke="#fff" stroke-width="1.200"/>`).join('')}`,
+  roy1:`<path d="M6 6H42M12 6V14M36 6V14" stroke="#5a3d0c" stroke-width="2.600" stroke-linecap="round"/><circle cx="24" cy="27" r="16" fill="#e9b949" stroke="#5a3d0c" stroke-width="2"/><circle cx="24" cy="27" r="10.500" fill="none" stroke="#8a5f14" stroke-width="1.5"/><circle cx="24" cy="27" r="4" fill="#fff3b8" stroke="#8a5f14" stroke-width="1.2"/><path d="M12 14L15 16M36 14L33 16" stroke="#5a3d0c" stroke-width="2"/>`,
+  flip1:`${CARD(16,13,-12)}<path d="M8 20a17 17 0 0 1 30-8" stroke="#f2d27a" stroke-width="2.600" fill="none" stroke-linecap="round"/><path d="M39 4v9h-9" stroke="#f2d27a" stroke-width="2.600" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M40 28a17 17 0 0 1-30 8" stroke="#f2d27a" stroke-width="2.600" fill="none" stroke-linecap="round"/><path d="M9 44v-9h9" stroke="#f2d27a" stroke-width="2.600" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`,
+  flip4:`<g opacity=".3">${CARD(6,3,-22)}</g><g opacity=".6">${CARD(13,9,-12)}</g>${CARD(21,17,0)}<path d="M12 45h30M16 41l-5 4M38 41l5 4M24 46v-3M30 46v-3" stroke="#f2d27a" stroke-width="2.200" stroke-linecap="round"/>`};
+try{const fi=fxIcon;fxIcon=function(id){return ICON[id]?`<b><svg viewBox="0 0 48 48" style="width:1.25em;height:1.25em;display:block;overflow:visible">${ICON[id].replace(/(\d)\.(\d)00\b/g,'$1.$2')}</svg></b>`:fi(id)}}catch(e){}
+})();
+
+</script><script>
+// ===================== Round 114: six message styles that match the effects (butterflies, rose petals, inferno, thunder, missile, diamond); the war banner now shows from five hits =====================
+(function(){const B=window.BUBS;if(!B)return;
+[['bfly','Butterflies','فراشات',2500],['petal','Rose petals','بتلات ورد',2500],['inferno','Inferno','جحيم',3000],['thunder','Thunder','برق ورعد',3000],['missile','Missile','صاروخ',3000],['diamond','Diamond','ألماس',3500]]
+ .forEach(([id,en,ar,cost])=>{if(!B.some(x=>x.id===id))B.push({id,en,ar,cost})});
+const U=s=>`url("data:image/svg+xml,${encodeURIComponent(s.replace(/(\d)\.(\d)00\b/g,'$1.$2'))}")`,S0='<svg xmlns="http://www.w3.org/2000/svg" ';
+const FLY=(a,b)=>S0+`viewBox="0 0 40 32"><path d="M20 15C14 0 0 2 3 13c2 6 10 5 17 3z" fill="${a}" stroke="#3a1050" stroke-width="1.4"/><path d="M20 15C26 0 40 2 37 13c-2 6-10 5-17 3z" fill="${a}" stroke="#3a1050" stroke-width="1.4"/><path d="M20 16C13 18 7 22 10 28c4 4 9-3 10-10z" fill="${b}" stroke="#3a1050" stroke-width="1.4"/><path d="M20 16c7 2 13 6 10 12c-4 4-9-3-10-10z" fill="${b}" stroke="#3a1050" stroke-width="1.4"/><ellipse cx="20" cy="17" rx="1.800" ry="8" fill="#3a1050"/><path d="M19.500 9q-3-5-6-5M20.500 9q3-5 6-5" stroke="#3a1050" stroke-width="1.100" fill="none"/><circle cx="9" cy="9" r="2" fill="#fff" opacity=".7"/><circle cx="31" cy="9" r="2" fill="#fff" opacity=".7"/></svg>`;
+const ROSE=S0+'viewBox="0 0 40 40"><path d="M20 38Q18 28 20 22" stroke="#1f7a3a" stroke-width="2.6" fill="none"/><path d="M19 30q-9-1-10-8q8 0 10 8z" fill="#2f9a4c" stroke="#145226" stroke-width="1"/><circle cx="20" cy="14" r="12" fill="#d81b3c" stroke="#6e0712" stroke-width="1.5"/><path d="M12 12q8-9 16 0q-2 9-8 9q-7-1-8-9z" fill="#f0445f" stroke="#6e0712" stroke-width="1.1"/><path d="M16 13q4-5 8 0q-1 4-4 4t-4-4z" fill="#ff8a9c" stroke="#6e0712" stroke-width="1"/><path d="M18.500 13.500q1.500-1.500 3 0" stroke="#6e0712" stroke-width="1" fill="none"/></svg>';
+const PETALS=S0+'viewBox="0 0 80 40"><path d="M8 8q7-5 10 2q-6 5-10-2z" fill="#f0445f" opacity=".55"/><path d="M44 5q6-3 8 3q-6 3-8-3z" fill="#ff8a9c" opacity=".6"/><path d="M66 24q7-4 9 3q-6 4-9-3z" fill="#f0445f" opacity=".5"/><path d="M24 30q6-4 8 2q-5 4-8-2z" fill="#ff8a9c" opacity=".55"/><path d="M56 33q5-3 7 2q-5 3-7-2z" fill="#d81b3c" opacity=".4"/></svg>';
+const FLAMES=S0+'viewBox="0 0 48 24" preserveAspectRatio="none"><path d="M0 24V16Q3 8 6 15Q8 2 13 13Q15 7 18 15Q21 0 26 13Q29 6 31 15Q35 3 38 14Q41 8 43 15Q46 9 48 16V24Z" fill="#ff5a1f"/><path d="M0 24V19Q4 13 7 18Q10 9 13 17Q17 11 19 18Q23 7 26 17Q30 11 32 18Q36 9 39 18Q43 13 45 18L48 19V24Z" fill="#ffb02e"/><path d="M0 24V21Q5 17 8 21Q12 15 14 21Q18 16 21 21Q25 13 27 21Q31 16 34 21Q38 15 40 21Q44 18 48 21V24Z" fill="#fff0a0"/></svg>';
+const BOLT=S0+'viewBox="0 0 24 36"><path d="M15 1L3 20h7L7 35L21 14h-7z" fill="#ffe14d" stroke="#1a1408" stroke-width="1.8" stroke-linejoin="round"/><path d="M13.500 5L6.500 18h5" stroke="#fff" stroke-width="1.300" fill="none"/></svg>';
+const ROCKET=S0+'viewBox="0 0 56 28"><path d="M4 14l-4-5 9 2zM4 14l-4 5 9-2z" fill="#ffb02e" stroke="#7a2a00" stroke-width="1"/><path d="M8 9l-5-6h9l5 6zM8 19l-5 6h9l5-6z" fill="#c8102e" stroke="#111" stroke-width="1.300" stroke-linejoin="round"/><path d="M7 8h30q14 1 18 6q-4 5-18 6H7z" fill="#e9eef2" stroke="#111" stroke-width="1.500" stroke-linejoin="round"/><path d="M40 8.300q11 1.200 15 5.700q-4 4.500-15 5.700z" fill="#c8102e" stroke="#111" stroke-width="1.300"/><rect x="13" y="8" width="4" height="12" fill="#111"/><circle cx="28" cy="14" r="3.200" fill="#6ec8ff" stroke="#111" stroke-width="1.200"/></svg>';
+const GEM=S0+'viewBox="0 0 40 36"><path d="M11 3H29L38 13L20 34L2 13Z" fill="#8fdcff" stroke="#0a3a66" stroke-width="1.700" stroke-linejoin="round"/><path d="M2 13H38M11 3L14 13L20 34M29 3L26 13L20 34M11 3L20 13L29 3" stroke="#0a3a66" stroke-width=".9" fill="none" opacity=".6"/><path d="M11 3L14 13H2Z" fill="#fff" opacity=".6"/><path d="M26 13H38L20 34Z" fill="#000" opacity=".12"/></svg>';
+const SPARK=S0+'viewBox="0 0 20 20"><path d="M10 0l2 8 8 2-8 2-2 8-2-8-8-2 8-2z" fill="#fff"/></svg>';
+const st=document.createElement('style');st.textContent=`
+.bubble.bub-bfly{background:linear-gradient(135deg,#fdf0ff,#f3c9ff 55%,#c9b3ff)!important;color:#3a1050!important;border-radius:20px!important;padding:8px 20px!important;font-weight:900;overflow:visible!important;box-shadow:0 5px 14px rgba(0,0,0,.4),inset 0 0 0 2px #fff,inset 0 0 0 3.5px #b88ae0!important}
+.bubble.bub-bfly::before,.bubble.bub-bfly::after{content:'';position:absolute;width:26px;height:21px;background:${U(FLY('#ff8ad1','#ffd166'))} center/contain no-repeat;pointer-events:none;animation:bf114 1.1s ease-in-out infinite alternate}
+.bubble.bub-bfly::before{left:-11px;top:-12px;transform:rotate(-18deg)}.bubble.bub-bfly::after{right:-10px;bottom:-10px;width:20px;height:16px;background-image:${U(FLY('#7fd0ff','#b88ae0'))};animation-delay:.4s}
+@keyframes bf114{from{scale:1 1}to{scale:.72 1}}
+.bubble.bub-petal{background:${U(PETALS)} center/90px auto,linear-gradient(180deg,#fff8f3,#ffe1e4)!important;color:#7a0f24!important;border-radius:16px!important;padding:8px 18px 8px 30px!important;font-weight:900;overflow:visible!important;box-shadow:0 5px 14px rgba(0,0,0,.4),inset 0 0 0 1.5px #e9a2ad,inset 0 0 0 3.5px #fff!important}
+.bubble.bub-petal::before{content:'';position:absolute;left:-12px;top:50%;width:32px;height:32px;margin-top:-18px;background:${U(ROSE)} center/contain no-repeat;transform:rotate(-14deg);pointer-events:none}
+.bubble.bub-inferno{background:${U(FLAMES)} left bottom/38px 13px repeat-x,radial-gradient(ellipse at 50% 130%,#7a1500 0,#2a0703 60%,#140302 100%)!important;color:#ffe08a!important;border-radius:10px!important;padding:7px 18px 14px!important;font-weight:900;text-shadow:0 0 6px #ff6a1a,0 1px 0 #3a0a00;overflow:hidden!important;box-shadow:0 0 0 1.5px #ff7a1a,0 0 18px rgba(255,90,10,.8),0 6px 14px rgba(0,0,0,.5)!important;animation:inf114 .9s ease-in-out infinite alternate}
+@keyframes inf114{from{box-shadow:0 0 0 1.5px #ff7a1a,0 0 12px rgba(255,90,10,.6),0 6px 14px rgba(0,0,0,.5)}to{box-shadow:0 0 0 1.5px #ffb02e,0 0 24px rgba(255,120,20,.95),0 6px 14px rgba(0,0,0,.5)}}
+.bubble.bub-thunder{background:linear-gradient(180deg,#3a4256,#1a1f2c 60%,#0e1119)!important;color:#fff!important;border-radius:16px 16px 16px 4px!important;padding:8px 18px 8px 32px!important;font-weight:900;text-shadow:0 0 8px #7fd8ff;overflow:visible!important;box-shadow:0 0 0 1.5px #ffe14d,0 0 16px rgba(127,216,255,.6),0 6px 14px rgba(0,0,0,.55)!important}
+.bubble.bub-thunder::before{content:'';position:absolute;left:5px;top:50%;width:20px;height:30px;margin-top:-15px;background:${U(BOLT)} center/contain no-repeat;filter:drop-shadow(0 0 5px #ffe14d);animation:th114 1.4s steps(1) infinite;pointer-events:none}
+@keyframes th114{0%,100%{opacity:1}44%{opacity:1}46%{opacity:.25}50%{opacity:1}54%{opacity:.4}58%{opacity:1}}
+.bubble.bub-missile{background:repeating-linear-gradient(-45deg,#ffd400 0 7px,#111 7px 14px) left bottom/100% 5px no-repeat,linear-gradient(180deg,#5d6b3a,#3c4725)!important;color:#fff8d6!important;border-radius:6px!important;padding:7px 16px 11px 16px!important;margin-top:0;font-weight:900;letter-spacing:.3px;text-shadow:0 1px 0 #1c2410;overflow:visible!important;box-shadow:0 5px 14px rgba(0,0,0,.5),inset 0 0 0 1.5px #1c2410,inset 0 0 0 3px rgba(255,255,255,.18)!important}
+.bubble.bub-missile::before{content:'';position:absolute;right:-16px;top:-13px;width:42px;height:21px;background:${U(ROCKET)} center/contain no-repeat;transform:rotate(-16deg);filter:drop-shadow(0 2px 2px rgba(0,0,0,.5));pointer-events:none}
+.bubble.bub-diamond{background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.85) 42%,transparent 54%),linear-gradient(135deg,#eafaff,#aee3ff 45%,#6fbdf5 75%,#c9f0ff)!important;color:#07325a!important;border-radius:5px 16px 5px 16px!important;padding:8px 18px 8px 34px!important;font-weight:900;overflow:visible!important;box-shadow:0 0 16px rgba(140,215,255,.75),0 5px 12px rgba(0,0,0,.4),inset 0 0 0 1.5px #fff,inset 0 0 0 3px #4a9fe0!important}
+.bubble.bub-diamond::before{content:'';position:absolute;left:5px;top:50%;width:24px;height:22px;margin-top:-11px;background:${U(GEM)} center/contain no-repeat;pointer-events:none}
+.bubble.bub-diamond::after{content:'';position:absolute;right:-6px;top:-8px;width:16px;height:16px;background:${U(SPARK)} center/contain no-repeat;animation:dm114 1.2s ease-in-out infinite;pointer-events:none}
+@keyframes dm114{0%,100%{transform:scale(.4) rotate(0);opacity:.3}50%{transform:scale(1) rotate(45deg);opacity:1}}
+.bubble.bcompact.bub-thunder,.bubble.bcompact.bub-diamond,.bubble.bcompact.bub-petal{padding-left:30px!important}.bubble.bcompact.bub-inferno{padding-bottom:12px!important}`;document.head.appendChild(st);
+})();
+
+// ---------- war clashes: every newer effect now fights with its own colours and shape (it used to fall back to plain white) ----------
+window.__LOOKX=Object.assign(window.__LOOKX||{},{
+  th1:{a:'#fff6c8',b:'#ffd400',c:'#ffffff',k:'bolt',n:'⚡'},th2:{a:'#c9d6ea',b:'#4a5a78',c:'#eef4ff',k:'bolt',n:'🌩️'},th3:{a:'#bff5ff',b:'#22d3ee',c:'#ffffff',k:'bolt',n:'⚡'},
+  th4:{a:'#d8ecff',b:'#5fb0ff',c:'#fff6c8',k:'bolt',n:'⛈️'},th5:{a:'#ffffff',b:'#b9a0ff',c:'#ffffff',k:'bolt',n:'🌩️'},
+  ice1:{a:'#eaffff',b:'#7fd0ff',c:'#ffffff',k:'shard',n:'💎'},ice4:{a:'#d9fbff',b:'#2b8fd6',c:'#ffffff',k:'shard',n:'🧊'},
+  roy1:{a:'#fff0b0',b:'#d9a938',c:'#fffbe0',k:'coin',n:'👑'},flip:{a:'#fffdf6',b:'#e2bd5c',c:'#ffffff',k:'comet',n:'🃏'},flip1:{a:'#fffdf6',b:'#e2bd5c',c:'#ffffff',k:'comet',n:'🃏'},flip4:{a:'#fff3d6',b:'#8a5a2b',c:'#ffffff',k:'crack',n:'🃏'},
+  firering:{a:'#ffd27a',b:'#ff5a1f',c:'#fff4d0',k:'comet',n:'⭕'},missile:{a:'#e9eef2',b:'#c8102e',c:'#fff1c0',k:'comet',n:'🚀'},tank:{a:'#c9d1a8',b:'#4a5a2a',c:'#ffe2b0',k:'crack',n:'💣'},
+  comic:{a:'#ffd400',b:'#ff3b1f',c:'#ffffff',k:'comet',n:'💥'},halo:{a:'#fff0b0',b:'#f2c94e',c:'#ffffff',k:'comet',n:'🌟'},glow:{a:'#fff6d8',b:'#e2bd5c',c:'#ffffff',k:'comet',n:'✨'},
+  gold:{a:'#ffe08a',b:'#e2a51c',c:'#fffbe0',k:'comet',n:'✨'},blue:{a:'#bfe6ff',b:'#1c8fe0',c:'#ffffff',k:'comet',n:'💠'},purple:{a:'#e3c9ff',b:'#8a3fe0',c:'#ffffff',k:'comet',n:'🔮'},green:{a:'#c9ffd6',b:'#1fae5a',c:'#ffffff',k:'comet',n:'🟢'},
+  pink:{a:'#ffd0e6',b:'#ff3f9a',c:'#ffffff',k:'comet',n:'🌸'},smoke:{a:'#e6e2da',b:'#6b665e',c:'#ffffff',k:'comet',n:'💨'},stars:{a:'#fff3b0',b:'#f2b21c',c:'#ffffff',k:'coin',n:'⭐'},hearts:{a:'#ffc2d6',b:'#ff3f7a',c:'#ffffff',k:'comet',n:'💗'},
+  frost:{a:'#eaffff',b:'#59c8ff',c:'#ffffff',k:'shard',n:'❄️'},fire:{a:'#ffd27a',b:'#ff6a00',c:'#fff4d0',k:'comet',n:'🔥'},galaxy:{a:'#d9c2ff',b:'#5a2ae0',c:'#ffffff',k:'comet',n:'🌌'},
+  petals:{a:'#ffc2cf',b:'#d81b3c',c:'#fff0f3',k:'comet',n:'🌹'},butterflies:{a:'#f3c9ff',b:'#9a5fe0',c:'#ffffff',k:'comet',n:'🦋'},diamonds:{a:'#eaffff',b:'#4a9fe0',c:'#ffffff',k:'shard',n:'💎'}});
+
+// ===================== Round 115: short messages in the thunder, inferno and butterfly styles take the shape of a cloud, a flame, a butterfly (long ones keep the normal box) =====================
+// message styles cut to the shape of their effect: a storm cloud, a flame, a butterfly
+(function(){
+const U=s=>`url("data:image/svg+xml,${encodeURIComponent(s.replace(/(\d)\.(\d)00\b/g,'$1.$2'))}")`,S0='<svg xmlns="http://www.w3.org/2000/svg" ';
+// cloud: stretched to the bubble; the bumps sit in the padding
+const CLOUD=S0+'viewBox="0 0 200 100" preserveAspectRatio="none"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a6784"/><stop offset=".55" stop-color="#2c3447"/><stop offset="1" stop-color="#141925"/></linearGradient></defs><path d="M30 92C8 92 2 74 10 62C0 50 8 30 28 32C30 12 58 6 72 20C82 2 118 0 128 18C146 6 176 14 174 36C196 36 200 60 188 68C198 82 186 94 168 92Z" fill="url(#g)" stroke="#0a0d14" stroke-width="3" vector-effect="non-scaling-stroke" stroke-linejoin="round"/><path d="M30 40C34 24 54 18 68 28M84 22C94 10 114 10 122 24M136 26C150 18 166 24 166 38" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="3" vector-effect="non-scaling-stroke" stroke-linecap="round"/></svg>';
+const BOLT=S0+'viewBox="0 0 24 36"><path d="M15 1L3 20h7L7 35L21 14h-7z" fill="#ffe14d" stroke="#1a1408" stroke-width="1.8" stroke-linejoin="round"/><path d="M13.500 5L6.500 18h5" stroke="#fff" stroke-width="1.300" fill="none"/></svg>';
+// flame: tongues along the top, hot core at the bottom
+const FLAME=S0+'viewBox="0 0 200 100" preserveAspectRatio="none"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff2a00"/><stop offset=".4" stop-color="#ff7a1a"/><stop offset=".75" stop-color="#ffc53d"/><stop offset="1" stop-color="#fff0a0"/></linearGradient><linearGradient id="h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffc53d"/><stop offset="1" stop-color="#fff8cc"/></linearGradient></defs><path d="M14 98C2 98 0 86 2 70C3 54 8 46 8 30C16 34 20 40 24 44C24 30 34 22 38 6C48 16 52 26 54 36C60 24 70 14 78 2C88 14 90 26 92 36C98 26 106 18 116 8C122 18 122 28 126 38C132 28 140 20 150 10C154 22 154 30 158 40C164 34 172 30 182 24C184 36 196 50 198 70C200 86 198 98 186 98Z" fill="url(#g)" stroke="#7a1500" stroke-width="2.4" vector-effect="non-scaling-stroke" stroke-linejoin="round"/><path d="M24 98C14 98 12 90 14 80C16 66 24 60 26 50C32 56 36 60 40 64C42 52 50 46 54 36C60 46 62 54 66 60C72 50 78 44 84 34C90 44 92 52 96 60C102 52 110 46 118 38C122 48 124 54 128 62C134 56 142 50 150 44C152 54 156 60 160 64C166 60 172 56 178 52C180 62 186 72 186 84C186 94 182 98 174 98Z" fill="url(#h)" opacity=".92"/></svg>';
+// butterfly wings: one picture, mirrored for the other side
+const WING=(a,b,c)=>S0+`viewBox="0 0 60 100" preserveAspectRatio="none"><path d="M58 46C52 14 30 0 12 4C0 8 0 30 10 42C22 54 44 52 58 48Z" fill="${a}" stroke="#3a1050" stroke-width="2.4" vector-effect="non-scaling-stroke" stroke-linejoin="round"/><path d="M58 54C40 50 20 54 12 66C4 80 10 96 24 96C40 96 54 74 58 56Z" fill="${b}" stroke="#3a1050" stroke-width="2.4" vector-effect="non-scaling-stroke" stroke-linejoin="round"/><path d="M52 42C44 22 30 12 16 12C10 14 10 26 16 34C26 44 42 44 52 42Z" fill="${c}" opacity=".85"/><circle cx="20" cy="22" r="5" fill="#fff" opacity=".85"/><circle cx="33" cy="32" r="3" fill="#fff" opacity=".7"/><circle cx="24" cy="78" r="5" fill="#fff" opacity=".8"/><path d="M56 47L14 10M56 47L8 34M56 55L16 70M56 55L26 92" stroke="#3a1050" stroke-width="1.200" vector-effect="non-scaling-stroke" opacity=".5"/></svg>`;
+const WINGR=(a,b,c)=>WING(a,b,c).replace('preserveAspectRatio="none">','preserveAspectRatio="none"><g transform="translate(60 0) scale(-1 1)">').replace('</svg>','</g></svg>');
+const ANT=S0+'viewBox="0 0 40 20"><path d="M19 20Q14 6 6 4M21 20Q26 6 34 4" stroke="#3a1050" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="6" cy="4" r="2.600" fill="#3a1050"/><circle cx="34" cy="4" r="2.600" fill="#3a1050"/></svg>';
+const SHORT=12;
+window.__bubHook=(function(h){return function(b,i){if(h)h.apply(this,arguments);try{if(!/bub-(thunder|inferno|bfly)\b/.test(b.className))return;let t='';b.childNodes.forEach(n=>{if(n.nodeType===3)t+=n.textContent;else if(n.classList&&!n.classList.contains('bwho'))t+=n.textContent});
+  if(t.trim().length<=SHORT)b.classList.add('bshape')}catch(e){}}})(window.__bubHook);
+const st=document.createElement('style');st.id='bubshape';st.textContent=`
+.bubble.bshape.bub-thunder{background:${U(CLOUD)} center/100% 100% no-repeat!important;color:#fff!important;border-radius:0!important;padding:12px 17px 8px!important;font-weight:900;text-shadow:0 0 8px #7fd8ff,0 1px 0 #000;overflow:visible!important;box-shadow:none!important;filter:drop-shadow(0 6px 8px rgba(0,0,0,.55)) drop-shadow(0 0 8px rgba(127,216,255,.45));min-width:0;text-align:center}
+.bubble.bshape.bub-thunder::before{content:'';position:absolute;left:50%;top:auto;bottom:-14px;width:13px;height:19px;margin-left:-16px;margin-top:0;background:${U(BOLT)} center/contain no-repeat;filter:drop-shadow(0 0 5px #ffe14d);animation:th114 1.4s steps(1) infinite;pointer-events:none}
+.bubble.bshape.bub-thunder::after{content:'';position:absolute;left:50%;bottom:-10px;width:9px;height:14px;margin-left:6px;background:${U(BOLT)} center/contain no-repeat;filter:drop-shadow(0 0 5px #ffe14d);animation:th114 1.4s steps(1) .5s infinite;pointer-events:none}
+.bubble.bshape.bub-inferno{background:${U(FLAME)} center/100% 100% no-repeat!important;color:#3a0a00!important;border-radius:0!important;padding:19px 15px 4px!important;font-weight:900;text-shadow:0 1px 0 rgba(255,255,255,.55);overflow:visible!important;box-shadow:none!important;animation:fl115 .7s ease-in-out infinite alternate;filter:drop-shadow(0 0 10px rgba(255,90,10,.85)) drop-shadow(0 5px 6px rgba(0,0,0,.5));min-width:0;text-align:center}
+.bubble.bshape.bub-inferno .bwho{color:#5a1204!important;text-shadow:none}
+.bubble.bshape .bwho{font-size:9.5px!important;line-height:1.1!important;margin:0 0 1px!important}
+@keyframes fl115{from{filter:drop-shadow(0 0 7px rgba(255,90,10,.7)) drop-shadow(0 5px 6px rgba(0,0,0,.5))}to{filter:drop-shadow(0 0 15px rgba(255,140,20,1)) drop-shadow(0 5px 6px rgba(0,0,0,.5))}}
+.bubble.bshape.bub-bfly{background:linear-gradient(180deg,#5a2a7a,#3a1050)!important;color:#fff!important;border-radius:999px!important;padding:5px 13px!important;font-weight:900;overflow:visible!important;box-shadow:0 4px 10px rgba(0,0,0,.45),inset 0 0 0 1.5px #f3c9ff!important;min-width:54px;text-align:center}
+.bubble.bshape.bub-bfly::before,.bubble.bshape.bub-bfly::after{content:'';position:absolute;top:50%;width:34px;height:185%;min-height:46px;margin-top:0;translate:0 -50%;background:${U(WING('#ff8ad1','#ffd166','#ffc2ea'))} center/100% 100% no-repeat;pointer-events:none;animation:none;z-index:-1;filter:drop-shadow(0 3px 4px rgba(0,0,0,.4))}
+.bubble.bshape.bub-bfly::before{left:auto;right:calc(100% - 7px);bottom:auto;transform-origin:100% 50%;animation:wgL115 .9s ease-in-out infinite alternate}
+.bubble.bshape.bub-bfly::after{right:auto;left:calc(100% - 7px);bottom:auto;scale:none;transform-origin:0 50%;background-image:${U(WINGR('#ff8ad1','#ffd166','#ffc2ea'))};animation:wgL115 .9s ease-in-out infinite alternate}
+@keyframes wgL115{from{transform:scaleX(1)}to{transform:scaleX(.6)}}@keyframes wgR115{from{transform:scaleX(-1)}to{transform:scaleX(-.6)}}
+.bubble.bshape.bub-bfly{isolation:isolate}`;document.head.appendChild(st);
+})();
+
+try{const E=window.__bubExt;if(E){E.bfly=[40,8];E.thunder=[0,16];E.inferno=[0,6]}}catch(e){}
+// ===================== Round 116: who cut? the cutter's face lands on the war card with "friend · name" (blue) or "foe · name" (red) =====================
+(function(){if(typeof intercept!=='function')return;let tm=null,iv=null;
+const clear=()=>{clearTimeout(tm);clearInterval(iv);document.querySelectorAll('.wc116').forEach(e=>e.remove());document.querySelectorAll('.wc116c').forEach(c=>{c.classList.remove('wc116c');c.style.removeProperty('--wc')})};
+function show(who){try{clear();if(typeof S==='undefined'||!S||!S.war||!S.players||!S.players[who]||who===0)return;const p=S.players[who],mine=p.team===S.players[0].team,col=mine?'#3aa0ff':'#ff4a3a';
+  const av=document.querySelector(`.seat[data-seat="${who}"] .avatar`);
+  const chip=document.createElement('div');chip.className='wc116 wc116chip';chip.style.setProperty('--wc',col);chip.innerHTML=av?av.innerHTML:'';
+  const lab=document.createElement('div');lab.className='wc116 wc116lab';lab.dir=(typeof LANG!=='undefined'&&LANG==='en')?'ltr':'rtl';lab.style.background=col;lab.textContent=(mine?L('Friend','صديق'):L('Foe','خصم'))+' · '+(p.name||'');
+  document.body.appendChild(chip);document.body.appendChild(lab);
+  const pos=()=>{const cs=[...document.querySelectorAll('#ground>.card')].filter(e=>e.getBoundingClientRect().width);const cd=cs[cs.length-1];if(!cd||!S||!S.war){clear();return}
+    document.querySelectorAll('.wc116c').forEach(c=>{if(c!==cd){c.classList.remove('wc116c');c.style.removeProperty('--wc')}});cd.classList.add('wc116c');cd.style.setProperty('--wc',col);
+    const r=cd.getBoundingClientRect(),s=Math.max(30,Math.min(40,r.width*.5));chip.style.width=chip.style.height=s+'px';chip.style.left=(r.right-s*.6)+'px';chip.style.top=(r.top-s*.42)+'px';
+    const lw=lab.offsetWidth||90,lh=lab.offsetHeight||22,bx={l:r.left+r.width/2-lw/2,r:r.left+r.width/2+lw/2,t:r.bottom+5,b:r.bottom+5+lh};
+    const hit=[...document.querySelectorAll('#war,#myrow .card,#actions button')].some(e=>{const o=e.getBoundingClientRect();return o.width&&o.left<bx.r&&o.right>bx.l&&o.top<bx.b&&o.bottom>bx.t});
+    if(hit){lab.style.transform='none';lab.style.top=(r.top+r.height*.5-lh/2)+'px';lab.style.left=Math.max(6,r.left-lw-10)+'px'}
+    else{lab.style.transform='translateX(-50%)';lab.style.left=(r.left+r.width/2)+'px';lab.style.top=(r.bottom+5)+'px'}};
+  pos();iv=setInterval(pos,200);tm=setTimeout(()=>{document.querySelectorAll('.wc116').forEach(e=>e.classList.add('out'));setTimeout(clear,300)},2800)}catch(e){}}
+const on=()=>typeof NET!=='undefined'&&NET.on,AN=()=>(typeof ANIM==='number'?ANIM:1);
+intercept=(function(p){return function(j){const r=p.apply(this,arguments);try{if(!on())setTimeout(()=>show(j),400*AN())}catch(e){}return r}})(intercept);
+if(typeof resolveWar==='function')resolveWar=(function(p){return function(){clear();return p.apply(this,arguments)}})(resolveWar);
+if(typeof playFx==='function')playFx=(function(p){return function(e){try{if(e&&on()){if(e.t==='cut'&&e.s!=null)setTimeout(()=>show(e.s),400*AN());else if(e.t==='win'||e.t==='eat')clear()}}catch(_){}return p.apply(this,arguments)}})(playFx);
+const st=document.createElement('style');st.textContent=`.wc116{position:fixed;z-index:58;pointer-events:none;transition:opacity .25s}.wc116.out{opacity:0}
+.wc116chip{border-radius:50%;overflow:hidden;background:#222;box-shadow:0 0 0 3px var(--wc),0 3px 8px rgba(0,0,0,.6);animation:wc116 .28s cubic-bezier(.2,1.5,.4,1) both}.wc116chip>*{width:100%;height:100%;display:block}
+.wc116lab{transform:translateX(-50%);color:#fff;font:900 13px Tahoma,system-ui,sans-serif;padding:3px 12px;border-radius:999px;white-space:nowrap;box-shadow:0 3px 8px rgba(0,0,0,.5);animation:wc116l .22s ease-out both}
+@keyframes wc116{from{scale:.2;opacity:0}to{scale:1;opacity:1}}@keyframes wc116l{from{opacity:0;margin-top:-8px}to{opacity:1;margin-top:0}}
+#ground>.card.wc116c{box-shadow:0 0 0 3px var(--wc),0 0 22px var(--wc)!important}`;document.head.appendChild(st);
+})();
+
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1110.0513';
+const EB_VERSION='v1110.1023';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
