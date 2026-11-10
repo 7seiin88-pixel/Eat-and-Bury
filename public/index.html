@@ -583,6 +583,9 @@ function targetsFor(i,r,incl=null){ // incl: a teammate's pile you chose to atta
   const g=S.ground.filter(c=>c.r===r);
   const piles=[];
   S.players.forEach((p,j)=>{if(j===i)return; /* every other pile, partner included */const e=exposed(p.pile);if(e&&e.rank===r)piles.push({j,n:e.n,cards:e.cards})});
+  // Your own pile joins the war when it shows the same rank you are eating: the cards are merging, so whoever wins the war takes them all.
+  // (It never makes an eat possible by itself: there must be something else to take.)
+  if(g.length||piles.length){const me=exposed(S.players[i].pile);if(me&&me.rank===r)piles.push({j:i,n:me.n,cards:me.cards,own:true})}
   const all=[...g,...piles.flatMap(x=>x.cards)];
   return {g,piles,value:sum(all),count:all.length};
 }
@@ -8506,13 +8509,14 @@ const loneMate=i=>S.players.some((p,j)=>mate(i,j)&&lone(j));
 // score one way of eating: rank r with card c
 function evalEat(i,o,c,L){const me=S.players[i],h=me.hand,r=o.r,t=o.t;
   let gain=sum(t.g),mateVal=0,oppVal=0;const mates=[];
-  t.piles.forEach(x=>{const v=sum(x.cards);if(mate(i,x.j)){mateVal+=v;mates.push(x.j)}else oppVal+=v});
+  let ownVal=0;t.piles.forEach(x=>{const v=sum(x.cards);if(x.j===i)ownVal+=v;else if(mate(i,x.j)){mateVal+=v;mates.push(x.j)}else oppVal+=v}); // my own open pile joins the war: nothing gained, but it can be lost
   gain+=oppVal+pts(c);
   const useJ=c.r==='JK'&&r!=='JK';
   const def=h.filter(x=>x!==c&&(x.r===r||x.r==='JK')).length; // cards left to hit back if someone cuts
   let sc=gain+t.count*.4;
   const p=oppCan(i,r,L),stake=gain+mateVal;
-  if(L>=2)sc-=p*stake*(def?.25:.6)*kn(i,'risk',0);
+  if(ownVal>0)sc-=(L>=2?p:.5)*ownVal*(def?.35:.85)*kn(i,'own',1);
+  if(L>=2)sc-=p*stake*(def?.25:.6)*kn(i,'risk',L>=3?3:1.5); // how much it fears being cut (measured over thousands of games: 3 is the sweet spot for the top level)
   if(useJ)sc-=kn(i,'jkEat',L>=3?Math.max(12,30-oppCan(i,r,L)*10):L>=2?22:30); // a joker is a cut kept in the hand
   if(mateVal>0){ // opening a war on a teammate's pile puts his points up for grabs
     const pull=L>=2&&kn(i,'mpull',1)&&mates.some(lone),bury=L>=2&&kn(i,'mbury',1)&&def>=1&&h.some(x=>x!==c&&x.r!==r&&x.r!=='JK'&&onGround(x.r));
@@ -10492,7 +10496,7 @@ const HITNUMS=[
 window.HITNUMS=HITNUMS;
 const cur=()=>{try{const id=WAL.hit||'classic';const h=HITNUMS.find(x=>x.id===id);return h&&(h.cost===0||WAL.owned.includes('hit-'+id))?h:HITNUMS[0]}catch(e){return HITNUMS[0]}};
 // the game creates a ".warcount" on each cut: restyle it in the player's chosen look
-try{new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(nd=>{try{if(!nd.classList||!nd.classList.contains('warcount')||nd.dataset.hn)return;const n=parseInt(String(nd.textContent).replace(/[^0-9]/g,''))||2;const h=cur();nd.dataset.hn=h.id;if(h.id==='classic')return;
+try{new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(nd=>{try{if(!nd.classList||!nd.classList.contains('warcount')||nd.dataset.hn)return;const n=parseInt(String(nd.textContent).replace(/[^0-9]/g,''))||2;const h=(window.__hitFor&&window.__hitFor())||cur();nd.dataset.hn=h.id;if(h.id==='classic')return;
   document.querySelectorAll('.hnpop').forEach(x=>x.remove());const d=document.createElement('div');d.className='hnpop';d.style.left=nd.style.left;d.style.top=Math.max(70,(parseFloat(nd.style.top)||0)-34)+'px';d.style.fontSize=h.size(n)+'px';d.innerHTML=h.html(n);nd.style.display='none';document.body.appendChild(d);setTimeout(()=>d.remove(),1350)}catch(e){}}))).observe(document.body,{childList:true})}catch(e){}
 const st=document.createElement('style');st.textContent=`
 .hnpop{position:fixed;z-index:9998;pointer-events:none;line-height:1;translate:-50% -50%;animation:hnpop 1.3s cubic-bezier(.2,.9,.3,1) both}
@@ -10535,9 +10539,9 @@ function hnBar(h){document.querySelectorAll('#shop .hnbar').forEach(x=>x.remove(
 window.addEventListener('click',async e=>{const tb=e.target.closest('#shop [data-hitbuy]');
   if(tb){e.stopImmediatePropagation();const h=HITNUMS.find(x=>x.id===tb.dataset.hitbuy);if(!h)return;if((WAL.tokens||0)<h.cost){toast(L('Not enough rupees','ما عندك روبيات كافية'));return}
     if(!await ebAsk(L(`Buy the ${h.en} counter for ${h.cost.toLocaleString('en')} rupees?`,`تشتري عدّاد "${h.ar}" بـ ${h.cost.toLocaleString('en')} روبية؟`),L('Buy','اشترِ'),L('No','لا')))return;
-    WAL.tokens-=h.cost;WAL.owned.push('hit-'+h.id);WAL.hit=h.id;saveWal();renderShop();hnDemo(h);return}
+    WAL.tokens-=h.cost;WAL.owned.push('hit-'+h.id);WAL.hit=h.id;saveWal();try{window.__hitSave&&window.__hitSave()}catch(e){}renderShop();hnDemo(h);return}
   const t=e.target.closest('#shop [data-hit]');if(!t)return;e.stopImmediatePropagation();const h=HITNUMS.find(x=>x.id===t.dataset.hit);if(!h)return;
-  if(h.cost===0||WAL.owned.includes('hit-'+h.id)){if(WAL.hit!==h.id&&!(h.id==='classic'&&!WAL.hit)){WAL.hit=h.id;saveWal();renderShop()}hnBar(null);hnDemo(h);return}
+  if(h.cost===0||WAL.owned.includes('hit-'+h.id)){if(WAL.hit!==h.id&&!(h.id==='classic'&&!WAL.hit)){WAL.hit=h.id;saveWal();try{window.__hitSave&&window.__hitSave()}catch(e){}renderShop()}hnBar(null);hnDemo(h);return}
   document.querySelectorAll('#shop .hnit').forEach(x=>x.classList.toggle('try',x===t));hnBar(h);hnDemo(h)},true);
 {const st=document.createElement('style');st.textContent='#shop .hnit.try{box-shadow:inset 0 0 0 2px #7fd0ff,0 0 12px rgba(127,208,255,.35)}#shop .hnbar{position:fixed;left:14px;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:10040;max-width:520px;margin:0 auto!important;background:#2a161a!important;box-shadow:inset 0 0 0 1.5px #f2d27a,0 8px 24px rgba(0,0,0,.6)!important;display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0;padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(242,210,122,.35);font-weight:800}#shop .hnbar button{border:0;border-radius:10px;padding:9px 14px;font:inherit;font-weight:800;background:linear-gradient(180deg,#f8e3a0,#e2bd5c 55%,#c9a04a);color:#2a1606}';document.head.appendChild(st)}
 })();
@@ -11044,31 +11048,6 @@ render=(function(p){return function(){const r=p.apply(this,arguments);go();setTi
 window.addEventListener('resize',()=>{go();setTimeout(go,400)});window.addEventListener('orientationchange',()=>setTimeout(go,500));
 })();
 
-// ===================== Round 119: tap a player to see what he is using in this game (message style, eat effect, fire-button effect), with a shortcut to that item in the shop =====================
-(function(){if(typeof renderProfile!=='function')return;
-const cosOf=i=>{try{const c=window.__botCos&&window.__botCos(i);if(c)return c;const pr=typeof profOf==='function'?profOf(i):null;if(pr&&!pr.bot&&(pr.efx||pr.sfx||pr.bub))return {bub:pr.bub||'plain',efx:pr.efx||'none',sfx:pr.sfx||'plain'}}catch(e){}return null};
-const price=(pid,cost)=>{const own=cost===0||(typeof WAL!=='undefined'&&WAL.owned.includes(pid));return own?`<small class="own">${L('You own it','عندك')}</small>`:`<small><i class="cn"></i>${(cost||0).toLocaleString('en')}</small>`};
-renderProfile=(function(p){return function(i){const r=p.apply(this,arguments);try{const box=document.getElementById('profBox');if(!box||i===0)return r;const old=box.querySelector('.kit119');if(old)old.remove();const c=cosOf(i);if(!c)return r;
-  const rows=[];
-  const b=typeof BUBS!=='undefined'&&BUBS.find(x=>x.id===c.bub);if(b&&b.id!=='plain')rows.push(`<button type="button" class="kit119r" data-kit="bub:${b.id}"><span class="kpv"><span class="bubble bub-${b.id}">${L('Eat!','أكل!')}</span></span><span class="ktx"><em>${L('Message style','شكل العبارات')}</em><b>${L(b.en,b.ar)}</b></span>${price('bub-'+b.id,b.cost)}</button>`);
-  const e=typeof EFX!=='undefined'&&EFX.find(x=>x.id===c.efx);if(e&&e.id!=='none')rows.push(`<button type="button" class="kit119r" data-kit="e:${e.id}"><span class="kpv kic">${fxIcon(e.id)}</span><span class="ktx"><em>${L('Eat effect','تأثير الأكل')}</em><b>${L(e.en,e.ar)}</b></span>${price('efx-'+e.id,e.cost)}</button>`);
-  const s=typeof SFX!=='undefined'&&SFX.find(x=>x.id===c.sfx);if(s&&s.id!=='plain')rows.push(`<button type="button" class="kit119r" data-kit="s:${s.id}"><span class="kpv kic">${fxIcon(s.id)}</span><span class="ktx"><em>${L('Fire-button effect','تأثير زر النار')}</em><b>${L(s.en,s.ar)}</b></span>${price('sfx-'+s.id,s.cost)}</button>`);
-  if(!rows.length)return r;const d=document.createElement('div');d.className='kit119';d.innerHTML=`<div class="label">${L('Using in this game','يستخدم بهالقيم')}</div>${rows.join('')}<p class="note">${L('Tap one to see it in the shop.','اضغط على أي واحد وتشوفه بالمتجر.')}</p>`;
-  const st=box.querySelector('.pstats');if(st)st.after(d);else box.appendChild(d)}catch(e){}return r}})(renderProfile);
-window.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-kit]');if(!t)return;e.stopImmediatePropagation();e.preventDefault();const [k,id]=t.dataset.kit.split(':');
-  try{document.getElementById('profSheet').hidden=true;openShop(k==='bub'?'emotes':'efx')}catch(_){return}
-  let n=0;const find=()=>{const el=document.querySelector(k==='bub'?`#shop [data-bub="${id}"]`:`#shop [data-fx2="${k}:${id}"]`);if(!el){if(++n<10)setTimeout(find,120);return}
-    try{el.scrollIntoView({block:'center'})}catch(_){}el.classList.remove('kit119hi');void el.offsetWidth;el.classList.add('kit119hi');setTimeout(()=>el.classList.remove('kit119hi'),3600)};setTimeout(find,150)},true);
-const st=document.createElement('style');st.textContent=`.kit119{margin:12px 0 4px}.kit119 .label{margin-bottom:6px}
-.kit119r{display:flex;align-items:center;gap:10px;width:100%;margin:6px 0;padding:8px 12px;border:0;border-radius:14px;font:inherit;color:#f4ead6;background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 1px rgba(242,210,122,.3);text-align:start}
-.kit119r .kpv{flex:none;width:86px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:radial-gradient(ellipse at center,#6a1a22,#3a0d12);overflow:hidden}
-.kit119r .kpv .bubble{position:static!important;transform:none!important;opacity:1!important;font-size:12px!important;padding:4px 10px!important;margin:0!important;animation:none;max-width:80px;white-space:nowrap}
-.kit119r .kic{font-size:24px}.kit119r .kic b{font-weight:400;display:block;line-height:1}
-.kit119r .ktx{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.3}.kit119r .ktx em{font-style:normal;font-size:11.5px;color:#c9b79a}.kit119r .ktx b{font-size:15px}
-.kit119r small{flex:none;display:flex;align-items:center;gap:4px;font-size:13px;font-weight:800;color:#f2d27a}.kit119r small.own{color:#5fe0a0}
-#shop .kit119hi{animation:kit119 1.2s ease-in-out 3;position:relative;z-index:2}@keyframes kit119{0%,100%{box-shadow:0 0 0 2px #f2d27a,0 0 0 rgba(242,210,122,0)}50%{box-shadow:0 0 0 3px #fff3b8,0 0 26px rgba(242,210,122,.95)}}`;document.head.appendChild(st);
-})();
-
 </script><script>
 // ===================== Round 120: "what you earned" on the end screen (rank points, XP, rupees, new achievements, the rank badge and the road to the next rank) and a points booster =====================
 (function(){
@@ -11189,8 +11168,73 @@ const st=document.createElement('style');st.textContent=`.mdl121{width:1.25em;he
 })();
 
 </script><script>
+// ===================== Round 122: small phones (side players inside the screen); the chosen hit counter is saved to the account; a player's card lists everything he is using
+// (theme, card face, card back, joker, eat effect, fire effect, hit counter, message style) with a shortcut to each in the shop; computers wear a full kit and show their own counter when they cut =====================
+(function(){
+// ---------- 1. narrow phones ----------
+{const st=document.createElement('style');st.textContent=`@media (orientation:portrait) and (max-width:379px){html body #seats .seat.s-l .who,html body #seats .seat.s-left .who,html body #seats .seat[class*="s-l"] .who{translate:8px 0}html body #seats .seat.s-r .who,html body #seats .seat.s-right .who,html body #seats .seat[class*="s-r"] .who{translate:-8px 0}}`;document.head.appendChild(st)}
+// the classes differ between layouts, so also correct by measuring: any seat that pokes out of the screen is pulled back in
+function tuck(){try{if(innerWidth>=innerHeight)return;document.querySelectorAll('#seats .seat .who').forEach(w=>{w.style.marginInline='';const r=w.getBoundingClientRect();if(!r.width)return;const over=r.right-(innerWidth-2),under=2-r.left;
+  if(over>0)w.style.transform=`translateX(${-Math.ceil(over)}px)`;else if(under>0)w.style.transform=`translateX(${Math.ceil(under)}px)`})}catch(e){}}
+if(typeof render==='function'){render=(function(p){return function(){const r=p.apply(this,arguments);try{document.querySelectorAll('#seats .seat .who').forEach(w=>{if(w.style.transform)w.style.transform=''})}catch(e){}requestAnimationFrame(tuck);return r}})(render);addEventListener('resize',()=>setTimeout(tuck,300))}
+
+// ---------- 2. the hit counter you chose lives in your account ----------
+window.__hitSave=function(){try{MYPROF.hit=WAL.hit||'classic';if(typeof ACCT!=='undefined'&&ACCT.on)api('/api/sync',{wal:{tokens:WAL.tokens,owned:WAL.owned,slams:WAL.slams},prof:{hit:MYPROF.hit}}).then(m=>applyMe(m,true)).catch(()=>{})}catch(e){}};
+if(typeof applyMe==='function')applyMe=(function(p){return function(m){const r=p.apply(this,arguments);try{const h=m&&m.prof&&m.prof.hit;if(h&&window.HITNUMS&&HITNUMS.some(x=>x.id===h)){if(h!=='classic'||!WAL.hit||WAL.owned.includes('hit-'+WAL.hit)===false){if(WAL.hit!==h&&(h!=='classic'||!WAL.hit)){WAL.hit=h;saveWal()}}
+    else if(WAL.hit&&WAL.hit!=='classic'&&WAL.owned.includes('hit-'+WAL.hit))setTimeout(()=>window.__hitSave(),1500)}}catch(e){}return r}})(applyMe); // a counter picked on this phone before the update is sent up once
+
+// ---------- 3. everything a player is using ----------
+const hash=s=>{let h=2166136261;for(const ch of String(s))h=Math.imul(h^ch.charCodeAt(0),16777619);return h>>>0};
+const L1=(name)=>{try{return (0,eval)(name)}catch(e){return null}};
+const LIST={theme:()=>typeof THEMES!=='undefined'?THEMES:[],back:()=>typeof BACKS!=='undefined'?BACKS:[],face:()=>typeof FACES_STYLES!=='undefined'?FACES_STYLES:[],joker:()=>typeof JOKERS!=='undefined'?JOKERS:[],hit:()=>window.HITNUMS||[]};
+const paid=l=>l.filter(x=>x&&x.cost>0);
+// a computer's kit: always the same for the same name, so "Faisal" keeps his look
+function botKit(name){const h=hash('kit:'+name),pick=(k,n)=>{const l=paid(LIST[k]());return l.length?l[(h>>>n)%l.length].id:''};return {theme:pick('theme',0),back:pick('back',5),face:pick('face',9),joker:pick('joker',13),hit:pick('hit',17)}}
+function kitOf(i){try{if(typeof S==='undefined'||!S||!S.players||!S.players[i]||i===0)return null;const c=window.__botCos&&window.__botCos(i);
+  if(c)return Object.assign({bub:c.bub,efx:c.efx,sfx:c.sfx},botKit(S.players[i].name||('p'+i)));
+  const pr=typeof profOf==='function'?profOf(i):null;if(pr&&!pr.bot)return Object.assign({bub:pr.bub||'plain',efx:pr.efx||'none',sfx:pr.sfx||'plain',hit:pr.hit||'classic'},pr.kit||{})}catch(e){}return null}
+window.__kitOf=kitOf;
+// who cut last: his counter is the one that shows
+let cutSeat=null;
+if(typeof intercept==='function')intercept=(function(p){return function(j){try{if(!(typeof NET!=='undefined'&&NET.on))cutSeat=j}catch(e){}return p.apply(this,arguments)}})(intercept);
+if(typeof declareEat==='function')declareEat=(function(p){return function(i){try{if(!(typeof NET!=='undefined'&&NET.on))cutSeat=i}catch(e){}return p.apply(this,arguments)}})(declareEat);
+if(typeof playFx==='function')playFx=(function(p){return function(e){try{if(e&&(e.t==='cut'||e.t==='eat')&&e.s!=null)cutSeat=e.s}catch(_){}return p.apply(this,arguments)}})(playFx);
+window.__hitFor=function(){try{if(cutSeat==null||cutSeat===0)return null;const k=kitOf(cutSeat);if(!k||!k.hit)return null;return (window.HITNUMS||[]).find(x=>x.id===k.hit)||null}catch(e){return null}};
+
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const price=(pid,cost)=>{const own=!cost||(typeof WAL!=='undefined'&&WAL.owned.includes(pid));return own?`<small class="own">${L('You own it','عندك')}</small>`:`<small><i class="cn"></i>${(cost||0).toLocaleString('en')}</small>`};
+const rowH=(kind,id,pv,label,name,pid,cost)=>`<button type="button" class="kit119r" data-kit="${kind}:${id}"><span class="kpv ${/^<(b|svg)/.test(pv)?'kic':''}${kind==='bub'?' kbub':''}">${pv}</span><span class="ktx"><em>${label}</em><b>${name}</b></span>${price(pid,cost)}</button>`;
+if(typeof renderProfile==='function')renderProfile=(function(p){return function(i){const r=p.apply(this,arguments);try{const box=document.getElementById('profBox');if(!box||i===0)return r;const old=box.querySelector('.kit119');if(old)old.remove();const k=kitOf(i);if(!k)return r;const rows=[];
+  const th=LIST.theme().find(x=>x.id===k.theme);if(th&&th.cost>0)rows.push(rowH('theme',th.id,`<span class="ksw" style="background:${esc(th.sw||'#6a1a22')}"></span>`,L('Table theme','ثيم الطاولة'),L(th.en,th.ar),th.id,th.cost));
+  const fc=LIST.face().find(x=>x.id===k.face);if(fc&&fc.cost>0)rows.push(rowH('face',fc.id,'<b>🂡</b>',L('Card faces','وجه الورق'),L(fc.en,fc.ar),fc.id,fc.cost));
+  const bk=LIST.back().find(x=>x.id===k.back);if(bk&&bk.cost>0)rows.push(rowH('back',bk.id,`<span class="kbk cbprev cb-${bk.id}"><span class="cardback"></span></span>`,L('Card back','ظهر الورق'),L(bk.en,bk.ar),bk.id,bk.cost));
+  const jk=LIST.joker().find(x=>x.id===k.joker);if(jk&&jk.cost>0)rows.push(rowH('joker',jk.id,'<b>🃏</b>',L('Joker','الجوكر'),L(jk.en,jk.ar),jk.id,jk.cost));
+  const e=typeof EFX!=='undefined'&&EFX.find(x=>x.id===k.efx);if(e&&e.id!=='none')rows.push(rowH('e',e.id,fxIcon(e.id),L('Eat effect','تأثير الأكل'),L(e.en,e.ar),'efx-'+e.id,e.cost));
+  const s=typeof SFX!=='undefined'&&SFX.find(x=>x.id===k.sfx);if(s&&s.id!=='plain')rows.push(rowH('s',s.id,fxIcon(s.id),L('Fire-button effect','تأثير زر النار'),L(s.en,s.ar),'sfx-'+s.id,s.cost));
+  const h=LIST.hit().find(x=>x.id===k.hit);if(h&&h.id!=='classic')rows.push(rowH('hit',h.id,`<span style="font-size:${Math.round(Math.min(34,h.size(3)*.5))}px;line-height:1">${h.html(3)}</span>`,L('Hit counter','عدّاد الضربات'),L(h.en,h.ar),'hit-'+h.id,h.cost));
+  const b=typeof BUBS!=='undefined'&&BUBS.find(x=>x.id===k.bub);if(b&&b.id!=='plain')rows.push(rowH('bub',b.id,`<span class="bubble bub-${b.id}${/^(thunder|inferno|bfly)$/.test(b.id)?' bshape':''}">${L('Eat!','أكل!')}</span>`,L('Message style','شكل العبارات'),L(b.en,b.ar),'bub-'+b.id,b.cost));
+  if(!rows.length)return r;const d=document.createElement('div');d.className='kit119';d.innerHTML=`<div class="label">${L('Using in this game','يستخدم بهاللعبة')}</div>${rows.join('')}<p class="note">${L('Tap one to see it in the shop.','اضغط على أي واحد وتشوفه بالمتجر.')}</p>`;
+  const st=box.querySelector('.pstats');if(st)st.after(d);else box.appendChild(d)}catch(e){}return r}})(renderProfile);
+window.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-kit]');if(!t)return;e.stopImmediatePropagation();e.preventDefault();const [k,id]=t.dataset.kit.split(':');
+  const skin=['theme','face','back','joker'].includes(k);
+  try{document.getElementById('profSheet').hidden=true;openShop(k==='bub'?'emotes':skin?'skins':'efx')}catch(_){return}
+  const sels=k==='bub'?[`#shop [data-bub="${id}"]`]:k==='hit'?[`#shop [data-hit="${id}"]`]:skin?[`#shop [data-skin="${k}:${id}"]`,`#shop [data-tpick="${id}"]`,`#shop [data-skin="${id}"]`,`#shop [data-${k}="${id}"]`,`#shop [data-id="${id}"]`]:[`#shop [data-fx2="${k}:${id}"]`];
+  let n=0;const find=()=>{let el=null;for(const s of sels){try{el=document.querySelector(s)}catch(_){}if(el)break}if(!el){if(++n<10)setTimeout(find,120);return}
+    try{el.scrollIntoView({block:'center'})}catch(_){}el.classList.remove('kit119hi');void el.offsetWidth;el.classList.add('kit119hi');setTimeout(()=>el.classList.remove('kit119hi'),3600)};setTimeout(find,150)},true);
+const st=document.createElement('style');st.textContent=`.kit119{margin:12px 0 4px}.kit119 .label{margin-bottom:6px}
+.kit119r{display:flex;align-items:center;gap:10px;width:100%;margin:6px 0;padding:7px 12px;border:0;border-radius:14px;font:inherit;color:#f4ead6;background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 1px rgba(242,210,122,.3);text-align:start}
+.kit119r .kpv{flex:none;width:86px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:radial-gradient(ellipse at center,#6a1a22,#3a0d12);overflow:hidden}
+.kit119r .kpv.kbub{overflow:visible}.kit119r .kpv .bubble{position:relative!important;left:auto!important;top:auto!important;right:auto!important;bottom:auto!important;transform:scale(.74)!important;transform-origin:50% 50%;opacity:1!important;margin:0!important;white-space:nowrap;flex:none}
+.kit119r .kpv .ksw{width:100%;height:100%;display:block;background-size:cover}.kit119r .kpv .kbk{width:26px;height:37px;display:block;position:relative}.kit119r .kpv .kbk .cardback{position:absolute;inset:0;width:100%;height:100%;border-radius:4px}
+.kit119r .kic{font-size:24px}.kit119r .kic b{font-weight:400;display:block;line-height:1}
+.kit119r .ktx{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.3}.kit119r .ktx em{font-style:normal;font-size:11.5px;color:#c9b79a}.kit119r .ktx b{font-size:15px}
+.kit119r small{flex:none;display:flex;align-items:center;gap:4px;font-size:13px;font-weight:800;color:#f2d27a}.kit119r small.own{color:#5fe0a0}
+#shop .kit119hi{animation:kit119 1.2s ease-in-out 3;position:relative;z-index:2}@keyframes kit119{0%,100%{box-shadow:0 0 0 2px #f2d27a,0 0 0 rgba(242,210,122,0)}50%{box-shadow:0 0 0 3px #fff3b8,0 0 26px rgba(242,210,122,.95)}}`;document.head.appendChild(st);
+})();
+
+</script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1110.1336';
+const EB_VERSION='v1110.1444';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
