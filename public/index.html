@@ -10935,8 +10935,118 @@ const st=document.createElement('style');st.textContent=`.wc116{position:fixed;z
 })();
 
 </script><script>
+// ===================== Round 117: lightning and thunder as normal eat effects; a richer smoke effect; flag message styles (Arab countries, UK, USA), each with a burst in its own colours =====================
+(function(){
+const R=(a,b)=>a+Math.random()*(b-a);
+// ---------- 1. eat effects: lightning, thunder ----------
+if(typeof FXS!=='undefined'&&typeof FXE!=='undefined'&&typeof FXB!=='undefined'&&typeof EFX!=='undefined'){
+  // "bolt" already existed as a picture (it is part of the big thunder); it is now an effect you can pick
+  FXS.storm=function(x,y,p){const cy=y-70-p*8,n=6+p*3;
+    for(let k=0;k<n;k++)FXE.add({type:'smoke',add:false,x:x+R(-34,34)-p*4+k%3*6,y:cy+R(-8,8),col:k%2?'rgba(40,46,62,0.75)':'rgba(84,94,118,0.7)',size:14,size2:R(26,38)+p*4,vx:R(-10,10),vy:R(-6,4),drag:.96,life:R(.9,1.3),fadeIn:.08,fade:1.4});
+    FXE.flash('rgba(190,220,255,'+(.12+p*.07)+')',1,.14);
+    const strike=(d)=>{for(let k=0;k<2;k++)FXE.add({type:'bolt',x:x+R(-10,10),y:cy+10,col:k?'rgba(255,255,255,1)':'rgba(190,225,255,1)',ang:Math.PI/2+R(-.15,.15),len:(y-cy)*R(.9,1.05),size:1,life:R(.16,.26),delay:d});
+      setTimeout(()=>{FXB.sparks(x,y,'rgba(210,235,255,1)',8+p*5,360,800);FXE.add({type:'glow',x,y,col:'rgba(170,215,255,1)',size:16,size2:50+p*14,life:.25,fade:1});FXB.ring(x,y,'rgba(190,225,255,0.9)',p,1)},d*1000+60)};
+    strike(.08);if(p>=2)strike(.3);if(p===3){strike(.52);FXE.shake(9,380);FXE.decal(x,y,70,'rgba(10,20,40,0.5)',2)}};
+  [['bolt','Lightning','برق',2500,2],['storm','Thunder','رعد',3000,2]].forEach(([id,en,ar,cost,tier])=>{if(!EFX.some(e=>e.id===id))EFX.push({id,en,ar,cost,tier})});
+  try{const fi=fxIcon;fxIcon=function(id){return id==='storm'?'<b>⛈️</b>':id==='bolt'?'<b>⚡</b>':fi(id)}}catch(e){}
+  try{window.__LOOKX=Object.assign(window.__LOOKX||{},{bolt:{a:'#d8ecff',b:'#5fb0ff',c:'#fff6c8',k:'bolt',n:'⚡'},storm:{a:'#c9d6ea',b:'#4a5a78',c:'#eef4ff',k:'bolt',n:'⛈️'}})}catch(e){}
+  // their sound: the studio thunder, cut short for a normal eat
+  try{const SMP=window.__SMP;if(SMP&&typeof SND!=='undefined'){
+    const cut=(id,g,off,dur)=>{try{const c=SND.ctx;if(!c||!SND.ok())return false;const b=SMP.buf[id];if(!b){SMP.all();return false}const s=c.createBufferSource();s.buffer=b;const gn=c.createGain(),t=c.currentTime+.01,v=g*SMP.vol()*.85;
+      gn.gain.setValueAtTime(v,t);gn.gain.setValueAtTime(v,t+dur*.55);gn.gain.linearRampToValueAtTime(.0001,t+dur);s.connect(gn).connect(c.destination);s.start(t,off);s.stop(t+dur+.05);return true}catch(e){return false}};
+    const EAT={bolt:['thunder_3',.28,.8,'eat_bolt'],storm:['thunder_1',0,1.0,'eat_storm']},FS=window.__FXSND||{};
+    window.fxSound=(function(prev){return function(id,p){try{const e=EAT[id];if(e){if(p===3){if(SMP.play(e[0],1,e[1]))return}else{if(SMP.play(e[3],p===2?.85:.7))return;if(typeof SND.slap==='function'){return}}return prev(p===3?'thunder':'gold',p)}}catch(_){}return prev(id,p)}})(window.fxSound);
+    try{fxSound=window.fxSound}catch(e){}}}catch(e){}
+
+  // ---------- 2. smoke, richer: a rolling ring of two-tone smoke, a rising column, gold glints inside ----------
+  FXS.smoke=function(x,y,p){const n=10+p*7;FXE.flash('rgba(235,230,220,'+(.05+p*.04)+')',1,.22);
+    FXE.add({type:'ring',x,y,col:'rgba(245,240,230,0.75)',size:12,size2:80+p*46,w:9+p*3,life:.5,fade:1});FXE.add({type:'ring',x,y,col:'rgba(246,220,138,0.6)',size:8,size2:54+p*30,w:4,life:.42,delay:.06,fade:1});
+    for(let k=0;k<n;k++){const a=k/n*6.283+R(-.2,.2),v=R(70,170)*(.85+p*.2);FXE.add({type:'smoke',add:false,x:x+Math.cos(a)*8,y:y+Math.sin(a)*5,col:k%3===0?'rgba(240,236,228,0.55)':k%3===1?'rgba(150,148,156,0.5)':'rgba(86,84,94,0.5)',size:10,size2:R(34,54)+p*8,vx:Math.cos(a)*v,vy:Math.sin(a)*v*.45-R(8,34),drag:.93,life:R(1.1,1.9),fadeIn:.08,fade:1.1})}
+    for(let k=0;k<5+p*4;k++)FXE.add({type:'smoke',add:false,x:x+R(-18,18),y:y+R(-6,6),col:k%2?'rgba(70,70,80,0.45)':'rgba(205,200,192,0.4)',size:12,size2:R(38,66)+p*6,vx:R(-14,14),vy:-R(60,140),drag:.975,life:R(1.4,2.3),fadeIn:.15,delay:R(.08,.5),fade:1});
+    for(let k=0;k<7*p;k++)FXE.add({type:'glow',x:x+R(-60,60)*(.6+p*.25),y:y+R(-55,25),col:k%3?'rgba(255,225,150,1)':'rgba(255,250,225,1)',size:R(1.6,3.4),vx:R(-10,10),vy:-R(8,30),life:R(.5,1.2),delay:R(.12,.8)});
+    FXB.sparks(x,y,'rgba(255,228,165,1)',5*p,300,700);FXB.dust(x,y,5+p*3);if(p===3)FXE.shake(7,340)};
+}
+
+// ---------- 3. flag message styles ----------
+(function(){const B=window.BUBS;if(!B)return;
+const U=s=>`url("data:image/svg+xml,${encodeURIComponent(s)}")`,S0='<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" ';
+const H3=(a,b,c,x=33.3,y=66.6)=>`linear-gradient(180deg,${a} 0 ${x}%,${b} ${x}% ${y}%,${c} ${y}%)`;
+const TEETH=(n,col,bg)=>{let p='M0 0H24';for(let k=0;k<n;k++)p+=`L34 ${((k+.5)/n*100).toFixed(1)}L24 ${((k+1)/n*100).toFixed(1)}`;return U(S0+`viewBox="0 0 100 100"><rect width="100" height="100" fill="${bg}"/><path d="${p}V100H0Z" fill="${col}"/></svg>`)};
+const UK=U(S0+'viewBox="0 0 60 30"><rect width="60" height="30" fill="#012169"/><path d="M0 0L60 30M60 0L0 30" stroke="#fff" stroke-width="6"/><path d="M0 0L60 30M60 0L0 30" stroke="#c8102e" stroke-width="2.4"/><path d="M30 0V30M0 15H60" stroke="#fff" stroke-width="10"/><path d="M30 0V30M0 15H60" stroke="#c8102e" stroke-width="6"/></svg>');
+const US=U(S0+'viewBox="0 0 190 100">'+Array.from({length:13},(_,k)=>`<rect y="${(k*100/13).toFixed(2)}" width="190" height="${(100/13+.2).toFixed(2)}" fill="${k%2?'#fff':'#b22234'}"/>`).join('')+'<rect width="76" height="53.85" fill="#3c3b6e"/>'+Array.from({length:20},(_,k)=>`<circle cx="${8+(k%5)*15}" cy="${7+Math.floor(k/5)*13.2}" r="2.6" fill="#fff"/>`).join('')+'</svg>');
+const star=(cx,cy,r)=>{let p='';for(let k=0;k<10;k++){const a2=k*Math.PI/5-Math.PI/2,rr=k%2?r*.4:r;p+=(k?'L':'M')+(cx+Math.cos(a2)*rr*.55).toFixed(1)+' '+(cy+Math.sin(a2)*rr).toFixed(1)}return p+'Z'};
+// Syria: drawn here (green, white, black, three red stars) because phones still disagree on its emoji
+const SY=U(S0+'viewBox="0 0 100 100"><rect width="100" height="33.4" fill="#007a3d"/><rect y="33.3" width="100" height="33.4" fill="#fff"/><rect y="66.6" width="100" height="33.4" fill="#111"/>'+[30,50,70].map(x=>`<path d="${star(x,50,13)}" fill="#ce1126"/>`).join('')+'</svg>');
+// id, English, Arabic, emoji, background, text colour mode (w = white text, h = dark text with a white halo), triangle colour, the colours of its burst
+const F=[
+ ['flsa','Saudi Arabia','السعودية','🇸🇦','#006c35','w',null,['#006c35','#ffffff','#0a8f4a']],
+ ['flae','UAE','الإمارات','🇦🇪',`linear-gradient(90deg,#e3001b 0 18px,transparent 18px),${H3('#00843d','#fff','#111')}`,'h',null,['#e3001b','#00843d','#ffffff','#111111']],
+ ['flqa','Qatar','قطر','🇶🇦',TEETH(9,'#fff','#8a1538')+' center/100% 100%','w',null,['#8a1538','#ffffff']],
+ ['flbh','Bahrain','البحرين','🇧🇭',TEETH(5,'#fff','#da291c')+' center/100% 100%','w',null,['#da291c','#ffffff']],
+ ['flom','Oman','عمان','🇴🇲',`linear-gradient(90deg,#db161b 0 18px,transparent 18px),${H3('#fff','#db161b','#008000')}`,'h',null,['#db161b','#ffffff','#008000']],
+ ['fliq','Iraq','العراق','🇮🇶',H3('#ce1126','#fff','#111'),'h',null,['#ce1126','#ffffff','#111111','#007a3d']],
+ ['fljo','Jordan','الأردن','🇯🇴',H3('#111','#fff','#007a3d'),'h','#ce1126',['#111111','#ffffff','#007a3d','#ce1126']],
+ ['fleg','Egypt','مصر','🇪🇬',H3('#ce1126','#fff','#111'),'h',null,['#ce1126','#ffffff','#111111','#c09300']],
+ ['fllb','Lebanon','لبنان','🇱🇧',H3('#ed1c24','#fff','#ed1c24',25,75),'h',null,['#ed1c24','#ffffff','#00a651']],
+ ['flsy','Syria','سوريا','',SY+' center/100% 100%','h',null,['#007a3d','#ffffff','#111111','#ce1126']],
+ ['flps','Palestine','فلسطين','🇵🇸',H3('#111','#fff','#007a3d'),'h','#ce1126',['#111111','#ffffff','#007a3d','#ce1126']],
+ ['flma','Morocco','المغرب','🇲🇦','#c1272d','w',null,['#c1272d','#006233']],
+ ['fldz','Algeria','الجزائر','🇩🇿','linear-gradient(90deg,#006233 0 50%,#fff 50%)','h',null,['#006233','#ffffff','#d21034']],
+ ['fltn','Tunisia','تونس','🇹🇳','#e70013','w',null,['#e70013','#ffffff']],
+ ['flly','Libya','ليبيا','🇱🇾',H3('#e70013','#111','#239e46',25,75),'w',null,['#e70013','#111111','#239e46','#ffffff']],
+ ['flsd','Sudan','السودان','🇸🇩',H3('#d21034','#fff','#111'),'h','#007229',['#d21034','#ffffff','#111111','#007229']],
+ ['flye','Yemen','اليمن','🇾🇪',H3('#ce1126','#fff','#111'),'h',null,['#ce1126','#ffffff','#111111']],
+ ['flgb','United Kingdom','بريطانيا','🇬🇧',UK+' center/100% 100%','h',null,['#012169','#ffffff','#c8102e']],
+ ['flus','USA','أمريكا','🇺🇸',US+' center/100% 100%','h',null,['#b22234','#ffffff','#3c3b6e']]];
+const COL={};F.forEach(([id,en,ar,em,bg,m,tri,cols])=>{COL[id]=cols;if(!B.some(x=>x.id===id))B.push({id,en,ar,cost:2000,flag:em})});
+window.__FLAGBUB=COL;
+let css=`.bubble[class*="bub-fl"]{border-radius:10px!important;padding:6px 13px!important;font-weight:900;overflow:visible!important;box-shadow:0 5px 12px rgba(0,0,0,.45),inset 0 0 0 1.5px rgba(0,0,0,.5)!important;isolation:isolate;min-width:0!important}
+.bubble[class*="bub-fl"]::after{position:absolute;top:-13px;inset-inline-end:-9px;font-size:21px;line-height:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5));transform-origin:20% 90%;animation:flw117 1.3s ease-in-out infinite alternate;pointer-events:none;-webkit-text-fill-color:initial;text-shadow:none}
+@keyframes flw117{from{transform:rotate(-9deg)}to{transform:rotate(9deg)}}
+.bubble.flh,.bubble.flw{color:#fff!important;-webkit-text-stroke:.09em #0c0c0c;paint-order:stroke fill;text-shadow:0 0 4px #000,0 0 7px rgba(0,0,0,.85),0 1px 2px #000!important}
+.bubble.flh .bwho,.bubble.flw .bwho{color:#fff!important;-webkit-text-stroke:.09em #0c0c0c;paint-order:stroke fill}
+.bubble.fltri{padding-left:26px!important}.bubble.fltri::before{content:'';position:absolute;left:0;top:0;bottom:0;width:20px;clip-path:polygon(0 0,100% 50%,0 100%);border-radius:10px 0 0 10px;z-index:-1}
+.bubble.flbar{padding-left:26px!important}.bubble.flteeth{padding-left:30px!important}
+.bubble[class*="bub-fl"] .flsh{position:absolute;inset:0;border-radius:inherit;overflow:hidden;pointer-events:none}.bubble[class*="bub-fl"] .flsh::before{content:'';position:absolute;top:0;bottom:0;left:-60%;width:45%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.55),transparent);animation:flsh117 2.2s ease-in-out .2s infinite}
+@keyframes flsh117{0%{left:-60%}55%,100%{left:120%}}`;
+F.forEach(([id,en,ar,em,bg,m,tri])=>{css+=`\n.bubble.bub-${id}{background:linear-gradient(rgba(0,0,0,.26),rgba(0,0,0,.26)),${/^#/.test(bg)?`linear-gradient(${bg},${bg})`:bg}!important}.bubble.bub-${id}::after{content:${em?`'${em}'`:'none'}}`;if(tri)css+=`.bubble.bub-${id}::before{background:${tri}}`});
+const st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
+const META={};F.forEach(([id,,,,,m,tri])=>{META[id]=(m==='w'?'flw':'flh')+(tri?' fltri':'')+(id==='flae'||id==='flom'?' flbar':'')+(id==='flqa'||id==='flbh'?' flteeth':'')});
+// every flag bubble (in the game, the shop, the preview) gets its helper classes and the moving shine
+const dress=b=>{try{const m=(b.className.match(/bub-(fl[a-z]{2})\b/)||[])[1];if(!m||!META[m]||b.dataset.fl)return null;b.dataset.fl=m;META[m].split(' ').forEach(c=>b.classList.add(c));const s=document.createElement('span');s.className='flsh';b.appendChild(s);return m}catch(e){return null}};
+try{new MutationObserver(ms=>ms.forEach(mu=>mu.addedNodes.forEach(n=>{if(n.nodeType!==1)return;if(n.classList&&n.classList.contains('bubble'))dress(n);n.querySelectorAll&&n.querySelectorAll('.bubble[class*="bub-fl"]').forEach(dress)}))).observe(document.documentElement,{childList:true,subtree:true})}catch(e){}
+// in the game: a burst of confetti in the flag's colours when the message pops
+window.__bubHook=(function(h){return function(b,i){if(h)h.apply(this,arguments);try{dress(b);const m=b.dataset.fl;if(!m||typeof FXE==='undefined')return;const cols=COL[m];
+  setTimeout(()=>{try{if(!b.isConnected||b.classList.contains('bwait'))return;const r=b.getBoundingClientRect();if(!r.width)return;const fx=document.getElementById('fx'),o=fx?fx.getBoundingClientRect():{left:0,top:0};const x=r.left+r.width/2-o.left,y=r.top+r.height/2-o.top;
+    const rgba=h=>{const n=parseInt(h.slice(1),16);return `rgba(${n>>16&255},${n>>8&255},${n&255},1)`};
+    for(let k=0;k<22;k++){const a=R(0,6.283),v=R(120,300);FXE.add({type:'shard',add:false,x:x+Math.cos(a)*r.width*.3,y:y+Math.sin(a)*r.height*.3,col:rgba(cols[k%cols.length]),size:R(3,5.5),vx:Math.cos(a)*v,vy:Math.sin(a)*v-90,ay:520,drag:.95,vr:R(-12,12),life:R(.6,1.1),fade:2})}
+    }catch(e){}},90)}catch(e){}}})(window.__bubHook);
+})();
+})();
+
+// ===================== Round 118: landscape: the cards on the ground never sit under my hand (the ground moves up; if the top player's pile is in the way it shrinks a little; my hand shrinks only as a last resort) =====================
+(function(){if(typeof render!=='function')return;let raf=0;
+function fit(){raf=0;try{const g=document.getElementById('ground'),row=document.getElementById('myrow');if(!g||!row)return;const pb=document.querySelector('#seats .seat.s-top .pilebox')||document.querySelector('.seat.s-top .pilebox');
+  g.style.translate='';row.style.scale='';row.style.transformOrigin='';if(pb){pb.style.scale='';pb.style.transformOrigin=''}
+  if(innerWidth<=innerHeight||typeof S==='undefined'||!S)return;
+  const gc=[...g.children].filter(e=>e.classList.contains('card')&&e.offsetWidth),hc=[...row.querySelectorAll('.card')].filter(e=>e.offsetWidth);if(!gc.length||!hc.length)return;
+  const gr=g.getBoundingClientRect(),gTop=gr.top+g.clientTop+Math.min(...gc.map(e=>e.offsetTop)),gBot=gr.top+g.clientTop+Math.max(...gc.map(e=>e.offsetTop+e.offsetHeight)),gL=gr.left+Math.min(...gc.map(e=>e.offsetLeft)),gR=gr.left+Math.max(...gc.map(e=>e.offsetLeft+e.offsetWidth));
+  const op=hc[0].offsetParent||row,or=op.getBoundingClientRect(),hTop=or.top+op.clientTop+Math.min(...hc.map(e=>e.offsetTop)),hH=Math.max(...hc.map(e=>e.offsetHeight));
+  let need=gBot-hTop+10;if(need<=0)return;
+  const pcs=pb?[...pb.querySelectorAll('.card')].map(e=>e.getBoundingClientRect()).filter(r=>r.width&&r.left<gR+6&&r.right>gL-6):[];
+  const tb=(g.closest('.stage')||g.parentElement).getBoundingClientRect();let ceil=pcs.length?Math.max(...pcs.map(r=>r.bottom)):tb.top;
+  let up=Math.max(0,Math.min(need,gTop-ceil-6));need-=up;
+  if(need>0&&pcs.length){const pt=Math.min(...pcs.map(r=>r.top)),ph=ceil-pt,s=Math.max(.66,(ph-need)/ph),gain=ph*(1-s);pb.style.transformOrigin='50% 0';pb.style.scale=String(s);const u=Math.min(need,gain);up+=u;need-=u}
+  if(need>0){const s=Math.max(.78,(hH-need)/hH);row.style.transformOrigin='50% 100%';row.style.scale=String(s)}
+  if(up>0)g.style.translate='0 '+(-Math.round(up))+'px'}catch(e){}}
+const go=()=>{if(!raf)raf=requestAnimationFrame(fit)};
+render=(function(p){return function(){const r=p.apply(this,arguments);go();setTimeout(go,350);return r}})(render);
+window.addEventListener('resize',()=>{go();setTimeout(go,400)});window.addEventListener('orientationchange',()=>setTimeout(go,500));
+})();
+
+</script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1110.1023';
+const EB_VERSION='v1110.1156';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
