@@ -15,6 +15,7 @@ const SO = require('./social');
 const PUBLIC = path.join(__dirname, 'public');
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.json': 'application/json' };
 
+const GZ = new Map();
 const server = http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
   if (url === '/health') { res.end('ok'); return; }
@@ -34,7 +35,14 @@ const server = http.createServer((req, res) => {
   if ((url === '/' || url === '/index.html') && !fs.existsSync(file)) file = path.join(__dirname, 'index.html');
   fs.readFile(file, (err, data) => {
     if (err) { res.writeHead(404); res.end('Not found'); return; }
-    res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-cache' });
+    const type = TYPES[path.extname(file)] || 'application/octet-stream', head = { 'Content-Type': type, 'Cache-Control': 'no-cache' };
+    // text files go out compressed (about half the size); each file is compressed once and kept until it changes
+    if (/html|javascript|json|css|svg/.test(type) && data.length > 2048 && /\bgzip\b/.test(String(req.headers['accept-encoding'] || ''))) {
+      try { const st = fs.statSync(file), key = file + ':' + st.mtimeMs + ':' + st.size; let z = GZ.get(file);
+        if (!z || z.key !== key) { z = { key, buf: require('zlib').gzipSync(data, { level: 6 }) }; GZ.set(file, z) }
+        head['Content-Encoding'] = 'gzip'; head['Vary'] = 'Accept-Encoding'; res.writeHead(200, head); res.end(z.buf); return } catch (e) {}
+    }
+    res.writeHead(200, head);
     res.end(data);
   });
 });
@@ -230,9 +238,11 @@ function joinRoom(c, room, data, reply) {
   reply({ ok: true, room: pub(room), me: c.id, token: tk });
   toRoom(room, 'room', pub(room));
 }
+// by the best rank in the room: newcomers meet normal computers, sergeants and up meet hard ones, majors and up the strongest
+function botLevel(r) { let top = 0; for (const m of r.members || []) if (!m.watch && m.prof && m.prof.rp > top) top = m.prof.rp; return top >= 1900 ? 'pro' : top >= 400 ? 'hard' : 'normal' }
 function startGame(r, cfg, ranked) {
   r.ranked = !!ranked;
-  const safe = { mode: ['solo', '2v2', '3v3'].includes(cfg.mode) ? cfg.mode : '2v2', decks: Math.min(12, Math.max(1, +cfg.decks || 4)), timer: Math.min(15, Math.max(2, +cfg.timer || 3)), level: cfg.level === 'easy' ? 'easy' : 'normal' /* online computers stay at the middle level */, hints: !!cfg.hints, lang: cfg.lang === 'en' ? 'en' : 'ar', fx: cfg.fx !== false };
+  const safe = { mode: ['solo', '2v2', '3v3'].includes(cfg.mode) ? cfg.mode : '2v2', decks: Math.min(12, Math.max(1, +cfg.decks || 4)), timer: Math.min(15, Math.max(2, +cfg.timer || 3)), level: cfg.level === 'easy' ? 'easy' : botLevel(r) /* the computers that fill the seats play at the level of the people in the room */, hints: !!cfg.hints, lang: cfg.lang === 'en' ? 'en' : 'ar', fx: cfg.fx !== false };
   if (r.qt) { clearTimeout(r.qt); r.qt = null; }
   if (r.game) r.game.stop();
   try { r.game = new Game(r, safe, { send: (sid, type, d) => send(clients.get(sid), type, d), war: (seat, gain) => reward(r, seat, a => ACC.warWon(a, gain)), over: g => { const ranked = !!r.ranked, res = g.results(); const keyOf = seat => { const m = r.members.find(y => !y.watch && y.seat === seat); return m && m.atoken ? crypto.createHash('sha256').update(String(m.atoken)).digest('hex').slice(0, 12) : null };

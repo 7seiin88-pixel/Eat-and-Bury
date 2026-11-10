@@ -45,6 +45,7 @@ function cleanProf(p, own) {
   const fr = String(p.frame || 'none'); o.frame = fr === 'none' || own('fr-' + fr) ? fr : 'none';
   const ef = String(p.efx || 'none'); o.efx = ef === 'none' || own('efx-' + ef) || (CAT.items['efx-' + ef] === 0) ? ef : 'none';
   const bb = String(p.bub || 'plain'); o.bub = bb === 'plain' || bb === 'royal' || own('bub-' + bb) ? bb : 'plain';
+  const ht = String(p.hit || 'classic'); o.hit = /^[a-z0-9]{1,16}$/.test(ht) && (own('hit-' + ht) || CAT.items['hit-' + ht] === 0) ? ht : 'classic'; // the hit counter you chose
   const sf = String(p.sfx || 'plain'); o.sfx = own('sfx-' + sf) || CAT.items['sfx-' + sf] === 0 ? sf : 'plain';
   const ai = v => clamp(v, -1, CAT.emotes + 50);
   { const src = p.auto && typeof p.auto === 'object' ? p.auto : {}; o.auto = { snd: '' }; for (const e of ['def', 'save', 'took', 'win', 'lost', 'winbig', 'tauf']) { o.auto[e] = src[e] == null ? -1 : ai(src[e]); o.auto[e + '2'] = src[e + '2'] == null ? -1 : ai(src[e + '2']); o.auto[e + '3'] = src[e + '3'] == null ? -1 : ai(src[e + '3']) } }
@@ -97,7 +98,7 @@ function checkAch(a) { const got = []; for (const x of ACH) if (!a.st.ach[x.id] 
 function daily(a) { const d = today(); if (a.w.day !== d) { a.w.day = d; const g = DAILY * (isVip(a) ? 2 : 1); a.w.tokens += g; return g } return 0 }
 // what the phone gets
 function me(a, note) { return { verified: !!a.verified, title: titleOf(a), season: a.st.season || '', seasons: a.st.seasons || [], shield: !!a.st.shield, id: a.id, prof: a.prof, st: { ...a.st, level: levelOf(a.st.xp) }, wal: { tokens: a.w.tokens, owned: a.w.owned, slams: a.w.slams, boost: a.w.boost || 0 }, boostCost: BOOST_COST, boostGames: BOOST_GAMES, note: note || null, test: TEST_MODE, vip: isVip(a) ? a.vip : 0, vipPrice: '$4.99', vipTest: TEST_MODE ? VIP_TEST_PRICE : 0 } }
-function pub(a) { return { id: a.id, name: a.prof.name, av: a.prof.av, flag: a.prof.flag, frame: a.prof.frame, efx: a.prof.efx, sfx: a.prof.sfx || 'plain', bub: a.prof.bub || 'plain', auto: a.prof.auto, level: levelOf(a.st.xp), games: a.st.games, wins: a.st.wins, wars: a.st.wars, rp: a.st.rp, streak: a.st.streak, tauf: a.st.tauf, vip: isVip(a), verified: !!a.verified, title: titleOf(a) } }
+function pub(a) { return { id: a.id, name: a.prof.name, av: a.prof.av, flag: a.prof.flag, frame: a.prof.frame, efx: a.prof.efx, sfx: a.prof.sfx || 'plain', bub: a.prof.bub || 'plain', hit: a.prof.hit || 'classic', kit: { theme: (a.prof.prefs || {}).theme || '', back: (a.prof.prefs || {}).back || '', face: (a.prof.prefs || {}).face || '', joker: (a.prof.prefs || {}).joker || '' }, auto: a.prof.auto, level: levelOf(a.st.xp), games: a.st.games, wins: a.st.wins, wars: a.st.wars, rp: a.st.rp, streak: a.st.streak, tauf: a.st.tauf, vip: isVip(a), verified: !!a.verified, title: titleOf(a) } }
 
 // ---------- what a phone may ask ----------
 async function load(token) { await ready; if (!token) return null; return store.byToken(hash(token)) }

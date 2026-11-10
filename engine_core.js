@@ -57,6 +57,9 @@ function targetsFor(i,r,incl=null){ // incl: a teammate's pile you chose to atta
   const g=S.ground.filter(c=>c.r===r);
   const piles=[];
   S.players.forEach((p,j)=>{if(j===i)return; /* every other pile, partner included */const e=exposed(p.pile);if(e&&e.rank===r)piles.push({j,n:e.n,cards:e.cards})});
+  // Your own pile joins the war when it shows the same rank you are eating: the cards are merging, so whoever wins the war takes them all.
+  // (It never makes an eat possible by itself: there must be something else to take.)
+  if(g.length||piles.length){const me=exposed(S.players[i].pile);if(me&&me.rank===r)piles.push({j:i,n:me.n,cards:me.cards,own:true})}
   const all=[...g,...piles.flatMap(x=>x.cards)];
   return {g,piles,value:sum(all),count:all.length};
 }
@@ -260,13 +263,14 @@ const loneMate=i=>S.players.some((p,j)=>mate(i,j)&&lone(j));
 // score one way of eating: rank r with card c
 function evalEat(i,o,c,L){const me=S.players[i],h=me.hand,r=o.r,t=o.t;
   let gain=sum(t.g),mateVal=0,oppVal=0;const mates=[];
-  t.piles.forEach(x=>{const v=sum(x.cards);if(mate(i,x.j)){mateVal+=v;mates.push(x.j)}else oppVal+=v});
+  let ownVal=0;t.piles.forEach(x=>{const v=sum(x.cards);if(x.j===i)ownVal+=v;else if(mate(i,x.j)){mateVal+=v;mates.push(x.j)}else oppVal+=v}); // my own open pile joins the war: nothing gained, but it can be lost
   gain+=oppVal+pts(c);
   const useJ=c.r==='JK'&&r!=='JK';
   const def=h.filter(x=>x!==c&&(x.r===r||x.r==='JK')).length; // cards left to hit back if someone cuts
   let sc=gain+t.count*.4;
   const p=oppCan(i,r,L),stake=gain+mateVal;
-  if(L>=2)sc-=p*stake*(def?.25:.6)*kn(i,'risk',0);
+  if(ownVal>0)sc-=(L>=2?p:.5)*ownVal*(def?.35:.85)*kn(i,'own',1);
+  if(L>=2)sc-=p*stake*(def?.25:.6)*kn(i,'risk',L>=3?3:1.5); // how much it fears being cut (measured over thousands of games: 3 is the sweet spot for the top level)
   if(useJ)sc-=kn(i,'jkEat',L>=3?Math.max(12,30-oppCan(i,r,L)*10):L>=2?22:30); // a joker is a cut kept in the hand
   if(mateVal>0){ // opening a war on a teammate's pile puts his points up for grabs
     const pull=L>=2&&kn(i,'mpull',1)&&mates.some(lone),bury=L>=2&&kn(i,'mbury',1)&&def>=1&&h.some(x=>x!==c&&x.r!==r&&x.r!=='JK'&&onGround(x.r));
