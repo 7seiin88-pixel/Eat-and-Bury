@@ -27,7 +27,7 @@ class Game {
     const c0 = E.intercept; E.intercept = function (j, card, fire = false) { const S = self.S; if (!S || !S.war) return; const w = S.war, pl = w.leader, vic = [...(w.victims || [])];
       S.eatCut = true; c0(j, card); self.push({ t: 'cut', s: j, c: card, fire: !!fire }); sayT(j, fire ? 'طق!' : 'قطع!', fire ? 'Slap!' : 'Cut!'); self.autoEvents('cut', j, pl, vic) };
     const r0 = E.resolveWar; E.resolveWar = function () { const S = self.S; if (!S || !S.war) return; const lostTo = self.bigLoss(S.war); S.moves = (S.moves || 0) + 1; const W = S.war.leader, fought = S.war.pot.length > 1, gain = E.__ctx().sum([...S.war.targets, ...S.war.pot]);
-      r0(); self.push({ t: 'win', s: W, gain }); if (fought) self.autoEvents('win', W); lostTo.forEach(j => self.push({ t: 'auto', s: j, ev: 'lost' })); if (gain > 50) self.push({ t: 'auto', s: W, ev: 'winbig' }); { const tw = (S.stats && S.stats[W] && S.stats[W].tw) || 0; if (tw > (self.twSeen[W] || 0)) { self.twSeen[W] = tw; self.push({ t: 'auto', s: W, ev: 'tauf' }) } } if (self.hooks.war) try { self.hooks.war(W, gain) } catch (e) { console.error(e) } };
+      r0(); self.push({ t: 'win', s: W, gain }); if (fought) self.autoEvents('win', W); lostTo.forEach(j => self.push({ t: 'auto', s: j, ev: 'lost', n: (Math.random() * 6) | 0 })); if (gain > 50) self.push({ t: 'auto', s: W, ev: 'winbig', n: (Math.random() * 6) | 0 }); { const tw = (S.stats && S.stats[W] && S.stats[W].tw) || 0; if (tw > (self.twSeen[W] || 0)) { self.twSeen[W] = tw; self.push({ t: 'auto', s: W, ev: 'tauf', n: (Math.random() * 6) | 0 }) } } if (self.hooks.war) try { self.hooks.war(W, gain) } catch (e) { console.error(e) } };
     const t0 = E.throwCard; E.throwCard = function (i, c) { const S = self.S; S.moves = (S.moves || 0) + 1; const sleeping = S.players[i].hand.length === 2 && S.draw.length > 0; t0(i, c); self.push({ t: 'throw', s: i, c }); if (sleeping) sayT(i, 'على كرت', 'Sleeping') };
     const s0 = E.startTurn; E.startTurn = function (i) { const S = self.S; if (S) S.moves = (S.moves || 0) + 1; s0(i); const S2 = self.S; if (S2 && S2.turn === i && S2.phase === 'choose' && !S2.chain) self.push({ t: 'turn', s: i }) };
     // names and who is a person, then deal
@@ -86,7 +86,7 @@ class Game {
     return w.fromPiles.filter(x => x.j !== W && S.players[x.j] && S.players[W] && S.players[x.j].team !== S.players[W].team && E.sum(x.cards || []) > 50).map(x => x.j) }
   autoEvents(kind, j, pl, vic) {
     const S = this.S, mates = (a, b) => a !== b && S.players[a] && S.players[b] && S.players[a].team === S.players[b].team;
-    const ev = (s, e) => this.push({ t: 'auto', s, ev: e });
+    const ev = (s, e) => this.push({ t: 'auto', s, ev: e, n: (Math.random() * 6) | 0 });
     if (kind === 'win') return ev(j, 'win');
     if (vic.includes(j)) ev(j, 'def'); vic.forEach(v => { if (mates(v, j)) ev(v, 'save') }); if (pl != null && mates(pl, j)) ev(pl, 'took');
   }

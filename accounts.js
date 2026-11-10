@@ -47,7 +47,7 @@ function cleanProf(p, own) {
   const bb = String(p.bub || 'plain'); o.bub = bb === 'plain' || bb === 'royal' || own('bub-' + bb) ? bb : 'plain';
   const sf = String(p.sfx || 'plain'); o.sfx = own('sfx-' + sf) || CAT.items['sfx-' + sf] === 0 ? sf : 'plain';
   const ai = v => clamp(v, -1, CAT.emotes + 50);
-  o.auto = p.auto && typeof p.auto === 'object' ? { def: ai(p.auto.def), save: ai(p.auto.save), took: ai(p.auto.took), win: ai(p.auto.win), lost: ai(p.auto.lost), winbig: ai(p.auto.winbig), tauf: ai(p.auto.tauf), snd: '' } : { def: -1, save: -1, took: -1, win: -1, lost: -1, winbig: -1, tauf: -1, snd: '' };
+  { const src = p.auto && typeof p.auto === 'object' ? p.auto : {}; o.auto = { snd: '' }; for (const e of ['def', 'save', 'took', 'win', 'lost', 'winbig', 'tauf']) { o.auto[e] = src[e] == null ? -1 : ai(src[e]); o.auto[e + '2'] = src[e + '2'] == null ? -1 : ai(src[e + '2']); o.auto[e + '3'] = src[e + '3'] == null ? -1 : ai(src[e + '3']) } }
   o.qp = Array.isArray(p.qp) ? p.qp.map(v => clamp(v, 0, CAT.emotes + 50)).slice(0, 80) : null;
   o.prefs = {}; if (p.prefs && typeof p.prefs === 'object') for (const k of ['theme', 'back', 'face', 'joker', 'lang']) if (p.prefs[k] != null) o.prefs[k] = short(p.prefs[k], 24);
   return o;
