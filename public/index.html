@@ -5949,7 +5949,7 @@ const _srp=showRankPop;showRankPop=function(){if(ACCT.on&&!window.__acctPop)retu
 // end of a game: undo the phone's own stat changes; the server sends the real result
 endGame=(function(prev){return function(){if(!ACCT.on||!S)return prev.apply(this,arguments);
   const keepP=JSON.stringify(MYPROF),keepW=JSON.stringify(WAL);const online=typeof NET!=='undefined'&&NET.on;
-  let won=false,wars=0,best=0,tauf=0,ex={};try{const rows=S.teams.map((t,k)=>({k,s:teamScore(k)})).sort((a,b)=>b.s-a.s);won=rows[0].k===teamOf(0)&&!(rows[1]&&rows[0].s===rows[1].s);const st=S.stats&&S.stats[0]||{};wars=st.wars||0;best=st.best||0;tauf=st.tauf||0;ex={fire:st.fire||0,bigwar:st.bigwar||0,jk:st.jk||0,pile:st.pile||0,dig:st.dig||0,gifts:st.gifts||0,lastw:st.lastw||0,tw:st.tw||0,comeback:won&&(st.low||0)<=-300?1:0}}catch(e){}
+  let won=false,wars=0,best=0,tauf=0,ex={};try{const rows=S.teams.map((t,k)=>({k,s:teamScore(k)})).sort((a,b)=>b.s-a.s);won=rows[0].k===teamOf(0)&&!(rows[1]&&rows[0].s===rows[1].s);const st=S.stats&&S.stats[0]||{};wars=st.wars||0;best=st.best||0;tauf=st.tauf||0;ex={fire:st.fire||0,bigwar:st.bigwar||0,jk:st.jk||0,pile:st.pile||0,dig:st.dig||0,gifts:st.gifts||0,lastw:st.lastw||0,tw:st.tw||0,faz:st.faz||0,comeback:won&&(st.low||0)<=-300?1:0}}catch(e){}
   const r=prev.apply(this,arguments);
   applyingMe=true;try{Object.assign(MYPROF,JSON.parse(keepP));const w=JSON.parse(keepW);WAL.tokens=w.tokens;WAL.owned=w.owned;WAL.slams=w.slams;origSaveWal();origSaveProf()}finally{applyingMe=false}
   if(!online&&!window.__offlineSent){window.__offlineSent=true;api('/api/offline',{won,wars,best,tauf,...ex}).then(m=>applyMe(m)).catch(()=>{}).finally(()=>setTimeout(()=>window.__offlineSent=false,3000))}
@@ -8585,7 +8585,7 @@ const _ow=openWindow;openWindow=function(){_ow.apply(this,arguments);try{if(!S||
 (function(){
 const ST=i=>{if(typeof S==='undefined'||!S||!S.players)return null;S.stats=S.stats||S.players.map(()=>({wars:0,best:0}));return S.stats[i]||(S.stats[i]={wars:0,best:0})};
 // cuts with a joker
-const _int=intercept;intercept=function(j,card){const ok=!!(S&&S.war&&card);const r=_int.apply(this,arguments);try{if(ok&&card.r==='JK'){const s=ST(j);if(s)s.jk=(s.jk||0)+1}}catch(e){}return r};
+const _int=intercept;intercept=function(j,card){const ok=!!(S&&S.war&&card);try{if(ok){const w=S.war,me=S.players[j];if(me&&S.players[w.leader]&&S.players[w.leader].team!==me.team&&(w.victims||[]).some(v=>v!==j&&S.players[v]&&S.players[v].team===me.team)){const s=ST(j);if(s)s.faz=(s.faz||0)+1}}}catch(e){}const r=_int.apply(this,arguments);try{if(ok&&card.r==='JK'){const s=ST(j);if(s)s.jk=(s.jk||0)+1}}catch(e){}return r};
 // every war: biggest war won (cuts), war won on your last card, opponents' piles taken, a war-won pile dug out, how far behind your team has been
 const _res=resolveWar;resolveWar=function(){const w=S&&S.war;let pre=null;
   try{if(w){const W=w.leader,p=S.players[W];pre={W,lone:W!==w.orig&&p.hand.length===0,cuts:Math.max(0,w.pot.length-1),
@@ -10037,9 +10037,9 @@ const st2=document.createElement('style');st2.textContent=`.h2-sorow{display:fle
 })();
 // ===================== the game always fills the whole screen, also in the home-screen app after turning the iPad/phone =====================
 (function(){const de=document.documentElement;
-function fit(){try{const vv=window.visualViewport;const w=Math.round(Math.max(innerWidth,vv?vv.width:0)),h=Math.round(Math.max(innerHeight,vv?vv.height:0));
-  if(de.__fw===w&&de.__fh===h)return;de.__fw=w;de.__fh=h;de.style.setProperty('--appW',w+'px');de.style.setProperty('--appH',h+'px');
-  try{if(typeof S!=='undefined'&&S&&typeof render==='function')render()}catch(e){}try{window.scrollTo(0,0)}catch(e){}}catch(e){}}
+function fit(){try{/* measure with our own fixed size removed: a page that is wider than the screen keeps the phone's layout wide after it is turned back upright */de.style.removeProperty('--appW');de.style.removeProperty('--appH');void de.offsetWidth;const vv=window.visualViewport;const w=Math.round(Math.max(innerWidth,vv?vv.width:0)),h=Math.round(Math.max(innerHeight,vv?vv.height:0));
+  de.style.setProperty('--appW',w+'px');de.style.setProperty('--appH',h+'px');if(de.__fw===w&&de.__fh===h)return;de.__fw=w;de.__fh=h;
+  const rr=()=>{try{if(typeof S!=='undefined'&&S&&typeof render==='function')render()}catch(e){}};rr();setTimeout(rr,300);setTimeout(rr,900);try{window.scrollTo(0,0)}catch(e){}}catch(e){}}
 const burst=()=>[0,80,250,600,1200,2000].forEach(d=>setTimeout(fit,d));
 addEventListener('resize',burst);addEventListener('orientationchange',burst);addEventListener('pageshow',burst);try{visualViewport.addEventListener('resize',burst)}catch(e){}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)burst()});fit();
@@ -11044,9 +11044,153 @@ render=(function(p){return function(){const r=p.apply(this,arguments);go();setTi
 window.addEventListener('resize',()=>{go();setTimeout(go,400)});window.addEventListener('orientationchange',()=>setTimeout(go,500));
 })();
 
+// ===================== Round 119: tap a player to see what he is using in this game (message style, eat effect, fire-button effect), with a shortcut to that item in the shop =====================
+(function(){if(typeof renderProfile!=='function')return;
+const cosOf=i=>{try{const c=window.__botCos&&window.__botCos(i);if(c)return c;const pr=typeof profOf==='function'?profOf(i):null;if(pr&&!pr.bot&&(pr.efx||pr.sfx||pr.bub))return {bub:pr.bub||'plain',efx:pr.efx||'none',sfx:pr.sfx||'plain'}}catch(e){}return null};
+const price=(pid,cost)=>{const own=cost===0||(typeof WAL!=='undefined'&&WAL.owned.includes(pid));return own?`<small class="own">${L('You own it','عندك')}</small>`:`<small><i class="cn"></i>${(cost||0).toLocaleString('en')}</small>`};
+renderProfile=(function(p){return function(i){const r=p.apply(this,arguments);try{const box=document.getElementById('profBox');if(!box||i===0)return r;const old=box.querySelector('.kit119');if(old)old.remove();const c=cosOf(i);if(!c)return r;
+  const rows=[];
+  const b=typeof BUBS!=='undefined'&&BUBS.find(x=>x.id===c.bub);if(b&&b.id!=='plain')rows.push(`<button type="button" class="kit119r" data-kit="bub:${b.id}"><span class="kpv"><span class="bubble bub-${b.id}">${L('Eat!','أكل!')}</span></span><span class="ktx"><em>${L('Message style','شكل العبارات')}</em><b>${L(b.en,b.ar)}</b></span>${price('bub-'+b.id,b.cost)}</button>`);
+  const e=typeof EFX!=='undefined'&&EFX.find(x=>x.id===c.efx);if(e&&e.id!=='none')rows.push(`<button type="button" class="kit119r" data-kit="e:${e.id}"><span class="kpv kic">${fxIcon(e.id)}</span><span class="ktx"><em>${L('Eat effect','تأثير الأكل')}</em><b>${L(e.en,e.ar)}</b></span>${price('efx-'+e.id,e.cost)}</button>`);
+  const s=typeof SFX!=='undefined'&&SFX.find(x=>x.id===c.sfx);if(s&&s.id!=='plain')rows.push(`<button type="button" class="kit119r" data-kit="s:${s.id}"><span class="kpv kic">${fxIcon(s.id)}</span><span class="ktx"><em>${L('Fire-button effect','تأثير زر النار')}</em><b>${L(s.en,s.ar)}</b></span>${price('sfx-'+s.id,s.cost)}</button>`);
+  if(!rows.length)return r;const d=document.createElement('div');d.className='kit119';d.innerHTML=`<div class="label">${L('Using in this game','يستخدم بهالقيم')}</div>${rows.join('')}<p class="note">${L('Tap one to see it in the shop.','اضغط على أي واحد وتشوفه بالمتجر.')}</p>`;
+  const st=box.querySelector('.pstats');if(st)st.after(d);else box.appendChild(d)}catch(e){}return r}})(renderProfile);
+window.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-kit]');if(!t)return;e.stopImmediatePropagation();e.preventDefault();const [k,id]=t.dataset.kit.split(':');
+  try{document.getElementById('profSheet').hidden=true;openShop(k==='bub'?'emotes':'efx')}catch(_){return}
+  let n=0;const find=()=>{const el=document.querySelector(k==='bub'?`#shop [data-bub="${id}"]`:`#shop [data-fx2="${k}:${id}"]`);if(!el){if(++n<10)setTimeout(find,120);return}
+    try{el.scrollIntoView({block:'center'})}catch(_){}el.classList.remove('kit119hi');void el.offsetWidth;el.classList.add('kit119hi');setTimeout(()=>el.classList.remove('kit119hi'),3600)};setTimeout(find,150)},true);
+const st=document.createElement('style');st.textContent=`.kit119{margin:12px 0 4px}.kit119 .label{margin-bottom:6px}
+.kit119r{display:flex;align-items:center;gap:10px;width:100%;margin:6px 0;padding:8px 12px;border:0;border-radius:14px;font:inherit;color:#f4ead6;background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 1px rgba(242,210,122,.3);text-align:start}
+.kit119r .kpv{flex:none;width:86px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:radial-gradient(ellipse at center,#6a1a22,#3a0d12);overflow:hidden}
+.kit119r .kpv .bubble{position:static!important;transform:none!important;opacity:1!important;font-size:12px!important;padding:4px 10px!important;margin:0!important;animation:none;max-width:80px;white-space:nowrap}
+.kit119r .kic{font-size:24px}.kit119r .kic b{font-weight:400;display:block;line-height:1}
+.kit119r .ktx{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.3}.kit119r .ktx em{font-style:normal;font-size:11.5px;color:#c9b79a}.kit119r .ktx b{font-size:15px}
+.kit119r small{flex:none;display:flex;align-items:center;gap:4px;font-size:13px;font-weight:800;color:#f2d27a}.kit119r small.own{color:#5fe0a0}
+#shop .kit119hi{animation:kit119 1.2s ease-in-out 3;position:relative;z-index:2}@keyframes kit119{0%,100%{box-shadow:0 0 0 2px #f2d27a,0 0 0 rgba(242,210,122,0)}50%{box-shadow:0 0 0 3px #fff3b8,0 0 26px rgba(242,210,122,.95)}}`;document.head.appendChild(st);
+})();
+
+</script><script>
+// ===================== Round 120: "what you earned" on the end screen (rank points, XP, rupees, new achievements, the rank badge and the road to the next rank) and a points booster =====================
+(function(){
+if(typeof acctNotes!=='function'||typeof ACCT==='undefined')return;
+const lvStart=l=>40*(l-1)*(l-1); // XP where a level begins (level = 1 + floor(sqrt(xp/40)))
+let BOOST={cost:400,games:5};
+if(typeof applyMe==='function')applyMe=(function(p){return function(m){try{if(m&&m.wal&&m.wal.boost!=null)WAL.boost=m.wal.boost;if(m&&m.boostCost)BOOST={cost:m.boostCost,games:m.boostGames||5}}catch(e){}return p.apply(this,arguments)}})(applyMe);
+const row=(ic,label,val,cls='')=>`<div class="s120r ${cls}"><span class="s120i">${ic}</span><span class="s120l">${label}</span><b>${val}</b></div>`;
+function boostHTML(){const n=(typeof WAL!=='undefined'&&WAL.boost)||0;
+  return n>0?`<div class="s120b on">⚡ ${L(`Double points: ${n} game${n>1?'s':''} left`,`مضاعف النقاط شغّال: باقي ${n===1?'لعبة وحدة':n===2?'لعبتين':n+(n<=10?' لعبات':' لعبة')}`)}</div>`
+    :`<button type="button" class="s120b" data-boost="1">⚡ ${L(`Double your points for ${BOOST.games} games`,`ضاعف نقاطك لـ${BOOST.games} لعبات`)} · <i class="cn"></i>${BOOST.cost}</button>`}
+function panel(n){try{const sheet=document.getElementById('overSheet'),ov=document.getElementById('over');if(!sheet||!ov||ov.hidden)return false;const g=n.game||null;
+  const rp=g?g.rp:0,xp=g?g.xp:n.xp,rup=g?g.prize:n.offline,boosted=g?g.boosted:n.boosted,ranked=!!(g&&g.ranked);
+  const cur=MYPROF.rp||0,rk=rankOf(cur),ix=RANKS2.indexOf(rk),nx=RANKS2[ix+1],pct=nx?Math.max(3,Math.min(100,Math.round((cur-rk.min)/(nx.min-rk.min)*100))):100;
+  const lv=levelOf(MYPROF.xp||0),l0=lvStart(lv),l1=lvStart(lv+1),lp=Math.max(3,Math.min(100,Math.round(((MYPROF.xp||0)-l0)/(l1-l0)*100)));
+  const ach=(n.ach||[]).map(x=>ACH.find(a=>a.id===x.id)).filter(Boolean);
+  let rows='';
+  if(ranked)rows+=row('🎖️',L('Rank points','نقاط الرتبة'),(rp>=0?'+':'')+rp,rp>=0?'pos':'neg');
+  if(xp!=null)rows+=row('⭐',L('Experience','الخبرة'),'+'+xp,'pos');
+  if(rup!=null)rows+=row('<i class="cn"></i>',L('Rupees','روبيات'),'+'+rup,'pos');
+  if(g&&g.won&&g.mult>1)rows+=row('🔥',L('Win streak','سلسلة الفوز'),'×'+g.mult,'sub');
+  if(boosted)rows+=row('⚡',L('Double points','مضاعف النقاط'),'×2','sub');
+  // how the points were made: the base, then each thing you did
+  const PN={wars:['⚔️','Wars won','حروب ربحتها'],loot:['💰','Biggest loot','أكبر غنيمة'],long:['⚡','A long war (5+ cuts)','حرب طويلة (٥ قطعات+)'],tw:['🌀','Turns you skipped','تطويف'],faz:['🛡️','Rescued a teammate','فزعة لربعك']};
+  const parts=(g?g.parts:n.parts)||[];let how='';
+  if(parts.length||(g&&ranked)){how=`<div class="s120how"><div class="s120hh">${ranked?L('How your rank points were made','شلون انحسبت نقاط الرتبة'):L('Your play this game (adds XP)','لعبك بهاللعبة (يزيد الخبرة)')}</div>`;
+    if(g&&ranked)how+=`<div class="s120p"><span>${g.won?'🏆':'💔'}</span><em>${g.won?L('Win','الفوز')+(g.mult>1?` · ${L('streak','سلسلة')} ×${g.mult}`:''):L('Loss','الخسارة')}</em><b class="${g.base>=0?'pos':'neg'}">${g.base>=0?'+':''}${g.base}</b></div>`;
+    parts.forEach(([k,v])=>{const d=PN[k];if(d)how+=`<div class="s120p"><span>${d[0]}</span><em>${L(d[1],d[2])}</em><b class="pos">${ranked?(g.won?'+'+v*(boosted?2:1):L('softens the loss','تخفف الخسارة')):'✓'}</b></div>`});
+    how+='</div>'}
+  const d=document.createElement('div');d.className='sum120';
+  d.innerHTML=`<div class="s120h">${L('What you earned','حصيلتك من اللعبة')}</div>
+   <div class="s120top"><div class="s120rk">${rankIcon(cur,'big')}</div><div class="s120rt"><b>${L(rk.en,rk.ar)}</b>
+     <div class="s120bar"><i style="width:${pct}%"></i></div><small>${nx?`${cur.toLocaleString('en')} / ${nx.min.toLocaleString('en')} · ${L('next: ','الرتبة الجاية: ')}${L(nx.en,nx.ar)}`:L('Top rank','أعلى رتبة')}</small>
+     ${g&&!ranked?`<small class="s120n">${L('Friendly game: rank does not change','لعبة ودّية: الرتبة ما تتغير')}</small>`:''}${!g?`<small class="s120n">${L('Rank points come from quick online games','نقاط الرتبة تجي من اللعب السريع أونلاين')}</small>`:''}</div></div>
+   <div class="s120rows">${rows}</div>${how}
+   <div class="s120lv"><span>${L('Level','المستوى')} ${lv}</span><div class="s120bar x"><i style="width:${lp}%"></i></div><span>${lv+1}</span></div>
+   ${ach.map(a=>`<div class="s120a"><span>${a.ic||'🏅'}</span><b>${L('New achievement: ','إنجاز جديد: ')}${L(a.en,a.ar)}</b><small>+${a.r} <i class="cn"></i></small></div>`).join('')}
+   <div class="s120bw">${boostHTML()}</div>`;
+  const old=sheet.querySelector('.sum120');if(old)old.remove();const fin=sheet.querySelector('.final');if(fin)fin.after(d);else sheet.prepend(d);
+  requestAnimationFrame(()=>d.classList.add('in'));return true}catch(e){return false}}
+acctNotes=(function(p){return function(n){let shown=false;try{if(n&&(n.game||n.offline!=null||n.xp!=null)){shown=panel(n);if(!shown){let k=0;const t=setInterval(()=>{if(panel(n)||++k>12)clearInterval(t)},250)}}}catch(e){}
+  if(n&&n.offline!=null&&(shown||!document.getElementById('over').hidden)){const m=Object.assign({},n);delete m.offline;return p.call(this,m)} // the rupees are already on the end screen
+  return p.apply(this,arguments)}})(acctNotes);
+// the little rank pop-up stays for promotions and drops only; everything else is on the end screen now
+if(typeof showRankPop==='function')showRankPop=(function(p){return function(a,b,won,mult,got){try{const ov=document.getElementById('over');if(ov&&!ov.hidden&&RANKS2.indexOf(rankOf(a))===RANKS2.indexOf(rankOf(b)))return}catch(e){}return p.apply(this,arguments)}})(showRankPop);
+window.addEventListener('click',async e=>{const t=e.target.closest&&e.target.closest('[data-boost]');if(!t)return;e.stopImmediatePropagation();
+  if(!ACCT.on){toast(L('Sign in first to keep your points','سجّل دخول أول عشان تنحفظ نقاطك'));return}
+  if((WAL.tokens||0)<BOOST.cost){toast(L(`You need ${BOOST.cost-(WAL.tokens||0)} more rupees`,`ينقصك ${BOOST.cost-(WAL.tokens||0)} روبية`));return}
+  if(!await ebAsk(L(`Double your XP and the rank points you win for the next ${BOOST.games} games, for ${BOOST.cost} rupees?`,`تضاعف خبرتك ونقاط الرتبة اللي تربحها بالـ${BOOST.games} لعبات الجاية بـ ${BOOST.cost} روبية؟`),L('Buy','اشترِ'),L('No','لا')))return;
+  try{const m=await api('/api/boost',{});applyMe(m,true);if(m.note&&m.note.refused){toast(L('Not enough rupees','ما عندك روبيات كافية'));return}toast(L('Double points is on ⚡','المضاعف اشتغل ⚡'));document.querySelectorAll('.s120bw').forEach(x=>x.innerHTML=boostHTML())}catch(err){toast(L('Could not reach the server','ما قدرنا نوصل السيرفر'))}},true);
+const st=document.createElement('style');st.textContent=`.sum120{margin:12px 0;padding:12px;border-radius:16px;background:linear-gradient(180deg,rgba(242,210,122,.12),rgba(0,0,0,.18));box-shadow:inset 0 0 0 1.5px rgba(242,210,122,.45);opacity:0;transform:translateY(8px);transition:opacity .35s,transform .35s}.sum120.in{opacity:1;transform:none}
+.s120h{font-weight:900;color:#f2d27a;font-size:15px;margin-bottom:8px;text-align:center}
+.s120top{display:flex;align-items:center;gap:12px}.s120rk{flex:none;width:72px;height:72px;display:grid;place-items:center}.s120rk .rkic{width:72px!important;height:72px!important;display:block}.s120rk svg{width:100%;height:100%}
+.s120rt{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}.s120rt b{font-size:18px}.s120rt small{font-size:12px;color:#c9b79a}.s120rt small.s120n{color:#9fb7d6}
+.s120bar{height:9px;border-radius:9px;background:rgba(255,255,255,.12);overflow:hidden}.s120bar i{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,#c9962e,#fff3b8);transition:width .9s ease-out}.s120bar.x i{background:linear-gradient(90deg,#3aa0ff,#bfe6ff)}
+.s120rows{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0}.s120r{display:flex;align-items:center;gap:7px;padding:7px 10px;border-radius:11px;background:rgba(255,255,255,.06)}.s120r .s120i{flex:none;width:22px;text-align:center}.s120r .s120l{flex:1;font-size:12.5px;color:#e9dcc2}
+.s120r b{font-size:16px;direction:ltr}.s120r.pos b{color:#5fe0a0}.s120r.neg b{color:#ff8a7a}.s120r.sub b{color:#f2d27a}
+.s120how{margin:0 0 10px;padding:8px 10px;border-radius:11px;background:rgba(0,0,0,.2)}.s120hh{font-size:12px;color:#c9b79a;margin-bottom:4px}.s120p{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:13.5px}.s120p span{flex:none;width:20px;text-align:center}.s120p em{flex:1;font-style:normal}.s120p b{direction:ltr;font-size:13.5px}.s120p b.pos{color:#5fe0a0}.s120p b.neg{color:#ff8a7a}
+.s120lv{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:800;color:#bfe6ff}.s120lv .s120bar{flex:1}
+.s120a{display:flex;align-items:center;gap:8px;margin-top:8px;padding:7px 10px;border-radius:11px;background:rgba(95,224,160,.12);box-shadow:inset 0 0 0 1px rgba(95,224,160,.4)}.s120a b{flex:1;font-size:13.5px}.s120a small{color:#f2d27a;font-weight:800;display:flex;align-items:center;gap:3px}
+.s120bw{margin-top:10px}.s120b{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:9px 12px;border:0;border-radius:12px;font:inherit;font-weight:900;font-size:14px;color:#2a1606;background:linear-gradient(180deg,#f8e3a0,#e2bd5c 55%,#c9a04a)}
+div.s120b.on{background:rgba(58,160,255,.16);color:#bfe6ff;box-shadow:inset 0 0 0 1px rgba(127,208,255,.5)}`;document.head.appendChild(st);
+})();
+
+// ===================== Round 121: achievements are military medals (ribbon + medallion); two new ones for rescuing teammates =====================
+(function(){if(typeof ACH==='undefined')return;
+[['faz10','Rescuer: come to a teammate\'s rescue 10 times','فزّاع: تفزع لربعك ١٠ مرات',p=>(p.faz||0)>=10,200],['faz50','Shield of the team: 50 rescues','درع الفريق: ٥٠ فزعة',p=>(p.faz||0)>=50,500]]
+  .forEach(([id,en,ar,ok,r])=>{if(!ACH.some(a=>a.id===id))ACH.push({id,ic:'🛡️',en,ar,ok,r})});
+const METAL={b:['#f1c08a','#c4834a','#6b3d1c'],s:['#f6f9fc','#b9c2cc','#4b5360'],g:['#fff3b8','#e2b54e','#7a5310']};
+const EMB={
+ star:'<path d="M20 5l4.400 9.600 10.400 1.200-7.700 7.100 2.100 10.300L20 28l-9.200 5.200 2.100-10.300-7.700-7.100 10.400-1.200z"/>',
+ swords:'<path d="M7 7l3.500 0L27 25l-2.500 2.500zM33 7l-3.500 0L13 25l2.500 2.500z"/><path d="M9 26l5 5M31 26l-5 5M8 33l3-3M32 33l-3-3" stroke-width="3" stroke-linecap="round" fill="none" stroke="currentColor"/>',
+ flame:'<path d="M20 4c2 7 10 10 10 19a10 10 0 0 1-20 0c0-4 2-6 4-9c0 4 2 5 3 5c0-6 1-10 3-15z"/>',
+ crown:'<path d="M5 28L7 11l7 7 6-11 6 11 7-7 2 17z"/><rect x="5" y="29.500" width="30" height="4.500" rx="1.500"/>',
+ bolt:'<path d="M23 3L8 22h9l-3 15L32 17h-9z"/>',
+ card:'<rect x="10" y="5" width="20" height="30" rx="3"/><path d="M20 12l5 8-5 8-5-8z" fill="#fff" opacity=".55"/>',
+ target:'<circle cx="20" cy="20" r="15" fill="none" stroke="currentColor" stroke-width="3.500"/><circle cx="20" cy="20" r="8" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="20" cy="20" r="3"/>',
+ gem:'<path d="M11 7h18l8 9L20 35 3 16z"/><path d="M3 16h34M11 7l4 9 5 19M29 7l-4 9-5 19" stroke="#fff" stroke-width="1" fill="none" opacity=".55"/>',
+ pick:'<path d="M5 12C14 3 26 3 35 12C27 8 13 8 5 12z"/><rect x="18" y="8" width="4" height="28" rx="2"/>',
+ house:'<path d="M20 5L4 19h4v15h9V24h6v10h9V19h4z"/>',
+ gift:'<rect x="6" y="16" width="28" height="18" rx="2"/><rect x="4" y="10" width="32" height="7" rx="2"/><path d="M20 10V34" stroke="#fff" stroke-width="3" opacity=".6"/><path d="M20 10c-8-8-12 0-4 0zM20 10c8-8 12 0 4 0z"/>',
+ heart:'<path d="M20 34C4 23 5 9 13 8c4 0 6 3 7 5c1-2 3-5 7-5c8 1 9 15-7 26z"/>',
+ clover:'<circle cx="20" cy="12" r="7"/><circle cx="12" cy="21" r="7"/><circle cx="28" cy="21" r="7"/><path d="M20 20c0 8-2 12-5 15h9c-2-4-3-8-4-15z"/>',
+ arrows:'<path d="M6 16A15 15 0 0 1 33 12L35 6l1 13-13-1 5-4A10 10 0 0 0 10 17zM34 24A15 15 0 0 1 7 28L5 34 4 21l13 1-5 4A10 10 0 0 0 30 23z"/>',
+ shield:'<path d="M20 3l14 5v11c0 9-6 15-14 18C12 34 6 28 6 19V8z"/><path d="M20 10v20M12 18h16" stroke="#fff" stroke-width="2.500" opacity=".55"/>',
+ wing:'<path d="M20 30C10 30 3 22 2 10c5 6 9 7 12 7c-3-3-4-6-4-9c4 5 7 6 10 7c3-1 6-2 10-7c0 3-1 6-4 9c3 0 7-1 12-7c-1 12-8 20-18 20z"/><circle cx="20" cy="12" r="4"/>'};
+const DEF={w1:['star','b',['#c8102e','#fff','#c8102e']],w10:['star','s',['#c8102e','#f2d27a','#c8102e']],w50:['crown','g',['#5a0d18','#f2d27a','#5a0d18']],g10:['card','b',['#1c4a9e','#fff','#1c4a9e']],g100:['card','g',['#1c4a9e','#f2d27a','#1c4a9e']],
+ war25:['swords','b',['#111','#c8102e','#111']],war100:['swords','g',['#111','#f2d27a','#111']],big:['gem','s',['#0f8a3c','#fff','#0f8a3c']],big200:['gem','g',['#0f8a3c','#f2d27a','#0f8a3c']],s3:['flame','b',['#ff7a1a','#fff','#ff7a1a']],s5:['flame','g',['#ff3b1f','#f2d27a','#ff3b1f']],
+ fire20:['flame','s',['#ff3b1f','#111','#ff3b1f']],war5:['bolt','s',['#1c4a9e','#ffd400','#1c4a9e']],jk25:['card','s',['#6a2a8a','#fff','#6a2a8a']],pile20:['target','s',['#111','#fff','#c8102e']],dig:['pick','s',['#6b3d1c','#f2d27a','#6b3d1c']],
+ fg10:['house','b',['#0f8a3c','#fff','#c8102e']],gift20:['gift','b',['#ff3f9a','#fff','#ff3f9a']],pal10:['heart','s',['#c8102e','#fff','#1c4a9e']],last10:['clover','s',['#0f8a3c','#f2d27a','#0f8a3c']],tw5:['arrows','b',['#22a4c4','#fff','#22a4c4']],
+ comeback:['arrows','g',['#c8102e','#111','#f2d27a']],lv10:['star','g',['#1c4a9e','#f2d27a','#1c4a9e']],gold:['wing','s',['#4b5360','#fff','#4b5360']],legend:['wing','g',['#5a0d18','#f2d27a','#111']],faz10:['shield','s',['#1c4a9e','#fff','#0f8a3c']],faz50:['shield','g',['#1c4a9e','#f2d27a','#0f8a3c']]};
+let N=0;
+const pt=(cx,cy,r,a)=>(cx+Math.cos(a)*r).toFixed(1)+' '+(cy+Math.sin(a)*r).toFixed(1);
+// rays behind the gold medals, a laurel wreath around the silver ones, a beaded rim on the bronze ones
+const burst=(cx,cy,n,r1,r2)=>{let p='';for(let k=0;k<n*2;k++)p+=(k?'L':'M')+pt(cx,cy,k%2?r2:r1,k*Math.PI/n-Math.PI/2);return p+'Z'};
+const laurel=(cx,cy,r,u)=>[-1,1].map(sd=>Array.from({length:8},(_,k)=>{const a=Math.PI/2+sd*(.32+k*.3),x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r,rot=a*180/Math.PI+90+sd*38;return `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="5.600" ry="2.300" transform="rotate(${rot.toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})" fill="url(#${u})" stroke="#1a0f08" stroke-width=".7"/>`}).join('')).join('');
+function medal(id){const d=DEF[id];if(!d)return null;const [e,m,rb]=d,M=METAL[m],u='md'+(N++),cx=40,cy=74,R=m==='g'?19:21;
+  const ribbon=`<path d="M17 9h46l-9 34H26z" fill="${rb[0]}" stroke="#1a0f08" stroke-width="1.500" stroke-linejoin="round"/><path d="M29 9h22l-4.300 34H33.300z" fill="${rb[1]}"/><path d="M36 9h8l-1.600 34h-4.800z" fill="${rb[2]}"/>
+   <path d="M21.500 9l7.500 34M58.500 9l-7.500 34" stroke="#f6dc8a" stroke-width="1.300" opacity=".85"/><path d="M17 9h46l-9 34H26z" fill="url(#${u}s)"/>
+   <rect x="11" y="2" width="58" height="9" rx="4" fill="url(#${u})" stroke="#1a0f08" stroke-width="1.400"/><rect x="15" y="4.500" width="50" height="1.800" rx=".9" fill="#fff" opacity=".55"/><circle cx="16" cy="6.500" r="1.300" fill="#1a0f08" opacity=".5"/><circle cx="64" cy="6.500" r="1.300" fill="#1a0f08" opacity=".5"/>
+   <path d="M33 43h14l-3 6h-8z" fill="url(#${u})" stroke="#1a0f08" stroke-width="1.200" stroke-linejoin="round"/><circle cx="40" cy="50.500" r="3.200" fill="none" stroke="url(#${u})" stroke-width="2.200"/><circle cx="40" cy="50.500" r="3.200" fill="none" stroke="#1a0f08" stroke-width=".6"/>`;
+  let back='';
+  if(m==='g')back=`<path d="${burst(cx,cy,16,27,20)}" fill="url(#${u})" stroke="#1a0f08" stroke-width="1.300" stroke-linejoin="round"/><path d="${burst(cx,cy,8,26,12)}" fill="#fff" opacity=".28"/>`;
+  else if(m==='s')back=laurel(cx,cy,24.500,u);
+  const rim=m==='b'?Array.from({length:24},(_,k)=>`<circle cx="${pt(cx,cy,R-2.400,k*Math.PI/12).split(' ')[0]}" cy="${pt(cx,cy,R-2.400,k*Math.PI/12).split(' ')[1]}" r=".9" fill="${M[2]}"/>`).join('')
+    :m==='g'?`<circle cx="${cx}" cy="${cy}" r="${R-2.600}" fill="none" stroke="#b3101f" stroke-width="2.400"/><circle cx="${cx}" cy="${cy}" r="${R-2.600}" fill="none" stroke="#fff" stroke-width=".5" opacity=".6" stroke-dasharray="1 2.400"/>`
+    :`<circle cx="${cx}" cy="${cy}" r="${R-2.800}" fill="none" stroke="${M[2]}" stroke-width="1.200"/><circle cx="${cx}" cy="${cy}" r="${R-4.600}" fill="none" stroke="${M[2]}" stroke-width=".6" stroke-dasharray="1.200 1.800"/>`;
+  const es=m==='g'?.6:.68;
+  return `<svg class="mdl121" viewBox="0 0 80 104" aria-hidden="true"><defs><linearGradient id="${u}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${M[0]}"/><stop offset=".45" stop-color="${M[1]}"/><stop offset=".62" stop-color="${M[0]}"/><stop offset="1" stop-color="${M[2]}"/></linearGradient>
+    <linearGradient id="${u}s" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".28"/><stop offset=".3" stop-color="#fff" stop-opacity=".16"/><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".32"/></linearGradient>
+    <radialGradient id="${u}r" cx=".35" cy=".3" r=".85"><stop offset="0" stop-color="${M[0]}"/><stop offset=".55" stop-color="${M[1]}"/><stop offset="1" stop-color="${M[2]}"/></radialGradient></defs>
+   ${ribbon}${back}<circle cx="${cx}" cy="${cy+1.500}" r="${R}" fill="#1a0f08" opacity=".35"/><circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#${u}r)" stroke="#1a0f08" stroke-width="1.600"/>${rim}
+   <g transform="translate(${cx-20*es} ${cy-20*es}) scale(${es})" fill="#fff" color="#fff" opacity=".5" stroke="none"><g transform="translate(.9 1.200)">${EMB[e]}</g></g><g transform="translate(${cx-20*es} ${cy-20*es}) scale(${es})" fill="${M[2]}" color="${M[2]}" stroke="none">${EMB[e]}</g>
+   <ellipse cx="${cx-8}" cy="${cy-11}" rx="9" ry="3.600" fill="#fff" opacity=".35" transform="rotate(-28 ${cx-8} ${cy-11})"/>${m==='g'?`<path d="M${cx+17} ${cy-22}l1.300 3.600 3.600 1.300-3.600 1.300-1.300 3.600-1.300-3.600-3.600-1.300 3.600-1.300z" fill="#fff"/>`:''}</svg>`.replace(/(\d)\.(\d)00\b/g,'$1.$2')}
+ACH.forEach(a=>{if(!DEF[a.id])return;try{Object.defineProperty(a,'ic',{configurable:true,enumerable:true,get:()=>medal(a.id),set(){}})}catch(e){a.ic=medal(a.id)}}); // a fresh drawing each time: two copies of one medal on the page must not share a gradient
+const st=document.createElement('style');st.textContent=`.mdl121{width:1.25em;height:1.62em;display:inline-block;vertical-align:middle;filter:drop-shadow(0 2px 2px rgba(0,0,0,.45))}
+.achgrid .mdl121,.me-ach .mdl121{width:44px;height:57px}.rpach .mdl121,.s120a .mdl121{width:32px;height:42px}`;document.head.appendChild(st);
+})();
+
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1110.1156';
+const EB_VERSION='v1110.1336';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
