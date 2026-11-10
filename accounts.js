@@ -77,26 +77,26 @@ function season(a) { const m = new Date().toISOString().slice(0, 7), st = a.st;
 // a title under your name, from your best badge
 
 // Round 91: more achievement stats
-const NEWST = ['fire', 'jk', 'pile', 'dig', 'gifts', 'lastw', 'comeback', 'tw'];
+const NEWST = ['fire', 'jk', 'pile', 'dig', 'gifts', 'lastw', 'comeback', 'tw', 'faz'];
 function addStats(st, r, cap) { for (const k of NEWST) st[k] = (st[k] || 0) + clamp(r[k], 0, cap[k] || 60); st.bigwar = Math.max(st.bigwar || 0, clamp(r.bigwar, 0, 20)) }
-const OFF_CAP = { fire: 40, jk: 30, pile: 30, dig: 5, gifts: 20, lastw: 15, comeback: 1, tw: 10 }, ON_CAP = { fire: 200, jk: 60, pile: 60, dig: 20, gifts: 60, lastw: 30, comeback: 1, tw: 30 };
+const OFF_CAP = { fire: 40, jk: 30, pile: 30, dig: 5, gifts: 20, lastw: 15, comeback: 1, tw: 10, faz: 15 }, ON_CAP = { fire: 200, jk: 60, pile: 60, dig: 20, gifts: 60, lastw: 30, comeback: 1, tw: 30, faz: 30 };
 function addPartners(st, r) { if (!r.won || !Array.isArray(r.partners)) return; st.pw = st.pw && typeof st.pw === 'object' ? st.pw : {};
   for (const k of r.partners.slice(0, 2)) { if (typeof k !== 'string' || !/^[0-9a-f]{12}$/.test(k)) continue; st.pw[k] = (st.pw[k] || 0) + 1 }
   const ks = Object.keys(st.pw); if (ks.length > 40) ks.sort((x, y) => st.pw[x] - st.pw[y]).slice(0, ks.length - 40).forEach(k => delete st.pw[k]) }
 const palBest = st => Math.max(0, ...Object.values(st.pw || {}))
-const TITLES = ['legend', 'w50', 's5', 'war100', 'g100', 'gold', 'war5', 'big200', 'comeback', 'pal10', 'dig', 'big', 'w10', 's3', 'war25', 'jk25', 'fire20', 'pile20', 'last10', 'fg10', 'tw5', 'lv10', 'g10', 'w1'];
+const TITLES = ['legend', 'w50', 's5', 'war100', 'g100', 'gold', 'war5', 'big200', 'comeback', 'pal10', 'dig', 'big', 'w10', 's3', 'war25', 'jk25', 'fire20', 'faz50', 'pile20', 'last10', 'faz10', 'fg10', 'tw5', 'lv10', 'g10', 'w1'];
 const titleOf = a => TITLES.find(k => a.st.ach && a.st.ach[k]) || '';
 const ACH = [['w1', s => s.wins >= 1, 50], ['w10', s => s.wins >= 10, 150], ['w50', s => s.wins >= 50, 500], ['g10', s => s.games >= 10, 100], ['g100', s => s.games >= 100, 600],
   ['war25', s => s.wars >= 25, 150], ['war100', s => s.wars >= 100, 400], ['big', s => s.best >= 100, 150], ['s3', s => s.bestStreak >= 3, 150], ['s5', s => s.bestStreak >= 5, 400],
   ['fire20', s => (s.fire || 0) >= 20, 150], ['war5', s => (s.bigwar || 0) >= 5, 300], ['jk25', s => (s.jk || 0) >= 25, 200],
   ['pile20', s => (s.pile || 0) >= 20, 150], ['big200', s => s.best >= 200, 300], ['dig', s => (s.dig || 0) >= 1, 200],
   ['fg10', s => (s.fg || 0) >= 10, 200], ['gift20', s => (s.gifts || 0) >= 20, 100], ['pal10', s => palBest(s) >= 10, 300],
-  ['last10', s => (s.lastw || 0) >= 10, 200], ['comeback', s => (s.comeback || 0) >= 1, 300], ['tw5', s => (s.tw || 0) >= 5, 150],
+  ['faz10', s => (s.faz || 0) >= 10, 200], ['faz50', s => (s.faz || 0) >= 50, 500], ['last10', s => (s.lastw || 0) >= 10, 200], ['comeback', s => (s.comeback || 0) >= 1, 300], ['tw5', s => (s.tw || 0) >= 5, 150],
   ['lv10', s => levelOf(s.xp) >= 10, 200], ['gold', s => s.rp >= 800, 300], ['legend', s => s.rp >= 4300, 2000]].map(([id, ok, r]) => ({ id, ok, r }));
 function checkAch(a) { const got = []; for (const x of ACH) if (!a.st.ach[x.id] && x.ok(a.st)) { a.st.ach[x.id] = Date.now(); a.w.tokens += x.r; got.push({ id: x.id, r: x.r }) } return got }
 function daily(a) { const d = today(); if (a.w.day !== d) { a.w.day = d; const g = DAILY * (isVip(a) ? 2 : 1); a.w.tokens += g; return g } return 0 }
 // what the phone gets
-function me(a, note) { return { verified: !!a.verified, title: titleOf(a), season: a.st.season || '', seasons: a.st.seasons || [], shield: !!a.st.shield, id: a.id, prof: a.prof, st: { ...a.st, level: levelOf(a.st.xp) }, wal: { tokens: a.w.tokens, owned: a.w.owned, slams: a.w.slams }, note: note || null, test: TEST_MODE, vip: isVip(a) ? a.vip : 0, vipPrice: '$4.99', vipTest: TEST_MODE ? VIP_TEST_PRICE : 0 } }
+function me(a, note) { return { verified: !!a.verified, title: titleOf(a), season: a.st.season || '', seasons: a.st.seasons || [], shield: !!a.st.shield, id: a.id, prof: a.prof, st: { ...a.st, level: levelOf(a.st.xp) }, wal: { tokens: a.w.tokens, owned: a.w.owned, slams: a.w.slams, boost: a.w.boost || 0 }, boostCost: BOOST_COST, boostGames: BOOST_GAMES, note: note || null, test: TEST_MODE, vip: isVip(a) ? a.vip : 0, vipPrice: '$4.99', vipTest: TEST_MODE ? VIP_TEST_PRICE : 0 } }
 function pub(a) { return { id: a.id, name: a.prof.name, av: a.prof.av, flag: a.prof.flag, frame: a.prof.frame, efx: a.prof.efx, sfx: a.prof.sfx || 'plain', bub: a.prof.bub || 'plain', auto: a.prof.auto, level: levelOf(a.st.xp), games: a.st.games, wins: a.st.wins, wars: a.st.wars, rp: a.st.rp, streak: a.st.streak, tauf: a.st.tauf, vip: isVip(a), verified: !!a.verified, title: titleOf(a) } }
 
 // ---------- what a phone may ask ----------
@@ -128,27 +128,40 @@ async function sync(a, body) {
 // a game against the computer (results come from the phone, so the reward is small and capped each day)
 async function offline(a, r) {
   const won = !!r.won, wars = clamp(r.wars, 0, 60), best = clamp(r.best, 0, 2000), tauf = clamp(r.tauf, 0, 60);
-  a.st.games++; if (won) a.st.wins++; a.st.wars += wars; a.st.best = Math.max(a.st.best, best); a.st.tauf += tauf; addStats(a.st, r, OFF_CAP); a.st.xp += 10 + (won ? 25 : 0) + wars * 3;
+  a.st.games++; if (won) a.st.wins++; a.st.wars += wars; a.st.best = Math.max(a.st.best, best); a.st.tauf += tauf; addStats(a.st, r, OFF_CAP); const pf = perf({ wars, best, bigwar: clamp(r.bigwar, 0, 20), tw: clamp(r.tw, 0, 10), faz: clamp(r.faz, 0, 15) }), bx = useBoost(a), xp = (10 + (won ? 25 : 0) + wars * 3 + Math.min(8, pf.total) * 2) * bx; a.st.xp += xp;
   const d = today(); if (a.w.offDay !== d) { a.w.offDay = d; a.w.offGot = 0 } const give = Math.max(0, Math.min(won ? 15 : 5, OFFLINE_CAP - a.w.offGot)); a.w.offGot += give; a.w.tokens += give;
-  const got = checkAch(a); await store.put(a); return me(a, { offline: give, ach: got });
+  const got = checkAch(a); await store.put(a); return me(a, { offline: give, ach: got, xp, parts: pf.parts, boosted: bx > 1, won });
 }
 // online games: the server saw everything, so these are the real rewards and the real rank
 async function warWon(a, gain) { const n = Math.max(1, Math.round(gain / 20)); a.w.tokens += n; await store.put(a); return me(a, { war: n }) }
 async function gameOver(a, r) {
-  const sz = season(a); const won = !!r.won, st = a.st, before = st.rp; let mult = 1, d = 0;
+  const sz = season(a); const won = !!r.won, st = a.st, before = st.rp; let mult = 1, d = 0; const bx = useBoost(a), pf = perf(r);
   st.games++; st.wars += r.wars || 0; st.best = Math.max(st.best, r.best || 0); st.tauf += r.tauf || 0; addStats(st, r, ON_CAP); if (!r.ranked) st.fg = (st.fg || 0) + 1; addPartners(st, { ...r, won });
   if (won) { st.wins++; st.streak++; st.bestStreak = Math.max(st.bestStreak, st.streak); mult = 1 + Math.min(st.streak - 1, 4) * .25 } else st.streak = 0;
   let shielded = false;
   if (r.ranked) { // rank points move only in ranked games (the quick game), not in rooms with friends
-    d = won ? Math.round(20 * mult) : -12; let after = Math.max(0, before + d);
+    d = won ? (Math.round(20 * mult) + pf.total) * bx : -12 + Math.min(6, Math.floor(pf.total / 2)); // a win: 20 x streak + how you played; a loss costs less if you fought well
+    let after = Math.max(0, before + d);
     if (!won && st.shield && rankIx(after) < rankIx(before)) { after = RANK_MIN[rankIx(before)]; shielded = true } // the first loss after a promotion never drops you
     if (!won) st.shield = 0; if (rankIx(after) > rankIx(before)) st.shield = 1;
     st.rp = after; st.peak = Math.max(st.peak || 0, after);
   }
-  st.xp += Math.round((10 + (won ? 25 : 0) + (r.wars || 0) * 3) * mult);
+  const xp = (Math.round((10 + (won ? 25 : 0) + (r.wars || 0) * 3) * mult) + pf.total * 3) * bx; st.xp += xp;
   const prize = won ? 20 : 5; a.w.tokens += prize;
-  const got = checkAch(a); await store.put(a); return me(a, { game: { won, rp: st.rp - before, mult, prize, ranked: !!r.ranked, shielded }, ach: got, season: sz });
+  const got = checkAch(a); await store.put(a); return me(a, { game: { won, rp: st.rp - before, mult, prize, ranked: !!r.ranked, shielded, xp, parts: pf.parts, bonus: pf.total, base: won ? Math.round(20 * mult) : -12, boosted: bx > 1, streak: st.streak }, ach: got, season: sz });
 }
+// how you played, not only whether you won: every part is small and capped so nobody can farm one thing
+function perf(r) { const parts = [], add = (k, n) => { if (n > 0) parts.push([k, n]) };
+  add('wars', Math.min(5, Math.floor((r.wars || 0) / 2)));                                         // 1 for every two wars you won
+  const b = r.best || 0; add('loot', b >= 200 ? 5 : b >= 150 ? 4 : b >= 100 ? 3 : b >= 50 ? 2 : 0); // your biggest loot in one war
+  add('long', (r.bigwar || 0) >= 5 ? 2 : 0);                                                       // won a war with five cuts or more
+  add('tw', Math.min(3, r.tw || 0));                                                               // skipped players who were waiting to draw
+  add('faz', Math.min(3, r.faz || 0));                                                             // came to a teammate's rescue
+  let total = parts.reduce((n, x) => n + x[1], 0); if (total > 12) total = 12; return { parts, total } }
+// points booster: bought with rupees, doubles the XP and the rank points you win for the next few games
+const BOOST_COST = 400, BOOST_GAMES = 5;
+function useBoost(a) { if ((a.w.boost || 0) > 0) { a.w.boost--; return 2 } return 1 }
+async function buyBoost(a) { if (a.w.tokens < BOOST_COST) return me(a, { refused: ['boost'] }); a.w.tokens -= BOOST_COST; a.w.boost = Math.min(50, (a.w.boost || 0) + BOOST_GAMES); await store.put(a); return me(a, { boost: a.w.boost }) }
 async function save(a) { await store.put(a) }
 const SLAM_COST = 50; // the fire button costs rupees each time
 async function spend(a, n) { if (a.w.tokens < n) return null; a.w.tokens -= n; await store.put(a); return me(a) }
@@ -170,6 +183,7 @@ async function http(req, res, url) {
 
     if (url === '/api/sync' && req.method === 'POST') return send(200, await sync(a, body));
     if (url === '/api/offline' && req.method === 'POST') return send(200, await offline(a, body));
+    if (url === '/api/boost' && req.method === 'POST') return send(200, await buyBoost(a));
     if (url === '/api/vip/test' && req.method === 'POST') { // testing only: buy a month of VIP with rupees (the real one is bought in the App Store)
       if (!TEST_MODE) return send(403, { err: 'store' }); if (a.w.tokens < VIP_TEST_PRICE) return send(200, me(a, { refused: ['vip'] }));
       a.w.tokens -= VIP_TEST_PRICE; const now = Date.now(); if (!isVip(a)) a.vipStart = now; a.vip = Math.max(a.vip || 0, now) + VIP_DAYS * 864e5; await store.put(a); return send(200, me(a, { vip: true })) }

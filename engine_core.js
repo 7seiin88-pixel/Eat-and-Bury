@@ -338,7 +338,7 @@ const _ow=openWindow;openWindow=function(){_ow.apply(this,arguments);try{if(!S||
 (function(){
 const ST=i=>{if(typeof S==='undefined'||!S||!S.players)return null;S.stats=S.stats||S.players.map(()=>({wars:0,best:0}));return S.stats[i]||(S.stats[i]={wars:0,best:0})};
 // cuts with a joker
-const _int=intercept;intercept=function(j,card){const ok=!!(S&&S.war&&card);const r=_int.apply(this,arguments);try{if(ok&&card.r==='JK'){const s=ST(j);if(s)s.jk=(s.jk||0)+1}}catch(e){}return r};
+const _int=intercept;intercept=function(j,card){const ok=!!(S&&S.war&&card);try{if(ok){const w=S.war,me=S.players[j];if(me&&S.players[w.leader]&&S.players[w.leader].team!==me.team&&(w.victims||[]).some(v=>v!==j&&S.players[v]&&S.players[v].team===me.team)){const s=ST(j);if(s)s.faz=(s.faz||0)+1}}}catch(e){}const r=_int.apply(this,arguments);try{if(ok&&card.r==='JK'){const s=ST(j);if(s)s.jk=(s.jk||0)+1}}catch(e){}return r};
 // every war: biggest war won (cuts), war won on your last card, opponents' piles taken, a war-won pile dug out, how far behind your team has been
 const _res=resolveWar;resolveWar=function(){const w=S&&S.war;let pre=null;
   try{if(w){const W=w.leader,p=S.players[W];pre={W,lone:W!==w.orig&&p.hand.length===0,cuts:Math.max(0,w.pot.length-1),
