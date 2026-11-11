@@ -2754,15 +2754,18 @@ html.t-sea .mj-l i,html.t-sea .mj-r i{display:none}
 function fitSeats(){const st=document.querySelector('.stage');if(!st||!S)return;const sr=st.getBoundingClientRect();
   // centre each player's picture on the rug: side players level with its middle, the top player over its centre line
   const rug=st.querySelector('.rug');if(rug){const rr=rug.getBoundingClientRect(),rx=rr.left+rr.width/2,ry=rr.top+rr.height/2;
-    document.querySelectorAll('.seat[data-seat]').forEach(s=>{if(s.dataset.seat==='0')return;const tw=s.querySelector('.tilewrap');if(!tw)return;const r=tw.getBoundingClientRect();if(!r.width)return;
+    // measure every seat first, then move them all: reading after each move forced the browser to lay the page out again and again
+    const moves=[];document.querySelectorAll('.seat[data-seat]').forEach(s=>{if(s.dataset.seat==='0')return;const tw=s.querySelector('.tilewrap');if(!tw)return;const r=tw.getBoundingClientRect();if(!r.width)return;
       const ox=+(s.dataset.ox||0),oy=+(s.dataset.oy||0),cx=r.left+r.width/2-ox,cy=r.top+r.height/2-oy;let nx=ox,ny=oy;
       if(s.classList.contains('s-left')||s.classList.contains('s-right')){const K=innerWidth>innerHeight?.31:.25,k=s.classList.contains('hi')?-K:s.classList.contains('lo')?K:0;ny=ry+rr.height*k-cy}
       else nx=rx-cx;
-      nx=Math.round(nx);ny=Math.round(ny);if(nx!==ox||ny!==oy){s.dataset.ox=nx;s.dataset.oy=ny}s.style.translate=`${nx}px ${ny}px`})}
+      moves.push([s,Math.round(nx),Math.round(ny),ox,oy])});
+    moves.forEach(([s,nx,ny,ox,oy])=>{if(nx!==ox||ny!==oy){s.dataset.ox=nx;s.dataset.oy=ny}const v=`${nx}px ${ny}px`;if(s.style.translate!==v)s.style.translate=v})}
   const seats=[...document.querySelectorAll('.seat[data-seat]')].filter(s=>s.dataset.seat!=='0');
   st.querySelectorAll('.mjs').forEach(m=>{if(!seats.some(s=>s.dataset.seat===m.dataset.for))m.remove()});
-  seats.forEach(s=>{const tw=s.querySelector('.tilewrap')||s.querySelector('.who');if(!tw)return;const r=tw.getBoundingClientRect();if(!r.width)return;
-    const cx=r.left-sr.left+r.width/2,cy=r.top-sr.top+r.height/2,w=r.width,side=s.classList.contains('s-left')||s.classList.contains('s-right');
+  const sr2=st.getBoundingClientRect(),rects=seats.map(s=>{const tw=s.querySelector('.tilewrap')||s.querySelector('.who');return tw?tw.getBoundingClientRect():null});
+  seats.forEach((s,ix)=>{const r=rects[ix];if(!r||!r.width)return;
+    const cx=r.left-sr2.left+r.width/2,cy=r.top-sr2.top+r.height/2,w=r.width,side=s.classList.contains('s-left')||s.classList.contains('s-right');
     let m=st.querySelector(`.mjs[data-for="${s.dataset.seat}"]`);
     if(!m){m=document.createElement('div');m.dataset.for=s.dataset.seat;m.setAttribute('aria-hidden','true');st.insertBefore(m,st.firstChild)}
     const kind=side?'mj mjs mj-v':'mj mjs mj-h';if(m.className!==kind){m.className=kind;m.innerHTML='<i></i><i></i>'}
@@ -8691,7 +8694,7 @@ addEventListener('unhandledrejection',e=>{const r=e.reason;if(!r)return;const m=
 (function(){
 say=(function(p){return function(i,text){const fx=document.getElementById('fx'),before=fx?new Set(fx.children):null;const r=p.apply(this,arguments);
   try{if(fx&&window.__sayClass)[...fx.children].filter(e=>!before.has(e)&&e.classList.contains('bubble')).forEach(b=>b.classList.add(window.__sayClass))}catch(e){}
-  try{if(fx&&i!==0){const se=document.querySelector(`.seat[data-seat="${i}"]`),k=se?(se.classList.contains('s-top')?'top':se.classList.contains('s-left')||se.classList.contains('s-right')?'side':''):'';
+  try{if(fx&&i!==0&&typeof window.__bubHook!=='function'){const se=document.querySelector(`.seat[data-seat="${i}"]`),k=se?(se.classList.contains('s-top')?'top':se.classList.contains('s-left')||se.classList.contains('s-right')?'side':''):'';
       const [dx,dy]=k==='top'?[46,16]:k==='side'?[0,-30]:[0,0];
       [...fx.children].filter(e=>!before.has(e)&&e.classList.contains('bubble')).forEach(b=>{const x0=(parseFloat(b.style.left)||0)+dx,y0=(parseFloat(b.style.top)||0)+dy;
         // keep clear of avatars, open piles, hands and the war panel: try a few spots around the usual one
@@ -8828,12 +8831,12 @@ const clash=b=>{const r=box(b);return [...document.querySelectorAll('.bubble:not
 function settle(b){if(!b.dataset.t)b.dataset.t=performance.now();if(/bub-(boom|zap|shout|pow)/.test(b.className)&&(b.textContent||'').trim().length>12)b.classList.add('bcompact','bflat');place(b);if(!clash(b))return;if(b.classList.contains('bwait'))return;
   const anims=b.getAnimations().filter(a=>!(a instanceof CSSAnimation));anims.forEach(a=>a.pause());b.classList.add('bwait');const t0=performance.now();
   const tick=()=>{if(!b.isConnected)return;place(b);if(!clash(b)){b.classList.remove('bwait');b.getAnimations().forEach(a=>{if(a instanceof CSSAnimation)return;try{a.currentTime=0;a.play()}catch(e){}});return}
-    if(performance.now()-t0>6000){b.remove();return}setTimeout(tick,250)};setTimeout(tick,250)}
+    if(performance.now()-t0>6000){b.remove();return}setTimeout(tick,350)};setTimeout(tick,350)}
 say=(function(p){return function(i,text){const before=new Set(document.querySelectorAll('.bubble'));const r=p.apply(this,arguments);
   try{[...document.querySelectorAll('.bubble')].filter(x=>!before.has(x)).forEach(x=>{if(window.__forceBub)x.classList.add('bub-'+window.__forceBub);try{window.__bubHook&&window.__bubHook(x,i)}catch(e){}settle(x)})}catch(e){}return r}})(say);
 // safety net: if two visible messages ever touch, the newer one steps aside or waits
-setInterval(()=>{try{const v=[...document.querySelectorAll('.bubble:not(.bwait)')].filter(b=>b.dataset.t).sort((x,y)=>x.dataset.t-y.dataset.t);
-  for(let k=1;k<v.length;k++){const b=v[k],r=box(b);if(v.slice(0,k).some(o=>{const q=box(o);return r.l<q.r+4&&r.r>q.l-4&&r.t<q.b+4&&r.b>q.t-4}))settle(b)}}catch(e){}},200);
+setInterval(()=>{try{const v=[...document.querySelectorAll('.bubble:not(.bwait)')].filter(b=>b.dataset.t);if(v.length<2)return;v.sort((x,y)=>x.dataset.t-y.dataset.t);
+  for(let k=1;k<v.length;k++){const b=v[k],r=box(b);if(v.slice(0,k).some(o=>{const q=box(o);return r.l<q.r+4&&r.r>q.l-4&&r.t<q.b+4&&r.b>q.t-4}))settle(b)}}catch(e){}},450);
 const st=document.createElement('style');st.textContent='.bubble.bwait{visibility:hidden!important}';document.head.appendChild(st);
 })();
 
@@ -9572,7 +9575,7 @@ const later3=()=>[80,350,800,1500].forEach(t=>setTimeout(refit,t));
 addEventListener('orientationchange',later3);addEventListener('resize',later3);try{visualViewport&&visualViewport.addEventListener('resize',later3)}catch(e){}
 })();
 // the "computer / away" chip under a side player never leaves the screen
-(function(){const fix=()=>{document.querySelectorAll('#seats .botchip,#seats .seat .who .name,#seats .seat .tags').forEach(c=>{c.style.translate='';const r=c.getBoundingClientRect();let d=0;if(r.left<4)d=4-r.left;else if(r.right>innerWidth-4)d=innerWidth-4-r.right;if(d)c.style.translate=d+'px 0'})};
+(function(){const fix=()=>{const els=[...document.querySelectorAll('#seats .botchip,#seats .seat .who .name,#seats .seat .tags')];els.forEach(c=>{if(c.style.translate)c.style.translate=''});const rs=els.map(c=>c.getBoundingClientRect());els.forEach((c,k)=>{const r=rs[k];let d=0;if(r.left<4)d=4-r.left;else if(r.right>innerWidth-4)d=innerWidth-4-r.right;if(d)c.style.translate=d+'px 0'})};
 render=(function(p){return function(){const r=p.apply(this,arguments);try{fix()}catch(e){}return r}})(render);
 const st=document.createElement('style');st.textContent='#seats .botchip{white-space:nowrap;max-width:46vw;overflow:hidden;text-overflow:ellipsis}';document.head.appendChild(st)})();
 (function(){const st=document.createElement('style');st.textContent=`html body #seats .seat .who .name{display:block!important;direction:rtl;unicode-bidi:plaintext;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:min(104px,30vw)!important;width:auto!important}
@@ -10926,7 +10929,7 @@ function show(who){try{clear();if(typeof S==='undefined'||!S||!S.war||!S.players
     const hit=[...document.querySelectorAll('#war,#myrow .card,#actions button')].some(e=>{const o=e.getBoundingClientRect();return o.width&&o.left<bx.r&&o.right>bx.l&&o.top<bx.b&&o.bottom>bx.t});
     if(hit){lab.style.transform='none';lab.style.top=(r.top+r.height*.5-lh/2)+'px';lab.style.left=Math.max(6,r.left-lw-10)+'px'}
     else{lab.style.transform='translateX(-50%)';lab.style.left=(r.left+r.width/2)+'px';lab.style.top=(r.bottom+5)+'px'}};
-  pos();iv=setInterval(pos,200);tm=setTimeout(()=>{document.querySelectorAll('.wc116').forEach(e=>e.classList.add('out'));setTimeout(clear,300)},2800)}catch(e){}}
+  pos();iv=setInterval(pos,350);tm=setTimeout(()=>{document.querySelectorAll('.wc116').forEach(e=>e.classList.add('out'));setTimeout(clear,300)},2800)}catch(e){}}
 const on=()=>typeof NET!=='undefined'&&NET.on,AN=()=>(typeof ANIM==='number'?ANIM:1);
 intercept=(function(p){return function(j){const r=p.apply(this,arguments);try{if(!on())setTimeout(()=>show(j),400*AN())}catch(e){}return r}})(intercept);
 if(typeof resolveWar==='function')resolveWar=(function(p){return function(){clear();return p.apply(this,arguments)}})(resolveWar);
@@ -11233,8 +11236,65 @@ const st=document.createElement('style');st.textContent=`.kit119{margin:12px 0 4
 })();
 
 </script><script>
+// ===================== Round 123: steady pace against the computer. A war used to wait the full timer even when nobody could cut,
+// so a run of eats felt slow and a run of throws felt fast. Now, when you hold no card that cuts and no computer is going to cut, the war ends after a short beat. =====================
+(function(){if(typeof openWindow!=='function')return;
+const BEAT=1100; // long enough to see the eat and its effect
+const online=()=>typeof NET!=='undefined'&&NET.on;
+openWindow=(function(p){return function(){const r=p.apply(this,arguments);try{if(online()||typeof S==='undefined'||!S||!S.war)return r;const w=S.war;
+  // a human who could cut keeps the whole timer to decide
+  const humanCan=S.players.some((pl,j)=>pl.human&&j!==w.leader&&typeof canIntercept==='function'&&canIntercept(j).length>0);
+  // a computer that decided to cut has a timer waiting
+  const botWill=Array.isArray(S.aiTimers)&&S.aiTimers.length>0;
+  if(!humanCan&&!botWill){const end=performance.now()+BEAT;if(w.deadline>end)w.deadline=end}}catch(e){}return r}})(openWindow);
+})();
+
+</script><script>
+// ===================== Round 124: online, updates are shown one after another. On a phone the network often delivers two or three
+// updates at once (an eat and the throw after it); they were drawn in the same instant, so the eat was never seen. Now each move stays on screen
+// for a moment before the next one is drawn; if updates pile up, the pauses get shorter so you never fall behind. =====================
+(function(){if(typeof applyView!=='function')return;
+const orig=applyView,Q=[];let holdUntil=0,tm=0;
+const HOLD={eat:780,cut:720,throw:520,win:640};
+function pump(){tm=0;while(Q.length){const now=performance.now();if(now<holdUntil){tm=setTimeout(pump,holdUntil-now+4);return}
+  const d=Q.shift(),lag=now-d.__at;
+  try{if(d.v){if(d.v.war&&typeof d.v.war.left==='number')d.v.war.left=Math.max(0,d.v.war.left-lag);if(typeof d.v.turnLeft==='number'&&d.v.turnLeft>0)d.v.turnLeft=Math.max(500,d.v.turnLeft-lag)}}catch(e){}
+  try{orig(d)}catch(e){console.error(e)}
+  let h=0;try{(d.fx||[]).forEach(e=>{h=Math.max(h,HOLD[e.t]||0)})}catch(e){}
+  if(Q.length>=4)h*=.25;else if(Q.length>=2)h*=.55; // falling behind: catch up
+  holdUntil=performance.now()+h}}
+applyView=function(d){try{d.__at=performance.now();Q.push(d);if(Q.length>8){Q.splice(0,Q.length-8)}}catch(e){return orig(d)}if(!tm)pump()};
+// a fresh game or a room change starts clean
+if(typeof netSend==='function')netSend=(function(p){return function(t){if(t==='start'||t==='reopen'){Q.length=0;holdUntil=0}return p.apply(this,arguments)}})(netSend);
+})();
+
+</script><script>
+// ===================== Round 125: smoother play. A message bubble is placed in the frame after the move is drawn, not in the same one,
+// so a move no longer freezes the screen for drawing + placing at once. Flags set around the call (chat style, forced style) travel with it. =====================
+(function(){if(typeof say!=='function')return;
+say=(function(p){return function(){const a=arguments,me=this,cls=window.__sayClass,fb=window.__forceBub;requestAnimationFrame(()=>{const c0=window.__sayClass,f0=window.__forceBub;window.__sayClass=cls;window.__forceBub=fb;try{p.apply(me,a)}catch(e){}finally{window.__sayClass=c0;window.__forceBub=f0}})}})(say);
+})();
+
+</script><script>
+// ===================== Round 126: the table is only rebuilt where something changed. Every redraw used to throw away and rebuild
+// the seats, the hand and the ground (about 550 elements) even when nothing in them had changed; the browser then had to style them all again. =====================
+(function(){if(typeof render!=='function')return;
+const IDS=['seats','myrow','ground','mebox','actions','status','board'];const last={},stamp={};let on=true;
+const desc=Object.getOwnPropertyDescriptor(Element.prototype,'innerHTML');
+function guard(el){if(!el||el.__g126)return;el.__g126=1;const id=el.id;
+  Object.defineProperty(el,'innerHTML',{configurable:true,get(){return desc.get.call(this)},set(v){
+    // skip only when the new markup is the same as last time and nobody else has rewritten the box since
+    if(on&&!window.__noSkip126&&last[id]===v&&stamp[id]===desc.get.call(this))return;
+    desc.set.call(this,v);last[id]=v;stamp[id]=null}})}
+// after each full redraw (all decorations applied), remember what the box looks like; if anything changes it later, the next redraw rebuilds it
+render=(function(p){return function(){IDS.forEach(id=>guard(document.getElementById(id)));const r=p.apply(this,arguments);
+  try{IDS.forEach(id=>{const el=document.getElementById(id);if(el&&last[id]!=null)stamp[id]=desc.get.call(el)})}catch(e){}return r}})(render);
+window.__render126=v=>{on=!!v};
+})();
+
+</script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1110.1444';
+const EB_VERSION='v1111.0302';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
