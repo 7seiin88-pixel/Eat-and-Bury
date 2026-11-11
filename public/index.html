@@ -8521,6 +8521,7 @@ function evalEat(i,o,c,L){const me=S.players[i],h=me.hand,r=o.r,t=o.t;
   if(ownVal>0)sc-=(L>=2?p:.5)*ownVal*(def?.35:.85)*kn(i,'own',1);
   if(L>=2)sc-=p*stake*(def?.25:.6)*kn(i,'risk',L>=3?3:1.5); // how much it fears being cut (measured over thousands of games: 3 is the sweet spot for the top level)
   if(useJ)sc-=kn(i,'jkEat',L>=3?Math.max(12,30-oppCan(i,r,L)*10):L>=2?22:30); // a joker is a cut kept in the hand
+  if(useJ&&S.draw.length>6&&gain-pts(c)<kn(i,'jkReal',30))sc-=kn(i,'jkWaste',80); // never spend the joker on a cheap eat while the game is young: what is taken must be worth it, not the joker's own 50
   if(mateVal>0){ // opening a war on a teammate's pile puts his points up for grabs
     const pull=L>=2&&kn(i,'mpull',1)&&mates.some(lone),bury=L>=2&&kn(i,'mbury',1)&&def>=1&&h.some(x=>x!==c&&x.r!==r&&x.r!=='JK'&&onGround(x.r));
     if(!(pull||bury))sc-=(mateVal*(L>=2?1.2:1)+15)*kn(i,'mate',1)}
@@ -8814,7 +8815,10 @@ function place(b){const q=b.getBoundingClientRect(),cx=(q.left+q.right)/2,cy=(q.
     const c2=(x,y)=>{const l=x-W/2,r=x+W/2,t=y-H/2,bb=y+H/2;if(t<M||bb>innerHeight-M||l<M||r>innerWidth-M)return Infinity;let a=0;for(const o of obs2){const ww=Math.min(r,o.r)-Math.max(l,o.l),h=Math.min(bb,o.b)-Math.max(t,o.t);if(ww>0&&h>0)a+=ww*h}return a};
     // side players: first choice is just above their fan of hidden cards (covers nothing); only if that spot is taken does the message sit on the cards
     if(A==='up'){const fan=[...document.querySelectorAll(`.seat[data-seat="${b.dataset.seat}"] .handfan .cardback`)].map(e=>e.getBoundingClientRect()).filter(r=>r.width);
-      if(fan.length){const ft=Math.min(...fan.map(r=>r.top)),y2=ft-6-H/2;if(y2-H/2>=M&&c2(x,y2)===0){b.style.left=(parseFloat(b.style.left)||0)+(x-cx)+'px';b.style.top=(parseFloat(b.style.top)||0)+(y2-cy)+'px';return}}}
+      if(fan.length){const ft=Math.min(...fan.map(r=>r.top)),y2=ft-6-H/2;if(y2-H/2>=M&&c2(x,y2)===0){b.style.left=(parseFloat(b.style.left)||0)+(x-cx)+'px';b.style.top=(parseFloat(b.style.top)||0)+(y2-cy)+'px';return}
+        // above the fan is taken: before sitting on his cards, try beside his picture, toward the middle of the table
+        const onFan=(x,y)=>fan.some(r=>x-W/2<r.right&&x+W/2>r.left&&y-H/2<r.bottom&&y+H/2>r.top);const inL=w.left+w.width/2<innerWidth/2;
+        if(W<=130)for(const yy of [w.top+w.height*.45,w.top+w.height*.15,w.bottom-H/2]){const xx=inL?w.right+10+W/2:w.left-10-W/2;if(c2(xx,yy)===0&&!onFan(xx,yy)){b.style.left=(parseFloat(b.style.left)||0)+(xx-cx)+'px';b.style.top=(parseFloat(b.style.top)||0)+(yy-cy)+'px';return}}}}
     let bx=x,by=y,bc=c2(x,y);for(let k=1;k<=(A==='right'?10:2)&&bc>0;k++){const d=k*8;const tries=A==='up'?[[0,-d]]:A==='down'?[[0,d]]:[[0,-d],[0,d],[d,0]];for(const [dx,dy] of tries){const v=c2(x+dx,y+dy);if(v<bc){bc=v;bx=x+dx;by=y+dy}}}
     b.style.left=(parseFloat(b.style.left)||0)+(bx-cx)+'px';b.style.top=(parseFloat(b.style.top)||0)+(by-cy)+'px';return}}
   if(cost(cx,cy)===0)return;
@@ -10541,8 +10545,10 @@ let hnRun=0;
 function hnDemo(h){const box=document.getElementById('efDemo');if(!box)return;const my=++hnRun;try{box.scrollIntoView({block:'nearest'})}catch(e){}
   document.querySelectorAll('.hnpop').forEach(x=>x.remove());const cd=box.querySelector('.efcard');
   [2,3,4,5,6].forEach((n,k)=>setTimeout(()=>{if(my!==hnRun||!document.getElementById('efDemo')||document.getElementById('shop').hidden)return;const r=box.getBoundingClientRect();if(!r.width)return;
-    document.querySelectorAll('.hnpop').forEach(x=>x.remove());const d=document.createElement('div');d.className='hnpop';d.style.zIndex=10050;d.style.left=(r.left+r.width/2)+'px';d.style.top=(r.top+r.height*.3)+'px';
-    d.style.fontSize=Math.round(Math.min(h.size(n),r.height*.5)*(h.id==='roman'?.7:1))+'px';d.innerHTML=h.html(n);document.body.appendChild(d);setTimeout(()=>d.remove(),k===4?1350:640);
+    document.querySelectorAll('.hnpop').forEach(x=>x.remove());const d=document.createElement('div');d.className='hnpop';d.style.zIndex=10050;const fs=Math.round(Math.min(h.size(n),Math.max(46,r.height*.55))*(h.id==='roman'?.7:1));d.style.fontSize=fs+'px';d.innerHTML=h.html(n);d.style.visibility='hidden';document.body.appendChild(d);
+    // beside the card (as in a real war it does not cover the card)
+    {const c=cd?cd.getBoundingClientRect():null,w=d.getBoundingClientRect().width||fs;const cx=c&&c.width?c.right+20+w/2:r.left+r.width/2,cy=c&&c.height?c.top+c.height*.45:r.top+r.height*.4;
+     d.style.left=Math.min(r.right-6-w/2,cx)+'px';d.style.top=cy+'px';d.style.visibility=''}setTimeout(()=>d.remove(),k===4?1350:640);
     try{cd&&cd.animate([{transform:'translate(-50%,-50%) scale(1.25) rotate(-14deg)'},{transform:'translate(-50%,-50%) scale(1) rotate(-6deg)'}],{duration:200,easing:'ease-out'});SND.ok()&&SND.slap&&SND.slap(2)}catch(e){}},k*600))}
 function hnBar(h){document.querySelectorAll('#shop .hnbar').forEach(x=>x.remove());if(!h)return;const box=document.getElementById('efDemo');if(!box)return;const bar=document.createElement('div');bar.className='efbar hnbar';
   const poor=(WAL.tokens||0)<h.cost;bar.innerHTML=`<span>${L(h.en,h.ar)}</span><button type="button" data-hitbuy="${h.id}">${poor?L('Need ','ينقصك ')+(h.cost-(WAL.tokens||0)).toLocaleString('en'):L('Buy for ','اشترِ بـ ')+h.cost.toLocaleString('en')}</button>`;(document.getElementById('shop')||box.parentNode).appendChild(bar)}
@@ -11286,8 +11292,50 @@ window.__render126=v=>{on=!!v};
 })();
 
 </script><script>
+// ===================== Round 116b: the "Done" plate must never sit on the friend/foe tag =====================
+// side seats put "خلّص" under the picture, the same spot as the "صديق/خصم" tag: move it below the tag,
+// or beside it toward the table if below is taken.
+(function(){
+const ov=(a,b)=>a.left<b.right-1&&a.right>b.left+1&&a.top<b.bottom-1&&a.bottom>b.top+1;
+function fix(){try{document.querySelectorAll('#seats .seat .doneplate').forEach(p=>{p.style.translate='';
+  const se=p.closest('.seat');const tags=[...se.querySelectorAll('.tags .tag')].map(e=>e.getBoundingClientRect()).filter(r=>r.width);
+  let r=p.getBoundingClientRect();const hit=tags.filter(t=>ov(r,t));if(!hit.length)return;
+  const others=[...document.querySelectorAll('#seats .seat .doneplate,#seats .seat .tags .tag,#seats .seat .who,#seats .seat .pilebox .card,#ground>.card')].filter(e=>e!==p&&!se.contains(e)).map(e=>e.getBoundingClientRect()).filter(x=>x.width);
+  const bot=Math.max(...hit.map(t=>t.bottom));const dy=bot-r.top+3;
+  const down={left:r.left,right:r.right,top:r.top+dy,bottom:r.bottom+dy};
+  if(!others.some(o=>ov(down,o))&&down.bottom<innerHeight-4){p.style.translate=`0 ${dy}px`;return}
+  // beside the tag, toward the middle of the table
+  const t=hit[0],mid=innerWidth/2,toR=(t.left+t.right)/2<mid;const dx=toR?t.right+3-r.left:t.left-3-r.right;const dy2=(t.top+t.bottom)/2-(r.top+r.bottom)/2;
+  p.style.translate=`${dx}px ${dy2}px`})}catch(e){}}
+render=(function(prev){return function(){const r=prev.apply(this,arguments);requestAnimationFrame(fix);return r}})(render);
+addEventListener('resize',()=>setTimeout(fix,350));
+})();
+
+// long messages near the screen edge were squeezed into one word per line (the bubble shrank to the space left before the edge):
+// give it its natural width, capped by its max-width, then keep it inside the screen.
+(function(){
+const st=document.createElement('style');st.textContent='#fx .bubble{width:max-content}';document.head.appendChild(st);
+function keep(b){try{const r=b.getBoundingClientRect();if(!r.width)return;const m=6;let dx=0;if(r.right>innerWidth-m)dx=innerWidth-m-r.right;if(r.left+dx<m)dx=m-r.left;
+  if(dx)b.style.left=(parseFloat(b.style.left)||0)+dx+'px'}catch(e){}}
+window.__bubKeep=keep;
+new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.classList&&n.classList.contains('bubble'))requestAnimationFrame(()=>keep(n))}))).observe(document.getElementById('fx')||document.body,{childList:true});
+})();
+
+// tapping a player's pile card to attack opened his profile when the finger landed on the edge of the picture next to it:
+// a tap on the picture that is inside (or within 8px of) an attackable card goes to the card instead.
+(function(){
+document.addEventListener('click',e=>{try{if(!S||!e.isTrusted)return;const tw=e.target.closest('#seats .tilewrap');if(!tw)return;const x=e.clientX,y=e.clientY;
+  const t=[...document.querySelectorAll('#seats [data-target]')].find(c=>{const r=c.getBoundingClientRect();return r.width&&x>=r.left-8&&x<=r.right+8&&y>=r.top-8&&y<=r.bottom+8});
+  if(!t)return;e.stopImmediatePropagation();e.preventDefault();t.click()}catch(_){}},true);
+// the gift button looked too big on the picture: smaller to look at, same size under the finger
+const st=document.createElement('style');st.textContent=`html body .table .seat .seatgift{width:24px!important;height:24px!important;padding:4px!important}
+html body .table .seat .seatgift::after{content:'';position:absolute;inset:-7px;border-radius:50%}
+html body .table .seat .seatgift svg{width:100%;height:100%}`;document.head.appendChild(st);
+})();
+
+</script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1111.0705';
+const EB_VERSION='v1111.1042';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
