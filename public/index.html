@@ -9659,6 +9659,13 @@ const IOS=typeof IS_IOS2!=='undefined'?IS_IOS2:/iP(hone|ad|od)/.test(navigator.u
 let away=0,need=false;
 document.addEventListener('visibilitychange',()=>{if(document.hidden){away=Date.now();return}if(Date.now()-away>800)need=true});
 addEventListener('pageshow',e=>{if(e.persisted)need=true});
+// an alarm or a phone call can cut the sound while the game stays on screen (no visibility change):
+// watch the audio clock; if it stops or the engine leaves 'running', wake/rebuild it on the next touch
+addEventListener('blur',()=>{away=Date.now()});addEventListener('focus',()=>{if(Date.now()-away>800)need=true});
+{let lt=-1,still=0;setInterval(()=>{try{if(typeof SND==='undefined'||!SND.on||!SND.ctx)return;const c=SND.ctx;
+  if(c.state!=='running'){need=true;lt=-1;return}
+  if(c.currentTime===lt){if(++still>=2)need=true}else still=0;lt=c.currentTime}catch(e){}},700)}
+try{const _i=SND.init;SND.init=function(){_i.apply(this,arguments);try{const c=this.ctx;if(c&&!c.__eb100){c.__eb100=1;c.addEventListener('statechange',()=>{if(c.state!=='running')need=true})}}catch(e){}}}catch(e){}
 function rebuild(){try{const old=SND.ctx;const musicOn=typeof MUSIC!=='undefined'&&MUSIC.playing;
   if(typeof MUSIC!=='undefined'){try{clearInterval(MUSIC.timer)}catch(e){}MUSIC.playing=false;MUSIC.bus=null;MUSIC.vol=null;MUSIC.lim=null}
   SND.ctx=null;SND.master=null;SND.nb=null;try{old&&old.close()}catch(e){}
@@ -9667,7 +9674,7 @@ function rebuild(){try{const old=SND.ctx;const musicOn=typeof MUSIC!=='undefined
 function fix(){if(!need||typeof SND==='undefined'||!SND.on)return;need=false;const c=SND.ctx;if(!c){SND.init();return}
   // silent kick inside the touch: resumes the audio session on iOS
   try{const b=c.createBuffer(1,1,22050),s=c.createBufferSource();s.buffer=b;s.connect(c.destination);s.start(0)}catch(e){}
-  if(c.state!=='running'){c.resume().catch(()=>{});setTimeout(()=>{if(SND.ctx===c&&c.state!=='running'&&IOS)rebuild()},350)}
+  if(c.state!=='running'){c.resume().catch(()=>{});setTimeout(()=>{if(SND.ctx===c&&c.state!=='running')rebuild()},350)}
   else if(IOS){c.suspend().then(()=>c.resume()).catch(()=>{});setTimeout(()=>{if(SND.ctx===c&&c.state!=='running')rebuild()},450)}}
 ['touchend','click','keydown'].forEach(ev=>document.addEventListener(ev,fix,{capture:true,passive:true}));
 })();
@@ -10894,7 +10901,7 @@ const FLAME=S0+'viewBox="0 0 200 100" preserveAspectRatio="none"><defs><linearGr
 const WING=(a,b,c)=>S0+`viewBox="0 0 60 100" preserveAspectRatio="none"><path d="M58 46C52 14 30 0 12 4C0 8 0 30 10 42C22 54 44 52 58 48Z" fill="${a}" stroke="#3a1050" stroke-width="2.4" vector-effect="non-scaling-stroke" stroke-linejoin="round"/><path d="M58 54C40 50 20 54 12 66C4 80 10 96 24 96C40 96 54 74 58 56Z" fill="${b}" stroke="#3a1050" stroke-width="2.4" vector-effect="non-scaling-stroke" stroke-linejoin="round"/><path d="M52 42C44 22 30 12 16 12C10 14 10 26 16 34C26 44 42 44 52 42Z" fill="${c}" opacity=".85"/><circle cx="20" cy="22" r="5" fill="#fff" opacity=".85"/><circle cx="33" cy="32" r="3" fill="#fff" opacity=".7"/><circle cx="24" cy="78" r="5" fill="#fff" opacity=".8"/><path d="M56 47L14 10M56 47L8 34M56 55L16 70M56 55L26 92" stroke="#3a1050" stroke-width="1.200" vector-effect="non-scaling-stroke" opacity=".5"/></svg>`;
 const WINGR=(a,b,c)=>WING(a,b,c).replace('preserveAspectRatio="none">','preserveAspectRatio="none"><g transform="translate(60 0) scale(-1 1)">').replace('</svg>','</g></svg>');
 const ANT=S0+'viewBox="0 0 40 20"><path d="M19 20Q14 6 6 4M21 20Q26 6 34 4" stroke="#3a1050" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="6" cy="4" r="2.600" fill="#3a1050"/><circle cx="34" cy="4" r="2.600" fill="#3a1050"/></svg>';
-const SHORT=12;
+const SHORT=16;
 window.__bubHook=(function(h){return function(b,i){if(h)h.apply(this,arguments);try{if(!/bub-(thunder|inferno|bfly)\b/.test(b.className))return;let t='';b.childNodes.forEach(n=>{if(n.nodeType===3)t+=n.textContent;else if(n.classList&&!n.classList.contains('bwho'))t+=n.textContent});
   if(t.trim().length<=SHORT)b.classList.add('bshape')}catch(e){}}})(window.__bubHook);
 const st=document.createElement('style');st.id='bubshape';st.textContent=`
@@ -11202,7 +11209,7 @@ let cutSeat=null;
 if(typeof intercept==='function')intercept=(function(p){return function(j){try{if(!(typeof NET!=='undefined'&&NET.on))cutSeat=j}catch(e){}return p.apply(this,arguments)}})(intercept);
 if(typeof declareEat==='function')declareEat=(function(p){return function(i){try{if(!(typeof NET!=='undefined'&&NET.on))cutSeat=i}catch(e){}return p.apply(this,arguments)}})(declareEat);
 if(typeof playFx==='function')playFx=(function(p){return function(e){try{if(e&&(e.t==='cut'||e.t==='eat')&&e.s!=null)cutSeat=e.s}catch(_){}return p.apply(this,arguments)}})(playFx);
-window.__hitFor=function(){try{if(cutSeat==null||cutSeat===0)return null;const k=kitOf(cutSeat);if(!k||!k.hit)return null;return (window.HITNUMS||[]).find(x=>x.id===k.hit)||null}catch(e){return null}};
+window.__hitFor=function(){return null};window.__hitForOld=function(){try{if(cutSeat==null||cutSeat===0)return null;const k=kitOf(cutSeat);if(!k||!k.hit)return null;return (window.HITNUMS||[]).find(x=>x.id===k.hit)||null}catch(e){return null}};
 
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const price=(pid,cost)=>{const own=!cost||(typeof WAL!=='undefined'&&WAL.owned.includes(pid));return own?`<small class="own">${L('You own it','عندك')}</small>`:`<small><i class="cn"></i>${(cost||0).toLocaleString('en')}</small>`};
@@ -11233,20 +11240,6 @@ const st=document.createElement('style');st.textContent=`.kit119{margin:12px 0 4
 .kit119r .ktx{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.3}.kit119r .ktx em{font-style:normal;font-size:11.5px;color:#c9b79a}.kit119r .ktx b{font-size:15px}
 .kit119r small{flex:none;display:flex;align-items:center;gap:4px;font-size:13px;font-weight:800;color:#f2d27a}.kit119r small.own{color:#5fe0a0}
 #shop .kit119hi{animation:kit119 1.2s ease-in-out 3;position:relative;z-index:2}@keyframes kit119{0%,100%{box-shadow:0 0 0 2px #f2d27a,0 0 0 rgba(242,210,122,0)}50%{box-shadow:0 0 0 3px #fff3b8,0 0 26px rgba(242,210,122,.95)}}`;document.head.appendChild(st);
-})();
-
-</script><script>
-// ===================== Round 123: steady pace against the computer. A war used to wait the full timer even when nobody could cut,
-// so a run of eats felt slow and a run of throws felt fast. Now, when you hold no card that cuts and no computer is going to cut, the war ends after a short beat. =====================
-(function(){if(typeof openWindow!=='function')return;
-const BEAT=1100; // long enough to see the eat and its effect
-const online=()=>typeof NET!=='undefined'&&NET.on;
-openWindow=(function(p){return function(){const r=p.apply(this,arguments);try{if(online()||typeof S==='undefined'||!S||!S.war)return r;const w=S.war;
-  // a human who could cut keeps the whole timer to decide
-  const humanCan=S.players.some((pl,j)=>pl.human&&j!==w.leader&&typeof canIntercept==='function'&&canIntercept(j).length>0);
-  // a computer that decided to cut has a timer waiting
-  const botWill=Array.isArray(S.aiTimers)&&S.aiTimers.length>0;
-  if(!humanCan&&!botWill){const end=performance.now()+BEAT;if(w.deadline>end)w.deadline=end}}catch(e){}return r}})(openWindow);
 })();
 
 </script><script>
@@ -11294,7 +11287,7 @@ window.__render126=v=>{on=!!v};
 
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1111.0302';
+const EB_VERSION='v1111.0705';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
