@@ -558,7 +558,7 @@ function newGame(cfg){
   S={cfg,players,teams,draw:buildDeck(cfg.decks),ground:[],turn:0,phase:'idle',war:null,sel:null,log:[],aiTimers:[],passes:0,lone:false,moves:0,stats:players.map(()=>({wars:0,best:0}))};
   for(const p of players)p.hand=S.draw.splice(0,4);
   S.ground=S.draw.splice(0,4);
-  log(L(`Dealt ${cfg.decks} decks. You go first.`,`توزّعت ${cfg.decks} شدّات. أنت تبدأ.`));
+  log(L(`Dealt ${cfg.decks} decks. You go first.`,`توزّعت ${cfg.decks} جناجف. أنت تبدأ.`));
   $('over').hidden=true;$('setup').hidden=true;
   startTurn(0);
 }
@@ -1191,12 +1191,12 @@ function renderSetup(){
     <p>${L('Win wars for 10s, faces, aces and jokers, then bury them under low cards so nobody takes them back.','اربح الحروب على العشرات والصور والآصات والجواكر، وادفنها تحت الأوراق الصغيرة عشان محد ياخذها منك.')}</p>
     <div class="fieldset"><div class="label">${L('Language','اللغة')}</div>${seg('lang',[['ar','العربية','العربية'],['en','English','English']],LANG)}</div>
     <div class="fieldset"><div class="label">${L('Players','اللاعبين')}</div>${seg('mode',[['2v2','2 vs 2','٢ ضد ٢'],['3v3','3 vs 3','٣ ضد ٣'],['solo','Everyone alone (4)','كل واحد لحاله (٤)']],c.mode)}</div>
-    <div class="fieldset"><div class="label">${L('Decks','عدد الشدّات')}</div>${seg('decks',[[4,'4','٤'],[8,'8','٨'],[10,'10','١٠'],[12,'12','١٢']],[4,8,10,12].includes(+c.decks)?c.decks:4)}</div>
+    <div class="fieldset"><div class="label">${L('Decks','عدد الجناجف')}</div>${seg('decks',[[4,'4','٤'],[8,'8','٨'],[10,'10','١٠'],[12,'12','١٢']],[4,8,10,12].includes(+c.decks)?c.decks:4)}</div>
     <div class="fieldset"><div class="label">${L('Computer players','مستوى الكمبيوتر')}</div>${seg('level',[['easy','Easy','سهل'],['normal','Normal','عادي'],['hard','Hard','صعب'],['pro','Pro','محترف']],c.level||'normal')}</div>
     <div class="fieldset"><div class="label">${L('Intercept timer','وقت القطع')}</div>${seg('timer',[[2,'2 s','٢ ث'],[3,'3 s','٣ ث'],[5,'5 s','٥ ث'],[8,'8 s','٨ ث']],c.timer||2)}</div>
     <div class="fieldset"><div class="label">${L('Hints','التلميحات')}</div>${seg('hints',[['on','Show hints','أظهر التلميحات'],['off','No hints','بدون تلميحات']],c.hints?'on':'off')}</div>
     <details><summary>${L('How to play','طريقة اللعب')}</summary><ul>${(LANG==='ar'?[
-      'كل شدّة فيها جوكرين. كل لاعب يبدأ بـ٤ أوراق و٤ أوراق تنحط على الأرض. المهم الرقم، النقشة ما تفرق.',
+      'كل جنجفة فيها جوكرين. كل لاعب يبدأ بـ٤ أوراق و٤ أوراق تنحط على الأرض. المهم الرقم، النقشة ما تفرق.',
       'اضغط مرتين على ورقة عشان تأكل اللي يطابقها على الأرض، أو ترميها إذا ما لها أكلة. الأوراق والكوم اللي تقدر تاكلها تضوي في دورك.',
       'دورك: اسحب ورقة، كُل، اسحب ورقة ثانية، وبعدين ارمِ ورقة. إذا عندك ورقة تطابق الأرض لازم تاكل، وتكمّل أكل لين ما يبقى شي يطابق.',
       'الجوكر ياكل أي شي. تقدر تهاجم كومة أي لاعب، حتى شريكك، إذا عندك نفس رقم الورقة اللي فوق، وتاخذ المجموعة كلها.',
@@ -3889,14 +3889,28 @@ exposed=function(pile){if(!pile||!pile.length)return null;
   if(pile[pile.length-1].r==='JK'){let n=0;for(let k=pile.length-1;k>=0&&pile[k].r==='JK';k--)n++;return {rank:'JK',n,cards:pile.slice(pile.length-n)}}
   let rank=null,n=0;
   for(let k=pile.length-1;k>=0;k--){const c=pile[k];if(c.r==='JK'){n++;continue}if(rank===null){rank=c.r;n++;continue}if(c.r===rank){n++;continue}break}
-  while(n>0&&pile[pile.length-n].r==='JK')n--;
+  while(n>0&&pile[pile.length-n].r==='JK'&&pile[pile.length-n].wr!==rank)n--; // a joker under the group stays with it only if it was won together with that rank
   return n?{rank,n,cards:pile.slice(pile.length-n)}:null};
+// a war won on a rank with jokers in it (e.g. a 10 eaten with a joker): the jokers are marked as part of that group,
+// so whoever takes the 10s later takes those jokers too. Jokers won on their own (a joker-only war) are not marked.
+{const _rwJ=resolveWar;resolveWar=function(){const w=S&&S.war;let W=null,cnt=0,rk=null;try{if(w){W=w.leader;cnt=w.targets.length+w.pot.length;const rc=[...w.targets,...w.pot].find(c=>c.r!=='JK');rk=rc?rc.r:null}}catch(e){}
+  const r=_rwJ.apply(this,arguments);
+  try{if(W!=null&&S&&S.players[W]){const pl=S.players[W].pile,added=pl.slice(Math.max(0,pl.length-cnt));added.forEach(c=>{if(c.r==='JK'){if(rk)c.wr=rk;else delete c.wr}})}}catch(e){}return r}}
 
 // A joker on the ground must be eaten by whoever holds a joker (other eats are allowed first, but the turn cannot end without it)
 options=function(i){const h=S.players[i].hand,hasJ=h.some(c=>c.r==='JK');
   return ORDER.map(r=>{const t=targetsFor(i,r);if(!t.count)return null;
     const natural=(r!=='JK'&&h.some(c=>c.r===r))||(r==='JK'&&hasJ&&t.g.length>0);
     return (natural||hasJ)?{r,t,natural}:null}).filter(Boolean)};
+
+// winning a war on the last card always brings five new cards, also for the one who opened it
+// (e.g. two jokers: eat with one, an opponent cuts, cut back with the second and win -> five cards, not one)
+{const _dc5=drawCards;drawCards=function(i,n){try{if(S&&S.__five===i&&n===1&&S.players[i].hand.length===0){S.__five=null;S.__fiveDone=i;n=5}}catch(e){}return _dc5.call(this,i,n)};
+ const _rw5=resolveWar;resolveWar=function(){const w=S&&S.war;let W=null;try{if(w&&w.leader===w.orig&&w.pot.length>1&&S.players[w.leader].hand.length===0&&S.draw.length>0){W=w.leader;S.__five=W}}catch(e){}
+  let r;try{r=_rw5.apply(this,arguments)}finally{if(S){S.__five=null}}
+  try{if(W!=null&&S&&S.__fiveDone===W){S.__fiveDone=null;const p=S.players[W];S.slowAI=W;
+    log(L(`${p.name} won on the last card and draws 5 new cards.`,V(p,'ربحت بآخر ورقة وسحبت ٥ أوراق جديدة.',`${p.name} ربح بآخر ورقة وسحب ٥ أوراق.`,`${p.name} ربحت بآخر ورقة وسحبت ٥ أوراق.`)));
+    try{say(W,L('Drew 5 🃏','سحب ٥ 🃏'))}catch(e){}}}catch(e){}return r}}
 
 </script><script>
 // ===================== Round 24: drag to play, names in sync online, voice fixes, watchers =====================
@@ -4845,7 +4859,7 @@ if(typeof S!=='undefined'&&S&&S.players)render();
   // private room toggle for the host
   if(typeof NET!=='undefined'&&NET.handlers){const _hrP=NET.handlers.room;NET.handlers.room=r=>{NET.priv=!!(r&&r.priv);_hrP&&_hrP(r)}}
   const _rlP=renderLobby;renderLobby=function(){_rlP();if(!NET.on||!NET.host)return;const s=$('lobbySheet');if(!s||s.querySelector('#lbPriv'))return;
-    const row=document.createElement('label');row.className='lv-priv';row.innerHTML=`<input type="checkbox" id="lbPriv" ${NET.priv?'checked':''}><span><b>${L('Private room','غرفة خاصة')}</b><small>${L('Hidden from the live rooms list; only people with the link can join.','ما تبين بقائمة الغرف الحية، بس اللي عنده الرابط يدخل.')}</small></span>`;
+    const row=document.createElement('label');row.className='lv-priv';row.innerHTML=`<input type="checkbox" id="lbPriv" ${NET.priv?'checked':''}><span><b>${L('Private room','غرفة خاصة')}</b><small>${L('Hidden from the live rooms list; only people with the link can join.','ما تبين بالغرف المفتوحة لأحد غير ربعك، وبس اللي عنده الرابط أو الكود يدخل.')}</small></span>`;
     const seats=s.querySelector('.lbseats');seats?seats.before(row):s.appendChild(row)};
   document.addEventListener('change',e=>{if(e.target&&e.target.id==='lbPriv'){NET.priv=e.target.checked;netSend('priv',{on:NET.priv})}});
   // joining a game that already started: go straight to the table
@@ -8511,6 +8525,9 @@ function oppCan(i,r,L){if(L<2)return .5;const pool=S.draw.length+S.players.reduc
   const u=unseen(i,r,L)+(r==='JK'?0:unseen(i,'JK',L)),q=Math.min(1,u/pool);
   const oc=S.players.reduce((n,p,j)=>opp(i,j)?n+p.hand.length:n,0);return 1-Math.pow(1-q,oc)}
 const loneMate=i=>S.players.some((p,j)=>mate(i,j)&&lone(j));
+// chance that a teammate holds rank r or a joker (to cut back if an opponent answers)
+function mateCan(i,r,L){if(L<2)return 0;const pool=S.draw.length+S.players.reduce((n,p,j)=>j===i?n:n+p.hand.length,0);if(!pool)return 0;
+  const u=unseen(i,r,L)+(r==='JK'?0:unseen(i,'JK',L)),q=Math.min(1,u/pool);const mc=S.players.reduce((n,p,j)=>mate(i,j)?n+p.hand.length:n,0);return 1-Math.pow(1-q,mc)}
 
 // score one way of eating: rank r with card c
 function evalEat(i,o,c,L){const me=S.players[i],h=me.hand,r=o.r,t=o.t;
@@ -8527,7 +8544,9 @@ function evalEat(i,o,c,L){const me=S.players[i],h=me.hand,r=o.r,t=o.t;
   if(useJ&&S.draw.length>6&&gain-pts(c)<kn(i,'jkReal',30))sc-=kn(i,'jkWaste',80); // never spend the joker on a cheap eat while the game is young: what is taken must be worth it, not the joker's own 50
   if(mateVal>0){ // opening a war on a teammate's pile puts his points up for grabs
     const pull=L>=2&&kn(i,'mpull',1)&&mates.some(lone),bury=L>=2&&kn(i,'mbury',1)&&def>=1&&h.some(x=>x!==c&&x.r!==r&&x.r!=='JK'&&onGround(x.r));
-    if(!(pull||bury))sc-=(mateVal*(L>=2?1.2:1)+15)*kn(i,'mate',1)}
+    if(!(pull||bury))sc-=(mateVal*(L>=2?1.2:1)+15)*kn(i,'mate',1);
+    // a teammate's pile holding a joker or 50+ points: never put it up for grabs, unless we can cover it twice over
+    if(kn(i,'v2',1)&&t.piles.some(x=>mate(i,x.j)&&(x.cards.some(c=>c.r==='JK')||sum(x.cards)>=50))&&!(bury&&def>=2))sc-=200}
   if(L>=2){const own=exposed(me.pile);if(own&&own.rank!==r&&r!=='JK'){const ov=sum(own.cards);if(ov)sc+=ov*oppCan(i,own.rank,L)*.5*kn(i,'bury',1)}} // burying our open points
   if(L>=2&&t.g.length&&!useJ&&loneMate(i))sc+=kn(i,'pull',10); // a war on the ground gives the teammate on his last card a chance to cut
   return sc}
@@ -8561,6 +8580,11 @@ aiThrow=function(i){const p=S.players[i],L=lvOf(i);if(L===0)return _throw.apply(
   const keep=c=>{let s=pts(c)*3+(c.r==='JK'?200:0)+(h.filter(x=>x.r===c.r).length-1)*5;
     S.players.forEach((q,j)=>{if(q.team!==p.team)return;const e=exposed(q.pile);if(e&&e.rank===c.r)s+=(j===i?25:14)}); // a card that matches our open pile would invite a war on it
     if(S.ground.some(g=>g.r===c.r))s+=3;
+    // going to sleep on one card (two in hand, one is thrown): keep a card that matches open piles still on top (a player's exposed
+    // cards or a war that was not buried yet). Someone will go for them, and that war can be cut for five new cards. A card that
+    // matches the ground is a poor one to sleep on: it can be eaten from the ground at any time.
+    if(kn(i,'v2',1)&&h.length===2&&S.draw.length>0&&c.r!=='JK'){let open=0;S.players.forEach((q,j)=>{const e=exposed(q.pile);if(e&&e.rank===c.r)open+=1+Math.min(3,sum(e.cards)/20)});
+      s+=open*kn(i,'sleepOpen',12);if(S.ground.some(g=>g.r===c.r))s-=kn(i,'sleepGround',8)}
     if(L>=3&&kn(i,'cnt',1))s+=oppCan(i,c.r,L)*(pts(c)+4)*1.5; // nobody can use it: safe to throw
     else if(L>=2&&kn(i,'tp',1))s+=pts(c)?4:0;
     return s+Math.random()*(L>=3?.3:1)};
@@ -8576,10 +8600,17 @@ aiWantsIntercept=function(j){const L=lvOf(j);if(L===0)return _want.apply(this,ar
     if(ln&&nat)return nat;return null}
   const wantDef=mineHit||(mateHit&&((L>=2&&kn(j,'dall',1))||Math.random()<.6));
   if(nat&&(value>0||ln||wantDef||kn(j,'natAll',L>=2?1:0)||(L===1&&Math.random()<.4)))return nat;
-  if(jk){
-    if(ln&&value>=kn(j,'jkLone',L>=2?5:10))return jk; // sleeping on a joker pays off now
+  if(jk&&!kn(j,'v2',1)){
+    if(ln&&value>=kn(j,'jkLone',L>=2?5:10))return jk;
     if(wantDef&&value>=kn(j,'jkDef',L>=2?15:25))return jk;
     if(value>=kn(j,'jkCut',L>=3?25:L>=2?30:40))return jk}
+  if(jk&&kn(j,'v2',1)){
+    if(ln&&value>=kn(j,'jkLone',L>=2?5:10))return jk; // on the last card: the joker brings five new cards
+    // a joker is spent only when it is likely to stick: two jokers in hand, nobody left who can answer (counted cards), a teammate who can back it up, or a big prize
+    const doubled=h.filter(c=>c.r==='JK').length>=2,pO=L>=2?oppCan(j,w.rank,L):.5,pM=mateCan(j,w.rank,L),back=doubled?1:pM;
+    const keep=value*((1-pO)+pO*back*.6);
+    if(wantDef&&value>=kn(j,'jkDef',L>=2?15:25)&&keep>=10)return jk;
+    if(keep>=kn(j,'jkCut2',L>=3?20:L>=2?24:30)&&(doubled||pO<.55||pM>.5||value>=50))return jk}
   return null};
 
 // pro cuts quicker
@@ -10140,7 +10171,7 @@ html body #lobby>.sheet{width:100%!important;max-width:none!important;height:100
   padding:max(18px,env(safe-area-inset-top)) max(18px,calc((100vw - 760px)/2)) max(18px,env(safe-area-inset-bottom))!important}
 #lbOptHint{margin:6px 0 2px;text-align:center;font-size:13px;line-height:1.6;color:#d6bd85}`;document.head.appendChild(st);
 const hint=()=>{try{const b=document.getElementById('lbStart');if(!b||document.getElementById('lbOptHint'))return;const p=document.createElement('p');p.id='lbOptHint';
-  p.textContent=L('Next page: players, decks, cut time, effects, computer style and your theme — then deal.','بالصفحة الجاية تختار: عدد اللاعبين، الشدّات، وقت القطع، التأثيرات، الكمبيوتر مع تأثيرات المتجر أو بدون، والثيم — وبعدها توزّع.');b.after(p)}catch(e){}};
+  p.textContent=L('Next page: players, decks, cut time, effects, computer style and your theme — then deal.','بالصفحة الجاية تختار: عدد اللاعبين، الجناجف، وقت القطع، التأثيرات، الكمبيوتر مع تأثيرات المتجر أو بدون، والثيم — وبعدها توزّع.');b.after(p)}catch(e){}};
 if(typeof renderLobby==='function')renderLobby=(function(p){return function(){const r=p.apply(this,arguments);hint();return r}})(renderLobby);setInterval(hint,900);
 // online rooms: seats played by the computer get shop styles too (same pick for the whole game, chosen from the room code and the seat's name)
 const BOY={bub:['comic','pow','shout','zap','boom','gold','fire','neon','royal','shemagh','falcon','carbon','ember','scroll','sadu'],efx:['gold','blue','purple','green','smoke','stars','money','frost','firering','halo'],sfx:['inferno','thunder','ice','meteor','royal','money','quake','missile','tank','flip']};
@@ -11342,8 +11373,106 @@ fetch('/api/ice',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d=>{if(d&&
 })();
 
 </script><script>
+// ===================== Round 117: one "Rooms" page instead of two look-alike buttons =====================
+// Home: "Quick game online" stays; "Play with friends" + "Live rooms" become one "Rooms" button.
+// The Rooms page: make a private room for friends or join with a code · rooms your friends are in · open public rooms.
+(function(){
+const esc2=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const DOOR='<svg viewBox="0 0 24 24"><path d="M5 21h14M7 21V4.5A1.5 1.5 0 0 1 8.5 3h7A1.5 1.5 0 0 1 17 4.5V21"/><circle cx="14" cy="12.5" r=".9" fill="currentColor"/></svg>';
+// home: swap the two buttons for one (the home page is redrawn often, so watch for it)
+function swapHome(){try{const two=document.querySelector('#h2Page .h2-two');if(two){const b=document.createElement('button');b.type='button';b.className='h2-rooms';b.dataset.rooms='1';
+    b.innerHTML=`<span>${DOOR}${L('Rooms','الغرف')}</span><small>${L('play with friends · join with a code · open rooms','العب مع ربعك · ادخل بكود · الغرف المفتوحة')}</small>`;two.replaceWith(b)}
+  const lv=document.querySelector('#h2Page #h2Live');if(lv)lv.remove()}catch(e){}}
+new MutationObserver(swapHome).observe(document.body,{childList:true,subtree:true});swapHome();
+// the page
+const sh=document.createElement('div');sh.id='roomsSheet';sh.className='overlay';sh.hidden=true;sh.innerHTML='<div class="sheet" id="roomsBox"></div>';document.body.appendChild(sh);
+let timer=0,pub=[],fr=[],code='';
+function row(name,sub,btn,codeV,ghost){return `<div class="rm-row"><span class="rm-av">${esc2((name||'?').trim().charAt(0))}</span><div class="rm-n"><b>${esc2(name)}</b><i>${sub}</i></div><button type="button" class="rm-go${ghost?' ghost':''}" data-rm-join="${esc2(codeV)}">${btn}</button></div>`}
+function draw(){const b=document.getElementById('roomsBox');if(!b)return;b.dir=LANG==='ar'?'rtl':'ltr';
+  const frRooms=fr.filter(f=>f.room);
+  const frHTML=frRooms.length?frRooms.map(f=>{const r=f.room,busy=r.started&&!r.free;
+      return row(f.name||'',`${r.priv?L('private','خاصة'):L('public','عامة')} · ${r.started?L('playing now','يلعبون الحين'):L(`${r.players} of ${r.n} · waiting`,`${r.players} من ${r.n} · ينتظرون`)}`,busy?L('Watch','تفرّج'):r.started?L('Take a seat','خذ مقعد'):L('Join','ادخل'),r.code,busy)}).join('')
+    :`<p class="rm-empty">${ACCT&&ACCT.on?L('When a friend opens a room, it shows up here.','لما يفتح أحد من ربعك غرفة، تطلع لك هني.'):L('Sign in to see your friends\' rooms here.','سجّل دخول عشان تشوف غرف ربعك هني.')}</p>`;
+  const pubHTML=pub.length?pub.slice(0,12).map(r=>{const busy=r.started&&!r.free;
+      return row(r.host||r.code,`${r.quick?'⚡ ':''}${L('public','عامة')} · ${r.started?(r.free?L(`${r.free} free seat${r.free>1?'s':''}`,`${r.free} مقعد فاضي`):L('playing now','يلعبون الحين')):L(`${r.players.length} waiting`,`${r.players.length} ينتظرون`)}`,busy?L('Watch','تفرّج'):r.started?L('Take a seat','خذ مقعد'):L('Join','ادخل'),r.code,busy)}).join('')
+    :`<p class="rm-empty">${L('No open rooms right now. Make one, or try the quick game.','ما فيه غرف مفتوحة الحين. سوّ وحدة، أو جرب اللعب السريع.')}</p>`;
+  b.innerHTML=`<div class="rm-head"><h2>${L('Rooms','الغرف')}</h2><button type="button" class="rm-x" id="rmClose" aria-label="close">✕</button></div>
+    <div class="rm-card"><h3>👥 ${L('Play with friends','العب مع ربعك')}</h3>
+      <button type="button" class="rm-make" id="rmMake">＋ ${L('Make a private room and send the link','سوّ غرفة خاصة ودز الرابط')}</button>
+      <div class="rm-code"><input id="rmCode" maxlength="6" placeholder="${L('Room code…','اكتب كود الغرفة…')}" value="${esc2(code)}" autocapitalize="characters"><button type="button" id="rmJoin">${L('Join','ادخل')}</button></div></div>
+    <div class="rm-card"><h3>⭐ ${L('Your friends\' rooms','غرف ربعك')}${frRooms.length?` <em>● ${frRooms.length}</em>`:''}</h3>${frHTML}</div>
+    <div class="rm-card"><h3>📡 ${L('Open rooms','الغرف المفتوحة')}${pub.length?` <em>● ${pub.length}</em>`:''}</h3>${pubHTML}</div>
+    <p class="rm-note">${L('Private rooms never show here to strangers, only to your friends.','الغرف الخاصة ما تطلع هني لأحد، بس لربعك.')}</p>`}
+async function load(){try{pub=await (await fetch('/rooms',{cache:'no-store'})).json()}catch(e){pub=[]}
+  try{if(typeof ACCT!=='undefined'&&ACCT.on){const d=await api('/api/so/list');fr=(d&&d.friends)||[]}else fr=[]}catch(e){fr=[]}
+  if(!sh.hidden){const ci=document.getElementById('rmCode');code=ci?ci.value:code;const foc=document.activeElement&&document.activeElement.id==='rmCode';draw();if(foc){const c=document.getElementById('rmCode');c&&c.focus()}}}
+window.openRooms=function(){if(typeof ONLINE_OK!=='undefined'&&!ONLINE_OK){toast(L('Online works on the game\'s website','الأونلاين يشتغل من رابط موقع اللعبة'));return}
+  if(typeof NET!=='undefined'&&NET.on){toast(L('Leave your room first','اطلع من غرفتك أول'));return}
+  code='';draw();sh.hidden=false;load();clearInterval(timer);timer=setInterval(()=>{if(sh.hidden){clearInterval(timer);return}load()},5000)};
+function close(){sh.hidden=true;clearInterval(timer)}
+function toLobby(){if(typeof hideHome==='function')hideHome();const s=document.getElementById('setup');if(s)s.hidden=true;lobbyErr='';renderLobby();document.getElementById('lobby').hidden=false}
+function joinCode(c){c=String(c||'').trim().toUpperCase();if(!c){toast(L('Write the room code','اكتب كود الغرفة'));return}close();lobbyCode=c;toLobby();
+  const ci=document.getElementById('lbCode');if(ci)ci.value=c;const n=document.getElementById('lbName');if(n&&n.value.trim())setTimeout(()=>{const b=document.getElementById('lbJoin');b&&b.click()},60);else n&&n.focus()}
+async function makePrivate(){close();lobbyCode='';toLobby();const n=document.getElementById('lbName');if(!n||!n.value.trim()){n&&n.focus();window.__wantPriv=true;return}
+  window.__wantPriv=true;try{await doEnter(true)}catch(e){}}
+// once the new room exists, make it private (hidden from strangers)
+if(typeof NET!=='undefined'&&NET.handlers){const _r=NET.handlers.room;NET.handlers.room=function(r){try{if(window.__wantPriv&&NET.on&&NET.host&&r&&!r.priv){window.__wantPriv=false;NET.priv=true;netSend('priv',{on:true})}}catch(e){}return _r&&_r.apply(this,arguments)}}
+if(typeof doEnter==='function')doEnter=(function(p){return async function(create){const r=await p.apply(this,arguments);try{if(window.__wantPriv&&create&&NET.on&&NET.host){window.__wantPriv=false;NET.priv=true;netSend('priv',{on:true});if(typeof renderLobby==='function')renderLobby()}else if(!create)window.__wantPriv=false}catch(e){}return r}})(doEnter);
+document.addEventListener('click',e=>{const t=e.target;
+  if(t.closest('[data-rooms]')){e.preventDefault();openRooms();return}
+  if(sh.hidden)return;
+  if(t.closest('#rmClose')||t===sh){close();return}
+  if(t.closest('#rmMake')){makePrivate();return}
+  if(t.closest('#rmJoin')){joinCode((document.getElementById('rmCode')||{}).value);return}
+  const j=t.closest('[data-rm-join]');if(j){joinCode(j.dataset.rmJoin);return}},true);
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target&&e.target.id==='rmCode'){e.preventDefault();joinCode(e.target.value)}});
+const st=document.createElement('style');st.textContent=`
+.h2-rooms{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:100%;border:0;border-radius:16px;font:inherit;padding:12px 10px;background:rgba(0,0,0,.22);color:#f2d27a;box-shadow:inset 0 0 0 1.5px rgba(242,210,122,.7);cursor:pointer}
+.h2-rooms>span{display:flex;align-items:center;gap:6px;font-weight:900;font-size:17px}.h2-rooms svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.h2-rooms small{font-size:11.5px;font-weight:600;color:rgba(242,210,122,.75)}
+#roomsSheet{z-index:9500!important;position:fixed}
+#roomsBox{max-height:88vh;overflow:auto;text-align:start}
+.rm-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}.rm-head h2{margin:0}
+.rm-x{width:36px;height:36px;border-radius:50%;border:1px solid rgba(242,210,122,.45);background:transparent;color:#f2d27a;font-size:16px}
+.rm-card{background:rgba(255,255,255,.045);box-shadow:inset 0 0 0 1px rgba(242,210,122,.2);border-radius:16px;padding:12px;margin:10px 0}
+.rm-card h3{margin:0 0 8px;font-size:15.5px;color:#f2d27a}.rm-card h3 em{font-style:normal;font-size:12px;color:#5fd07a;font-weight:700}
+.rm-make{width:100%;border:0;border-radius:14px;padding:12px;font:inherit;font-weight:900;font-size:15px;color:#2a1606;background:linear-gradient(180deg,#f6dd96,#c99d4a);cursor:pointer}
+.rm-code{display:flex;gap:8px;margin-top:8px}.rm-code input{flex:1;min-width:0;border-radius:12px;border:1px solid rgba(242,210,122,.35);background:rgba(0,0,0,.35);color:#f4ead6;font:inherit;font-size:15px;padding:10px 12px;text-transform:uppercase}
+.rm-code button,.rm-go{border-radius:12px;padding:9px 14px;font:inherit;font-weight:900;font-size:14px;white-space:nowrap;cursor:pointer;border:0;color:#2a1606;background:linear-gradient(180deg,#f6dd96,#c99d4a)}
+.rm-code button{background:transparent;color:#f2d27a;box-shadow:inset 0 0 0 1.5px rgba(242,210,122,.7)}
+.rm-go.ghost{background:transparent;color:#f2d27a;box-shadow:inset 0 0 0 1.5px rgba(242,210,122,.7)}
+.rm-row{display:flex;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px solid rgba(242,210,122,.12)}.rm-row:last-child{border-bottom:0}
+.rm-av{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#d9c3a0;color:#3a1a0a;font-weight:900}
+.rm-n{flex:1;min-width:0}.rm-n b{display:block;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rm-n i{display:block;font-style:normal;font-size:12px;color:rgba(233,220,194,.7)}
+.rm-empty{margin:4px 0;font-size:13px;color:rgba(233,220,194,.65)}.rm-note{text-align:center;font-size:12px;color:rgba(233,220,194,.6);margin:6px 0 0}`;document.head.appendChild(st);
+})();
+
+</script><script>
+// ===================== Round 118: statistics for the owner (how many play, errors on phones) =====================
+// Each phone sends: a ping every minute while the game is open, the start and end of games against the computer, and any error.
+// Only a random device number is sent (no name, no account), so the owner can count players without knowing who they are.
+(function(){if(!/^https?:/.test(location.protocol))return;
+let dev='';try{dev=localStorage.getItem('eb-dev')||'';if(!/^[a-z0-9]{10,40}$/.test(dev)){dev=(Math.random().toString(36).slice(2)+Date.now().toString(36)).slice(0,20);localStorage.setItem('eb-dev',dev)}}catch(e){dev=Math.random().toString(36).slice(2,14)}
+let ver='';try{ver=EB_VERSION}catch(e){}
+const post=(u,o)=>{try{fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(o),keepalive:true}).catch(()=>{})}catch(e){}};
+const ping=()=>{if(!document.hidden)post('/api/stat',{ev:'ping',id:dev})};setTimeout(ping,3000);setInterval(ping,60e3);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)ping()});
+// games against the computer
+const off=()=>!(typeof NET!=='undefined'&&NET.on);let t0=0;
+if(typeof newGame==='function')newGame=(function(p){return function(){const r=p.apply(this,arguments);try{if(off()){t0=Date.now();post('/api/stat',{ev:'start',id:dev})}}catch(e){}return r}})(newGame);
+if(typeof endGame==='function')endGame=(function(p){return function(){try{if(off()&&t0){post('/api/stat',{ev:'end',ms:Date.now()-t0,id:dev});t0=0}}catch(e){}return p.apply(this,arguments)}})(endGame);
+// errors: each different one once per visit, at most 15
+const sent=new Set();
+function report(msg,where){msg=String(msg||'').slice(0,160);where=String(where||'').slice(0,120);if(!msg||/^Script error/.test(msg))return;const k=msg+'|'+where;if(sent.has(k)||sent.size>=15)return;sent.add(k);
+  const ua=navigator.userAgent,devn=/iPhone|iPad/.test(ua)?'iOS '+((ua.match(/OS (\d+)_/)||[])[1]||''):/Android/.test(ua)?'Android '+((ua.match(/Android (\d+)/)||[])[1]||''):/Mac/.test(ua)?'Mac':'other';
+  let v2=ver;try{v2=EB_VERSION}catch(_){}post('/api/err',{msg,where,ver:v2,dev:devn+(/CriOS|Chrome/.test(ua)?' Chrome':/Safari/.test(ua)?' Safari':'')})}
+addEventListener('error',e=>{try{const st=e.error&&e.error.stack?String(e.error.stack).split('\n')[1]||'':'';report(e.message,(st.trim()||(e.filename||'').split('/').pop()+':'+e.lineno+':'+e.colno).replace(/https?:\/\/[^/ ]+/g,''))}catch(_){}});
+addEventListener('unhandledrejection',e=>{try{const r=e.reason;report('promise: '+(r&&r.message||String(r)),r&&r.stack?(String(r.stack).split('\n')[1]||'').trim().replace(/https?:\/\/[^/ ]+/g,''):'')}catch(_){}});
+})();
+
+</script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1112.0213';
+const EB_VERSION='v1113.0217';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
