@@ -21,6 +21,10 @@ const server = http.createServer((req, res) => {
   if (url === '/health') { res.end('ok'); return; }
   if (url.startsWith('/api/dw/')) { let b = ''; req.on('data', d => { b += d; if (b.length > 20000) req.destroy() }); req.on('end', () => { let body = {}; try { body = b ? JSON.parse(b) : {} } catch (e) {} DW.http(req, res, url, body, live) }); return; }
   if (url.startsWith('/api/so/')) { let b = ''; req.on('data', d => { b += d; if (b.length > 20000) req.destroy() }); req.on('end', () => { let body = {}; try { body = b ? JSON.parse(b) : {} } catch (e) {} SO.http(req, res, url, body, live) }); return; }
+  // voice relay (TURN) for players on mobile data: set TURN_URLS (comma separated), TURN_USER, TURN_PASS in the hosting settings
+  if (url.split('?')[0] === '/api/ice') { const urls = String(process.env.TURN_URLS || '').split(',').map(x => x.trim()).filter(Boolean);
+    const ice = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }]; if (urls.length) ice.push({ urls, username: process.env.TURN_USER || '', credential: process.env.TURN_PASS || '' });
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); return res.end(JSON.stringify({ ice, relay: urls.length > 0 })) }
   if (url.startsWith('/api/')) return ACC.http(req, res, url.split('?')[0]);
   if (url === '/rooms') { // live rooms list for the "rooms now" screen
     const list = [...rooms.values()].filter(r => !r.priv && !r.dw).map(r => {
@@ -57,9 +61,9 @@ server.on('upgrade', (req, socket) => {
   const accept = crypto.createHash('sha1').update(key + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11').digest('base64');
   socket.write('HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ' + accept + '\r\n\r\n');
   socket.setNoDelay(true);
-  const c = { id: 'c' + (nextId++), socket, buf: Buffer.alloc(0), parts: [], room: null, alive: true };
+  const c = { id: 'c' + (nextId++), socket, buf: Buffer.alloc(0), parts: [], room: null, alive: true, miss: 0 };
   clients.set(c.id, c);
-  socket.on('data', d => { c.buf = Buffer.concat([c.buf, d]); readFrames(c); });
+  socket.on('data', d => { c.alive = true; c.buf = Buffer.concat([c.buf, d]); readFrames(c); });
   socket.on('close', () => drop(c));
   socket.on('error', () => drop(c));
 });
@@ -96,7 +100,7 @@ function sendFrame(c, data, op = 1) {
 }
 const send = (c, type, data) => c && sendFrame(c, JSON.stringify({ type, data }));
 // Keep connections alive behind hosting proxies
-setInterval(() => { for (const c of clients.values()) { if (!c.alive) { c.socket.destroy(); continue; } c.alive = false; sendFrame(c, Buffer.alloc(0), 9); } }, 25000);
+setInterval(() => { for (const c of clients.values()) { if (c.alive) c.miss = 0; else if (++c.miss >= 3) { c.socket.destroy(); continue; } c.alive = false; sendFrame(c, Buffer.alloc(0), 9); } }, 25000); // a phone on a weak network gets three chances (about a minute) before it counts as gone
 
 // ---------- Who is online (for diwaniyas) ----------
 const online = new Map(); // account id -> set of connections
