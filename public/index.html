@@ -1619,7 +1619,10 @@ function wrapGuest(){if(guestWrapped)return;guestWrapped=true;
   intercept=(j,c,fire)=>netSend('act',{a:'cut',card:c.id,fire:!!fire});
   endTurn=()=>netSend('act',{a:'pass'});passTurn=()=>netSend('act',{a:'pass'});
   resolveWar=()=>{};startTurn=()=>{};aiChoose=()=>{};aiThrow=()=>{};saveGame=()=>{};
-  sendGift=function(f,to,id,free){if(f===0&&!free){const g=GIFTS.find(x=>x.id===id);if(!g||WAL.tokens<g.cost)return;WAL.tokens-=g.cost;saveWal();netSend('act',{a:'gift',to,id});return}localGift(f,to,id,true)};
+  sendGift=function(f,to,id,free){if(f===0&&!free){const g=GIFTS.find(x=>x.id===id);if(!g)return;
+    // 'everyone' (-1): one gift to each other player, paid for each
+    const list=to===-1?S.players.map((p,i)=>i).filter(i=>i>0):[to];if(WAL.tokens<g.cost*list.length){try{toast(L('Not enough rupees','ما عندك روبيات كافية'))}catch(e){}return}
+    WAL.tokens-=g.cost*list.length;saveWal();list.forEach((x,k)=>setTimeout(()=>netSend('act',{a:'gift',to:x,id}),k*120));return}localGift(f,to,id,true)};
   say=function(i,t){if(i===0)netSend('act',{a:'say',text:t});else localSay(i,t)};
   on('up',d=>applyView(d));
 }
@@ -6030,7 +6033,7 @@ const FXE=(function(){const cv=document.createElement('canvas');cv.id='fxCanvas'
     c.globalCompositeOperation='lighter';flashes=flashes.filter(f=>{f.t+=dt;const k=f.t/f.dur;if(k>=1)return false;c.globalAlpha=f.a*(1-k)*(1-k);c.fillStyle=f.col;c.fillRect(0,0,W,H);return true});
     c.globalAlpha=1;c.globalCompositeOperation='source-over';
     if(parts.length||decals.length||flashes.length)requestAnimationFrame(loop);else{running=false;c.clearRect(0,0,W,H)}}
-  function shake(px,ms){const a=$('app');if(!a||!a.animate)return;const kf=[];for(let k=0;k<8;k++)kf.push({transform:`translate(${R(-px,px)}px,${R(-px,px)}px)`});kf.push({transform:'none'});a.animate(kf,{duration:ms,easing:'ease-out'})}
+  function shake(px,ms){px=Math.min(px,7);const a=$('table')||$('app');if(!a||!a.animate)return;const kf=[];for(let k=0;k<8;k++)kf.push({transform:`translate(${R(-px,px)}px,${R(-px,px)}px)`});kf.push({transform:'none'});a.animate(kf,{duration:ms,easing:'ease-out'})}
   return {add,flash,decal,shake,R,glow}})();
 
 // colour helpers
@@ -11249,22 +11252,21 @@ const st=document.createElement('style');st.textContent=`.kit119{margin:12px 0 4
 })();
 
 </script><script>
-// ===================== Round 124: online, updates are shown one after another. On a phone the network often delivers two or three
-// updates at once (an eat and the throw after it); they were drawn in the same instant, so the eat was never seen. Now each move stays on screen
-// for a moment before the next one is drawn; if updates pile up, the pauses get shorter so you never fall behind. =====================
+// ===================== Round 124 (v2): online pacing without lag. The first version held every update for up to 0.8 s so each move
+// could be seen; online that piled up: your own action showed seconds later, the war timer jumped or was skipped, and a cut could be
+// sent on an old table. Now an update is only held when the network really delivered two at once (the second within 120 ms of an eat),
+// for at most 0.38 s, and never when a war is on, when it is your own move, or when more are waiting. =====================
 (function(){if(typeof applyView!=='function')return;
-const orig=applyView,Q=[];let holdUntil=0,tm=0;
-const HOLD={eat:780,cut:720,throw:520,win:640};
-function pump(){tm=0;while(Q.length){const now=performance.now();if(now<holdUntil){tm=setTimeout(pump,holdUntil-now+4);return}
-  const d=Q.shift(),lag=now-d.__at;
-  try{if(d.v){if(d.v.war&&typeof d.v.war.left==='number')d.v.war.left=Math.max(0,d.v.war.left-lag);if(typeof d.v.turnLeft==='number'&&d.v.turnLeft>0)d.v.turnLeft=Math.max(500,d.v.turnLeft-lag)}}catch(e){}
-  try{orig(d)}catch(e){console.error(e)}
-  let h=0;try{(d.fx||[]).forEach(e=>{h=Math.max(h,HOLD[e.t]||0)})}catch(e){}
-  if(Q.length>=4)h*=.25;else if(Q.length>=2)h*=.55; // falling behind: catch up
-  holdUntil=performance.now()+h}}
-applyView=function(d){try{d.__at=performance.now();Q.push(d);if(Q.length>8){Q.splice(0,Q.length-8)}}catch(e){return orig(d)}if(!tm)pump()};
-// a fresh game or a room change starts clean
-if(typeof netSend==='function')netSend=(function(p){return function(t){if(t==='start'||t==='reopen'){Q.length=0;holdUntil=0}return p.apply(this,arguments)}})(netSend);
+const orig=applyView;let last=0,lastEat=false,pend=null,tm=0;
+const hasWar=d=>!!(d&&d.v&&d.v.war);
+const mine=d=>(d&&d.fx||[]).some(e=>e&&e.s===0);
+function run(d){if(tm){clearTimeout(tm);tm=0}const p=pend;pend=null;if(p&&p!==d)try{orig(p)}catch(e){console.error(e)}
+  try{orig(d)}catch(e){console.error(e)}last=performance.now();lastEat=(d.fx||[]).some(e=>e&&(e.t==='eat'||e.t==='cut'))}
+applyView=function(d){try{const now=performance.now();
+  if(pend){run(d);return} // something already waiting: show both now, never fall behind
+  if(lastEat&&now-last<120&&!hasWar(d)&&!mine(d)){pend=d;tm=setTimeout(()=>{const x=pend;pend=null;tm=0;if(x)run(x)},380);return}
+  run(d)}catch(e){try{orig(d)}catch(_){}}};
+if(typeof netSend==='function')netSend=(function(p){return function(t){if(t==='start'||t==='reopen'){if(tm)clearTimeout(tm);tm=0;pend=null;lastEat=false}return p.apply(this,arguments)}})(netSend);
 })();
 
 </script><script>
@@ -11333,9 +11335,15 @@ html body .table .seat .seatgift::after{content:'';position:absolute;inset:-7px;
 html body .table .seat .seatgift svg{width:100%;height:100%}`;document.head.appendChild(st);
 })();
 
+// voice: the free public relay the mics used is gone, so players on mobile data could not hear each other (only some pairs connected).
+// The relay now comes from our own server (/api/ice), set in the hosting settings.
+(function(){if(typeof ICE==='undefined')return;
+fetch('/api/ice',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d=>{if(d&&d.relay&&Array.isArray(d.ice)){d.ice.filter(x=>x.username!=null).forEach(x=>ICE.iceServers.unshift(x));window.__iceRelay=true}}).catch(()=>{});
+})();
+
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1111.1042';
+const EB_VERSION='v1112.0213';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
