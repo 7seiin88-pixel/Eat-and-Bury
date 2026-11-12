@@ -68,7 +68,7 @@ async function http(req, res, url, body, live) {
       const ids = [...new Set([...Object.keys(me.friends), ...Object.keys(me.inReq), ...Object.keys(me.outReq), ...Object.keys(me.read)])];
       const cards = {}; await Promise.all(ids.map(async id => { const c = await cardOf(id); if (c) cards[id] = c }));
       const row = id => { const c = cards[id]; if (!c) return null; const d = dms.get(pairKey(a.id, id)) || [], last = d[d.length - 1];
-        return { ...c, st: status(id), seen: R(id).seen || 0, last: last ? { t: last.t.slice(0, 60), ts: last.ts, mine: last.f === a.id } : null, unread: !!(last && last.f !== a.id && last.ts > (me.read[id] || 0)), canDm: canDm(a.id, id) } };
+        return { ...c, st: status(id), room: live && live.room ? live.room(id) : null, seen: R(id).seen || 0, last: last ? { t: last.t.slice(0, 60), ts: last.ts, mine: last.f === a.id } : null, unread: !!(last && last.f !== a.id && last.ts > (me.read[id] || 0)), canDm: canDm(a.id, id) } };
       const friends = Object.keys(me.friends).map(row).filter(Boolean).sort((x, y) => (y.st !== 'off') - (x.st !== 'off') || (y.last ? y.last.ts : 0) - (x.last ? x.last.ts : 0) || y.seen - x.seen);
       const chats = Object.keys(me.read).filter(id => !me.friends[id] && dms.has(pairKey(a.id, id))).map(row).filter(Boolean);
       return send(200, { me: a.id, dm: me.dm, friends, chats, inReq: Object.keys(me.inReq).map(row).filter(Boolean), outReq: Object.keys(me.outReq).map(row).filter(Boolean), blocked: Object.keys(me.blocked).length });

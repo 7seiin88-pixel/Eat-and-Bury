@@ -33,7 +33,7 @@ class Game {
     // names and who is a person, then deal
     E.newGame({ mode: cfg.mode, decks: cfg.decks, timer: cfg.timer, level: cfg.level, hints: !!cfg.hints, fx: cfg.fx !== false });
     this.syncSeats(true);
-    { const S = this.S, ar = this.ctx.LANG === 'ar'; S.log[0] = ar ? `توزّعت ${S.cfg.decks} شدّات. يبدأ ${S.players[0].name}.` : `Dealt ${S.cfg.decks} decks. ${S.players[0].name} goes first.`; }
+    { const S = this.S, ar = this.ctx.LANG === 'ar'; S.log[0] = ar ? `توزّعت ${S.cfg.decks} جناجف. يبدأ ${S.players[0].name}.` : `Dealt ${S.cfg.decks} decks. ${S.players[0].name} goes first.`; }
     this.clock = setInterval(() => this.tick(), 200);
   }
   get S() { return this.ctx.__getS() }

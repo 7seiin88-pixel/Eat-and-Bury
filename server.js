@@ -3,6 +3,7 @@
 // - Connects players in rooms over WebSockets and relays their messages.
 // The server runs every online game itself (game.js), so no player's phone is in charge.
 // No extra packages needed: uses only what comes with Node.js.
+const STATS = require('./stats'); // first: it also counts server errors
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -15,12 +16,25 @@ const SO = require('./social');
 const PUBLIC = path.join(__dirname, 'public');
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.json': 'application/json' };
 
-const GZ = new Map();
+const GZ = new Map(), RATE = new Map();
+setInterval(() => RATE.clear(), 10 * 60e3).unref();
 const server = http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
   if (url === '/health') { res.end('ok'); return; }
   if (url.startsWith('/api/dw/')) { let b = ''; req.on('data', d => { b += d; if (b.length > 20000) req.destroy() }); req.on('end', () => { let body = {}; try { body = b ? JSON.parse(b) : {} } catch (e) {} DW.http(req, res, url, body, live) }); return; }
   if (url.startsWith('/api/so/')) { let b = ''; req.on('data', d => { b += d; if (b.length > 20000) req.destroy() }); req.on('end', () => { let body = {}; try { body = b ? JSON.parse(b) : {} } catch (e) {} SO.http(req, res, url, body, live) }); return; }
+  // statistics: phones send a ping, game start/end and errors; the owner reads the report
+  if (url === '/api/stat' || url === '/api/err') { if (req.method !== 'POST') { res.writeHead(405); return res.end() }
+    const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim(), now = Date.now();
+    let q = RATE.get(ip); if (!q || now - q.t > 60e3) { q = { t: now, n: 0 }; RATE.set(ip, q) } if (++q.n > 40) { res.writeHead(429); return res.end() }
+    let b = ''; req.on('data', d => { b += d; if (b.length > 4000) req.destroy() }); req.on('end', () => { let o = {}; try { o = JSON.parse(b || '{}') } catch (e) {}
+      const id = /^[a-z0-9]{6,40}$/i.test(String(o.id || '')) ? 'd:' + o.id : null;
+      if (url === '/api/err') STATS.err('phone', { msg: o.msg, where: o.where, ver: o.ver, dev: o.dev });
+      else if (o.ev === 'ping') STATS.ping(id); else if (o.ev === 'start') { STATS.gameStart('offline'); STATS.player(id) } else if (o.ev === 'end') STATS.gameEnd('offline', +o.ms || 0);
+      res.writeHead(204); res.end() }); return }
+  if (url === '/api/admin/stats') { if (!STATS.okKey(req)) { res.writeHead(403, { 'Content-Type': 'application/json' }); return res.end('{"err":"no"}') }
+    const started = [...rooms.values()].filter(r => r.started), inRooms = started.reduce((n, r) => n + r.members.filter(m => !m.watch && !m.away).length, 0);
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); return res.end(JSON.stringify(STATS.report({ connected: clients.size, rooms: started.length, waiting: rooms.size - started.length, playingOnline: inRooms, watching: [...rooms.values()].reduce((n, r) => n + r.members.filter(m => m.watch).length, 0) }))) }
   // voice relay (TURN) for players on mobile data: set TURN_URLS (comma separated), TURN_USER, TURN_PASS in the hosting settings
   if (url.split('?')[0] === '/api/ice') { const urls = String(process.env.TURN_URLS || '').split(',').map(x => x.trim()).filter(Boolean);
     const ice = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }]; if (urls.length) ice.push({ urls, username: process.env.TURN_USER || '', credential: process.env.TURN_PASS || '' });
@@ -99,6 +113,7 @@ function sendFrame(c, data, op = 1) {
   c.socket.write(Buffer.concat([head, p]));
 }
 const send = (c, type, data) => c && sendFrame(c, JSON.stringify({ type, data }));
+setInterval(() => { try { STATS.peak(STATS.seen.size, [...rooms.values()].filter(r => r.started).length) } catch (e) {} }, 60e3).unref();
 // Keep connections alive behind hosting proxies
 setInterval(() => { for (const c of clients.values()) { if (c.alive) c.miss = 0; else if (++c.miss >= 3) { c.socket.destroy(); continue; } c.alive = false; sendFrame(c, Buffer.alloc(0), 9); } }, 25000); // a phone on a weak network gets three chances (about a minute) before it counts as gone
 
@@ -108,6 +123,8 @@ function goOnline(c, aid) { try { SO.seenNow(aid) } catch (e) {} if (c.aid === a
 function goOffline(c) { if (!c.aid) return; const s = online.get(c.aid); if (s) { s.delete(c.id); if (!s.size) online.delete(c.aid) } c.aid = null }
 const live = {
   push(aid, type, data) { const s = online.get(aid); if (s) for (const id of s) send(clients.get(id), type, data) },
+  room(aid) { for (const r of rooms.values()) { if (r.dw) continue; const m = r.members.find(x => x.aid === aid && !x.away); if (!m) continue; const pl = r.members.filter(x => !x.watch), host = r.members.find(x => x.sid === r.host);
+      return { code: r.code, host: host ? host.name : '', started: !!r.started, priv: !!r.priv, n: r.n || 4, players: pl.length, free: r.started && r.n ? Math.max(0, r.n - pl.length) : Math.max(0, 4 - pl.length) } } return null },
   status(aid) { for (const r of rooms.values()) if (r.started && r.members.some(m => m.aid === aid && !m.watch && !m.away)) return 'play'; return online.has(aid) || DW.recent(aid) ? 'on' : 'off' },
   tables(dw) { return [...rooms.values()].filter(r => r.dw === dw).map(r => { const pl = r.members.filter(m => !m.watch); return { code: r.code, players: pl.map(m => ({ name: m.name, av: m.prof && /^p:/.test(m.prof.av || '') ? m.prof.av : 'p:0' })), started: !!r.started, n: r.n || 4, free: r.started && r.n ? Math.max(0, r.n - pl.length) : Math.max(0, 4 - pl.length), watchers: r.members.length - pl.length } }) }
 };
@@ -171,10 +188,10 @@ function onMessage2(c, { type, data = {}, rid }) {
       if (!r || !r.game) return; const m = r.members.find(x => x.sid === c.id); if (!m || m.watch) return;
       if (data && data.a === 'slam') { // the fire button: take the rupees first
         if (!m.atoken || Date.now() - (m.lastSlam || 0) < 1500) return; m.lastSlam = Date.now();
-        ACC.load(m.atoken).then(a => a && ACC.spend(a, ACC.SLAM_COST)).then(me => { if (!me) return; send(clients.get(m.sid), 'me', me); if (r.game) r.game.act(m.seat, { a: 'slam' }); }).catch(e => console.error('slam', e));
+        ACC.load(m.atoken).then(a => a && ACC.spend(a, ACC.SLAM_COST)).then(me => { if (!me) return; STATS.bump('fire'); STATS.bump('spent', ACC.SLAM_COST); send(clients.get(m.sid), 'me', me); if (r.game) r.game.act(m.seat, { a: 'slam' }); }).catch(e => console.error('slam', e));
         return;
       }
-      return r.game.act(m.seat, data || {});
+      if (data && data.a === 'gift') STATS.bump('gifts'); return r.game.act(m.seat, data || {});
     }
     case 'mic': { if (!r) return; const m = r.members.find(x => x.sid === c.id); if (m) { m.mic = !!data.on; toRoom(r, 'room', pub(r)); } return; }
     case 'rtc': // voice chat signalling
@@ -187,7 +204,7 @@ function onMessage2(c, { type, data = {}, rid }) {
       const old = m.sid;
       if (m.timer) { clearTimeout(m.timer); m.timer = null; }
       const oc = clients.get(old); if (oc && oc !== c) { oc.room = null; try { oc.socket.destroy(); } catch (e) {} clients.delete(old); }
-      m.sid = c.id; m.away = false; m.mic = false; c.room = room.code; if (m.atoken && !c.atoken) c.atoken = m.atoken; if (m.aid && !c.aid) goOnline(c, m.aid);
+      if (room.started && m.away) STATS.bump('back'); m.sid = c.id; m.away = false; m.mic = false; c.room = room.code; if (m.atoken && !c.atoken) c.atoken = m.atoken; if (m.aid && !c.aid) goOnline(c, m.aid);
       if (room.host === old) room.host = c.id;
       reply({ ok: true, room: pub(room), me: c.id, watch: !!m.watch });
       toRoom(room, 'room', pub(room));
@@ -249,9 +266,9 @@ function startGame(r, cfg, ranked) {
   const safe = { mode: ['solo', '2v2', '3v3'].includes(cfg.mode) ? cfg.mode : '2v2', decks: Math.min(12, Math.max(1, +cfg.decks || 4)), timer: Math.min(15, Math.max(2, +cfg.timer || 3)), level: cfg.level === 'easy' ? 'easy' : botLevel(r) /* the computers that fill the seats play at the level of the people in the room */, hints: !!cfg.hints, lang: cfg.lang === 'en' ? 'en' : 'ar', fx: cfg.fx !== false };
   if (r.qt) { clearTimeout(r.qt); r.qt = null; }
   if (r.game) r.game.stop();
-  try { r.game = new Game(r, safe, { send: (sid, type, d) => send(clients.get(sid), type, d), war: (seat, gain) => reward(r, seat, a => ACC.warWon(a, gain)), over: g => { const ranked = !!r.ranked, res = g.results(); const keyOf = seat => { const m = r.members.find(y => !y.watch && y.seat === seat); return m && m.atoken ? crypto.createHash('sha256').update(String(m.atoken)).digest('hex').slice(0, 12) : null };
+  try { r.game = new Game(r, safe, { send: (sid, type, d) => send(clients.get(sid), type, d), war: (seat, gain) => reward(r, seat, a => ACC.warWon(a, gain)), over: g => { STATS.gameEnd('online', Date.now() - (r.t0 || Date.now())); const ranked = !!r.ranked, res = g.results(); const keyOf = seat => { const m = r.members.find(y => !y.watch && y.seat === seat); return m && m.atoken ? crypto.createHash('sha256').update(String(m.atoken)).digest('hex').slice(0, 12) : null };
       for (const x of res) { const partners = res.filter(y => y.team === x.team && y.seat !== x.seat).map(y => keyOf(y.seat)).filter(Boolean); reward(r, x.seat, a => ACC.gameOver(a, { ...x, ranked, partners })) } } }); } catch (e) { console.error('game start', e); r.game = null; return; }
-  r.started = true; r.n = r.game.S.players.length; toRoom(r, 'room', pub(r)); toRoom(r, 'started', {}); r.game.flush();
+  r.started = true; r.n = r.game.S.players.length; r.t0 = Date.now(); STATS.gameStart(r.ranked ? 'quick' : 'online'); toRoom(r, 'room', pub(r)); toRoom(r, 'started', {}); r.game.flush();
 }
 const QUICK_WAIT = 15000;
 function quickGo(r) { if (!rooms.has(r.code) || r.started || !r.members.some(m => !m.watch)) return; startGame(r, { mode: '2v2', decks: 4, timer: 3, level: 'normal' }, true); }
@@ -264,7 +281,7 @@ function drop(c, keepSocket, now) {
   if (!r) return;
   const m = r.members.find(x => x.sid === c.id); if (!m) return;
   if (!now) { // lost connection: hold the seat for a while so they can come back
-    m.away = true; m.mic = false; m.wasAway = true; if (r.game && !m.watch) { try { r.game.push({ t: 'say', s: m.seat, text: 'طلع 🚪' }) } catch (e) {} }
+    if (r.started && !m.watch) STATS.bump('drops'); m.away = true; m.mic = false; m.wasAway = true; if (r.game && !m.watch) { try { r.game.push({ t: 'say', s: m.seat, text: 'طلع 🚪' }) } catch (e) {} }
     m.timer = setTimeout(() => remove(r, m), r.started ? 15 * 60 * 1000 : GRACE); // a game in progress keeps the seat 15 minutes
     if (r.game) r.game.changed();
     return toRoom(r, 'room', pub(r));

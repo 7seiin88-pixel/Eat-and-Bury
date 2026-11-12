@@ -102,7 +102,7 @@ function pub(a) { return { id: a.id, name: a.prof.name, av: a.prof.av, flag: a.p
 
 // ---------- what a phone may ask ----------
 async function load(token) { await ready; if (!token) return null; return store.byToken(hash(token)) }
-async function create(local) { await ready; const a = fresh(local), token = crypto.randomBytes(24).toString('base64url'); a.token = hash(token); daily(a); await store.put(a); return { token, a } }
+async function create(local) { await ready; const a = fresh(local), token = crypto.randomBytes(24).toString('base64url'); a.token = hash(token); daily(a); await store.put(a); try { require('./stats').bump('newAcc') } catch (e) {} return { token, a } }
 // The phone sends what it thinks it has. Only buying (with rupees the server knows about) and spending are accepted;
 // anything that would add rupees is ignored, because the server gives every reward itself.
 async function sync(a, body) {
@@ -122,6 +122,7 @@ async function sync(a, body) {
   else if (sl < a.w.slams) a.w.slams = sl;
   // other spending (gifts sent to the computer, etc.): accept only a decrease
   const claimed = clamp(wal.tokens, 0, 1e9); if (wal.tokens != null && claimed < tokens) tokens = claimed;
+  try { const sp = a.w.tokens - tokens; if (sp > 0) require('./stats').bump('spent', sp) } catch (e) {}
   a.w.tokens = tokens;
   if (body.prof) { const own = id => a.w.owned.includes(id) || CAT.items[id] === 0; const n = cleanProf({ ...a.prof, ...body.prof, prefs: { ...a.prof.prefs, ...(body.prof.prefs || {}) } }, own); a.prof = n }
   await store.put(a); return me(a, notes.length ? { refused: notes } : null);

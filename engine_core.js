@@ -33,7 +33,7 @@ function newGame(cfg){
   S={cfg,players,teams,draw:buildDeck(cfg.decks),ground:[],turn:0,phase:'idle',war:null,sel:null,log:[],aiTimers:[],passes:0,lone:false,moves:0,stats:players.map(()=>({wars:0,best:0}))};
   for(const p of players)p.hand=S.draw.splice(0,4);
   S.ground=S.draw.splice(0,4);
-  log(L(`Dealt ${cfg.decks} decks. You go first.`,`توزّعت ${cfg.decks} شدّات. أنت تبدأ.`));
+  log(L(`Dealt ${cfg.decks} decks. You go first.`,`توزّعت ${cfg.decks} جناجف. أنت تبدأ.`));
   startTurn(0);
 }
 
@@ -220,14 +220,28 @@ exposed=function(pile){if(!pile||!pile.length)return null;
   if(pile[pile.length-1].r==='JK'){let n=0;for(let k=pile.length-1;k>=0&&pile[k].r==='JK';k--)n++;return {rank:'JK',n,cards:pile.slice(pile.length-n)}}
   let rank=null,n=0;
   for(let k=pile.length-1;k>=0;k--){const c=pile[k];if(c.r==='JK'){n++;continue}if(rank===null){rank=c.r;n++;continue}if(c.r===rank){n++;continue}break}
-  while(n>0&&pile[pile.length-n].r==='JK')n--;
+  while(n>0&&pile[pile.length-n].r==='JK'&&pile[pile.length-n].wr!==rank)n--; // a joker under the group stays with it only if it was won together with that rank
   return n?{rank,n,cards:pile.slice(pile.length-n)}:null};
+// a war won on a rank with jokers in it (e.g. a 10 eaten with a joker): the jokers are marked as part of that group,
+// so whoever takes the 10s later takes those jokers too. Jokers won on their own (a joker-only war) are not marked.
+{const _rwJ=resolveWar;resolveWar=function(){const w=S&&S.war;let W=null,cnt=0,rk=null;try{if(w){W=w.leader;cnt=w.targets.length+w.pot.length;const rc=[...w.targets,...w.pot].find(c=>c.r!=='JK');rk=rc?rc.r:null}}catch(e){}
+  const r=_rwJ.apply(this,arguments);
+  try{if(W!=null&&S&&S.players[W]){const pl=S.players[W].pile,added=pl.slice(Math.max(0,pl.length-cnt));added.forEach(c=>{if(c.r==='JK'){if(rk)c.wr=rk;else delete c.wr}})}}catch(e){}return r}}
 
 // A joker on the ground must be eaten by whoever holds a joker (other eats are allowed first, but the turn cannot end without it)
 options=function(i){const h=S.players[i].hand,hasJ=h.some(c=>c.r==='JK');
   return ORDER.map(r=>{const t=targetsFor(i,r);if(!t.count)return null;
     const natural=(r!=='JK'&&h.some(c=>c.r===r))||(r==='JK'&&hasJ&&t.g.length>0);
     return (natural||hasJ)?{r,t,natural}:null}).filter(Boolean)};
+
+// winning a war on the last card always brings five new cards, also for the one who opened it
+// (e.g. two jokers: eat with one, an opponent cuts, cut back with the second and win -> five cards, not one)
+{const _dc5=drawCards;drawCards=function(i,n){try{if(S&&S.__five===i&&n===1&&S.players[i].hand.length===0){S.__five=null;S.__fiveDone=i;n=5}}catch(e){}return _dc5.call(this,i,n)};
+ const _rw5=resolveWar;resolveWar=function(){const w=S&&S.war;let W=null;try{if(w&&w.leader===w.orig&&w.pot.length>1&&S.players[w.leader].hand.length===0&&S.draw.length>0){W=w.leader;S.__five=W}}catch(e){}
+  let r;try{r=_rw5.apply(this,arguments)}finally{if(S){S.__five=null}}
+  try{if(W!=null&&S&&S.__fiveDone===W){S.__fiveDone=null;const p=S.players[W];S.slowAI=W;
+    log(L(`${p.name} won on the last card and draws 5 new cards.`,V(p,'ربحت بآخر ورقة وسحبت ٥ أوراق جديدة.',`${p.name} ربح بآخر ورقة وسحب ٥ أوراق.`,`${p.name} ربحت بآخر ورقة وسحبت ٥ أوراق.`)));
+    try{say(W,L('Drew 5 🃏','سحب ٥ 🃏'))}catch(e){}}}catch(e){}return r}}
 
 // ===================== "تطوف" stat: a player whose turn is jumped because someone else won a war =====================
 const _rwT=resolveWar;resolveWar=function(){const w=S&&S.war;const orig=w?w.orig:null,W=w?w.leader:null;_rwT();
@@ -259,6 +273,9 @@ function oppCan(i,r,L){if(L<2)return .5;const pool=S.draw.length+S.players.reduc
   const u=unseen(i,r,L)+(r==='JK'?0:unseen(i,'JK',L)),q=Math.min(1,u/pool);
   const oc=S.players.reduce((n,p,j)=>opp(i,j)?n+p.hand.length:n,0);return 1-Math.pow(1-q,oc)}
 const loneMate=i=>S.players.some((p,j)=>mate(i,j)&&lone(j));
+// chance that a teammate holds rank r or a joker (to cut back if an opponent answers)
+function mateCan(i,r,L){if(L<2)return 0;const pool=S.draw.length+S.players.reduce((n,p,j)=>j===i?n:n+p.hand.length,0);if(!pool)return 0;
+  const u=unseen(i,r,L)+(r==='JK'?0:unseen(i,'JK',L)),q=Math.min(1,u/pool);const mc=S.players.reduce((n,p,j)=>mate(i,j)?n+p.hand.length:n,0);return 1-Math.pow(1-q,mc)}
 
 // score one way of eating: rank r with card c
 function evalEat(i,o,c,L){const me=S.players[i],h=me.hand,r=o.r,t=o.t;
@@ -272,9 +289,12 @@ function evalEat(i,o,c,L){const me=S.players[i],h=me.hand,r=o.r,t=o.t;
   if(ownVal>0)sc-=(L>=2?p:.5)*ownVal*(def?.35:.85)*kn(i,'own',1);
   if(L>=2)sc-=p*stake*(def?.25:.6)*kn(i,'risk',L>=3?3:1.5); // how much it fears being cut (measured over thousands of games: 3 is the sweet spot for the top level)
   if(useJ)sc-=kn(i,'jkEat',L>=3?Math.max(12,30-oppCan(i,r,L)*10):L>=2?22:30); // a joker is a cut kept in the hand
+  if(useJ&&S.draw.length>6&&gain-pts(c)<kn(i,'jkReal',30))sc-=kn(i,'jkWaste',80); // never spend the joker on a cheap eat while the game is young: what is taken must be worth it, not the joker's own 50
   if(mateVal>0){ // opening a war on a teammate's pile puts his points up for grabs
     const pull=L>=2&&kn(i,'mpull',1)&&mates.some(lone),bury=L>=2&&kn(i,'mbury',1)&&def>=1&&h.some(x=>x!==c&&x.r!==r&&x.r!=='JK'&&onGround(x.r));
-    if(!(pull||bury))sc-=(mateVal*(L>=2?1.2:1)+15)*kn(i,'mate',1)}
+    if(!(pull||bury))sc-=(mateVal*(L>=2?1.2:1)+15)*kn(i,'mate',1);
+    // a teammate's pile holding a joker or 50+ points: never put it up for grabs, unless we can cover it twice over
+    if(kn(i,'v2',1)&&t.piles.some(x=>mate(i,x.j)&&(x.cards.some(c=>c.r==='JK')||sum(x.cards)>=50))&&!(bury&&def>=2))sc-=200}
   if(L>=2){const own=exposed(me.pile);if(own&&own.rank!==r&&r!=='JK'){const ov=sum(own.cards);if(ov)sc+=ov*oppCan(i,own.rank,L)*.5*kn(i,'bury',1)}} // burying our open points
   if(L>=2&&t.g.length&&!useJ&&loneMate(i))sc+=kn(i,'pull',10); // a war on the ground gives the teammate on his last card a chance to cut
   return sc}
@@ -308,6 +328,11 @@ aiThrow=function(i){const p=S.players[i],L=lvOf(i);if(L===0)return _throw.apply(
   const keep=c=>{let s=pts(c)*3+(c.r==='JK'?200:0)+(h.filter(x=>x.r===c.r).length-1)*5;
     S.players.forEach((q,j)=>{if(q.team!==p.team)return;const e=exposed(q.pile);if(e&&e.rank===c.r)s+=(j===i?25:14)}); // a card that matches our open pile would invite a war on it
     if(S.ground.some(g=>g.r===c.r))s+=3;
+    // going to sleep on one card (two in hand, one is thrown): keep a card that matches open piles still on top (a player's exposed
+    // cards or a war that was not buried yet). Someone will go for them, and that war can be cut for five new cards. A card that
+    // matches the ground is a poor one to sleep on: it can be eaten from the ground at any time.
+    if(kn(i,'v2',1)&&h.length===2&&S.draw.length>0&&c.r!=='JK'){let open=0;S.players.forEach((q,j)=>{const e=exposed(q.pile);if(e&&e.rank===c.r)open+=1+Math.min(3,sum(e.cards)/20)});
+      s+=open*kn(i,'sleepOpen',12);if(S.ground.some(g=>g.r===c.r))s-=kn(i,'sleepGround',8)}
     if(L>=3&&kn(i,'cnt',1))s+=oppCan(i,c.r,L)*(pts(c)+4)*1.5; // nobody can use it: safe to throw
     else if(L>=2&&kn(i,'tp',1))s+=pts(c)?4:0;
     return s+Math.random()*(L>=3?.3:1)};
@@ -323,10 +348,17 @@ aiWantsIntercept=function(j){const L=lvOf(j);if(L===0)return _want.apply(this,ar
     if(ln&&nat)return nat;return null}
   const wantDef=mineHit||(mateHit&&((L>=2&&kn(j,'dall',1))||Math.random()<.6));
   if(nat&&(value>0||ln||wantDef||kn(j,'natAll',L>=2?1:0)||(L===1&&Math.random()<.4)))return nat;
-  if(jk){
-    if(ln&&value>=kn(j,'jkLone',L>=2?5:10))return jk; // sleeping on a joker pays off now
+  if(jk&&!kn(j,'v2',1)){
+    if(ln&&value>=kn(j,'jkLone',L>=2?5:10))return jk;
     if(wantDef&&value>=kn(j,'jkDef',L>=2?15:25))return jk;
     if(value>=kn(j,'jkCut',L>=3?25:L>=2?30:40))return jk}
+  if(jk&&kn(j,'v2',1)){
+    if(ln&&value>=kn(j,'jkLone',L>=2?5:10))return jk; // on the last card: the joker brings five new cards
+    // a joker is spent only when it is likely to stick: two jokers in hand, nobody left who can answer (counted cards), a teammate who can back it up, or a big prize
+    const doubled=h.filter(c=>c.r==='JK').length>=2,pO=L>=2?oppCan(j,w.rank,L):.5,pM=mateCan(j,w.rank,L),back=doubled?1:pM;
+    const keep=value*((1-pO)+pO*back*.6);
+    if(wantDef&&value>=kn(j,'jkDef',L>=2?15:25)&&keep>=10)return jk;
+    if(keep>=kn(j,'jkCut2',L>=3?20:L>=2?24:30)&&(doubled||pO<.55||pM>.5||value>=50))return jk}
   return null};
 
 // pro cuts quicker
