@@ -30,7 +30,7 @@ const server = http.createServer((req, res) => {
     let b = ''; req.on('data', d => { b += d; if (b.length > 4000) req.destroy() }); req.on('end', () => { let o = {}; try { o = JSON.parse(b || '{}') } catch (e) {}
       const id = /^[a-z0-9]{6,40}$/i.test(String(o.id || '')) ? 'd:' + o.id : null;
       if (url === '/api/err') STATS.err('phone', { msg: o.msg, where: o.where, ver: o.ver, dev: o.dev });
-      else if (o.ev === 'ping') STATS.ping(id); else if (o.ev === 'start') { STATS.gameStart('offline'); STATS.player(id) } else if (o.ev === 'end') STATS.gameEnd('offline', +o.ms || 0);
+      else if (o.ev === 'ping') STATS.ping(id); else if (o.ev === 'start') { STATS.gameStart('offline'); STATS.player(id); STATS.addGame({ kind: 'ضد الكمبيوتر', mode: String(o.mode || '').slice(0, 5), names: [String(o.name || '')], bots: 0 }) } else if (o.ev === 'end') STATS.gameEnd('offline', +o.ms || 0); else if (o.ev === 'kit') STATS.used(o.items); else if (o.ev === 'fire') STATS.fired(o.item, o.n);
       res.writeHead(204); res.end() }); return }
   if (url === '/api/admin/stats') { if (!STATS.okKey(req)) { res.writeHead(403, { 'Content-Type': 'application/json' }); return res.end('{"err":"no"}') }
     const started = [...rooms.values()].filter(r => r.started), inRooms = started.reduce((n, r) => n + r.members.filter(m => !m.watch && !m.away).length, 0);
@@ -153,7 +153,7 @@ function onMessage2(c, { type, data = {}, rid }) {
         const tk = token();
         const room = { code: newCode(), host: c.id, started: false, members: [member(c, data.name, 0, tk)] };
         if (dw) { room.dw = dw; room.priv = true; }
-        rooms.set(room.code, room); c.room = room.code;
+        rooms.set(room.code, room); c.room = room.code; STATS.roomMade();
         reply({ ok: true, room: pub(room), me: c.id, token: tk });
       });
     }
@@ -170,7 +170,7 @@ function onMessage2(c, { type, data = {}, rid }) {
         if (wait) { joinRoom(c, wait, data, reply); if (wait.members.filter(m => !m.watch).length >= 4) setTimeout(() => quickGo(wait), 1500); return; }
         const tk = token();
         const room = { code: newCode(), host: c.id, started: false, quick: true, qAt: Date.now() + QUICK_WAIT, members: [member(c, data.name, 0, tk)] };
-        rooms.set(room.code, room); c.room = room.code;
+        rooms.set(room.code, room); c.room = room.code; STATS.roomMade();
         room.qt = setTimeout(() => quickGo(room), QUICK_WAIT);
         reply({ ok: true, room: pub(room), me: c.id, token: tk });
       });
@@ -193,9 +193,9 @@ function onMessage2(c, { type, data = {}, rid }) {
       }
       if (data && data.a === 'gift') STATS.bump('gifts'); return r.game.act(m.seat, data || {});
     }
-    case 'mic': { if (!r) return; const m = r.members.find(x => x.sid === c.id); if (m) { m.mic = !!data.on; toRoom(r, 'room', pub(r)); } return; }
+    case 'mic': { if (!r) return; const m = r.members.find(x => x.sid === c.id); if (m) { m.mic = !!data.on && !!r.priv; toRoom(r, 'room', pub(r)); } return; }
     case 'rtc': // voice chat signalling
-      if (!r || !r.members.some(m => m.sid === data.to)) return;
+      if (!r || !r.priv || !r.members.some(m => m.sid === data.to)) return; // voice only in private rooms
       return send(clients.get(data.to), 'rtc', { from: c.id, data: data.data });
     case 'resume': { // come back after leaving the page (sharing on WhatsApp, a call, the screen locking)
       const room = rooms.get(String(data.code || '').toUpperCase().trim());
@@ -242,7 +242,7 @@ function joinRoom(c, room, data, reply) {
   if (room.started && !data.watch && room.n) { // take a computer's seat in a game that already started
     const used = new Set(room.members.filter(m => !m.watch).map(m => m.seat)); let seat = 1; while (used.has(seat)) seat++;
     if (seat < room.n) { const tk = token();
-      room.members.push(member(c, data.name, seat, tk)); c.room = room.code;
+      const mm = member(c, data.name, seat, tk); try { const S = room.game && room.game.S; if (S && room.d0) mm.lateFrac = Math.max(0, 1 - S.draw.length / room.d0) } catch (e) {} room.members.push(mm); c.room = room.code;
       reply({ ok: true, room: pub(room), me: c.id, token: tk, late: true });
       toRoom(room, 'room', pub(room)); if (room.game) { room.game.syncSeats(); room.game.flush(c.id); } return; }
   }
@@ -266,9 +266,9 @@ function startGame(r, cfg, ranked) {
   const safe = { mode: ['solo', '2v2', '3v3'].includes(cfg.mode) ? cfg.mode : '2v2', decks: Math.min(12, Math.max(1, +cfg.decks || 4)), timer: Math.min(15, Math.max(2, +cfg.timer || 3)), level: cfg.level === 'easy' ? 'easy' : botLevel(r) /* the computers that fill the seats play at the level of the people in the room */, hints: !!cfg.hints, lang: cfg.lang === 'en' ? 'en' : 'ar', fx: cfg.fx !== false };
   if (r.qt) { clearTimeout(r.qt); r.qt = null; }
   if (r.game) r.game.stop();
-  try { r.game = new Game(r, safe, { send: (sid, type, d) => send(clients.get(sid), type, d), war: (seat, gain) => reward(r, seat, a => ACC.warWon(a, gain)), over: g => { STATS.gameEnd('online', Date.now() - (r.t0 || Date.now())); const ranked = !!r.ranked, res = g.results(); const keyOf = seat => { const m = r.members.find(y => !y.watch && y.seat === seat); return m && m.atoken ? crypto.createHash('sha256').update(String(m.atoken)).digest('hex').slice(0, 12) : null };
-      for (const x of res) { const partners = res.filter(y => y.team === x.team && y.seat !== x.seat).map(y => keyOf(y.seat)).filter(Boolean); reward(r, x.seat, a => ACC.gameOver(a, { ...x, ranked, partners })) } } }); } catch (e) { console.error('game start', e); r.game = null; return; }
-  r.started = true; r.n = r.game.S.players.length; r.t0 = Date.now(); STATS.gameStart(r.ranked ? 'quick' : 'online'); toRoom(r, 'room', pub(r)); toRoom(r, 'started', {}); r.game.flush();
+  try { r.game = new Game(r, safe, { send: (sid, type, d) => send(clients.get(sid), type, d), war: (seat, gain) => reward(r, seat, a => ACC.warWon(a, gain)), over: g => { STATS.gameEnd('online', Date.now() - (r.t0 || Date.now())); try { const S = g.S, E = g.ctx.__ctx(), sc = S.teams.map((t, k) => E.teamScore(k)), best = Math.max(...sc), wk = sc.indexOf(best), tie = sc.filter(x => x === best).length > 1; STATS.endGameRec(r.gDay, r.gIdx, { end: Date.now(), min: Math.round((Date.now() - r.t0) / 6000) / 10, won: tie ? 'تعادل' : S.players.filter(p => p.team === wk).map(p => p.name + (p.human ? '' : ' 🤖')).join(' + '), score: sc.join('-') }) } catch (e) {} const ranked = !!r.ranked, res = g.results(); const keyOf = seat => { const m = r.members.find(y => !y.watch && y.seat === seat); return m && m.atoken ? crypto.createHash('sha256').update(String(m.atoken)).digest('hex').slice(0, 12) : null };
+      for (const x of res) { const partners = res.filter(y => y.team === x.team && y.seat !== x.seat).map(y => keyOf(y.seat)).filter(Boolean); const mm = r.members.find(m => !m.watch && m.seat === x.seat), late = !!(mm && mm.lateFrac >= .5); /* joined after half the deck was drawn: rupees and XP, but rank points neither go up nor down */ reward(r, x.seat, a => ACC.gameOver(a, { ...x, ranked: ranked && !late, partners })) } } }); } catch (e) { console.error('game start', e); r.game = null; return; }
+  r.started = true; r.n = r.game.S.players.length; r.d0 = r.game.S.draw.length || 1; r.t0 = Date.now(); STATS.gameStart(r.ranked ? 'quick' : 'online'); { const hum = r.members.filter(m => !m.watch); r.gDay = STATS.DAY(); r.gIdx = STATS.addGame({ kind: r.ranked ? 'سريع' : (r.priv ? 'غرفة خاصة' : 'غرفة'), mode: safe.mode, names: hum.map(m => m.name), bots: Math.max(0, r.n - hum.length) }) } toRoom(r, 'room', pub(r)); toRoom(r, 'started', {}); r.game.flush();
 }
 const QUICK_WAIT = 15000;
 function quickGo(r) { if (!rooms.has(r.code) || r.started || !r.members.some(m => !m.watch)) return; startGame(r, { mode: '2v2', decks: 4, timer: 3, level: 'normal' }, true); }

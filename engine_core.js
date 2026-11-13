@@ -273,6 +273,16 @@ function oppCan(i,r,L){if(L<2)return .5;const pool=S.draw.length+S.players.reduc
   const u=unseen(i,r,L)+(r==='JK'?0:unseen(i,'JK',L)),q=Math.min(1,u/pool);
   const oc=S.players.reduce((n,p,j)=>opp(i,j)?n+p.hand.length:n,0);return 1-Math.pow(1-q,oc)}
 const loneMate=i=>S.players.some((p,j)=>mate(i,j)&&lone(j));
+// memory of players sleeping on their last card: if one lets a war go by without cutting, he holds neither that rank nor a joker
+// (until his card changes). hard/pro use it to throw and open wars only on ranks he cannot cut.
+const MEM=()=>S.mem&&S.mem.length===S.players.length?S.mem:(S.mem=S.players.map(()=>({no:{},noJ:false})));
+const forget=i=>{try{const m=MEM()[i];if(m){m.no={};m.noJ=false}}catch(e){}};
+{const _ic=intercept;intercept=function(j,c){try{if(S.war){S.war.cut=S.war.cut||[];S.war.cut.push(j)}}catch(e){}return _ic.apply(this,arguments)};
+ const _rw=resolveWar;resolveWar=function(){try{const w=S&&S.war;if(w&&w.rank!=='JK'&&S.draw.length>0){const cut=new Set(w.cut||[]);S.players.forEach((p,j)=>{if(j===w.orig||cut.has(j)||p.hand.length!==1)return;const m=MEM()[j];m.no[w.rank]=true;m.noJ=true})}}catch(e){}return _rw.apply(this,arguments)};
+ const _tc=throwCard;throwCard=function(i){const r=_tc.apply(this,arguments);forget(i);return r};
+ const _dc=drawCards;drawCards=function(i){const r=_dc.apply(this,arguments);forget(i);return r}}
+// how likely a sleeping opponent can cut a war on rank r (0 when we saw him let one go by)
+const sleeperRisk=(i,r)=>{let risk=0;S.players.forEach((p,j)=>{if(!opp(i,j)||!lone(j))return;const m=MEM()[j];if(m&&m.noJ&&m.no[r])return;risk=Math.max(risk,m&&m.noJ?.6:1)});return risk};
 // chance that a teammate holds rank r or a joker (to cut back if an opponent answers)
 function mateCan(i,r,L){if(L<2)return 0;const pool=S.draw.length+S.players.reduce((n,p,j)=>j===i?n:n+p.hand.length,0);if(!pool)return 0;
   const u=unseen(i,r,L)+(r==='JK'?0:unseen(i,'JK',L)),q=Math.min(1,u/pool);const mc=S.players.reduce((n,p,j)=>mate(i,j)?n+p.hand.length:n,0);return 1-Math.pow(1-q,mc)}
@@ -288,13 +298,23 @@ function evalEat(i,o,c,L){const me=S.players[i],h=me.hand,r=o.r,t=o.t;
   const p=oppCan(i,r,L),stake=gain+mateVal;
   if(ownVal>0)sc-=(L>=2?p:.5)*ownVal*(def?.35:.85)*kn(i,'own',1);
   if(L>=2)sc-=p*stake*(def?.25:.6)*kn(i,'risk',L>=3?3:1.5); // how much it fears being cut (measured over thousands of games: 3 is the sweet spot for the top level)
+  if(L>=2&&kn(i,'mem2',0)){const rk=sleeperRisk(i,r);if(rk)sc-=rk*(stake*.35+8)}
   if(useJ)sc-=kn(i,'jkEat',L>=3?Math.max(12,30-oppCan(i,r,L)*10):L>=2?22:30); // a joker is a cut kept in the hand
-  if(useJ&&S.draw.length>6&&gain-pts(c)<kn(i,'jkReal',30))sc-=kn(i,'jkWaste',80); // never spend the joker on a cheap eat while the game is young: what is taken must be worth it, not the joker's own 50
+  if(useJ&&S.draw.length>6&&gain-pts(c)<kn(i,'jkReal',30))sc-=kn(i,'jkWaste',80);
+  if(useJ&&h.length>=3&&S.draw.length>6&&gain-pts(c)<kn(i,'jkHoldV',60))sc-=kn(i,'jkHold',80); // with three or more cards in hand the joker is kept for a real war, not spent on a small attack // never spend the joker on a cheap eat while the game is young: what is taken must be worth it, not the joker's own 50
+  // pro tactic: the teammate sleeps on his last card, his open war is in danger and he cannot cover it; I hold two or more of that rank.
+  // Take it myself: the points stay with the team, and if he sleeps on the same rank he cuts in and gets five new cards.
+  let take=false;if(L>=3&&kn(i,'mtake',1)&&!useJ&&mateVal>0&&def>=1){const mj=t.piles.find(x=>mate(i,x.j)&&lone(x.j));
+    if(mj){const m=MEM()[mj.j],maybe=!(m&&m.no[r]),danger=oppCan(i,r,L);if(maybe&&danger>.25){
+      // weigh it: taking his war uncovers what lies under it in his pile (it can be attacked next); waiting keeps my cards to defend his war when it is attacked
+      const pl=S.players[mj.j].pile,rest=pl.slice(0,pl.length-mj.n),un=rest.length?exposed(rest):null,costUnder=un?sum(un.cards)*oppCan(i,un.rank,L)*kn(i,'mtakeU',.8):0;
+      const wait=def>=2?mateVal*kn(i,'mtakeW',.3):0,gain=mateVal*(.4+danger*.6)+kn(i,'mtakeB',12);
+      if(gain-costUnder-wait>0){take=true;sc+=gain-costUnder-wait}}}}
   if(mateVal>0){ // opening a war on a teammate's pile puts his points up for grabs
     const pull=L>=2&&kn(i,'mpull',1)&&mates.some(lone),bury=L>=2&&kn(i,'mbury',1)&&def>=1&&h.some(x=>x!==c&&x.r!==r&&x.r!=='JK'&&onGround(x.r));
-    if(!(pull||bury))sc-=(mateVal*(L>=2?1.2:1)+15)*kn(i,'mate',1);
+    if(!(pull||bury||take))sc-=(mateVal*(L>=2?1.2:1)+15)*kn(i,'mate',1);
     // a teammate's pile holding a joker or 50+ points: never put it up for grabs, unless we can cover it twice over
-    if(kn(i,'v2',1)&&t.piles.some(x=>mate(i,x.j)&&(x.cards.some(c=>c.r==='JK')||sum(x.cards)>=50))&&!(bury&&def>=2))sc-=200}
+    if(kn(i,'v2',1)&&t.piles.some(x=>mate(i,x.j)&&(x.cards.some(c=>c.r==='JK')||sum(x.cards)>=50))&&!(bury&&def>=2)&&!take)sc-=200}
   if(L>=2){const own=exposed(me.pile);if(own&&own.rank!==r&&r!=='JK'){const ov=sum(own.cards);if(ov)sc+=ov*oppCan(i,own.rank,L)*.5*kn(i,'bury',1)}} // burying our open points
   if(L>=2&&t.g.length&&!useJ&&loneMate(i))sc+=kn(i,'pull',10); // a war on the ground gives the teammate on his last card a chance to cut
   return sc}
@@ -328,6 +348,7 @@ aiThrow=function(i){const p=S.players[i],L=lvOf(i);if(L===0)return _throw.apply(
   const keep=c=>{let s=pts(c)*3+(c.r==='JK'?200:0)+(h.filter(x=>x.r===c.r).length-1)*5;
     S.players.forEach((q,j)=>{if(q.team!==p.team)return;const e=exposed(q.pile);if(e&&e.rank===c.r)s+=(j===i?25:14)}); // a card that matches our open pile would invite a war on it
     if(S.ground.some(g=>g.r===c.r))s+=3;
+    if(L>=2&&kn(i,'mem',1)&&c.r!=='JK'){const rk=sleeperRisk(i,c.r);if(rk===0&&S.players.some((p,j)=>opp(i,j)&&lone(j)))s-=kn(i,'memT',8);else s+=rk*kn(i,'memU',2)}
     // going to sleep on one card (two in hand, one is thrown): keep a card that matches open piles still on top (a player's exposed
     // cards or a war that was not buried yet). Someone will go for them, and that war can be cut for five new cards. A card that
     // matches the ground is a poor one to sleep on: it can be eaten from the ground at any time.

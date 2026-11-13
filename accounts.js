@@ -85,7 +85,7 @@ function addPartners(st, r) { if (!r.won || !Array.isArray(r.partners)) return; 
   for (const k of r.partners.slice(0, 2)) { if (typeof k !== 'string' || !/^[0-9a-f]{12}$/.test(k)) continue; st.pw[k] = (st.pw[k] || 0) + 1 }
   const ks = Object.keys(st.pw); if (ks.length > 40) ks.sort((x, y) => st.pw[x] - st.pw[y]).slice(0, ks.length - 40).forEach(k => delete st.pw[k]) }
 const palBest = st => Math.max(0, ...Object.values(st.pw || {}))
-const TITLES = ['legend', 'w50', 's5', 'war100', 'g100', 'gold', 'war5', 'big200', 'comeback', 'pal10', 'dig', 'big', 'w10', 's3', 'war25', 'jk25', 'fire20', 'faz50', 'pile20', 'last10', 'faz10', 'fg10', 'tw5', 'lv10', 'g10', 'w1'];
+const TITLES = ['lv50', 'lv40', 'legend', 'w50', 's5', 'war100', 'g100', 'gold', 'war5', 'big200', 'comeback', 'pal10', 'dig', 'big', 'w10', 's3', 'war25', 'jk25', 'fire20', 'faz50', 'pile20', 'last10', 'faz10', 'fg10', 'tw5', 'lv10', 'g10', 'w1'];
 const titleOf = a => TITLES.find(k => a.st.ach && a.st.ach[k]) || '';
 const ACH = [['w1', s => s.wins >= 1, 50], ['w10', s => s.wins >= 10, 150], ['w50', s => s.wins >= 50, 500], ['g10', s => s.games >= 10, 100], ['g100', s => s.games >= 100, 600],
   ['war25', s => s.wars >= 25, 150], ['war100', s => s.wars >= 100, 400], ['big', s => s.best >= 100, 150], ['s3', s => s.bestStreak >= 3, 150], ['s5', s => s.bestStreak >= 5, 400],
@@ -94,6 +94,16 @@ const ACH = [['w1', s => s.wins >= 1, 50], ['w10', s => s.wins >= 10, 150], ['w5
   ['fg10', s => (s.fg || 0) >= 10, 200], ['gift20', s => (s.gifts || 0) >= 20, 100], ['pal10', s => palBest(s) >= 10, 300],
   ['faz10', s => (s.faz || 0) >= 10, 200], ['faz50', s => (s.faz || 0) >= 50, 500], ['last10', s => (s.lastw || 0) >= 10, 200], ['comeback', s => (s.comeback || 0) >= 1, 300], ['tw5', s => (s.tw || 0) >= 5, 150],
   ['lv10', s => levelOf(s.xp) >= 10, 200], ['gold', s => s.rp >= 800, 300], ['legend', s => s.rp >= 4300, 2000]].map(([id, ok, r]) => ({ id, ok, r }));
+// level rewards: 50 rupees every level, a cheap item at some levels, frames and titles nobody can buy at 30/40/50 (an item you already own pays half its price instead)
+const LVREW = { 3: ['ebmint'], 5: ['modern'], 8: ['efx-blue'], 10: ['jhead'], 12: ['ebblack'], 15: ['camp'], 20: ['hit-dice'], 25: ['sfx-glow'], 30: ['sea', 'fr-lv30'], 40: ['fr-lv40', 'title:lv40'], 50: ['fr-lv50', 'title:lv50'] }, LV_RUPEES = 50;
+function levelUp(a, xpBefore) { const out = [], now = levelOf(a.st.xp);
+  for (let L = levelOf(xpBefore) + 1; L <= now; L++) { let r = LV_RUPEES; const items = [];
+    for (const id of (LVREW[L] || [])) {
+      if (id.startsWith('title:')) { const t = id.slice(6); a.st.ach = a.st.ach || {}; if (!a.st.ach[t]) { a.st.ach[t] = Date.now(); items.push(id) } continue }
+      if (CAT.items[id] == null) continue;
+      if (a.w.owned.includes(id)) { const c = CAT.items[id] || 0; if (c < 100000) r += Math.round(c / 2) } else { a.w.owned.push(id); items.push(id) } }
+    a.w.tokens += r; out.push({ lv: L, r, items }) }
+  return out }
 function checkAch(a) { const got = []; for (const x of ACH) if (!a.st.ach[x.id] && x.ok(a.st)) { a.st.ach[x.id] = Date.now(); a.w.tokens += x.r; got.push({ id: x.id, r: x.r }) } return got }
 function daily(a) { const d = today(); if (a.w.day !== d) { a.w.day = d; const g = DAILY * (isVip(a) ? 2 : 1); a.w.tokens += g; return g } return 0 }
 // what the phone gets
@@ -115,7 +125,7 @@ async function sync(a, body) {
       if (vipT ? isVip(a) : (CAT.items[th] > 0 && a.w.owned.includes(th))) return Math.round(c * (1 - (CAT.off || 0)) / 10) * 10 }
     return c };
   want.sort((x, y) => (CAT.match && CAT.match[x] ? -1 : 0) - (CAT.match && CAT.match[y] ? -1 : 0));
-  for (const id of want) { const c = priceOf(id); if (tokens >= c) { tokens -= c; a.w.owned.push(id) } else notes.push('cant:' + id) }
+  for (const id of want) { const c = priceOf(id); if (tokens >= c) { tokens -= c; a.w.owned.push(id); try { require('./stats').bought(id) } catch (e) {} } else notes.push('cant:' + id) }
   // fire slams bought in packs, or used
   const sl = clamp(wal.slams, 0, 100000);
   if (sl > a.w.slams) { const add = sl - a.w.slams, pk = (CAT.slamPacks || []).find(([n]) => n === add), cost = pk ? pk[1] : Math.ceil(add * 8); if (tokens >= cost) { tokens -= cost; a.w.slams = sl } }
@@ -130,9 +140,9 @@ async function sync(a, body) {
 // a game against the computer (results come from the phone, so the reward is small and capped each day)
 async function offline(a, r) {
   const won = !!r.won, wars = clamp(r.wars, 0, 60), best = clamp(r.best, 0, 2000), tauf = clamp(r.tauf, 0, 60);
-  a.st.games++; if (won) a.st.wins++; a.st.wars += wars; a.st.best = Math.max(a.st.best, best); a.st.tauf += tauf; addStats(a.st, r, OFF_CAP); const pf = perf({ wars, best, bigwar: clamp(r.bigwar, 0, 20), tw: clamp(r.tw, 0, 10), faz: clamp(r.faz, 0, 15) }), bx = useBoost(a), xp = (10 + (won ? 25 : 0) + wars * 3 + Math.min(8, pf.total) * 2) * bx; a.st.xp += xp;
+  a.st.games++; if (won) a.st.wins++; a.st.wars += wars; a.st.best = Math.max(a.st.best, best); a.st.tauf += tauf; addStats(a.st, r, OFF_CAP); const pf = perf({ wars, best, bigwar: clamp(r.bigwar, 0, 20), tw: clamp(r.tw, 0, 10), faz: clamp(r.faz, 0, 15) }), bx = useBoost(a), xp = (10 + (won ? 25 : 0) + wars * 3 + Math.min(8, pf.total) * 2) * bx; const xp0 = a.st.xp; a.st.xp += xp; const lvup = levelUp(a, xp0);
   const d = today(); if (a.w.offDay !== d) { a.w.offDay = d; a.w.offGot = 0 } const give = Math.max(0, Math.min(won ? 15 : 5, OFFLINE_CAP - a.w.offGot)); a.w.offGot += give; a.w.tokens += give;
-  const got = checkAch(a); await store.put(a); return me(a, { offline: give, ach: got, xp, parts: pf.parts, boosted: bx > 1, won });
+  const got = checkAch(a); await store.put(a); return me(a, { offline: give, ach: got, xp, parts: pf.parts, boosted: bx > 1, won, lvup });
 }
 // online games: the server saw everything, so these are the real rewards and the real rank
 async function warWon(a, gain) { const n = Math.max(1, Math.round(gain / 20)); a.w.tokens += n; await store.put(a); return me(a, { war: n }) }
@@ -148,9 +158,9 @@ async function gameOver(a, r) {
     if (!won) st.shield = 0; if (rankIx(after) > rankIx(before)) st.shield = 1;
     st.rp = after; st.peak = Math.max(st.peak || 0, after);
   }
-  const xp = (Math.round((10 + (won ? 25 : 0) + (r.wars || 0) * 3) * mult) + pf.total * 3) * bx; st.xp += xp;
+  const xp = (Math.round((10 + (won ? 25 : 0) + (r.wars || 0) * 3) * mult) + pf.total * 3) * bx; const xp0 = st.xp; st.xp += xp; const lvup = levelUp(a, xp0);
   const prize = won ? 20 : 5; a.w.tokens += prize;
-  const got = checkAch(a); await store.put(a); return me(a, { game: { won, rp: st.rp - before, mult, prize, ranked: !!r.ranked, shielded, xp, parts: pf.parts, bonus: pf.total, base: won ? Math.round(20 * mult) : -12, boosted: bx > 1, streak: st.streak }, ach: got, season: sz });
+  const got = checkAch(a); await store.put(a); return me(a, { game: { won, rp: st.rp - before, mult, prize, ranked: !!r.ranked, shielded, xp, parts: pf.parts, bonus: pf.total, base: won ? Math.round(20 * mult) : -12, boosted: bx > 1, streak: st.streak }, ach: got, season: sz, lvup });
 }
 // how you played, not only whether you won: every part is small and capped so nobody can farm one thing
 function perf(r) { const parts = [], add = (k, n) => { if (n > 0) parts.push([k, n]) };
