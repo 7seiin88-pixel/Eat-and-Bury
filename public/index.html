@@ -11372,6 +11372,13 @@ html body .table .seat .seatgift svg{width:100%;height:100%}`;document.head.appe
 fetch('/api/ice',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d=>{if(d&&d.relay&&Array.isArray(d.ice)){d.ice.filter(x=>x.username!=null).forEach(x=>ICE.iceServers.unshift(x));window.__iceRelay=true}}).catch(()=>{});
 })();
 
+// online: cards drawn from the pile fly to the player with the card sound (the server now tells the phones), as in a game against the computer
+(function(){if(typeof playFx!=='function')return;const _pf=playFx;
+playFx=function(e){if(!e||e.t!=='draw')return _pf.apply(this,arguments);try{if(!S||(typeof calm!=='undefined'&&calm))return;
+  const st=document.querySelector('.drawrow .stack'),from=st?pt(st):null,to=e.s===0?pt(($('myrow')||document).querySelector('.hand')):seatPt(e.s);if(!from||!to)return;
+  for(let m=0;m<Math.min(e.n||1,5);m++)setTimeout(()=>{try{fly('<div class="cardback"></div>',from,to,{ms:360,r1:20,s1:.8});SND.deal()}catch(_){}},m*90*(typeof ANIM!=='undefined'?ANIM:1))}catch(_){}};
+})();
+
 </script><script>
 // ===================== Round 117: one "Rooms" page instead of two look-alike buttons =====================
 // Home: "Quick game online" stays; "Play with friends" + "Live rooms" become one "Rooms" button.
@@ -11472,7 +11479,7 @@ addEventListener('unhandledrejection',e=>{try{const r=e.reason;report('promise: 
 
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1113.0217';
+const EB_VERSION='v1113.0243';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
