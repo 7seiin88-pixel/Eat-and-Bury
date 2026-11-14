@@ -391,19 +391,44 @@ const _ow=openWindow;openWindow=function(){_ow.apply(this,arguments);try{if(!S||
     S.aiTimers.push(setTimeout(()=>{if(g===gen&&S.war&&S.war.leader!==j&&S.players[j].hand.includes(c))intercept(j,c)},d))})}catch(e){}};
 })();
 
+// ===================== Round 141: the computer thinks about the turn ("tauf") before cutting =====================
+// When a war is won, every player between the one who started it and the winner, who has no cards and was about to draw five, is skipped.
+// So the computer now asks: if I win this war, who gets skipped? An opponent waiting for five cards = a reason to cut (even a small war);
+// my teammate waiting for five cards = a reason NOT to cut (unless the war is worth it). And with two cards left, a cut that leaves it on its last card
+// ("على كرت") is a strong spot for the team, so it takes it.
+(function(){if(typeof aiWantsIntercept!=='function')return;
+const tm=(a,b)=>S.players[a]&&S.players[b]&&S.players[a].team===S.players[b].team;
+function skipped(W){const w=S.war,out={foe:0,mate:0};if(!w||W==null||W===w.orig||!S.draw.length)return out;let j=nextIdx(w.orig),g=0;
+  while(j!==W&&g++<S.players.length){const p=S.players[j];if(p&&p.hand.length===0)out[tm(j,W)?'mate':'foe']++;j=nextIdx(j)}return out}
+const base=aiWantsIntercept;
+aiWantsIntercept=function(j){let c=base.apply(this,arguments);try{const w=S.war;if(!w)return c;const p=S.players[j],h=p.hand;
+  const nat=h.find(x=>x.r===w.rank&&x.r!=='JK'),jk=h.find(x=>x.r==='JK');if(!nat&&!jk)return c;
+  const value=sum([...w.targets,...w.pot]),W0=w.leader;
+  // who loses five cards now (if nobody cuts again), and who would if I win: counted from my team's side
+  const now=skipped(W0),mine=skipped(j);
+  const foesNow=tm(W0,j)?now.foe:now.mate,matesNow=tm(W0,j)?now.mate:now.foe; // "foe/mate" of the current leader, turned to my side
+  const gain=(mine.foe-foesNow)-(mine.mate-matesNow); // + : more opponents skipped / fewer of my teammates skipped
+  const lead=tm(W0,j);
+  if(lead)return c; // never fight my own side for this
+  if(gain>0&&!c){if(nat)return nat;if(jk&&(value>=10||gain>=2))return jk}
+  if(gain<0&&c){const worth=value>=25*(-gain);if(!worth&&!(h.length===1))return null}
+  if(!c&&nat&&h.length===2&&value>=10&&gain>=0)return nat; // leaves me on my last card: the next war won brings five new cards
+}catch(e){}return c};
+})();
+
 // ===================== Round 91: more achievement stats, counted by the rules engine itself (the same code runs on the phone and on the server) =====================
 (function(){
 const ST=i=>{if(typeof S==='undefined'||!S||!S.players)return null;S.stats=S.stats||S.players.map(()=>({wars:0,best:0}));return S.stats[i]||(S.stats[i]={wars:0,best:0})};
 // cuts with a joker
-const _int=intercept;intercept=function(j,card){const ok=!!(S&&S.war&&card);try{if(ok){const w=S.war,me=S.players[j];if(me&&S.players[w.leader]&&S.players[w.leader].team!==me.team&&(w.victims||[]).some(v=>v!==j&&S.players[v]&&S.players[v].team===me.team)){const s=ST(j);if(s)s.faz=(s.faz||0)+1}}}catch(e){}const r=_int.apply(this,arguments);try{if(ok&&card.r==='JK'){const s=ST(j);if(s)s.jk=(s.jk||0)+1}}catch(e){}return r};
+const _int=intercept;intercept=function(j,card){const ok=!!(S&&S.war&&card);try{if(ok){const w=S.war,me=S.players[j];(w.cutters=w.cutters||[]).push(j);if(me&&S.players[w.leader]&&S.players[w.leader].team!==me.team&&(w.victims||[]).some(v=>v!==j&&S.players[v]&&S.players[v].team===me.team)){const s=ST(j);if(s){s.faz=(s.faz||0)+1;/* a big pile saved (4+ cards or 50+ points): counts extra */const big=(w.fromPiles||[]).some(x=>x.j!==j&&S.players[x.j]&&S.players[x.j].team===me.team&&((x.cards||[]).length>=4||sum(x.cards||[])>=50));if(big)s.fazb=(s.fazb||0)+1}}}}catch(e){}const r=_int.apply(this,arguments);try{if(ok&&card.r==='JK'){const s=ST(j);if(s)s.jk=(s.jk||0)+1}}catch(e){}return r};
 // every war: biggest war won (cuts), war won on your last card, opponents' piles taken, a war-won pile dug out, how far behind your team has been
 const _res=resolveWar;resolveWar=function(){const w=S&&S.war;let pre=null;
   try{if(w){const W=w.leader,p=S.players[W];pre={W,lone:W!==w.orig&&p.hand.length===0,cuts:Math.max(0,w.pot.length-1),
-    tsum:(S.stats||[]).reduce((n,x)=>n+((x&&x.tauf)||0),0),opp:(w.fromPiles||[]).filter(x=>S.players[x.j]&&S.players[x.j].team!==p.team),cards:[...w.targets,...w.pot]}}}catch(e){pre=null}
+    tsum:(S.stats||[]).reduce((n,x)=>n+((x&&x.tauf)||0),0),cut:(w.cutters||[]).slice(),opp:(w.fromPiles||[]).filter(x=>S.players[x.j]&&S.players[x.j].team!==p.team),cards:[...w.targets,...w.pot]}}}catch(e){pre=null}
   const r=_res.apply(this,arguments);
   try{if(pre){const s=ST(pre.W);if(s){s.bigwar=Math.max(s.bigwar||0,pre.cuts);if(pre.lone)s.lastw=(s.lastw||0)+1;
       if(pre.opp.length){s.pile=(s.pile||0)+pre.opp.length;if(pre.opp.some(x=>(x.cards||[]).some(c=>c&&c.wl)))s.dig=(s.dig||0)+1}}
-    {const t2=(S.stats||[]).reduce((n,x)=>n+((x&&x.tauf)||0),0);if(t2>pre.tsum){const s=ST(pre.W);if(s)s.tw=(s.tw||0)+(t2-pre.tsum)}} // you jumped the turn past someone waiting to draw 5
+    {const t2=(S.stats||[]).reduce((n,x)=>n+((x&&x.tauf)||0),0);if(t2>pre.tsum){const s=ST(pre.W);if(s)s.tw=(s.tw||0)+(t2-pre.tsum);/* team tauf: a teammate answered in the same war (cut for you or you for him) and together you jumped the turn past the player waiting to draw five: both get it */const mates=[...new Set(pre.cut)].filter(t=>t!==pre.W&&S.players[t]&&S.players[t].team===S.players[pre.W].team);if(mates.length){if(s)s.ttw=(s.ttw||0)+1;mates.forEach(t=>{const m=ST(t);if(m){m.tw=(m.tw||0)+(t2-pre.tsum);m.ttw=(m.ttw||0)+1}})}}} // you jumped the turn past someone waiting to draw 5
     if(pre.cuts>=1)pre.cards.forEach(c=>{if(c)c.wl=1}); // this loot was fought over: digging it out later counts
     const ts=S.teams.map((t,k)=>teamScore(k));S.players.forEach((pl,i)=>{const others=ts.filter((_,k)=>k!==pl.team);if(!others.length)return;const st=ST(i);if(st)st.low=Math.min(st.low||0,ts[pl.team]-Math.max(...others))})}}catch(e){}
   return r};

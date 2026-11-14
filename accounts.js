@@ -78,9 +78,9 @@ function season(a) { const m = new Date().toISOString().slice(0, 7), st = a.st;
 // a title under your name, from your best badge
 
 // Round 91: more achievement stats
-const NEWST = ['fire', 'jk', 'pile', 'dig', 'gifts', 'lastw', 'comeback', 'tw', 'faz'];
+const NEWST = ['fire', 'jk', 'pile', 'dig', 'gifts', 'lastw', 'comeback', 'tw', 'faz', 'ttw', 'fazb'];
 function addStats(st, r, cap) { for (const k of NEWST) st[k] = (st[k] || 0) + clamp(r[k], 0, cap[k] || 60); st.bigwar = Math.max(st.bigwar || 0, clamp(r.bigwar, 0, 20)) }
-const OFF_CAP = { fire: 40, jk: 30, pile: 30, dig: 5, gifts: 20, lastw: 15, comeback: 1, tw: 10, faz: 15 }, ON_CAP = { fire: 200, jk: 60, pile: 60, dig: 20, gifts: 60, lastw: 30, comeback: 1, tw: 30, faz: 30 };
+const OFF_CAP = { fire: 40, jk: 30, pile: 30, dig: 5, gifts: 20, lastw: 15, comeback: 1, tw: 10, faz: 15, ttw: 5, fazb: 8 }, ON_CAP = { fire: 200, jk: 60, pile: 60, dig: 20, gifts: 60, lastw: 30, comeback: 1, tw: 30, faz: 30, ttw: 15, fazb: 20 };
 function addPartners(st, r) { if (!r.won || !Array.isArray(r.partners)) return; st.pw = st.pw && typeof st.pw === 'object' ? st.pw : {};
   for (const k of r.partners.slice(0, 2)) { if (typeof k !== 'string' || !/^[0-9a-f]{12}$/.test(k)) continue; st.pw[k] = (st.pw[k] || 0) + 1 }
   const ks = Object.keys(st.pw); if (ks.length > 40) ks.sort((x, y) => st.pw[x] - st.pw[y]).slice(0, ks.length - 40).forEach(k => delete st.pw[k]) }
@@ -92,7 +92,7 @@ const ACH = [['w1', s => s.wins >= 1, 50], ['w10', s => s.wins >= 10, 150], ['w5
   ['fire20', s => (s.fire || 0) >= 20, 150], ['war5', s => (s.bigwar || 0) >= 5, 300], ['jk25', s => (s.jk || 0) >= 25, 200],
   ['pile20', s => (s.pile || 0) >= 20, 150], ['big200', s => s.best >= 200, 300], ['dig', s => (s.dig || 0) >= 1, 200],
   ['fg10', s => (s.fg || 0) >= 10, 200], ['gift20', s => (s.gifts || 0) >= 20, 100], ['pal10', s => palBest(s) >= 10, 300],
-  ['faz10', s => (s.faz || 0) >= 10, 200], ['faz50', s => (s.faz || 0) >= 50, 500], ['last10', s => (s.lastw || 0) >= 10, 200], ['comeback', s => (s.comeback || 0) >= 1, 300], ['tw5', s => (s.tw || 0) >= 5, 150],
+  ['faz10', s => (s.faz || 0) >= 10, 200], ['faz50', s => (s.faz || 0) >= 50, 500], ['last10', s => (s.lastw || 0) >= 10, 200], ['comeback', s => (s.comeback || 0) >= 1, 300], ['tw5', s => (s.tw || 0) >= 5, 150], ['ttw1', s => (s.ttw || 0) >= 1, 200], ['ttw5', s => (s.ttw || 0) >= 5, 500], ['fazb10', s => (s.fazb || 0) >= 10, 300],
   ['lv10', s => levelOf(s.xp) >= 10, 200], ['gold', s => s.rp >= 800, 300], ['legend', s => s.rp >= 4300, 2000]].map(([id, ok, r]) => ({ id, ok, r }));
 // level rewards: 50 rupees every level, a cheap item at some levels, frames and titles nobody can buy at 30/40/50 (an item you already own pays half its price instead)
 const LVREW = { 3: ['ebmint'], 5: ['modern'], 8: ['efx-blue'], 10: ['jhead'], 12: ['ebblack'], 15: ['camp'], 20: ['hit-dice'], 25: ['sfx-glow'], 30: ['sea', 'fr-lv30'], 40: ['fr-lv40', 'title:lv40'], 50: ['fr-lv50', 'title:lv50'] }, LV_RUPEES = 50;
@@ -140,16 +140,29 @@ async function sync(a, body) {
 // a game against the computer (results come from the phone, so the reward is small and capped each day)
 async function offline(a, r) {
   const won = !!r.won, wars = clamp(r.wars, 0, 60), best = clamp(r.best, 0, 2000), tauf = clamp(r.tauf, 0, 60);
-  a.st.games++; if (won) a.st.wins++; a.st.wars += wars; a.st.best = Math.max(a.st.best, best); a.st.tauf += tauf; addStats(a.st, r, OFF_CAP); const pf = perf({ wars, best, bigwar: clamp(r.bigwar, 0, 20), tw: clamp(r.tw, 0, 10), faz: clamp(r.faz, 0, 15) }), bx = useBoost(a), xp = (10 + (won ? 25 : 0) + wars * 3 + Math.min(8, pf.total) * 2) * bx; const xp0 = a.st.xp; a.st.xp += xp; const lvup = levelUp(a, xp0);
+  a.st.games++; if (won) a.st.wins++; a.st.wars += wars; a.st.best = Math.max(a.st.best, best); a.st.tauf += tauf; addStats(a.st, r, OFF_CAP); const pf = perf({ wars, best, bigwar: clamp(r.bigwar, 0, 20), tw: clamp(r.tw, 0, 10), faz: clamp(r.faz, 0, 15), ttw: clamp(r.ttw, 0, 5), fazb: clamp(r.fazb, 0, 8) }), bx = useBoost(a), xp = (10 + (won ? 25 : 0) + wars * 3 + Math.min(8, pf.total) * 2) * bx; const xp0 = a.st.xp; a.st.xp += xp; const lvup = levelUp(a, xp0);
   const d = today(); if (a.w.offDay !== d) { a.w.offDay = d; a.w.offGot = 0 } const give = Math.max(0, Math.min(won ? 15 : 5, OFFLINE_CAP - a.w.offGot)); a.w.offGot += give; a.w.tokens += give;
-  const got = checkAch(a); await store.put(a); return me(a, { offline: give, ach: got, xp, parts: pf.parts, boosted: bx > 1, won, lvup });
+  // rank points against the computer too (round 135): smaller than online and capped each day, but a win, a streak and this game's badges all multiply it
+  season(a); const st = a.st, before = st.rp || 0; let mult = 1;
+  if (won) { st.streak = (st.streak || 0) + 1; st.bestStreak = Math.max(st.bestStreak || 0, st.streak); mult = 1 + Math.min(st.streak - 1, 6) * .25 } else st.streak = 0;
+  if (a.w.offRpDay !== d) { a.w.offRpDay = d; a.w.offRp = 0 }
+  const base = won ? Math.round(10 * mult) : -4 + Math.min(4, Math.floor(pf.total / 3));
+  let dRp = won ? Math.round((base + pf.total) * bx) : base;
+  if (dRp > 0) { dRp = Math.max(0, Math.min(dRp, OFF_RP_CAP - (a.w.offRp || 0))); a.w.offRp = (a.w.offRp || 0) + dRp }
+  let after = Math.max(0, before + dRp), shielded = false;
+  if (dRp < 0 && st.shield && rankIx(after) < rankIx(before)) { after = RANK_MIN[rankIx(before)]; shielded = true }
+  if (dRp < 0) st.shield = 0; if (rankIx(after) > rankIx(before)) st.shield = 1;
+  st.rp = after; st.peak = Math.max(st.peak || 0, after);
+  const got = checkAch(a); await store.put(a);
+  return me(a, { offline: give, ach: got, xp, parts: pf.parts, boosted: bx > 1, won, lvup, game: { won, rp: after - before, mult, prize: give, ranked: true, vsBots: true, shielded, xp, parts: pf.parts, bonus: pf.total, base, boosted: bx > 1, streak: st.streak, capped: (a.w.offRp || 0) >= OFF_RP_CAP } });
 }
+const OFF_RP_CAP = 160; // most rank points a day from games against the computer
 // online games: the server saw everything, so these are the real rewards and the real rank
 async function warWon(a, gain) { const n = Math.max(1, Math.round(gain / 20)); a.w.tokens += n; await store.put(a); return me(a, { war: n }) }
 async function gameOver(a, r) {
   const sz = season(a); const won = !!r.won, st = a.st, before = st.rp; let mult = 1, d = 0; const bx = useBoost(a), pf = perf(r);
   st.games++; st.wars += r.wars || 0; st.best = Math.max(st.best, r.best || 0); st.tauf += r.tauf || 0; addStats(st, r, ON_CAP); if (!r.ranked) st.fg = (st.fg || 0) + 1; addPartners(st, { ...r, won });
-  if (won) { st.wins++; st.streak++; st.bestStreak = Math.max(st.bestStreak, st.streak); mult = 1 + Math.min(st.streak - 1, 4) * .25 } else st.streak = 0;
+  if (won) { st.wins++; st.streak++; st.bestStreak = Math.max(st.bestStreak, st.streak); mult = 1 + Math.min(st.streak - 1, 6) * .25 /* up to x2.5 on a 7-win streak */ } else st.streak = 0;
   let shielded = false;
   if (r.ranked) { // rank points move only in ranked games (the quick game), not in rooms with friends
     d = won ? (Math.round(20 * mult) + pf.total) * bx : -12 + Math.min(6, Math.floor(pf.total / 2)); // a win: 20 x streak + how you played; a loss costs less if you fought well
@@ -167,9 +180,13 @@ function perf(r) { const parts = [], add = (k, n) => { if (n > 0) parts.push([k,
   add('wars', Math.min(5, Math.floor((r.wars || 0) / 2)));                                         // 1 for every two wars you won
   const b = r.best || 0; add('loot', b >= 200 ? 5 : b >= 150 ? 4 : b >= 100 ? 3 : b >= 50 ? 2 : 0); // your biggest loot in one war
   add('long', (r.bigwar || 0) >= 5 ? 2 : 0);                                                       // won a war with five cuts or more
-  add('tw', Math.min(3, r.tw || 0));                                                               // skipped players who were waiting to draw
+  add('tw', Math.min(6, (r.tw || 0) * 2));                                                         // skipped players who were waiting to draw five (a tactic: counts double)
+  add('ttw', Math.min(4, (r.ttw || 0) * 2));                                                       // ...together with your teammate, who answered in the same war: both get it
   add('faz', Math.min(3, r.faz || 0));                                                             // came to a teammate's rescue
-  let total = parts.reduce((n, x) => n + x[1], 0); if (total > 12) total = 12; return { parts, total } }
+  add('fazb', Math.min(4, (r.fazb || 0) * 2));                                                     // ...and the pile you saved was a big one
+  const badges = [(r.tw || 0) > 0 || (r.ttw || 0) > 0, (r.faz || 0) > 0, (r.bigwar || 0) >= 5, (r.best || 0) >= 100].filter(Boolean).length;
+  add('badges', Math.min(3, badges));                                                              // each of this game's badges adds a point
+  let total = parts.reduce((n, x) => n + x[1], 0); if (total > 20) total = 20; return { parts, total } }
 // points booster: bought with rupees, doubles the XP and the rank points you win for the next few games
 const BOOST_COST = 400, BOOST_GAMES = 5;
 function useBoost(a) { if ((a.w.boost || 0) > 0) { a.w.boost--; return 2 } return 1 }
