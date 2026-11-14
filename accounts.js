@@ -5,7 +5,7 @@
 const crypto = require('crypto'), fs = require('fs'), path = require('path');
 const CAT = JSON.parse(fs.readFileSync(path.join(__dirname, 'catalog.json'), 'utf8'));
 const TEST_MODE = process.env.TEST_MODE !== 'off'; // test phase: everyone starts with 50,000 rupees
-const START_RUPEES = TEST_MODE ? 50000 : 500;
+const START_RUPEES = TEST_MODE ? 100000 : 500;
 const VIP_DAYS = 30, VIP_TEST_PRICE = 5000; // VIP: $4.99 a month in the App Store; while testing it is bought with rupees
 const isVip = a => (a.vip || 0) > Date.now();
 const DAILY = 50, OFFLINE_CAP = 60; // daily gift; rupees a day from games against the computer
@@ -206,7 +206,7 @@ async function http(req, res, url) {
       if (!process.env.ADMIN_KEY || req.headers['x-admin-key'] !== process.env.ADMIN_KEY) return send(403, { err: 'no' });
       const t = await store.byId(String(body.id || '')); if (!t) return send(404, { err: 'nf' }); t.verified = body.on !== false; await store.put(t); return send(200, { ok: true, verified: t.verified }) }
     const a = await load(tok); if (!a) return send(401, { err: 'auth' });
-    if (url === '/api/me') { const sz = season(a); const g = daily(a); const got = checkAch(a); if (g || got.length || sz) await store.put(a); return send(200, me(a, g || got.length || sz ? { daily: g, ach: got, season: sz } : null)) }
+    if (url === '/api/me') { const sz = season(a); const g = daily(a); const got = checkAch(a); let tt = false; if (TEST_MODE && !a.w.t100) { a.w.t100 = 1; tt = true; if (a.w.tokens < 100000) a.w.tokens = 100000 } /* test phase: everyone is topped up to 100,000 once */ if (g || got.length || sz || tt) await store.put(a); return send(200, me(a, g || got.length || sz ? { daily: g, ach: got, season: sz } : null)) }
     if (url === '/api/top') { const list = await store.top(50); const mine = await store.above(a.st.rp || 0);
       return send(200, { me: { pos: mine + 1, rp: a.st.rp || 0 }, list: list.map((x, k) => ({ pos: k + 1, id: x.id === a.id ? 'me' : '', name: x.prof.name || 'لاعب', av: /^p:/.test(x.prof.av || '') ? x.prof.av : (x.prof.av && x.prof.av.length < 40000 ? x.prof.av : 'p:0'), flag: x.prof.flag, rp: x.st.rp || 0, vip: isVip(x), verified: !!x.verified, title: titleOf(x) })) }) }
 
