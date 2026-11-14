@@ -2390,7 +2390,7 @@ SAMPLES.slam2='SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//tgw
 
 // ---------- Test rupees (for trying the paid things; remove before launch) ----------
 const TEST_TOKENS=true;
-if(TEST_TOKENS&&WAL.tokens<20000){WAL.tokens=50000;WAL.slams=Math.max(WAL.slams||0,50);saveWal();setTimeout(()=>{try{slamIcon();toast(L('Test mode: 50,000 rupees','وضع التجربة: عندك ٥٠٬٠٠٠ روبية'))}catch(e){}},800)}
+if(TEST_TOKENS&&!WAL.t100){WAL.t100=1;if(WAL.tokens<100000)WAL.tokens=100000;WAL.slams=Math.max(WAL.slams||0,50);saveWal();setTimeout(()=>{try{slamIcon();toast(L('Test mode: 100,000 rupees','وضع التجربة: عندك ١٠٠٬٠٠٠ روبية'))}catch(e){}},800)}
 const _setupT=renderSetup;renderSetup=function(){_setupT();if(!TEST_TOKENS||$('testTok'))return;const row=document.querySelector('#setupForm .setrow');if(!row)return;
   const b=document.createElement('button');b.type='button';b.id='testTok';b.className='testtok';b.innerHTML=`<i class="cn"></i> ${L('Test mode: +5000 rupees','وضع التجربة: +٥٠٠٠ روبية')}`;row.after(b)};
 document.addEventListener('click',e=>{if(!e.target.closest('#testTok'))return;WAL.tokens+=5000;WAL.slams=(WAL.slams||0)+20;saveWal();if(typeof slamIcon==='function')slamIcon();
@@ -13417,8 +13417,8 @@ if(typeof sendGift==='function')sendGift=(function(p){return function(from,to,id
 let lastCh=0;function chime(){try{if(!SND.ok())return;const now=performance.now();if(now-lastCh<600)return;lastCh=now;const c=SND.ctx,t=c.currentTime+.01,o=(()=>{try{return SND.out()}catch(e){return c.destination}})();
   [[1318.5,0],[1760,.11]].forEach(([f,d])=>{const a=c.createOscillator(),b=c.createOscillator(),g=c.createGain();a.type='sine';b.type='sine';a.frequency.value=f;b.frequency.value=f*2;g.gain.setValueAtTime(0,t+d);g.gain.linearRampToValueAtTime(.09,t+d+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d+.7);a.connect(g);b.connect(g);g.connect(o);a.start(t+d);b.start(t+d);a.stop(t+d+.75);b.stop(t+d+.75)})}catch(e){}}
 const isPhrase=t=>{try{return EMOTES.some(e=>e[0]===t||e[1]===t)}catch(e){return false}};
-if(typeof say==='function')say=(function(p){return function(i,t){const r=p.apply(this,arguments);try{if(i!==0&&isPhrase(t)&&!(typeof isMuted==='function'&&isMuted(i)))chime()}catch(e){}return r}})(say);
-if(typeof chatBubble==='function')chatBubble=(function(p){return function(i){const r=p.apply(this,arguments);try{if(i!==0&&!(typeof isMuted==='function'&&isMuted(i)))chime()}catch(e){}return r}})(chatBubble);
+if(typeof say==='function')say=(function(p){return function(i,t){const r=p.apply(this,arguments);try{if(i===0&&isPhrase(t))chime()}catch(e){}return r}})(say); // only the one who sends it hears the chime
+if(typeof chatBubble==='function')chatBubble=(function(p){return function(i){const r=p.apply(this,arguments);try{if(i===0)chime()}catch(e){}return r}})(chatBubble);
 
 // ---------- 5) the princess set and stronger girls' fire effects ----------
 const STAR=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M10 1l2.6 5.6 6.1.7-4.5 4.2 1.2 6L10 14.6 4.6 17.5l1.2-6L1.3 7.3l6.1-.7z" fill="#fff6c8" stroke="#ffb3d1" stroke-width="1"/></svg>`;
@@ -13623,8 +13623,39 @@ if(typeof FXS!=='undefined'&&typeof FXE!=='undefined'){
 })();
 
 </script><script>
+// ===================== Round 143: one tap on the cut button is always a plain cut (the fire could stay armed from an earlier swipe or double tap);
+//                      the joker mark is the star, and from six jokers up it becomes a golden hat with a big number =====================
+(function(){
+// ---------- 1) the fire only stays armed when YOU armed it with the fire button. Anything else (a fast swipe that did not play, a double tap whose cut was too late)
+//               is dropped: before a tap on the cut button, when the war ends, and after a few seconds ----------
+let explicit=false,autoSince=0;
+const armed=()=>{try{return !!slamArmed}catch(e){return false}};
+function drop(){try{if(!armed()||explicit)return;slamArmed=false;try{useSlam()}catch(e){}try{slamIcon()}catch(e){}}catch(e){}}
+const onBtn=e=>{try{if(e.target.closest&&e.target.closest('#slamBtn'))[30,120,300,600].forEach(d=>setTimeout(()=>{explicit=armed()},d))}catch(_){}};
+['pointerdown','touchstart','mousedown','click'].forEach(t=>window.addEventListener(t,onBtn,{capture:true,passive:true}));
+if(typeof useSlam==='function')useSlam=(function(p){return function(){const was=armed();const r=p.apply(this,arguments);if(was&&!armed())explicit=false;return r}})(useSlam);
+// a tap that starts on the cut button: the fire from an old gesture must not ride on it (a double tap arms its own fire afterwards)
+window.addEventListener('pointerdown',e=>{try{if(e.target.closest&&e.target.closest('[data-int]'))drop()}catch(_){}} ,true);
+window.addEventListener('touchstart',e=>{try{if(e.target.closest&&e.target.closest('[data-int]'))drop()}catch(_){}} ,{capture:true,passive:true});
+let hadWar=false;setInterval(()=>{try{const w=!!(typeof S!=='undefined'&&S&&S.war);if(hadWar&&!w)drop();hadWar=w;
+  if(armed()&&!explicit){if(!autoSince)autoSince=performance.now();else if(performance.now()-autoSince>4000&&!document.querySelector('.dragghost')){drop();autoSince=0}}else autoSince=0}catch(e){}},300);
+
+// ---------- 2) the joker mark: the star up to five jokers; six and more: a golden hat with a big number ----------
+const GOLD=n=>`<svg viewBox="0 0 40 40"><defs><linearGradient id="gh143" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff6c8"/><stop offset=".45" stop-color="#f2b51d"/><stop offset="1" stop-color="#8a5f14"/></linearGradient><radialGradient id="gb143" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#ffe27a"/><stop offset="1" stop-color="#c9952e"/></radialGradient></defs>
+ <g stroke="#5a3d08" stroke-width="1.1" stroke-linejoin="round"><path d="M8 26C4 21 3 14 5 9c3 5 7 8 11 9l1 8z" fill="url(#gh143)"/><path d="M16 18c-1-6 1-12 4-16 3 4 5 10 4 16l-1 8h-6z" fill="url(#gh143)"/><path d="M24 18c4-1 8-4 11-9 2 5 1 12-3 17h-9z" fill="url(#gh143)"/>
+ <circle cx="5" cy="9" r="2.8" fill="url(#gb143)"/><circle cx="20" cy="2.8" r="2.8" fill="url(#gb143)"/><circle cx="35" cy="9" r="2.8" fill="url(#gb143)"/>
+ <rect x="4" y="22" width="32" height="16" rx="8" fill="url(#gb143)"/></g><text x="20" y="35" text-anchor="middle" font-family="Tahoma" font-weight="900" font-size="${n>9?13:15}" fill="#5a0d18">${n}</text></svg>`;
+try{if(window.JKMARKS)window.JKMARKS.gold=GOLD}catch(e){}
+const prev=window.__jkTag;
+window.__jkTag=n=>{try{const M=window.JKMARKS||{};if(n>5)return `<span class="jk135 jm-gold big143" title="جوكر">${GOLD(n)}</span>`;let k='star';try{k=localStorage.getItem('eb-jkmark')||'star'}catch(e){}if(!M[k])k='star';return `<span class="jk135 jm-${k}" title="جوكر">${M[k](n)}</span>`}catch(e){return prev?prev(n):''}};
+const st=document.createElement('style');st.textContent=`html body .jk135.jm-star svg{animation:none!important}html body .jk135.jm-star .spin{animation:jmSpin 6s linear infinite!important}
+html body .card .jk135.big143{width:38px!important;height:38px!important;margin-top:-19px!important}#war .wt .jk135.big143{width:30px;height:30px}
+html body .jk135.big143{filter:drop-shadow(0 0 4px rgba(255,200,60,.9)) drop-shadow(0 2px 3px rgba(0,0,0,.7))!important}`;document.head.appendChild(st);
+})();
+
+</script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1114.2034';
+const EB_VERSION='v1115.0152';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
