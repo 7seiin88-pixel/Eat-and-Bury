@@ -6479,7 +6479,7 @@ useSlam=function(){if(!slamArmed)return;slamArmed=false;slamIcon();
   if((WAL.tokens||0)<SLAM_COST)return;WAL.tokens-=SLAM_COST;saveWal();slamIcon();fireSlam(0)};
 window.addEventListener('click',e=>{const t=e.target.closest('#slamBtn');if(!t)return;e.stopImmediatePropagation();e.preventDefault();if(!S)return;
   if(!slamArmed&&(WAL.tokens||0)<SLAM_COST){toast(L(`The fire button needs ${SLAM_COST} rupees`,`زر النار يحتاج ${SLAM_COST} روبية`));return}
-  slamArmed=!slamArmed;slamIcon();
+  slamArmed=!slamArmed;if(slamArmed)window.__armWhy='button';slamIcon();
   if(slamArmed){toast(L(`Fire ready (${SLAM_COST} rupees): play your card`,`النار جاهزة (${SLAM_COST} روبية): العب ورقتك`));try{if(SND.ok()){const c=SND.ctx.currentTime;SND.hit(c,{f:600,f2:2400,q:1,gain:.3,attack:.08,decay:.2});SND.hit(c,{type:'lowpass',f:900,gain:.5,attack:.05,decay:.45})}}catch(err){}}},true);
 setInterval(()=>{const b=$('slamBtn');if(b)b.classList.toggle('poor',(WAL.tokens||0)<SLAM_COST)},1500);
 slamIcon();
@@ -7848,19 +7848,20 @@ runEfx=(function(prev){return function(id,box,at,p){const r=prev.apply(this,argu
 </script><script>
 // ===================== Round 78: flick to fire — swipe a card up FAST and it is played with fire; a calm drag or a double tap stays a normal play =====================
 (function(){
-const FAST=1.15;            // px per ms, measured over the last ~80 ms of the swipe
+const FAST=2.0;            // px per ms. Round 144: a normal quick throw is about 1 to 1.8, so only a real hard flick counts; it must also travel far enough and last long enough to be measured (a tap that jitters is not a flick)
+const TRAVEL=110,MINDT=35; // px the finger must have gone up from where it started; ms the speed is measured over
 let tr=null,auto=false;
 const cost=()=>window.SLAM_COST||50;
 const canPlay=()=>S&&((S.turn===0&&(S.phase==='choose'||S.phase==='throw'))||S.war);
 function setFire(on){if(on===auto)return;auto=on;slamArmed=on;try{slamIcon()}catch(e){}const g=document.querySelector('.dragghost');if(g)g.classList.toggle('onfire',on)}
 document.addEventListener('pointerdown',e=>{const el=e.target.closest('#myrow [data-card]');if(!el||!canPlay())return;
-  tr={pid:e.pointerId,pts:[{x:e.clientX,y:e.clientY,t:performance.now()}],pre:!!slamArmed,poorTold:false}},{capture:true,passive:true});
+  tr={pid:e.pointerId,y0:e.clientY,pts:[{x:e.clientX,y:e.clientY,t:performance.now()}],pre:!!slamArmed,poorTold:false}},{capture:true,passive:true});
 window.addEventListener('pointermove',e=>{if(!tr||e.pointerId!==tr.pid)return;const now=performance.now();tr.pts.push({x:e.clientX,y:e.clientY,t:now});
   while(tr.pts.length>2&&now-tr.pts[0].t>80)tr.pts.shift();
   if(tr.pre)return; // the player already armed fire with the button
-  const a=tr.pts[0],b=tr.pts[tr.pts.length-1],dt=Math.max(1,b.t-a.t),vy=(a.y-b.y)/dt;
+  const a=tr.pts[0],b=tr.pts[tr.pts.length-1],dt=b.t-a.t,vy=dt>=MINDT?(a.y-b.y)/dt:0;
   const hand=$('myrow');if(!hand)return;const above=e.clientY<hand.getBoundingClientRect().top+10;
-  const fast=vy>FAST&&above;
+  const fast=vy>FAST&&above&&(tr.y0-e.clientY)>=TRAVEL;if(fast)window.__armWhy='flick '+vy.toFixed(1)+'px/ms '+Math.round(tr.y0-e.clientY)+'px';
   if(fast&&!auto){if((WAL.tokens||0)<cost()&&!(typeof NET!=='undefined'&&NET.on)){if(!tr.poorTold){tr.poorTold=true;toast(L(`Fire needs ${cost()} rupees`,`النار تحتاج ${cost()} روبية`))}return}setFire(true)}
   else if(!fast&&auto&&vy<.25)setFire(false)},{capture:true,passive:true});
 // after the drag code has played (or not played) the card: drop the fire if it was not used
@@ -7877,7 +7878,7 @@ intercept=(function(prev){return function(){used=performance.now();return prev.a
 // useSlam clears slamArmed when the card is played; keep our flag in step
 useSlam=(function(prev){return function(){const r=prev.apply(this,arguments);auto=false;return r}})(useSlam);
 // one-time tip the first time a war starts
-let told=false;try{told=localStorage.getItem('flickTip')==='1'}catch(e){}
+let told=true;
 render=(function(prev){return function(){const r=prev.apply(this,arguments);if(!told&&S&&S.war&&!S.players[0].remote){told=true;try{localStorage.setItem('flickTip','1')}catch(e){}
   setTimeout(()=>toast(L('Tip: flick a card up fast to play it with fire 🔥','نصيحة: اسحب الورقة لفوق بسرعة وتنلعب بالنار 🔥')),400)}return r}})(render);
 const st=document.createElement('style');st.textContent=`
@@ -7903,11 +7904,11 @@ function feel(btn){const r=btn.getBoundingClientRect();const g=document.createEl
   btn.classList.add('qdbl');try{navigator.vibrate&&navigator.vibrate([25,35,70])}catch(e){}
   try{if(SND.ok()){const t=SND.ctx.currentTime;SND.hit(t,{f:500,f2:2600,q:1,gain:.35,attack:.04,decay:.18});SND.hit(t+.05,{type:'lowpass',f:700,gain:.6,attack:.02,decay:.35})}}catch(e){}}
 function cut(id,fire,btn){if(!S||!S.war)return;const c=S.players[0].hand.find(x=>x.id===id);if(!c||!canIntercept(0).some(x=>x.id===c.id))return;
-  if(fire&&!slamArmed){if(!online()&&(WAL.tokens||0)<cost()){toast(L(`Fire needs ${cost()} rupees`,`النار تحتاج ${cost()} روبية`));fire=false}else{slamArmed=true;try{slamIcon()}catch(e){}}}
+  if(fire&&!slamArmed){if(!online()&&(WAL.tokens||0)<cost()){toast(L(`Fire needs ${cost()} rupees`,`النار تحتاج ${cost()} روبية`));fire=false}else{slamArmed=true;window.__armWhy='2taps';try{slamIcon()}catch(e){}}}
   intercept(0,c)}
 window.addEventListener('click',e=>{const b=e.target.closest('[data-int]');if(!b||!S||!S.war)return;e.stopImmediatePropagation();e.preventDefault();
   const id=+b.dataset.int,now=performance.now();
-  if(pend&&pend.id===id&&now-pend.t<GAP+120){clearTimeout(pend.tm);pend=null;feel(b);setTimeout(()=>cut(id,true,b),150);return}
+  if(pend&&pend.id===id&&now-pend.t<GAP+120){window.__tapGap=Math.round(now-pend.t)+'ms trusted='+e.isTrusted;clearTimeout(pend.tm);pend=null;feel(b);setTimeout(()=>cut(id,true,b),150);return}
   if(pend){clearTimeout(pend.tm);pend=null}
   b.classList.add('qtap');setTimeout(()=>b.classList.remove('qtap'),160);
   pend={id,t:now,tm:setTimeout(()=>{pend=null;cut(id,false,b)},GAP)}},true);
@@ -13648,14 +13649,69 @@ const GOLD=n=>`<svg viewBox="0 0 40 40"><defs><linearGradient id="gh143" x1="0" 
 try{if(window.JKMARKS)window.JKMARKS.gold=GOLD}catch(e){}
 const prev=window.__jkTag;
 window.__jkTag=n=>{try{const M=window.JKMARKS||{};if(n>5)return `<span class="jk135 jm-gold big143" title="جوكر">${GOLD(n)}</span>`;let k='star';try{k=localStorage.getItem('eb-jkmark')||'star'}catch(e){}if(!M[k])k='star';return `<span class="jk135 jm-${k}" title="جوكر">${M[k](n)}</span>`}catch(e){return prev?prev(n):''}};
-const st=document.createElement('style');st.textContent=`html body .jk135.jm-star svg{animation:none!important}html body .jk135.jm-star .spin{animation:jmSpin 6s linear infinite!important}
+const st=document.createElement('style');st.textContent=`html body .jk135.jm-star svg{animation:none!important}html body .jk135.jm-star .spin{animation:none!important}
 html body .card .jk135.big143{width:38px!important;height:38px!important;margin-top:-19px!important}#war .wt .jk135.big143{width:30px;height:30px}
 html body .jk135.big143{filter:drop-shadow(0 0 4px rgba(255,200,60,.9)) drop-shadow(0 2px 3px rgba(0,0,0,.7))!important}`;document.head.appendChild(st);
 })();
 
 </script><script>
+// ===================== Round 144: find out what brings the fire out on a real phone.
+// Every time the fire effect plays, the phone tells the owner's report HOW it was armed (the fire button, two taps on the cut button, a hard flick, or none of them),
+// which effect played and for which seat. No names, no account: only the cause. Read it in the report under errors -> phone, lines that start with FIRELOG. Remove after the cause is known. =====================
+(function(){if(!/^https?:/.test(location.protocol))return;
+let sent=0,ver='';try{ver=EB_VERSION}catch(e){}
+const net=()=>{try{return typeof NET!=='undefined'&&NET.on?'online':'bots'}catch(e){return '?'}};
+const post=(msg,where)=>{if(sent++>60)return;try{fetch('/api/err',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msg:'FIRELOG '+msg,where:String(where).slice(0,118),ver}),keepalive:true}).catch(()=>{})}catch(e){}};
+const st=()=>{try{return (S.war?'war pot'+Math.min(9,S.war.pot.length):'turn')+' '+S.phase}catch(e){return ''}};
+const stack=()=>{try{return String(new Error().stack||'').split('\n').slice(2,7).map(l=>(l.match(/:(\d+):\d+\)?$/)||[])[1]||'').join('>')}catch(e){return ''}};
+if(typeof useSlam==='function')useSlam=(function(p){return function(){let was=false;try{was=!!slamArmed}catch(e){}
+  if(was){const why=window.__armWhy||'NOTHING';window.__armWhy='';let sfx='';try{sfx=sfxOf(0)}catch(e){}
+    post('me armed-by='+why.split(' ')[0],net()+' '+st()+' sfx='+sfx+(why.indexOf(' ')>0?' '+why.slice(why.indexOf(' ')+1):'')+(window.__tapGap?' gap='+window.__tapGap:'')+(why==='NOTHING'?' at '+stack():''));window.__tapGap=''}
+  return p.apply(this,arguments)}})(useSlam);
+if(typeof fireSlam==='function')fireSlam=(function(p){return function(i){try{if(i!==0){let sfx='';try{sfx=sfxOf(i)}catch(e){}post('other-seat fire',net()+' '+st()+' seat'+i+' sfx='+sfx+' at '+stack())}}catch(e){}return p.apply(this,arguments)}})(fireSlam);
+if(typeof slapFx==='function')slapFx=(function(p){return function(card,from,power){try{if(power===3){const s=window.__efSeat;post('strong-hit power3',net()+' '+st()+' seat'+s+' at '+stack())}}catch(e){}return p.apply(this,arguments)}})(slapFx);
+// the fire is armed but nobody armed it: say so once per time
+let told=false;setInterval(()=>{try{if(slamArmed&&!window.__armWhy){if(!told){told=true;post('armed-without-cause',net()+' '+st())}}else told=false;if(!slamArmed)window.__armWhy=''}catch(e){}},400);
+})();
+
+// ---------- 2) the burst-shaped phrase bubbles (comic star, zap, boom, shout): a medium phrase pulled the star wide in one direction only.
+//               Now the words break into two balanced lines and the star grows in both directions, so it keeps its shape ----------
+(function(){const BURST=['bub-pow','bub-zap','bub-boom','bub-shout'],RATIO=1.55;
+const st=document.createElement('style');st.textContent=BURST.map(c=>`.bubble.${c}:not(.bcompact):not(.chatsay)`).join(',')+`{white-space:normal!important;max-width:62px!important;box-sizing:content-box;text-wrap:balance;text-align:center;line-height:1.2}`;document.head.appendChild(st);
+function fit(b){try{if(!b.isConnected||b.classList.contains('bcompact')||!BURST.some(c=>b.classList.contains(c)))return;const w=b.offsetWidth,h=b.offsetHeight;if(!w||!h)return;
+  if(w/h>RATIO){const add=Math.min(9,(w/RATIO-h)/2),cs=getComputedStyle(b);b.style.setProperty('padding-top',(parseFloat(cs.paddingTop)+add)+'px','important');b.style.setProperty('padding-bottom',(parseFloat(cs.paddingBottom)+add)+'px','important')}}catch(e){}}
+const h=window.__bubHook;window.__bubHook=function(b,i){if(h)try{h.apply(this,arguments)}catch(e){}try{requestAnimationFrame(()=>fit(b))}catch(e){}};
+})();
+
+// ---------- 3) the end of a game: the rank bar comes from the server's answer. When it does not come, say so on the sheet (with the reason)
+//               and tell the owner's report, instead of showing nothing ----------
+(function(){if(!/^https?:/.test(location.protocol)||typeof endGame!=='function')return;let ver='';try{ver=EB_VERSION}catch(e){}
+let lastErr='';
+if(typeof api==='function')api=(function(p){return function(path){const r=p.apply(this,arguments);try{if(/\/api\/offline/.test(path))r.catch(e=>{lastErr=String(e&&(e.message||e.status||e)||'error').slice(0,60)})}catch(e){}return r}})(api);
+endGame=(function(p){return function(){const r=p.apply(this,arguments);lastErr='';
+  setTimeout(()=>{try{const sh=document.getElementById('overSheet');if(!sh||document.getElementById('over').hidden||sh.querySelector('.road137,.noroad144'))return;
+    const on=!!(typeof ACCT!=='undefined'&&ACCT.on),net=typeof NET!=='undefined'&&NET.on,sum=!!sh.querySelector('.sum120');
+    const why=!on?L('The game is not linked to your account right now (the server did not answer when the game opened). Reload the page with the internet on.','اللعبة مو مربوطة بحسابك الحين (السيرفر ما رد وقت فتح اللعبة). حدّث الصفحة والنت شغال.')
+      :lastErr?L('The result of this game did not reach the server (internet or server).','نتيجة هالقيم ما وصلت السيرفر (النت أو السيرفر).'):L('The server has not answered yet.','السيرفر ما رد لين الحين.');
+    const d=document.createElement('div');d.className='noroad144';d.innerHTML=`<b>${L('Rank bar not shown','شريط الرتبة ما طلع')}</b><span>${why}</span>`;
+    const fin=sh.querySelector('.final');if(fin)fin.after(d);else sh.prepend(d);
+    try{fetch('/api/err',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msg:'ROADLOG no rank bar',where:'acct='+on+' online='+!!net+' sum='+sum+' err='+lastErr,ver}),keepalive:true}).catch(()=>{})}catch(e){}}catch(e){}},8000);
+  return r}})(endGame);
+const st=document.createElement('style');st.textContent=`.noroad144{margin:8px 0;padding:10px 12px;border-radius:14px;background:rgba(0,0,0,.3);box-shadow:inset 0 0 0 1px rgba(255,160,120,.5);text-align:center;color:#ffd9c8;font:700 12px/1.6 Cairo,Tahoma,sans-serif}.noroad144 b{display:block;color:#ffb199;font-size:13px}`;document.head.appendChild(st);
+})();
+
+// ---------- 4) a game "without effects" (plain table): every ordinary eat and cut came out with the flame and its sound, for you and for the computer players
+//               (round 93 turned EVERY effect into the plain flame; that was meant for the paid fire button only).
+//               Now in a plain table an ordinary eat or cut shows no effect at all; only the paid fire button still shows the plain flame ----------
+(function(){if(typeof runEfx!=='function')return;
+// the flame in a plain table is only for a fire that a player really paid for (the fire button); the computer players' own "strong hits" stay quiet there too
+let paid=0;if(typeof fireSlam==='function')fireSlam=(function(p){return function(){paid=performance.now();return p.apply(this,arguments)}})(fireSlam);
+runEfx=(function(p){return function(id,box,at,pw){try{if(window.fxOff&&window.fxOff()&&!(box&&box.id==='efDemo')){if(pw!==3)return;if(performance.now()-paid>2500)return}}catch(e){}return p.apply(this,arguments)}})(runEfx);
+})();
+
+</script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1115.0152';
+const EB_VERSION='v1115.0811';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
