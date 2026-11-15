@@ -7855,20 +7855,20 @@ const cost=()=>window.SLAM_COST||50;
 const canPlay=()=>S&&((S.turn===0&&(S.phase==='choose'||S.phase==='throw'))||S.war);
 function setFire(on){if(on===auto)return;auto=on;slamArmed=on;try{slamIcon()}catch(e){}const g=document.querySelector('.dragghost');if(g)g.classList.toggle('onfire',on)}
 document.addEventListener('pointerdown',e=>{const el=e.target.closest('#myrow [data-card]');if(!el||!canPlay())return;
-  tr={pid:e.pointerId,y0:e.clientY,pts:[{x:e.clientX,y:e.clientY,t:performance.now()}],pre:!!slamArmed,poorTold:false}},{capture:true,passive:true});
+  tr={pid:e.pointerId,y0:e.clientY,x0:e.clientX,pts:[{x:e.clientX,y:e.clientY,t:performance.now()}],pre:!!slamArmed,poorTold:false}},{capture:true,passive:true});
 window.addEventListener('pointermove',e=>{if(!tr||e.pointerId!==tr.pid)return;const now=performance.now();tr.pts.push({x:e.clientX,y:e.clientY,t:now});
   while(tr.pts.length>2&&now-tr.pts[0].t>80)tr.pts.shift();
   if(tr.pre)return; // the player already armed fire with the button
-  const a=tr.pts[0],b=tr.pts[tr.pts.length-1],dt=b.t-a.t,vy=dt>=MINDT?(a.y-b.y)/dt:0;
+  const a=tr.pts[0],b=tr.pts[tr.pts.length-1],dt=b.t-a.t,up=a.y-b.y,vy=dt>=MINDT&&up>0?Math.hypot(b.x-a.x,up)/dt:0; // speed along the finger's real direction: a flick toward a side seat is mostly sideways
   const hand=$('myrow');if(!hand)return;const above=e.clientY<hand.getBoundingClientRect().top+10;
-  const fast=vy>FAST&&above&&(tr.y0-e.clientY)>=TRAVEL;if(fast)window.__armWhy='flick '+vy.toFixed(1)+'px/ms '+Math.round(tr.y0-e.clientY)+'px';
+  const far=Math.hypot(e.clientX-tr.x0,tr.y0-e.clientY);const fast=vy>FAST&&above&&far>=TRAVEL;if(fast)window.__armWhy='flick '+vy.toFixed(1)+'px/ms '+Math.round(far)+'px';else if(vy>1.2&&far>=60)tr.best=Math.max(tr.best||0,vy);
   if(fast&&!auto){if((WAL.tokens||0)<cost()&&!(typeof NET!=='undefined'&&NET.on)){if(!tr.poorTold){tr.poorTold=true;toast(L(`Fire needs ${cost()} rupees`,`النار تحتاج ${cost()} روبية`))}return}setFire(true)}
   else if(!fast&&auto&&vy<.25)setFire(false)},{capture:true,passive:true});
 // after the drag code has played (or not played) the card: drop the fire if it was not used
 // if the card went to the table (or a choice popup opened for it) the fire stays ready for that play; otherwise it is dropped
 let used=0;
 if(typeof quickPlay==='function')quickPlay=(function(prev){return function(){used=performance.now();return prev.apply(this,arguments)}})(quickPlay);
-const done=e=>{if(!tr||e.pointerId!==tr.pid)return;tr=null;if(!auto)return;
+const done=e=>{if(!tr||e.pointerId!==tr.pid)return;const best=tr.best;tr=null;if(!auto){try{if(best&&window.__flickLog)window.__flickLog(best)}catch(_){}return}
   if(performance.now()-used<300){const t0=performance.now(),iv=setInterval(()=>{if(!auto){clearInterval(iv);return}
       const idle=!S||(!S.war&&S.turn!==0)||S.phase==='over';if(idle||performance.now()-t0>15000){clearInterval(iv);setFire(false)}},300);return}
   setFire(false)};
@@ -8559,15 +8559,17 @@ const st=document.createElement('style');st.textContent=`.warcount{position:fixe
 // ===================== Round 93: room option "special effects" on/off — for players who want a plain table =====================
 (function(){
 const fxOff=()=>{try{return !!(S&&S.cfg&&S.cfg.fx===false)}catch(e){return false}};window.fxOff=fxOff;
-let pref=true;try{pref=localStorage.getItem('eb-fx')!=='off'}catch(e){}
+let pref=true; // round 144: the choice is no longer remembered. 'Plain table' used to stick for every later game without the player noticing (his effects all looked like the plain flame); now every new game starts 'with effects' unless you pick plain for that game
+try{localStorage.removeItem('eb-fx')}catch(e){}
 // setup form: a new row
 renderSetup=(function(p){return function(){const r=p.apply(this,arguments);try{const f=$('setupForm');if(!f||f.querySelector('input[name="fx"]'))return r;const hints=f.querySelector('input[name="hints"]');const fs=hints&&hints.closest('.fieldset');if(!fs)return r;
   const d=document.createElement('div');d.className='fieldset';d.innerHTML=`<div class="label">${L('Special effects','التأثيرات المميزة')}</div>${seg('fx',[['on','With effects ✨','مع التأثيرات ✨'],['off','Plain table','بدون تأثيرات']],pref?'on':'off')}`;fs.after(d)}catch(e){}return r}})(renderSetup);
 try{renderSetup()}catch(e){}
+const resetFx=()=>{pref=true;try{const on=document.querySelector('#setupForm input[name="fx"][value="on"]');if(on)on.checked=true}catch(e){}};
 const readFx=()=>{const x=document.querySelector('#setupForm input[name="fx"]:checked');return x?x.value!=='off':pref};
-document.addEventListener('change',e=>{if(e.target&&e.target.name==='fx'){pref=e.target.value!=='off';try{localStorage.setItem('eb-fx',pref?'on':'off')}catch(err){}}},true);
-newGame=(function(p){return function(cfg){cfg=Object.assign({},cfg);if(cfg.fx==null)cfg.fx=readFx();return p.call(this,cfg)}})(newGame);
-if(typeof netSend==='function')netSend=(function(p){return function(type,data){if(type==='start'&&data&&data.cfg&&data.cfg.fx==null)data.cfg.fx=readFx();return p.apply(this,arguments)}})(netSend);
+document.addEventListener('change',e=>{if(e.target&&e.target.name==='fx'){pref=e.target.value!=='off'}},true);
+newGame=(function(p){return function(cfg){cfg=Object.assign({},cfg);if(cfg.fx==null)cfg.fx=readFx();resetFx();const r=p.call(this,cfg);try{if(cfg.fx===false)setTimeout(()=>toast(L('Plain table: this game is without special effects','طاولة بسيطة: هالقيم بدون تأثيرات مميزة')),900)}catch(e){}return r}})(newGame);
+if(typeof netSend==='function')netSend=(function(p){return function(type,data){if(type==='start'&&data&&data.cfg){if(data.cfg.fx==null)data.cfg.fx=readFx();resetFx()}return p.apply(this,arguments)}})(netSend);
 // with effects off: fire still shows, but as the plain flame (no lightning, quake, meteor…) and no clashes; the war build-up (louder slaps, rings, ×N) and the form ring stay
 runEfx=(function(p){return function(id,box,at,pw){if(fxOff()&&id&&id!=='none')id='blaze';return p.call(this,id,box,at,pw)}})(runEfx);
 if(window.effectClash){const c=window.effectClash;window.effectClash=function(){if(fxOff())return;return c.apply(this,arguments)}}
@@ -13662,7 +13664,7 @@ html body .jk135.big143{filter:drop-shadow(0 0 4px rgba(255,200,60,.9)) drop-sha
 let sent=0,ver='';try{ver=EB_VERSION}catch(e){}
 const net=()=>{try{return typeof NET!=='undefined'&&NET.on?'online':'bots'}catch(e){return '?'}};
 const post=(msg,where)=>{if(sent++>60)return;try{fetch('/api/err',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msg:'FIRELOG '+msg,where:String(where).slice(0,118),ver}),keepalive:true}).catch(()=>{})}catch(e){}};
-const st=()=>{try{return (S.war?'war pot'+Math.min(9,S.war.pot.length):'turn')+' '+S.phase}catch(e){return ''}};
+const st=()=>{try{return (S.cfg&&S.cfg.fx===false?'PLAIN-TABLE ':'fx-on ')+(S.war?'war pot'+Math.min(9,S.war.pot.length):'turn')}catch(e){return ''}};
 const stack=()=>{try{return String(new Error().stack||'').split('\n').slice(2,7).map(l=>(l.match(/:(\d+):\d+\)?$/)||[])[1]||'').join('>')}catch(e){return ''}};
 if(typeof useSlam==='function')useSlam=(function(p){return function(){let was=false;try{was=!!slamArmed}catch(e){}
   if(was){const why=window.__armWhy||'NOTHING';window.__armWhy='';let sfx='';try{sfx=sfxOf(0)}catch(e){}
@@ -13709,9 +13711,20 @@ let paid=0;if(typeof fireSlam==='function')fireSlam=(function(p){return function
 runEfx=(function(p){return function(id,box,at,pw){try{if(window.fxOff&&window.fxOff()&&!(box&&box.id==='efDemo')){if(pw!==3)return;if(performance.now()-paid>2500)return}}catch(e){}return p.apply(this,arguments)}})(runEfx);
 })();
 
+// ---------- 5) the computer threw things (eggs, tomatoes...) too often: after about one won war in five, and again 6 seconds later.
+//               Now it is rare: at most one every 40 seconds, and less than half as often ----------
+(function(){if(typeof aiBanter!=='function')return;let last=-1e9;
+aiBanter=(function(p){return function(W){try{if(S&&S.players&&S.players[W]&&!S.players[W].human&&(performance.now()-last<40000||Math.random()>.4))return}catch(e){}return p.apply(this,arguments)}})(aiBanter);
+// the gift is sent a second later (a timer inside), so count it there
+if(typeof sendGift==='function')sendGift=(function(p){return function(from){try{const pl=S&&S.players&&S.players[from];if(pl&&from!==0&&!pl.human&&!pl.remote)last=performance.now()}catch(e){}return p.apply(this,arguments)}})(sendGift);
+})();
+// a strong swipe that was still not counted as a flick: tell the report how fast it was, so the limit can be set from real fingers
+(function(){if(!/^https?:/.test(location.protocol))return;let n=0,ver='';try{ver=EB_VERSION}catch(e){}
+window.__flickLog=v=>{if(n++>15)return;try{fetch('/api/err',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msg:'FLICKLOG strong swipe not counted',where:'speed '+(Math.round(v*5)/5).toFixed(1)+' px/ms (limit 2.0)',ver}),keepalive:true}).catch(()=>{})}catch(e){}}})();
+
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1115.0811';
+const EB_VERSION='v1115.0833';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
