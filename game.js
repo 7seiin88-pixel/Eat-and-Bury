@@ -94,7 +94,7 @@ class Game {
   viewFor(k, watcher) {
     const S = this.S, n = S.players.length, r = i => (i - k + n) % n, me = S.players[k], myTeam = me.team, solo = S.cfg.mode === 'solo';
     const tm = t => solo ? (t - k + n) % n : (t - myTeam + 2) % 2; const players = [];
-    S.players.forEach((p, i) => { players[r(i)] = { name: p.name, f: p.f, team: tm(p.team), human: i === k && !watcher, pile: p.pile, hand: i === k && !watcher ? p.hand : p.hand.map(() => ({ id: -1, r: '?', s: '' })) } });
+    S.players.forEach((p, i) => { players[r(i)] = { name: p.name, f: p.f, team: tm(p.team), human: i === k && !watcher, pile: p.pile, hand: i === k || watcher ? p.hand : p.hand.map(() => ({ id: -1, r: '?', s: '' })) } });
     const teams = solo ? S.teams.map((t, i) => S.teams[(i + k) % n]) : S.teams;
     const now = Date.now(), w = S.war && { ...S.war, orig: r(S.war.orig), leader: r(S.war.leader), victims: S.war.victims.map(r), fromPiles: S.war.fromPiles.map(x => ({ j: r(x.j), cards: x.cards })), left: Math.max(0, S.war.deadline - now), deadline: 0 };
     const stats = S.stats ? S.players.map((_, j) => S.stats[(j + k) % n]) : undefined;
