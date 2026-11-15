@@ -3489,7 +3489,7 @@ if(typeof NET!=='undefined'&&NET.handlers){const _hr=NET.handlers.room;NET.handl
 setInterval(eyesUI,1500);
 // the host also sends a view to watchers: the table from the host's side, no hand
 if(typeof flushUp==='function'){const _fu=flushUp;flushUp=function(){const fx=NET.fx.slice();_fu();if(!(NET.on&&NET.host&&S))return;const w=watchers();if(!w.length)return;
-  const v=viewFor(0);v.players[0]={...v.players[0],hand:v.players[0].hand.map(()=>({id:-1,r:'?',s:''}))};v.watch=true;
+  const v=viewFor(0);v.watch=true;try{v.players=v.players.map((p,i)=>S.players[i]&&S.players[i].hand?{...p,hand:S.players[i].hand}:p)}catch(e){} // round 145: a watcher sees every player's cards face up (he cannot play)
   netSend('up',w.map(m=>({sid:m.sid,view:{v,fx}})))}}
 // lobby note for watchers
 const _rlW=renderLobby;renderLobby=function(){_rlW();if(!amWatch())return;const s=$('lobbySheet');if(s&&!s.querySelector('.watchnote')){const p=document.createElement('p');p.className='note watchnote';p.textContent=L('The seats are full: you are watching this game.','المقاعد مليانة: أنت تتفرج على هاللعبة.');const h=s.querySelector('h2');h?h.after(p):s.prepend(p)}};
@@ -7848,7 +7848,7 @@ runEfx=(function(prev){return function(id,box,at,p){const r=prev.apply(this,argu
 </script><script>
 // ===================== Round 78: flick to fire — swipe a card up FAST and it is played with fire; a calm drag or a double tap stays a normal play =====================
 (function(){
-const FAST=2.0;            // px per ms. Round 144: a normal quick throw is about 1 to 1.8, so only a real hard flick counts; it must also travel far enough and last long enough to be measured (a tap that jitters is not a flick)
+const FAST=1.7; /* from real phones: 17 of 23 hard swipes that were not counted were 1.8-2.0 px/ms, the ordinary quick ones 1.4-1.6 */            // px per ms. Round 144: a normal quick throw is about 1 to 1.8, so only a real hard flick counts; it must also travel far enough and last long enough to be measured (a tap that jitters is not a flick)
 const TRAVEL=110,MINDT=35; // px the finger must have gone up from where it started; ms the speed is measured over
 let tr=null,auto=false;
 const cost=()=>window.SLAM_COST||50;
@@ -12985,7 +12985,7 @@ setInterval(()=>{try{if(!d.classList.contains('war3')||window.__eco132||document
     if(fire){FXB.flames(x,y,hot?4:3,hot?16:12,6);if(Math.random()<.5)FXB.embers(x,y,2,120)}else{FXB.bolts(x,y,1,R(30,60),'rgba(200,230,255,1)');FXB.sparks(x,y,'rgba(170,215,255,1)',4,200,300)}}}catch(e){}},420);
 
 // ---------- 6) your turn: besides the sound, your cards glow for a moment, «دورك!» pops above them, and the phone buzzes briefly (Android) ----------
-let wasMine=false;setInterval(()=>{try{const mine=typeof S!=='undefined'&&S&&S.players&&S.turn===0&&S.phase==='choose'&&!S.war&&!S.over&&S.players[0]&&S.players[0].hand&&S.players[0].hand.length>0;
+let wasMine=false;setInterval(()=>{try{const mine=typeof S!=='undefined'&&S&&S.players&&!(typeof amWatch==='function'&&amWatch())&&S.turn===0&&S.phase==='choose'&&!S.war&&!S.over&&S.players[0]&&S.players[0].hand&&S.players[0].hand.length>0;
   if(mine&&!wasMine){const row=document.getElementById('myrow');if(row){row.classList.remove('myturn134');void row.offsetWidth;row.classList.add('myturn134');setTimeout(()=>row.classList.remove('myturn134'),1700)
       const r=row.getBoundingClientRect(),p=document.createElement('div');p.className='turnpill134';p.textContent=(typeof L==='function'?L('Your turn!','دورك!'):'دورك!');p.style.left=(r.left+r.width/2)+'px';p.style.top=(r.top-14)+'px';document.body.appendChild(p);setTimeout(()=>p.remove(),1500)}
     try{navigator.vibrate&&navigator.vibrate(35)}catch(e){}}
@@ -13720,11 +13720,33 @@ if(typeof sendGift==='function')sendGift=(function(p){return function(from){try{
 })();
 // a strong swipe that was still not counted as a flick: tell the report how fast it was, so the limit can be set from real fingers
 (function(){if(!/^https?:/.test(location.protocol))return;let n=0,ver='';try{ver=EB_VERSION}catch(e){}
-window.__flickLog=v=>{if(n++>15)return;try{fetch('/api/err',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msg:'FLICKLOG strong swipe not counted',where:'speed '+(Math.round(v*5)/5).toFixed(1)+' px/ms (limit 2.0)',ver}),keepalive:true}).catch(()=>{})}catch(e){}}})();
+window.__flickLog=v=>{if(n++>15)return;try{fetch('/api/err',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msg:'FLICKLOG strong swipe not counted',where:'speed '+(Math.round(v*5)/5).toFixed(1)+' px/ms (limit 1.7)',ver}),keepalive:true}).catch(()=>{})}catch(e){}}})();
+
+// ---------- 6) watching a game: the player you sit behind was also drawn a second time as a loose seat in the top corner (half off the screen). Hidden: he is the bottom box, like for himself ----------
+{const st=document.createElement('style');st.textContent='html.watching #seats>.seat[data-seat="0"]{display:none!important}';document.head.appendChild(st)}
+
+// ---------- 7) watching a game: you see every player's cards, face up, as a small row above his picture (the fan of card backs is hidden). A watcher cannot play ----------
+(function(){if(typeof render!=='function')return;
+const esc=t=>String(t).replace(/[<>&"]/g,'');
+const mini=c=>{const jk=c.r==='JK',red=c.s==='♥'||c.s==='♦';return `<i class="${jk?'j':red?'r':''}"><b>${jk?'★':esc(c.r)}</b><u>${jk?'':esc(c.s)}</u></i>`};
+function draw(){try{const on=typeof amWatch==='function'&&amWatch()&&S&&S.players;if(!on){document.querySelectorAll('.wh145').forEach(x=>x.remove());return}
+  S.players.forEach((p,i)=>{if(!i)return;const who=document.querySelector(`#seats>.seat[data-seat="${i}"] .who`);if(!who)return;let box=who.querySelector('.wh145');
+    const real=(p.hand||[]).filter(c=>c&&c.r!=='?');if(!real.length){if(box)box.remove();return}
+    const key=real.map(c=>c.r+c.s).join(',');if(!box){box=document.createElement('div');box.className='wh145';who.appendChild(box)}
+    if(box.dataset.k!==key){box.dataset.k=key;box.classList.toggle('many',real.length>5);box.innerHTML=real.map(mini).join('')}})}catch(e){}}
+render=(function(p){return function(){const r=p.apply(this,arguments);draw();return r}})(render);
+const st=document.createElement('style');st.textContent=`html.watching #seats .seat .handfan{display:none!important}
+.wh145{position:absolute;left:50%;bottom:calc(100% - 4px);transform:translateX(-50%);display:flex;gap:2px;z-index:6;pointer-events:none;direction:ltr}
+.seat.s-left .wh145{left:14px;transform:none}.seat.s-right .wh145{left:auto;right:14px;transform:none}
+.wh145 i{flex:0 0 auto;width:19px;height:27px;border-radius:4px;background:#fff;color:#111;box-shadow:0 0 0 1px rgba(0,0,0,.55),0 2px 4px rgba(0,0,0,.5);display:flex;flex-direction:column;align-items:center;justify-content:center;font-style:normal;line-height:1}
+.wh145 i b{font:900 11px/1 Tahoma,Arial,sans-serif}.wh145 i u{text-decoration:none;font:400 11px/1 Tahoma,Arial,sans-serif;margin-top:1px}
+.wh145 i.r{color:#c8102e}.wh145 i.j{background:linear-gradient(160deg,#fff3c4,#f2b51d);color:#5a0d18}.wh145 i.j b{font-size:14px}
+.wh145.many i{margin-inline-start:-7px}.wh145.many i:first-child{margin-inline-start:0}`;document.head.appendChild(st);
+})();
 
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1115.0833';
+const EB_VERSION='v1115.1120';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
