@@ -78,9 +78,9 @@ function season(a) { const m = new Date().toISOString().slice(0, 7), st = a.st;
 // a title under your name, from your best badge
 
 // Round 91: more achievement stats
-const NEWST = ['fire', 'jk', 'pile', 'dig', 'gifts', 'lastw', 'comeback', 'tw', 'faz', 'ttw', 'fazb'];
+const NEWST = ['fire', 'jk', 'pile', 'dig', 'gifts', 'lastw', 'comeback', 'tw', 'faz', 'ttw', 'fazb', 'jtw', 'jkg'];
 function addStats(st, r, cap) { for (const k of NEWST) st[k] = (st[k] || 0) + clamp(r[k], 0, cap[k] || 60); st.bigwar = Math.max(st.bigwar || 0, clamp(r.bigwar, 0, 20)) }
-const OFF_CAP = { fire: 40, jk: 30, pile: 30, dig: 5, gifts: 20, lastw: 15, comeback: 1, tw: 10, faz: 15, ttw: 5, fazb: 8 }, ON_CAP = { fire: 200, jk: 60, pile: 60, dig: 20, gifts: 60, lastw: 30, comeback: 1, tw: 30, faz: 30, ttw: 15, fazb: 20 };
+const OFF_CAP = { fire: 40, jk: 30, pile: 30, dig: 5, gifts: 20, lastw: 15, comeback: 1, tw: 10, faz: 15, ttw: 5, fazb: 8, jtw: 5, jkg: 1 }, ON_CAP = { fire: 200, jk: 60, pile: 60, dig: 20, gifts: 60, lastw: 30, comeback: 1, tw: 30, faz: 30, ttw: 15, fazb: 20, jtw: 10, jkg: 1 };
 function addPartners(st, r) { if (!r.won || !Array.isArray(r.partners)) return; st.pw = st.pw && typeof st.pw === 'object' ? st.pw : {};
   for (const k of r.partners.slice(0, 2)) { if (typeof k !== 'string' || !/^[0-9a-f]{12}$/.test(k)) continue; st.pw[k] = (st.pw[k] || 0) + 1 }
   const ks = Object.keys(st.pw); if (ks.length > 40) ks.sort((x, y) => st.pw[x] - st.pw[y]).slice(0, ks.length - 40).forEach(k => delete st.pw[k]) }
@@ -138,9 +138,18 @@ async function sync(a, body) {
   await store.put(a); return me(a, notes.length ? { refused: notes } : null);
 }
 // a game against the computer (results come from the phone, so the reward is small and capped each day)
+// the monsters' challenge (round 152): five stages against the computer. Each stage pays once when first beaten, and a quarter more for every extra star earned later.
+const CH_PAY = [300, 500, 800, 1200, 2000];
+async function challenge(a, r) {
+  const k = Math.floor(+r.stage), stars = Math.max(1, Math.min(3, Math.floor(+r.stars) || 1)); if (!(k >= 0 && k < CH_PAY.length)) return me(a, { challenge: { refused: 'stage' } });
+  const ch = a.st.ch && typeof a.st.ch === 'object' ? a.st.ch : (a.st.ch = {}); if (k > 0 && !(ch[k - 1] >= 1)) return me(a, { challenge: { refused: 'locked' } });
+  const now = Date.now(); if (now - (a.w.chT || 0) < 120000) return me(a, { challenge: { refused: 'soon' } }); a.w.chT = now; // a stage cannot be won faster than this
+  const prev = ch[k] || 0; let pay = 0; if (stars > prev) { if (!prev) pay += CH_PAY[k]; pay += (stars - Math.max(prev, 1)) * Math.round(CH_PAY[k] * .25); ch[k] = stars; a.w.tokens += pay }
+  await store.put(a); return me(a, { challenge: { stage: k, stars: ch[k], pay } });
+}
 async function offline(a, r) {
   const won = !!r.won, wars = clamp(r.wars, 0, 60), best = clamp(r.best, 0, 2000), tauf = clamp(r.tauf, 0, 60);
-  a.st.games++; if (won) a.st.wins++; a.st.wars += wars; a.st.best = Math.max(a.st.best, best); a.st.tauf += tauf; addStats(a.st, r, OFF_CAP); const pf = perf({ wars, best, bigwar: clamp(r.bigwar, 0, 20), tw: clamp(r.tw, 0, 10), faz: clamp(r.faz, 0, 15), ttw: clamp(r.ttw, 0, 5), fazb: clamp(r.fazb, 0, 8) }), bx = useBoost(a), xp = (10 + (won ? 25 : 0) + wars * 3 + Math.min(8, pf.total) * 2) * bx; const xp0 = a.st.xp; a.st.xp += xp; const lvup = levelUp(a, xp0);
+  a.st.games++; if (won) a.st.wins++; a.st.wars += wars; a.st.best = Math.max(a.st.best, best); a.st.tauf += tauf; addStats(a.st, r, OFF_CAP); const pf = perf({ wars, best, bigwar: clamp(r.bigwar, 0, 20), tw: clamp(r.tw, 0, 10), faz: clamp(r.faz, 0, 15), ttw: clamp(r.ttw, 0, 5), fazb: clamp(r.fazb, 0, 8), jtw: clamp(r.jtw, 0, 5), jkn: clamp(r.jkn, 0, 24) }), bx = useBoost(a), xp = (10 + (won ? 25 : 0) + wars * 3 + Math.min(8, pf.total) * 2) * bx; const xp0 = a.st.xp; a.st.xp += xp; const lvup = levelUp(a, xp0);
   const d = today(); if (a.w.offDay !== d) { a.w.offDay = d; a.w.offGot = 0 } const give = Math.max(0, Math.min(won ? 15 : 5, OFFLINE_CAP - a.w.offGot)); a.w.offGot += give; a.w.tokens += give;
   // rank points against the computer too (round 135): smaller than online and capped each day, but a win, a streak and this game's badges all multiply it
   season(a); const st = a.st, before = st.rp || 0; let mult = 1;
@@ -165,7 +174,7 @@ async function gameOver(a, r) {
   if (won) { st.wins++; st.streak++; st.bestStreak = Math.max(st.bestStreak, st.streak); mult = 1 + Math.min(st.streak - 1, 6) * .25 /* up to x2.5 on a 7-win streak */ } else st.streak = 0;
   let shielded = false;
   if (r.ranked) { // rank points move only in ranked games (the quick game), not in rooms with friends
-    d = won ? (Math.round(20 * mult) + pf.total) * bx : -12 + Math.min(6, Math.floor(pf.total / 2)); // a win: 20 x streak + how you played; a loss costs less if you fought well
+    d = won ? (Math.round(20 * mult) + pf.total) * bx : (r.solo ? -6 : -12) + Math.min(r.solo ? 3 : 6, Math.floor(pf.total / 2)); /* round 146: in a quick game where everyone plays alone three of four lose, so a loss there costs half */ // a win: 20 x streak + how you played; a loss costs less if you fought well
     let after = Math.max(0, before + d);
     if (!won && st.shield && rankIx(after) < rankIx(before)) { after = RANK_MIN[rankIx(before)]; shielded = true } // the first loss after a promotion never drops you
     if (!won) st.shield = 0; if (rankIx(after) > rankIx(before)) st.shield = 1;
@@ -184,9 +193,11 @@ function perf(r) { const parts = [], add = (k, n) => { if (n > 0) parts.push([k,
   add('ttw', Math.min(4, (r.ttw || 0) * 2));                                                       // ...together with your teammate, who answered in the same war: both get it
   add('faz', Math.min(3, r.faz || 0));                                                             // came to a teammate's rescue
   add('fazb', Math.min(4, (r.fazb || 0) * 2));                                                     // ...and the pile you saved was a big one
+  add('jtw', Math.min(6, (r.jtw || 0) * 3));                                                       // opened with a joker so a teammate could answer and the next player was skipped
+  { const n = Math.min(24, Math.floor(+r.jkn || 0)); add('jkg', n >= 7 ? 10 : n === 6 ? 8 : n === 5 ? 6 : n === 4 ? 4 : 0) } // the golden joker hat: 4 jokers in your pile at once = 4, 5 = 6, 6 = 8, 7 or more = 10
   const badges = [(r.tw || 0) > 0 || (r.ttw || 0) > 0, (r.faz || 0) > 0, (r.bigwar || 0) >= 5, (r.best || 0) >= 100].filter(Boolean).length;
   add('badges', Math.min(3, badges));                                                              // each of this game's badges adds a point
-  let total = parts.reduce((n, x) => n + x[1], 0); if (total > 20) total = 20; return { parts, total } }
+  let total = parts.reduce((n, x) => n + x[1], 0); if (total > 30) total = 30; return { parts, total } }
 // points booster: bought with rupees, doubles the XP and the rank points you win for the next few games
 const BOOST_COST = 400, BOOST_GAMES = 5;
 function useBoost(a) { if ((a.w.boost || 0) > 0) { a.w.boost--; return 2 } return 1 }
@@ -212,6 +223,7 @@ async function http(req, res, url) {
 
     if (url === '/api/sync' && req.method === 'POST') return send(200, await sync(a, body));
     if (url === '/api/offline' && req.method === 'POST') return send(200, await offline(a, body));
+    if (url === '/api/challenge' && req.method === 'POST') return send(200, await challenge(a, body));
     if (url === '/api/boost' && req.method === 'POST') return send(200, await buyBoost(a));
     if (url === '/api/vip/test' && req.method === 'POST') { // testing only: buy a month of VIP with rupees (the real one is bought in the App Store)
       if (!TEST_MODE) return send(403, { err: 'store' }); if (a.w.tokens < VIP_TEST_PRICE) return send(200, me(a, { refused: ['vip'] }));

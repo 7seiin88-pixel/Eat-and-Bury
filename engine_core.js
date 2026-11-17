@@ -17,8 +17,11 @@ const NAMES={en:['You','Faisal','Noor','Yousef','Mariam','Khalid'],ar:['أنت',
 const FEMALE=[false,false,true,false,true,false];
 // Verb form for a player: you / he / she.
 const V=(p,you,he,she)=>(p.human&&!NET_ON)?you:(p.f?she:he);
-const rankAr=r=>r==='JK'?'الجوكر':`الـ${r}`;
-const cardName=c=>c.r==='JK'?L('a Joker','جوكر'):c.r;
+/* the cards by the names we call them: الأكه، الشايب، البنت، الولد، العشره */
+const AR_RANK={A:'الأكه',K:'الشايب',Q:'البنت',J:'الولد','10':'العشره'},AR_BARE={A:'أكه',K:'شايب',Q:'بنت',J:'ولد','10':'عشره'};
+const rankAr=r=>r==='JK'?'الجوكر':(AR_RANK[r]||`الـ${r}`);
+const cardName=c=>c.r==='JK'?L('a Joker','جوكر'):L(c.r,AR_RANK[c.r]||c.r);
+const byCard=c=>AR_RANK[c.r]?'ب'+AR_RANK[c.r]:'بـ'+cardName(c),theCard=c=>c.r==='JK'?'الجوكر':rankAr(c.r),bareAr=r=>AR_BARE[r]||r;
 
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function buildDeck(n){const d=[];for(let k=0;k<n;k++){for(const s of SUITS)for(const r of RANKS)d.push({id:uid++,r,s});d.push({id:uid++,r:'JK',s:''},{id:uid++,r:'JK',s:''})}return shuffle(d)}
@@ -33,6 +36,7 @@ function newGame(cfg){
   S={cfg,players,teams,draw:buildDeck(cfg.decks),ground:[],turn:0,phase:'idle',war:null,sel:null,log:[],aiTimers:[],passes:0,lone:false,moves:0,stats:players.map(()=>({wars:0,best:0}))};
   for(const p of players)p.hand=S.draw.splice(0,4);
   S.ground=S.draw.splice(0,4);
+  /* round 149: the four opening cards are four different numbers (two of the same number on the ground looked like a mistake) */try{for(let k=1;k<S.ground.length;k++){let g=0;while(S.ground.slice(0,k).some(c=>c.r===S.ground[k].r)&&g++<60){const j=Math.floor(Math.random()*S.draw.length);const t=S.draw[j];if(!t||S.ground.some(c=>c.r===t.r))continue;S.draw[j]=S.ground[k];S.ground[k]=t}}}catch(e){}
   log(L(`Dealt ${cfg.decks} decks. You go first.`,`توزّعت ${cfg.decks} جناجف. أنت تبدأ.`));
   startTurn(0);
 }
@@ -110,7 +114,7 @@ function declareEat(i,card,r,incl=null){
   S.war={rank:r,orig:i,leader:i,pot:[card],targets:[...t.g,...t.piles.flatMap(x=>x.cards)],victims:t.piles.map(x=>x.j),fromGround:t.g,fromPiles:t.piles.map(x=>({j:x.j,cards:x.cards})),deadline:0};
   const who=S.players[i];
   const from=[t.g.length?L('the ground','الأرض'):null,...t.piles.map(x=>(S.players[x.j].human&&!NET_ON)?L('your pile','كومتك'):L(S.players[x.j].name+"'s pile",'كومة '+S.players[x.j].name))].filter(Boolean).join(L(' and ',' و'));
-  log(L(`${who.name} ${who.human?'go':'goes'} for the ${plural(r)} on ${from} with ${cardName(card)}.`,V(who,`رحت على ${rankAr(r)} في ${from} بـ${cardName(card)}.`,`${who.name} راح على ${rankAr(r)} في ${from} بـ${cardName(card)}.`,`${who.name} راحت على ${rankAr(r)} في ${from} بـ${cardName(card)}.`)));
+  log(L(`${who.name} ${who.human?'go':'goes'} for the ${plural(r)} on ${from} with ${cardName(card)}.`,V(who,`رحت على ${rankAr(r)} في ${from} ${byCard(card)}.`,`${who.name} راح على ${rankAr(r)} في ${from} ${byCard(card)}.`,`${who.name} راحت على ${rankAr(r)} في ${from} ${byCard(card)}.`)));
   S.phase='war';S.sel=null;openWindow();
 }
 function openWindow(){
@@ -127,7 +131,7 @@ function canIntercept(j){
 }
 function intercept(j,card){
   if(!S.war)return;take(j,card);S.war.pot.push(card);S.war.leader=j;
-  const p=S.players[j];log(L(`${p.name} ${p.human?'intercept':'intercepts'} with ${cardName(card)}!`,V(p,`قطعت بـ${cardName(card)}!`,`${p.name} قطع بـ${cardName(card)}!`,`${p.name} قطعت بـ${cardName(card)}!`)));
+  const p=S.players[j];log(L(`${p.name} ${p.human?'intercept':'intercepts'} with ${cardName(card)}!`,V(p,`قطعت ${byCard(card)}!`,`${p.name} قطع ${byCard(card)}!`,`${p.name} قطعت ${byCard(card)}!`)));
   openWindow();
 }
 function resolveWar(){
@@ -255,8 +259,13 @@ const _rwT=resolveWar;resolveWar=function(){const w=S&&S.war;const orig=w?w.orig
 // normal: plays for the team: never opens a war on a teammate's pile without a reason, defends a teammate's pile, sleeps on a joker.
 // hard:   + pulls a teammate who is on his last card (opens a ground war he can cut), buries its own exposed points, smarter jokers.
 // pro:    + counts the cards it has seen to judge who can cut, throws the cards nobody can use, cuts faster.
+// legend (أسطوري, round 149): everything the pro does + it reads the turn order before it opens a war:
+//   - an opponent sleeping on one card is not fed: it does not open a war he may cut unless it holds a second card to answer him ("مدبّل");
+//   - a joker is not spent on an eat when the players behind could take it back and it has nothing to cover with: it is kept for a bigger war or to defend its teammate;
+//   - its teammate waiting to draw five is not skipped: it avoids opening a war that a player sitting after him is likely to win;
+//   - an opponent waiting to draw five IS skipped: it opens a war (with a joker too) that its teammate sitting after him can answer.
 (function(){
-const LVN={easy:0,normal:1,hard:2,pro:3};
+const LVN={easy:0,normal:1,hard:2,pro:3,legend:4};
 const lvOf=i=>{const p=S.players[i];if(p.human)return 1;const v=LVN[p.lv||(S.cfg&&S.cfg.level)||'normal'];return v==null?1:v};
 const kn=(i,n,d)=>{const k=S.players[i].k;return k&&k[n]!=null?k[n]:d};
 const mate=(i,j)=>i!==j&&S.players[i].team===S.players[j].team;
@@ -279,7 +288,7 @@ const MEM=()=>S.mem&&S.mem.length===S.players.length?S.mem:(S.mem=S.players.map(
 const forget=i=>{try{const m=MEM()[i];if(m){m.no={};m.noJ=false}}catch(e){}};
 {const _ic=intercept;intercept=function(j,c){try{if(S.war){S.war.cut=S.war.cut||[];S.war.cut.push(j)}}catch(e){}return _ic.apply(this,arguments)};
  const _rw=resolveWar;resolveWar=function(){try{const w=S&&S.war;if(w&&w.rank!=='JK'&&S.draw.length>0){const cut=new Set(w.cut||[]);S.players.forEach((p,j)=>{if(j===w.orig||cut.has(j)||p.hand.length!==1)return;const m=MEM()[j];m.no[w.rank]=true;m.noJ=true})}}catch(e){}return _rw.apply(this,arguments)};
- const _tc=throwCard;throwCard=function(i){const r=_tc.apply(this,arguments);forget(i);return r};
+ const _tc=throwCard;throwCard=function(i,c){const r=_tc.apply(this,arguments);forget(i);try{(S.lastThrow=S.lastThrow||[])[i]={r:c&&c.r,lone:S.players[i].hand.length===1}}catch(e){}return r};
  const _dc=drawCards;drawCards=function(i){const r=_dc.apply(this,arguments);forget(i);return r}}
 // how likely a sleeping opponent can cut a war on rank r (0 when we saw him let one go by)
 const sleeperRisk=(i,r)=>{let risk=0;S.players.forEach((p,j)=>{if(!opp(i,j)||!lone(j))return;const m=MEM()[j];if(m&&m.noJ&&m.no[r])return;risk=Math.max(risk,m&&m.noJ?.6:1)});return risk};
@@ -317,7 +326,31 @@ function evalEat(i,o,c,L){const me=S.players[i],h=me.hand,r=o.r,t=o.t;
     if(kn(i,'v2',1)&&t.piles.some(x=>mate(i,x.j)&&(x.cards.some(c=>c.r==='JK')||sum(x.cards)>=50))&&!(bury&&def>=2)&&!take)sc-=200}
   if(L>=2){const own=exposed(me.pile);if(own&&own.rank!==r&&r!=='JK'){const ov=sum(own.cards);if(ov)sc+=ov*oppCan(i,own.rank,L)*.5*kn(i,'bury',1)}} // burying our open points
   if(L>=2&&t.g.length&&!useJ&&loneMate(i))sc+=kn(i,'pull',10); // a war on the ground gives the teammate on his last card a chance to cut
+  if(L>=4)sc+=legend(i,r,c,useJ,def,stake,gain,L);
   return sc}
+// ---- legend: read the table before opening a war ----
+function legend(i,r,c,useJ,def,stake,gain,L){let d=0;const n=S.players.length,canDraw=S.draw.length>0,h=S.players[i].hand;
+  // 1) the joker: with nothing to cover it and players behind who may take it back, keep it for a bigger war or for a teammate's pile in danger
+  if(useJ){const pO=oppCan(i,r,L);if(!def)d-=pO*kn(i,'lgJk',10);
+    let guard=0;S.players.forEach((q,j)=>{if(!mate(i,j))return;const e=exposed(q.pile);if(e){const v=sum(e.cards);if(v>=20)guard=Math.max(guard,v*oppCan(i,e.rank,L))}});d-=Math.min(40,guard*kn(i,'lgGuard',.2))}
+  // 2) the turn order. If this war is cut and won by player W, everyone between me and W who has no cards and was about to draw five is skipped.
+  let foeBeforeMate=0,sig=false;
+  if(canDraw){const pool=S.draw.length+S.players.reduce((m,p,j)=>j===i?m:m+p.hand.length,0);
+    if(pool){const u=unseen(i,r,L)+(r==='JK'?0:unseen(i,'JK',L)),q=Math.min(1,u/pool);
+      let j=nextIdx(i),g=0,foeWait=0,mateWait=0,pNone=1; // pNone: chance nobody before this seat has cut
+      while(j!==i&&g++<n){const p=S.players[j];
+        if(p.hand.length===0){if(opp(i,j))foeWait++;else mateWait++}
+        else{const m=MEM()[j];let pj=1-Math.pow(1-q,p.hand.length);if(lone(j)&&m&&m.noJ&&m.no[r])pj=0;
+          // 3) the signal: my teammate threw this very rank and went to sleep on one card. He most likely kept its twin to cut with.
+          const t=(S.lastThrow||[])[j];if(mate(i,j)&&lone(j)&&t&&t.lone&&t.r===r&&r!=='JK'&&!(m&&m.noJ&&m.no[r])){pj=Math.max(pj,kn(i,'lgSigP',.7));if(!sig){sig=true;foeBeforeMate=foeWait}}
+          if(mate(i,j))d+=pNone*pj*(foeWait*kn(i,'lgTauf',24)-mateWait*kn(i,'lgOwn',14));
+          else d-=pNone*pj*(mateWait*kn(i,'lgSkip',26));
+          pNone*=(1-pj)}
+        j=nextIdx(j)}}}
+  if(sig){d+=kn(i,'lgSig',10); // he cuts in, takes the war and draws five
+    // the joker tauf: nothing to eat with, an opponent right behind me is waiting to draw five, and my sleeping teammate can answer this rank
+    if(useJ&&foeBeforeMate>0&&!h.some(x=>x.r===r)){let back=kn(i,'jkEat',L>=3?Math.max(12,30-oppCan(i,r,L)*10):22);if(S.draw.length>6&&gain-pts(c)<kn(i,'jkReal',30))back+=kn(i,'jkWaste',80);if(h.length>=3&&S.draw.length>6&&gain-pts(c)<kn(i,'jkHoldV',60))back+=kn(i,'jkHold',80);d+=back*kn(i,'lgJT',1)+kn(i,'lgJTb',12)}}
+  return d}
 
 function bestEat(i,L,allowJ){const h=S.players[i].hand,jk=h.find(c=>c.r==='JK');let best=null,score=-Infinity;
   for(const o of options(i)){
@@ -416,6 +449,20 @@ aiWantsIntercept=function(j){let c=base.apply(this,arguments);try{const w=S.war;
 }catch(e){}return c};
 })();
 
+// ===================== Round 149: legend — do not feed the player sleeping on one card =====================
+// Cutting a war lets a sleeping opponent answer with his last card, win it and draw five. The legend cuts such a war only when it is
+// "مدبّل" (holds a second card to answer back), when it is defending its own side, when it is itself on its last card, or when the war is worth the risk.
+(function(){if(typeof aiWantsIntercept!=='function')return;const _w=aiWantsIntercept;
+aiWantsIntercept=function(j){const c=_w.apply(this,arguments);try{const p=S.players[j],lv=p.lv||(S.cfg&&S.cfg.level);if(!c||p.human||lv!=='legend')return c;
+  const w=S.war,k=p.k||{},K=(n,d)=>k[n]!=null?k[n]:d;if(!w||!S.draw.length)return c;
+  const h=p.hand,answers=h.filter(x=>x.r===w.rank||x.r==='JK').length;if(answers>=2||h.length===1)return c;
+  if(w.victims.some(v=>S.players[v]&&S.players[v].team===p.team))return c; // our pile is in it: defend
+  let risk=0;S.players.forEach((q,i)=>{if(q.team===p.team||!(q.hand.length===1)||i===w.leader)return;const m=(S.mem||[])[i];if(m&&m.noJ&&m.no[w.rank])return;risk=Math.max(risk,m&&m.noJ?.6:1)});
+  if(!risk)return c;const value=[...w.targets,...w.pot].reduce((a,x)=>a+(x.r==='JK'?50:['10','J','Q','K','A'].includes(x.r)?10:0),0);
+  if(value>=K('lgCutV',40))return c;return Math.random()<K('lgCutP',.25)?c:null}catch(e){return c}};
+})();
+
+
 // ===================== Round 91: more achievement stats, counted by the rules engine itself (the same code runs on the phone and on the server) =====================
 (function(){
 const ST=i=>{if(typeof S==='undefined'||!S||!S.players)return null;S.stats=S.stats||S.players.map(()=>({wars:0,best:0}));return S.stats[i]||(S.stats[i]={wars:0,best:0})};
@@ -423,13 +470,14 @@ const ST=i=>{if(typeof S==='undefined'||!S||!S.players)return null;S.stats=S.sta
 const _int=intercept;intercept=function(j,card){const ok=!!(S&&S.war&&card);try{if(ok){const w=S.war,me=S.players[j];(w.cutters=w.cutters||[]).push(j);if(me&&S.players[w.leader]&&S.players[w.leader].team!==me.team&&(w.victims||[]).some(v=>v!==j&&S.players[v]&&S.players[v].team===me.team)){const s=ST(j);if(s){s.faz=(s.faz||0)+1;/* a big pile saved (4+ cards or 50+ points): counts extra */const big=(w.fromPiles||[]).some(x=>x.j!==j&&S.players[x.j]&&S.players[x.j].team===me.team&&((x.cards||[]).length>=4||sum(x.cards||[])>=50));if(big)s.fazb=(s.fazb||0)+1}}}}catch(e){}const r=_int.apply(this,arguments);try{if(ok&&card.r==='JK'){const s=ST(j);if(s)s.jk=(s.jk||0)+1}}catch(e){}return r};
 // every war: biggest war won (cuts), war won on your last card, opponents' piles taken, a war-won pile dug out, how far behind your team has been
 const _res=resolveWar;resolveWar=function(){const w=S&&S.war;let pre=null;
-  try{if(w){const W=w.leader,p=S.players[W];pre={W,lone:W!==w.orig&&p.hand.length===0,cuts:Math.max(0,w.pot.length-1),
+  try{if(w){const W=w.leader,p=S.players[W];pre={W,orig:w.orig,jo:(w.pot[0]&&w.pot[0].r==='JK')?w.orig:null,lone:W!==w.orig&&p.hand.length===0,cuts:Math.max(0,w.pot.length-1),
     tsum:(S.stats||[]).reduce((n,x)=>n+((x&&x.tauf)||0),0),cut:(w.cutters||[]).slice(),opp:(w.fromPiles||[]).filter(x=>S.players[x.j]&&S.players[x.j].team!==p.team),cards:[...w.targets,...w.pot]}}}catch(e){pre=null}
   const r=_res.apply(this,arguments);
   try{if(pre){const s=ST(pre.W);if(s){s.bigwar=Math.max(s.bigwar||0,pre.cuts);if(pre.lone)s.lastw=(s.lastw||0)+1;
       if(pre.opp.length){s.pile=(s.pile||0)+pre.opp.length;if(pre.opp.some(x=>(x.cards||[]).some(c=>c&&c.wl)))s.dig=(s.dig||0)+1}}
-    {const t2=(S.stats||[]).reduce((n,x)=>n+((x&&x.tauf)||0),0);if(t2>pre.tsum){const s=ST(pre.W);if(s)s.tw=(s.tw||0)+(t2-pre.tsum);/* team tauf: a teammate answered in the same war (cut for you or you for him) and together you jumped the turn past the player waiting to draw five: both get it */const mates=[...new Set(pre.cut)].filter(t=>t!==pre.W&&S.players[t]&&S.players[t].team===S.players[pre.W].team);if(mates.length){if(s)s.ttw=(s.ttw||0)+1;mates.forEach(t=>{const m=ST(t);if(m){m.tw=(m.tw||0)+(t2-pre.tsum);m.ttw=(m.ttw||0)+1}})}}} // you jumped the turn past someone waiting to draw 5
+    {const t2=(S.stats||[]).reduce((n,x)=>n+((x&&x.tauf)||0),0);if(t2>pre.tsum){const s=ST(pre.W);if(s)s.tw=(s.tw||0)+(t2-pre.tsum);/* joker tauf: you had nothing to eat, so you opened with a joker on a number your teammate could answer (on the ground or on his own pile); he answered, won, and the turn jumped past the player after you */try{const jo=pre.jo;if(jo!=null&&jo!==pre.W&&S.players[jo]&&S.players[jo].team===S.players[pre.W].team&&pre.cut.includes(pre.W)){const q=ST(jo);if(q)q.jtw=(q.jtw||0)+1}else{/* the same play opened with an ordinary card: the opener shares the team tauf (smaller than the joker one) */const o=pre.orig;if(o!=null&&o!==pre.W&&S.players[o]&&S.players[o].team===S.players[pre.W].team&&pre.cut.includes(pre.W)&&!pre.cut.includes(o)){const q=ST(o);if(q)q.ttw=(q.ttw||0)+1}}}catch(e){}/* team tauf: a teammate answered in the same war (cut for you or you for him) and together you jumped the turn past the player waiting to draw five: both get it */const mates=[...new Set(pre.cut)].filter(t=>t!==pre.W&&S.players[t]&&S.players[t].team===S.players[pre.W].team);if(mates.length){if(s)s.ttw=(s.ttw||0)+1;mates.forEach(t=>{const m=ST(t);if(m){m.tw=(m.tw||0)+(t2-pre.tsum);m.ttw=(m.ttw||0)+1}})}}} // you jumped the turn past someone waiting to draw 5
     if(pre.cuts>=1)pre.cards.forEach(c=>{if(c)c.wl=1}); // this loot was fought over: digging it out later counts
+    /* golden joker hat: four jokers or more sitting in your pile at once; the most you held counts */S.players.forEach((pl,i)=>{try{const n=(pl.pile||[]).filter(c=>c&&c.r==='JK').length;if(n>=4){const q=ST(i);if(q){q.jkg=1;q.jkn=Math.max(q.jkn||0,n)}}}catch(e){}});
     const ts=S.teams.map((t,k)=>teamScore(k));S.players.forEach((pl,i)=>{const others=ts.filter((_,k)=>k!==pl.team);if(!others.length)return;const st=ST(i);if(st)st.low=Math.min(st.low||0,ts[pl.team]-Math.max(...others))})}}catch(e){}
   return r};
 })();

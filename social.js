@@ -71,7 +71,7 @@ async function http(req, res, url, body, live) {
         return { ...c, st: status(id), room: live && live.room ? live.room(id) : null, seen: R(id).seen || 0, last: last ? { t: last.t.slice(0, 60), ts: last.ts, mine: last.f === a.id } : null, unread: !!(last && last.f !== a.id && last.ts > (me.read[id] || 0)), canDm: canDm(a.id, id) } };
       const friends = Object.keys(me.friends).map(row).filter(Boolean).sort((x, y) => (y.st !== 'off') - (x.st !== 'off') || (y.last ? y.last.ts : 0) - (x.last ? x.last.ts : 0) || y.seen - x.seen);
       const chats = Object.keys(me.read).filter(id => !me.friends[id] && dms.has(pairKey(a.id, id))).map(row).filter(Boolean);
-      return send(200, { me: a.id, dm: me.dm, friends, chats, inReq: Object.keys(me.inReq).map(row).filter(Boolean), outReq: Object.keys(me.outReq).map(row).filter(Boolean), blocked: Object.keys(me.blocked).length });
+      return send(200, { me: a.id, dm: me.dm, watch: me.watch || 'all', friends, chats, inReq: Object.keys(me.inReq).map(row).filter(Boolean), outReq: Object.keys(me.outReq).map(row).filter(Boolean), blocked: Object.keys(me.blocked).length });
     }
     if (act === 'find') { const id = String(body.id || '').toLowerCase().replace(/[^0-9a-f]/g, ''); if (!isId(id) || id === a.id) return send(200, { err: 'nf' }); const c = await cardOf(id); if (!c) return send(200, { err: 'nf' });
       return send(200, { ...c, friend: !!me.friends[id], sent: !!me.outReq[id], got: !!me.inReq[id] }) }
@@ -88,7 +88,7 @@ async function http(req, res, url, body, live) {
       if (body.on === false) delete me.blocked[id]; else { me.blocked[id] = now; delete me.friends[id]; delete tr.friends[a.id]; delete me.inReq[id]; delete me.outReq[id]; delete tr.inReq[a.id]; delete tr.outReq[a.id] }
       touch('u:' + a.id); touch('u:' + id); return send(200, { ok: true }) }
     if (act === 'blocked') { const list = (await Promise.all(Object.keys(me.blocked).map(cardOf))).filter(Boolean); return send(200, { list }) }
-    if (act === 'privacy') { if (['all', 'friends', 'none'].includes(body.dm)) { me.dm = body.dm; touch('u:' + a.id) } return send(200, { ok: true, dm: me.dm }) }
+    if (act === 'privacy') { if (['all', 'friends', 'none'].includes(body.dm)) { me.dm = body.dm; touch('u:' + a.id) } if (['all', 'friends', 'none'].includes(body.watch)) { me.watch = body.watch; touch('u:' + a.id) } return send(200, { ok: true, dm: me.dm, watch: me.watch || 'all' }) }
     if (act === 'chat') { // open a private chat: the messages, and whether you may write
       const id = String(body.id || ''); if (!isId(id)) return send(200, { err: 'nf' }); const c = await cardOf(id); if (!c) return send(200, { err: 'nf' });
       const d = dms.get(pairKey(a.id, id)) || [], after = +body.after || 0; me.read[id] = now; touch('u:' + a.id);
@@ -127,4 +127,9 @@ async function http(req, res, url, body, live) {
 }
 // the server tells us someone is online (websocket) so "last seen" stays right while they play
 function seenNow(id) { if (!isId(id)) return; const r = R(id), now = Date.now(); if (now - r.seen > 30000) { r.seen = now; touch('u:' + id) } }
-module.exports = { http, seenNow, ready };
+// may this account watch a game that player is in? (round 145: each player chooses who may watch: everyone, friends only, nobody; a blocked player never can)
+// the answer is 'ok', or why not: 'blocked' | 'closed' | 'friends'
+function canWatch(watcher, player) { if (!player || watcher === player) return 'ok'; const t = rec.get(player); if (!t) return 'ok';
+  if (watcher && (t.blocked[watcher] || (rec.get(watcher) || { blocked: {} }).blocked[player])) return 'blocked';
+  const w = t.watch || 'all'; if (w === 'all') return 'ok'; if (w === 'none') return 'closed'; return watcher && t.friends[watcher] ? 'ok' : 'friends' }
+module.exports = { http, seenNow, ready, canWatch };
