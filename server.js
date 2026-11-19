@@ -270,10 +270,10 @@ function joinRoom(c, room, data, reply) {
   toRoom(room, 'room', pub(room));
 }
 // by the best rank in the room: newcomers meet normal computers, sergeants and up meet hard ones, majors and up the strongest
-function botLevel(r) { let top = 0; for (const m of r.members || []) if (!m.watch && m.prof && m.prof.rp > top) top = m.prof.rp; return top >= 1900 ? 'pro' : top >= 400 ? 'hard' : 'normal' }
+function botLevel(r) { let top = 0; for (const m of r.members || []) if (!m.watch && m.prof && m.prof.rp > top) top = m.prof.rp; const hum = (r.members || []).filter(m => !m.watch); return hum.length && hum.every(m => !(m.prof && m.prof.games >= 3)) ? 'easy' : 'legend' /* the computers play legendary; only a table of brand-new players (fewer than 3 games each) gets the easy one */ }
 function startGame(r, cfg, ranked) {
   r.ranked = !!ranked;
-  const safe = { mode: ['solo', '2v2', '3v3'].includes(cfg.mode) ? cfg.mode : '2v2', decks: Math.min(12, Math.max(1, +cfg.decks || 4)), timer: Math.min(15, Math.max(2, +cfg.timer || 3)), level: cfg.level === 'easy' ? 'easy' : botLevel(r) /* the computers that fill the seats play at the level of the people in the room */, hints: !!cfg.hints, lang: cfg.lang === 'en' ? 'en' : 'ar', fx: cfg.fx !== false };
+  const safe = { mode: ['solo', '2v2', '3v3'].includes(cfg.mode) ? cfg.mode : '2v2', decks: Math.min(12, Math.max(1, +cfg.decks || 4)), timer: Math.min(15, Math.max(2, +cfg.timer || 3)), level: botLevel(r) /* the computers that fill the seats play at the level of the people in the room */, hints: !!cfg.hints, lang: cfg.lang === 'en' ? 'en' : 'ar', fx: cfg.fx !== false };
   if (r.qt) { clearTimeout(r.qt); r.qt = null; }
   if (r.game) r.game.stop();
   try { r.game = new Game(r, safe, { send: (sid, type, d) => send(clients.get(sid), type, d), war: (seat, gain) => reward(r, seat, a => ACC.warWon(a, gain)), over: g => { STATS.gameEnd('online', Date.now() - (r.t0 || Date.now())); try { const S = g.S, E = g.ctx.__ctx(), sc = S.teams.map((t, k) => E.teamScore(k)), best = Math.max(...sc), wk = sc.indexOf(best), tie = sc.filter(x => x === best).length > 1; STATS.endGameRec(r.gDay, r.gIdx, { end: Date.now(), min: Math.round((Date.now() - r.t0) / 6000) / 10, won: tie ? 'تعادل' : S.players.filter(p => p.team === wk).map(p => p.name + (p.human ? '' : ' 🤖')).join(' + '), score: sc.join('-') }) } catch (e) {} const ranked = !!r.ranked, res = g.results(); const keyOf = seat => { const m = r.members.find(y => !y.watch && y.seat === seat); return m && m.atoken ? crypto.createHash('sha256').update(String(m.atoken)).digest('hex').slice(0, 12) : null };
@@ -282,7 +282,7 @@ function startGame(r, cfg, ranked) {
 }
 const QUICK_WAIT = 15000;
 const QMODES = { '2v2': 4, '3v3': 6, solo: 4 }; // kind of quick game -> seats at the table
-function quickGo(r) { if (!rooms.has(r.code) || r.started || !r.members.some(m => !m.watch)) return; startGame(r, { mode: QMODES[r.qmode] ? r.qmode : '2v2', decks: 4, timer: 3, level: 'normal' }, true); }
+function quickGo(r) { if (!rooms.has(r.code) || r.started || !r.members.some(m => !m.watch)) return; startGame(r, { mode: QMODES[r.qmode] ? r.qmode : '2v2', decks: 4, timer: 3, level: 'legend' }, true); }
 
 function reward(r, seat, fn) { const m = r.members.find(x => !x.watch && x.seat === seat); if (!m || !m.atoken) return;
   ACC.load(m.atoken).then(a => a && fn(a)).then(me => { if (!me) return; send(clients.get(m.sid), 'me', me); m.prof = { ...(m.prof || {}), level: me.st.level, rp: me.st.rp, streak: me.st.streak, wins: me.st.wins, games: me.st.games, wars: me.st.wars } }).catch(e => console.error('reward', e)); }

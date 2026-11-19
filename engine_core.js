@@ -323,7 +323,10 @@ function evalEat(i,o,c,L){const me=S.players[i],h=me.hand,r=o.r,t=o.t;
     const pull=L>=2&&kn(i,'mpull',1)&&mates.some(lone),bury=L>=2&&kn(i,'mbury',1)&&def>=1&&h.some(x=>x!==c&&x.r!==r&&x.r!=='JK'&&onGround(x.r));
     if(!(pull||bury||take))sc-=(mateVal*(L>=2?1.2:1)+15)*kn(i,'mate',1);
     // a teammate's pile holding a joker or 50+ points: never put it up for grabs, unless we can cover it twice over
-    if(kn(i,'v2',1)&&t.piles.some(x=>mate(i,x.j)&&(x.cards.some(c=>c.r==='JK')||sum(x.cards)>=50))&&!(bury&&def>=2)&&!take)sc-=200}
+    if(kn(i,'v2',1)&&t.piles.some(x=>mate(i,x.j)&&(x.cards.some(c=>c.r==='JK')||sum(x.cards)>=50))&&!(bury&&def>=2)&&!take)sc-=200 // round 163: UNCOVERING. Eating on a teammate's pile lifts the cards that cover it; when a rich war lies under that cover (he won it and buried it with a card or two), it is open to everybody the moment I do it. The old guard only looked at the open group, so it never saw the war underneath. Count what lies under, at full risk, unless I hold two cards to defend it, and never put a joker or 50+ points under it up for grabs.
+}
+  if(L>=2&&!take&&kn(i,'uncov',1)){let worst=0;t.piles.forEach(x=>{if(x.j===i||!mate(i,x.j))return;const pl=S.players[x.j].pile,rest=pl.slice(0,pl.length-x.n),un=rest.length?exposed(rest):null;if(!un)return;const uv=sum(un.cards),hasJ=un.cards.some(c=>c.r==='JK');if(uv<15&&!hasJ)return;
+      const danger=Math.max(.4,oppCan(i,un.rank,L));let pen=uv*danger*kn(i,'uncovK',1.7)+(hasJ?60:0)+(uv>=50?120:0);if(def>=2)pen*=.5;worst=Math.max(worst,pen)});sc-=worst}
   if(L>=2){const own=exposed(me.pile);if(own&&own.rank!==r&&r!=='JK'){const ov=sum(own.cards);if(ov)sc+=ov*oppCan(i,own.rank,L)*.5*kn(i,'bury',1)}} // burying our open points
   if(L>=2&&t.g.length&&!useJ&&loneMate(i))sc+=kn(i,'pull',10); // a war on the ground gives the teammate on his last card a chance to cut
   if(L>=4)sc+=legend(i,r,c,useJ,def,stake,gain,L);

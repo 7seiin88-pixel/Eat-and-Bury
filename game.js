@@ -5,6 +5,21 @@ const vm = require('vm'), fs = require('fs'), path = require('path');
 const CORE = fs.readFileSync(path.join(__dirname, 'engine_core.js'), 'utf8');
 const SCRIPT = new vm.Script(CORE + '\n;function __getS(){return S}\nfunction __setGen(){gen++}\nfunction __ctx(){return {sum,teamScore,nextIdx,isLone,ORDER,canThrow,throwable,mustNow,mustEat,canSleep,onGround}}\n', { filename: 'engine_core.js' });
 const TURN_MS = 10000, AWAY_MS = 4000;
+// the legend computer thinks in a helper thread (mcworker.js); if it is busy or late the computer plays as the pro would
+const MCSTAT = { ask: 0, used: 0, late: 0, err: 0 };
+let MCW = null, MCSEQ = 0, MCWAIT = new Map(), MCDEAD = false;
+function mcBoot() {
+  if (MCW || MCDEAD) return MCW;
+  try {
+    const { Worker } = require('worker_threads'); MCW = new Worker(path.join(__dirname, 'mcworker.js'));
+    MCW.on('message', m => { const cb = MCWAIT.get(m.id); if (cb) { MCWAIT.delete(m.id); cb(m.err ? null : m.act) } });
+    MCW.on('error', e => { console.error('mcworker', e); MCDEAD = true; MCW = null; for (const cb of MCWAIT.values()) cb(null); MCWAIT.clear() });
+    MCW.on('exit', () => { MCW = null; for (const cb of MCWAIT.values()) cb(null); MCWAIT.clear() });
+  } catch (e) { MCDEAD = true; MCW = null }
+  return MCW;
+}
+function mcAsk(snap, seat, cb) { const w = mcBoot(); if (!w || MCWAIT.size >= 3) return cb(null); const id = ++MCSEQ; MCSTAT.ask++; MCWAIT.set(id, cb); w.postMessage({ id, seat, snap, opts: { K: 12, ms: 350, seed: (Date.now() & 0x7fffffff) } }); setTimeout(() => { if (MCWAIT.has(id)) { MCWAIT.delete(id); MCSTAT.late++; cb(null) } }, 1400) }
+
 
 class Game {
   constructor(room, cfg, hooks) {
@@ -33,6 +48,18 @@ class Game {
     const s0 = E.startTurn; E.startTurn = function (i) { const S = self.S; if (S) S.moves = (S.moves || 0) + 1; s0(i); const S2 = self.S; if (S2 && S2.turn === i && S2.phase === 'choose' && !S2.chain) self.push({ t: 'turn', s: i }) };
     // names and who is a person, then deal
     E.newGame({ mode: cfg.mode, decks: cfg.decks, timer: cfg.timer, level: cfg.level, hints: !!cfg.hints, fx: cfg.fx !== false });
+    if (cfg.level === 'legend') {
+      const aiOrig = ctx.aiChoose;
+      ctx.aiChoose = function (i) {
+        const S = self.S, p = S && S.players && S.players[i];
+        if (!p || p.human || S.war || S.phase !== 'choose' || self.dead) return aiOrig.apply(this, arguments);
+        const key = S.turn + '|' + p.hand.map(c => c.id).join(','), still = () => self.S === S && !self.dead && !S.war && S.phase === 'choose' && S.turn === i && (S.turn + '|' + S.players[i].hand.map(c => c.id).join(',')) === key;
+        const snap = JSON.parse(JSON.stringify({ cfg: S.cfg, teams: S.teams, turn: S.turn, phase: S.phase, war: null, ground: S.ground, passes: S.passes, lone: S.lone, wasLone: S.wasLone, moves: S.moves, stats: S.stats, mem: S.mem, lastThrow: S.lastThrow, drawN: S.draw.length,
+          players: S.players.map((q, j) => ({ name: q.name, team: q.team, pile: q.pile, hand: j === i ? q.hand : [], n: q.hand.length, f: q.f })) }));
+        const me = this;
+        mcAsk(snap, i, act => { if (!still()) return; try { if (act && act.type === 'eat') { const c = S.players[i].hand.find(x => x.id === act.id); if (c) { MCSTAT.used++; return ctx.declareEat(i, c, act.r) } } } catch (e) { console.error('legend', e) } aiOrig.call(me, i) });
+      };
+    }
     this.syncSeats(true);
     { const S = this.S, ar = this.ctx.LANG === 'ar'; S.log[0] = ar ? `توزّعت ${S.cfg.decks} جناجف. يبدأ ${S.players[0].name}.` : `Dealt ${S.cfg.decks} decks. ${S.players[0].name} goes first.`; }
     this.clock = setInterval(() => this.tick(), 200);
@@ -113,4 +140,4 @@ class Game {
     return S.players.map((p, i) => ({ seat: i, won: !tie && rows[0].k === p.team, wars: (S.stats && S.stats[i] && S.stats[i].wars) || 0, best: (S.stats && S.stats[i] && S.stats[i].best) || 0, tauf: (S.stats && S.stats[i] && S.stats[i].tauf) || 0, team: p.team, ...(() => { const t = (S.stats && S.stats[i]) || {}, won = !tie && rows[0].k === p.team; return { fire: t.fire || 0, bigwar: t.bigwar || 0, jk: t.jk || 0, pile: t.pile || 0, dig: t.dig || 0, gifts: t.gifts || 0, lastw: t.lastw || 0, tw: t.tw || 0, faz: t.faz || 0, ttw: t.ttw || 0, fazb: t.fazb || 0, jtw: t.jtw || 0, jkg: t.jkg ? 1 : 0, jkn: t.jkn || 0, comeback: won && (t.low || 0) <= -300 ? 1 : 0 } })() })) }
   stop() { this.dead = true; clearInterval(this.clock); for (const h of this.timers) clearTimeout(h); this.timers.clear(); if (this.upT) clearTimeout(this.upT); try { this.ctx.__setGen() } catch (e) {} }
 }
-module.exports = { Game };
+module.exports = { Game, MCSTAT };
