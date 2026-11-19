@@ -136,7 +136,7 @@ function newCode() { let c; do { c = Math.random().toString(36).slice(2, 7).toUp
 const autoOf = a => { if (!a || typeof a !== 'object') return null; const k = v => { v = Math.floor(+v); return Number.isFinite(v) ? Math.max(-1, Math.min(300, v)) : -1; };
   const o = {}; for (const e of ['def', 'save', 'took', 'win', 'lost', 'winbig', 'tauf']) { o[e] = k(a[e]); o[e + '2'] = k(a[e + '2']); o[e + '3'] = k(a[e + '3']) }
   return { ...o, snd: String(a.snd || '').replace(/[^a-z]/g, '').slice(0, 12) }; };
-const pub = r => ({ code: r.code, host: r.host, started: r.started, priv: !!r.priv, theme: r.theme || '', mic: r.mic !== false, quick: !!r.quick, qmode: r.quick ? (r.qmode || '2v2') : '', qIn: r.qAt && !r.started ? Math.max(0, r.qAt - Date.now()) : 0, dw: r.dw ? DW.name(r.dw) : '', members: r.members.map(m => ({ sid: m.sid, name: m.name, seat: m.seat, mic: m.mic, away: !!m.away, watch: !!m.watch, prof: m.prof || null })) });
+const pub = r => ({ code: r.code, host: r.host, started: r.started, priv: !!r.priv, chat: (r.lchat || []).slice(-30), size: r.quick ? (QMODES[r.qmode] || 4) : (r.size === 6 ? 6 : 4), theme: r.theme || '', mic: r.mic !== false, quick: !!r.quick, qmode: r.quick ? (r.qmode || '2v2') : '', qIn: r.qAt && !r.started ? Math.max(0, r.qAt - Date.now()) : 0, dw: r.dw ? DW.name(r.dw) : '', members: r.members.map(m => ({ sid: m.sid, name: m.name, seat: m.seat, mic: m.mic, away: !!m.away, watch: !!m.watch, prof: m.prof || null })) });
 const GRACE = 3 * 60 * 1000; // keep a player's seat this long after they lose connection
 const token = () => crypto.randomBytes(12).toString('hex');
 const toRoom = (r, type, data) => r.members.forEach(m => send(clients.get(m.sid), type, data));
@@ -182,6 +182,7 @@ function onMessage2(c, { type, data = {}, rid }) {
       if (a) a.seat = data.b; if (b) b.seat = data.a;
       return toRoom(r, 'room', pub(r));
     }
+    case 'rsize': { if (!r || r.host !== c.id || r.started || r.quick) return; const n = +data.n === 6 ? 6 : 4; if (n === 4 && r.members.filter(m => !m.watch).length > 4) return; r.size = n; return toRoom(r, 'room', pub(r)); } // the host picks a table of 4 or 6
     case 'start': { if (!r || r.host !== c.id) return; return startGame(r, data.cfg || {}); }
     case 'reopen': if (!r || r.host !== c.id) return; if (r.game) { r.game.stop(); r.game = null; } r.started = false; return toRoom(r, 'room', pub(r));
     case 'up': return; // (old app versions) the server sends the table now
@@ -193,6 +194,11 @@ function onMessage2(c, { type, data = {}, rid }) {
         return;
       }
       if (data && data.a === 'gift') STATS.bump('gifts'); return r.game.act(m.seat, data || {});
+    }
+    case 'lchat': { // chat in the room page before the game starts
+      if (!r || r.started) return; const m = r.members.find(x => x.sid === c.id); if (!m || m.watch) return; const now = Date.now(); if (now - (m.lcT || 0) < 700) return; m.lcT = now;
+      const text = String(data && data.text || '').replace(/\s+/g, ' ').trim().slice(0, 100); if (!text) return;
+      const msg = { from: m.name, seat: m.seat, text, t: now }; (r.lchat = r.lchat || []).push(msg); if (r.lchat.length > 40) r.lchat.shift(); return toRoom(r, 'lchat', msg);
     }
     case 'mic': { if (!r) return; const m = r.members.find(x => x.sid === c.id); if (m) { m.mic = !!data.on && !!r.priv && r.mic !== false; toRoom(r, 'room', pub(r)); } return; }
     case 'rtc': // voice chat signalling
@@ -265,7 +271,7 @@ function joinRoom(c, room, data, reply) {
   }
   const used = new Set(room.members.map(m => m.seat)); let seat = 1; while (used.has(seat)) seat++;
   const tk = token();
-  room.members.push(member(c, data.name, seat, tk)); c.room = room.code;
+  room.members.push(member(c, data.name, seat, tk)); c.room = room.code; if (!room.quick && seat >= 4) room.size = 6;
   reply({ ok: true, room: pub(room), me: c.id, token: tk }); sweepWatch(room, c.aid);
   toRoom(room, 'room', pub(room));
 }
@@ -274,6 +280,7 @@ function botLevel(r) { let top = 0; for (const m of r.members || []) if (!m.watc
 function startGame(r, cfg, ranked) {
   r.ranked = !!ranked;
   const safe = { mode: ['solo', '2v2', '3v3'].includes(cfg.mode) ? cfg.mode : '2v2', decks: Math.min(12, Math.max(1, +cfg.decks || 4)), timer: Math.min(15, Math.max(2, +cfg.timer || 3)), level: botLevel(r) /* the computers that fill the seats play at the level of the people in the room */, hints: !!cfg.hints, lang: cfg.lang === 'en' ? 'en' : 'ar', fx: cfg.fx !== false };
+  if (!r.quick && r.members.filter(m => !m.watch).length > 4) safe.mode = '3v3'; // more than four people at the table: it has to be 3 against 3
   if (r.qt) { clearTimeout(r.qt); r.qt = null; }
   if (r.game) r.game.stop();
   try { r.game = new Game(r, safe, { send: (sid, type, d) => send(clients.get(sid), type, d), war: (seat, gain) => reward(r, seat, a => ACC.warWon(a, gain)), over: g => { STATS.gameEnd('online', Date.now() - (r.t0 || Date.now())); try { const S = g.S, E = g.ctx.__ctx(), sc = S.teams.map((t, k) => E.teamScore(k)), best = Math.max(...sc), wk = sc.indexOf(best), tie = sc.filter(x => x === best).length > 1; STATS.endGameRec(r.gDay, r.gIdx, { end: Date.now(), min: Math.round((Date.now() - r.t0) / 6000) / 10, won: tie ? 'تعادل' : S.players.filter(p => p.team === wk).map(p => p.name + (p.human ? '' : ' 🤖')).join(' + '), score: sc.join('-') }) } catch (e) {} const ranked = !!r.ranked, res = g.results(); const keyOf = seat => { const m = r.members.find(y => !y.watch && y.seat === seat); return m && m.atoken ? crypto.createHash('sha256').update(String(m.atoken)).digest('hex').slice(0, 12) : null };
