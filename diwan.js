@@ -3,6 +3,7 @@
 'use strict';
 const crypto = require('crypto'), fs = require('fs'), path = require('path');
 const ACC = require('./accounts');
+const CLEAN = (() => { try { return require('./clean') } catch (e) { return { mask: x => x } } })();
 const MEMBERS_MAX = 50, CHAT_KEEP = 80, DW_PRICE = 3000; // a new diwaniya costs rupees; VIP members get one free
 const maxFor = a => ACC.isVip(a) ? 2 : 1; // how many diwaniyas a player can be in
 const freeDw = a => ACC.isVip(a) && a.dwFree !== a.vipStart;
@@ -34,7 +35,7 @@ const persist = d => Promise.resolve(saveDw && saveDw(d)).catch(e => console.err
 function newCode() { let c; do { c = 'D' + crypto.randomBytes(3).toString('hex').toUpperCase().slice(0, 5) } while (byCode.has(c)); return c }
 
 // what we show about a member (refreshed whenever they open the diwaniya)
-const snap = a => ({ name: a.prof.name || 'لاعب', av: a.prof.av, frame: a.prof.frame, rp: a.st.rp, vip: ACC.isVip(a), verified: !!a.verified, title: ACC.titleOf(a), level: 1 + Math.floor(Math.sqrt((a.st.xp || 0) / 40)) });
+const snap = a => ({ name: a.prof.name || 'لاعب', av: a.prof.av, frame: a.prof.frame, rp: a.st.rp, vip: ACC.isVip(a), verified: !!a.verified, title: ACC.titleOf(a), games: a.st.games || 0, wins: a.st.wins || 0, wars: a.st.wars || 0, bstr: a.st.bestStreak || 0, ach: Object.keys(a.st.ach || {}).sort().join(','), level: 1 + Math.floor(Math.sqrt((a.st.xp || 0) / 40)) });
 function touch(d, a) { const m = d.members[a.id]; if (!m) return; const s = snap(a); let ch = false; for (const k in s) if (m[k] !== s[k]) { m[k] = s[k]; ch = true } m.seen = Date.now(); if (ch) { d.ver++; persist(d) } }
 const isMember = (id, aid) => { const d = all.get(id); return !!(d && aid && d.members[aid]) && !(locked.get(aid) || new Set()).has(id) };
 const myDw = a => (a.dw || []).filter(id => all.has(id) && all.get(id).members[a.id]);
@@ -55,7 +56,7 @@ async function join(a, code) {
   if (d.members[a.id]) return { ok: true, id: d.id };
   if (myDw(a).length >= maxFor(a)) return { err: 'limit' };
   if (Object.keys(d.members).length >= MEMBERS_MAX) return { err: 'full' };
-  d.members[a.id] = { ...snap(a), role: '', joined: Date.now(), seen: Date.now() }; d.ver++;
+  d.members[a.id] = { ...snap(a), role: '', joined: Date.now(), seen: Date.now() }; d.ver++; if (d.inv) delete d.inv[a.id];
   sys(d, (a.prof.name || 'لاعب') + ' دخل الديوانية'); await persist(d); a.dw = [...myDw(a), d.id]; await ACC.save(a); return { ok: true, id: d.id };
 }
 async function leave(a, id) {
@@ -85,7 +86,7 @@ function sys(d, text) { d.chat.push({ s: 1, t: short(text, 80), ts: Date.now() }
 const lastMsg = new Map(), seen = new Map(); // seen: the app was open in the last minute
 async function chat(a, id, text) {
   const d = all.get(id); if (!d || !d.members[a.id]) return { err: 'no' }; if (lockOf(a).includes(id)) return { err: 'locked' };
-  const t = short(text, 200); if (!t) return { ok: true };
+  const t = CLEAN.mask(short(text, 200)); if (!t) return { ok: true };
   const now = Date.now(); if (now - (lastMsg.get(a.id) || 0) < 700) return { err: 'slow' }; lastMsg.set(a.id, now);
   d.chat.push({ a: a.id, n: a.prof.name || 'لاعب', t, ts: now }); if (d.chat.length > CHAT_KEEP) d.chat.splice(0, d.chat.length - CHAT_KEEP);
   await persist(d); return { ok: true };
@@ -94,14 +95,48 @@ async function chat(a, id, text) {
 // the diwaniya screen: members (only when something changed), who is on, its tables and new chat messages
 function view(a, id, q, live) {
   const d = all.get(id); if (!d || !d.members[a.id]) return { err: 'gone' };
-  touch(d, a); const isLocked = lockOf(a).includes(id);
+  touch(d, a); if (roll(d)) { d.ver++; persist(d) } const isLocked = lockOf(a).includes(id);
   const st = {}; for (const k of Object.keys(d.members)) st[k] = live.status(k);
   const tables = live.tables(d.id);
   const after = +q.after || 0;
   return { locked: isLocked, id: d.id, code: d.code, name: d.name, icon: d.icon, color: d.color, owner: d.owner, me: a.id, ver: d.ver, max: MEMBERS_MAX,
     members: q.ver == d.ver ? null : Object.entries(d.members).map(([k, m]) => ({ id: k, ...m })),
-    st, tables, chat: d.chat.filter(m => m.ts > after).slice(-40) };
+    rank: q.ver == d.ver ? null : { w: d.rk.w, m: d.rk.m, star: d.star || '', starN: d.starN || {}, wp: Object.fromEntries(Object.keys(d.members).map(k => [k, partner(d, k)]).filter(x => x[1])) },
+    inv: Object.keys(d.inv || {}), st, tables, chat: d.chat.filter(m => m.ts > after).slice(-40) };
 }
+// invite a friend from inside the game: he gets a question, and joins only if he says yes
+async function invite(a, id, who, live) {
+  const d = all.get(id); if (!d || !d.members[a.id]) return { err: 'no' }; who = String(who || '');
+  if (d.members[who]) return { ok: true }; if (!(live && live.isFriend && live.isFriend(a.id, who))) return { err: 'no' };
+  if (Object.keys(d.members).length >= MEMBERS_MAX) return { err: 'full' };
+  d.inv = d.inv || {}; d.inv[who] = { by: a.id, n: a.prof.name || 'لاعب', ts: Date.now() }; d.ver++; await persist(d); return { ok: true };
+}
+const pend = a => { const out = []; for (const d of all.values()) { const v = d.inv && d.inv[a.id]; if (v && !d.members[a.id]) out.push({ id: d.id, name: d.name, icon: d.icon, by: v.n, ts: v.ts }) } return out };
+async function invAnswer(a, id, yes) {
+  const d = all.get(id); if (!d || !d.inv || !d.inv[a.id]) return { err: 'notfound' };
+  delete d.inv[a.id]; d.ver++; await persist(d); if (!yes) return { ok: true }; return join(a, d.code);
+}
+// ---------- the diwaniya ranking: games played at its tables, this week and this month (Kuwait time, the week starts on Sunday) ----------
+const KW = 3 * 3600e3;
+const weekNo = t => Math.floor((Math.floor((t + KW) / 864e5) + 4) / 7);
+const monthKey = t => { const x = new Date(t + KW); return x.getUTCFullYear() + '-' + (x.getUTCMonth() + 1) };
+function roll(d) {
+  const now = Date.now(), wk = weekNo(now), mk = monthKey(now); d.rk = d.rk || { w: {}, m: {} }; let ch = false;
+  if (d.wk !== wk) { // a new week: the one who won most last week becomes the star of the week
+    let star = null; if (d.wk === wk - 1) { const top = Object.entries(d.rk.w).filter(([k, v]) => d.members[k] && v.wn > 0).sort((x, y) => y[1].wn - x[1].wn || y[1].wars - x[1].wars || x[1].g - y[1].g)[0]; if (top) { star = top[0]; d.starN = d.starN || {}; d.starN[star] = (d.starN[star] || 0) + 1 } }
+    d.star = star; d.rk.w = {}; d.wk = wk; ch = true; }
+  if (d.mk !== mk) { d.rk.m = {}; d.mk = mk; ch = true }
+  return ch;
+}
+function played(id, rows) {
+  const d = all.get(id); if (!d) return; roll(d); rows = rows.filter(x => x && d.members[x.id]); if (!rows.length) return;
+  for (const x of rows) { for (const p of ['w', 'm']) { const o = d.rk[p][x.id] = d.rk[p][x.id] || { g: 0, wn: 0, wars: 0 }; o.g++; if (x.won) o.wn++; o.wars += x.wars || 0 }
+    for (const y of rows) if (y.id !== x.id && y.team === x.team) { d.with = d.with || {}; const w = d.with[x.id] = d.with[x.id] || {}; w[y.id] = (w[y.id] || 0) + 1 } }
+  d.ver++; persist(d);
+}
+const partner = (d, id) => { const w = d.with && d.with[id]; if (!w) return ''; const t = Object.entries(w).filter(([k]) => d.members[k]).sort((x, y) => y[1] - x[1])[0]; return t ? t[0] : '' };
+// a member opened a table: a line in the chat, and the list of members (the server tells the ones who are online)
+function opened(id, name) { const d = all.get(id); if (!d) return []; sys(d, short(name, 20) + ' فتح طاولة 🃏'); persist(d); return Object.keys(d.members) }
 function mine(a) { return myDw(a).map(id => { const d = all.get(id); return { id, name: d.name, icon: d.icon, color: d.color, code: d.code, n: Object.keys(d.members).length } }) }
 
 async function http(req, res, url, body, live) {
@@ -109,9 +144,9 @@ async function http(req, res, url, body, live) {
   await ready;
   const a = await ACC.load(String(req.headers.authorization || '').replace(/^Bearer /, '')); if (!a) return send(401, { err: 'auth' });
   const act = url.slice('/api/dw/'.length); seen.set(a.id, Date.now());
-  if (act === 'ping') return send(200, { ok: true });
+  if (act === 'ping') return send(200, { ok: true, inv: pend(a) });
   try {
-    if (act === 'mine') { lockOf(a); return send(200, { list: mine(a), max: maxFor(a), vip: ACC.isVip(a), free: freeDw(a), price: DW_PRICE, icons: ICONS, colors: COLORS }) }
+    if (act === 'mine') { lockOf(a); return send(200, { inv: pend(a), list: mine(a), max: maxFor(a), vip: ACC.isVip(a), free: freeDw(a), price: DW_PRICE, icons: ICONS, colors: COLORS }) }
     if (act === 'create') { const r = await create(a, body); if (r.ok) r.me = ACC.me(a); return send(200, r) }
     if (act === 'join') return send(200, await join(a, body.code));
     if (act === 'leave') return send(200, await leave(a, String(body.id)));
@@ -119,8 +154,10 @@ async function http(req, res, url, body, live) {
     if (act === 'role') return send(200, await role(a, String(body.id), String(body.who), body.role));
     if (act === 'edit') return send(200, await edit(a, String(body.id), body));
     if (act === 'chat') return send(200, await chat(a, String(body.id), body.text));
+    if (act === 'invite') return send(200, await invite(a, String(body.id), body.who, live));
+    if (act === 'invanswer') return send(200, await invAnswer(a, String(body.id), !!body.yes));
     if (act === 'view') return send(200, view(a, String(body.id), body, live));
     return send(404, { err: 'nf' });
   } catch (e) { console.error('dw', e); return send(500, { err: 'server' }) }
 }
-module.exports = { http, isMember, recent: aid => Date.now() - (seen.get(aid) || 0) < 45000, name: id => (all.get(id) || {}).name || '' };
+module.exports = { http, isMember, opened, played, recent: aid => Date.now() - (seen.get(aid) || 0) < 45000, name: id => (all.get(id) || {}).name || '' };

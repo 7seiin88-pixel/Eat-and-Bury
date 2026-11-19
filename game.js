@@ -1,6 +1,8 @@
 // حفر ودفن: the server runs every online game. Same rules as the app (engine_core.js is generated from it),
 // so no player's phone is in charge any more: nobody waits for a slow "host" and nobody can cheat by editing the page.
 'use strict';
+const CLEAN = (() => { try { return require('./clean') } catch (e) { return { mask: x => x } } })();
+
 const vm = require('vm'), fs = require('fs'), path = require('path');
 const CORE = fs.readFileSync(path.join(__dirname, 'engine_core.js'), 'utf8');
 const SCRIPT = new vm.Script(CORE + '\n;function __getS(){return S}\nfunction __setGen(){gen++}\nfunction __ctx(){return {sum,teamScore,nextIdx,isLone,ORDER,canThrow,throwable,mustNow,mustEat,canSleep,onGround}}\n', { filename: 'engine_core.js' });
@@ -103,8 +105,8 @@ class Game {
       case 'pass': if (S.turn === seat && S.phase === 'choose' && !E.mustNow(seat) && !E.canThrow(seat)) { S.lone ? E.passTurn(seat) : E.endTurn(seat) } break;
       case 'cut': { const c = card(a.card); if (c && S.war && E.canIntercept(seat).includes(c)) E.intercept(seat, c, false); break } // fire only comes from the paid 'slam' act, never from a cut
       case 'gift': { const to = ((+a.to || 0) + seat) % n; if (to !== seat && /^[a-z0-9]{1,16}$/.test(String(a.id))) { this.push({ t: 'gift', f: seat, to, id: String(a.id) }); const st = this.statOf(seat); if (st) st.gifts = Math.min(60, (st.gifts || 0) + 1) } break }
-      case 'chat': this.push({ t: 'chat', s: seat, text: String(a.text || '').slice(0, 60) }); break;
-      case 'say': this.push({ t: 'say', s: seat, text: String(a.text || '').slice(0, 40) }); break;
+      case 'chat': this.push({ t: 'chat', s: seat, text: CLEAN.mask(String(a.text || '').slice(0, 60)) }); break;
+      case 'say': this.push({ t: 'say', s: seat, text: CLEAN.mask(String(a.text || '').slice(0, 40)) }); break;
       case 'slam': { const st = this.statOf(seat); if (st) st.fire = (st.fire || 0) + 1 } this.push({ t: 'slam', s: seat }); this.push({ t: 'say', s: seat, text: this.ctx.LANG === 'ar' ? 'صفقة!' : 'SLAM!' }); break;
     }
   }

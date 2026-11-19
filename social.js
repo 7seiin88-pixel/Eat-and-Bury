@@ -4,6 +4,7 @@
 'use strict';
 const fs = require('fs'), path = require('path');
 const ACC = require('./accounts');
+const CLEAN = (() => { try { return require('./clean') } catch (e) { return { mask: x => x } } })();
 const FRIENDS_MAX = 200, DM_KEEP = 60, DM_LEN = 300, REPORTS_KEEP = 2000;
 const REASONS = ['abuse', 'cheat', 'name', 'spam', 'quit', 'harass', 'other'];
 const short = (v, n) => String(v == null ? '' : v).replace(/[<>]/g, '').trim().slice(0, n);
@@ -103,7 +104,7 @@ async function http(req, res, url, body, live) {
       invites.set(id, { from: a.id, name: a.prof.name, code, ts: now }); live && live.push && live.push(id, 'social', { k: 'invite', from: a.id, name: a.prof.name, code });
       return send(200, { ok: true, st: status(id) }) }
     if (act === 'invdone') { invites.delete(a.id); return send(200, { ok: true }) }
-    if (act === 'send') { const id = String(body.id || ''); const t = short(body.text, DM_LEN); if (!isId(id) || !t) return send(200, { err: 'empty' });
+    if (act === 'send') { const id = String(body.id || ''); const t = CLEAN.mask(short(body.text, DM_LEN)); if (!isId(id) || !t) return send(200, { err: 'empty' });
       if (!canDm(a.id, id)) return send(200, { err: 'closed' });
       const k = pairKey(a.id, id); const d = dms.get(k) || []; const last = d.filter(m => m.f === a.id).slice(-5);
       if (last.length === 5 && now - last[0].ts < 8000) return send(200, { err: 'slow' });
@@ -132,4 +133,7 @@ function seenNow(id) { if (!isId(id)) return; const r = R(id), now = Date.now();
 function canWatch(watcher, player) { if (!player || watcher === player) return 'ok'; const t = rec.get(player); if (!t) return 'ok';
   if (watcher && (t.blocked[watcher] || (rec.get(watcher) || { blocked: {} }).blocked[player])) return 'blocked';
   const w = t.watch || 'all'; if (w === 'all') return 'ok'; if (w === 'none') return 'closed'; return watcher && t.friends[watcher] ? 'ok' : 'friends' }
-module.exports = { http, seenNow, ready, canWatch };
+// used by the diwaniyas: are these two friends, and a pop-up for a player (kept 3 minutes, shown by his next ping)
+const isFriend = (a, b) => { const r = rec.get(a); return !!(r && r.friends[b]) };
+const notify = (to, o) => { invites.set(to, { ...o, ts: Date.now() }) };
+module.exports = { http, seenNow, ready, canWatch, isFriend, notify };
