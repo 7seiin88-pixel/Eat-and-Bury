@@ -136,7 +136,7 @@ function newCode() { let c; do { c = Math.random().toString(36).slice(2, 7).toUp
 const autoOf = a => { if (!a || typeof a !== 'object') return null; const k = v => { v = Math.floor(+v); return Number.isFinite(v) ? Math.max(-1, Math.min(300, v)) : -1; };
   const o = {}; for (const e of ['def', 'save', 'took', 'win', 'lost', 'winbig', 'tauf']) { o[e] = k(a[e]); o[e + '2'] = k(a[e + '2']); o[e + '3'] = k(a[e + '3']) }
   return { ...o, snd: String(a.snd || '').replace(/[^a-z]/g, '').slice(0, 12) }; };
-const pub = r => ({ code: r.code, host: r.host, started: r.started, priv: !!r.priv, quick: !!r.quick, qmode: r.quick ? (r.qmode || '2v2') : '', qIn: r.qAt && !r.started ? Math.max(0, r.qAt - Date.now()) : 0, dw: r.dw ? DW.name(r.dw) : '', members: r.members.map(m => ({ sid: m.sid, name: m.name, seat: m.seat, mic: m.mic, away: !!m.away, watch: !!m.watch, prof: m.prof || null })) });
+const pub = r => ({ code: r.code, host: r.host, started: r.started, priv: !!r.priv, theme: r.theme || '', mic: r.mic !== false, quick: !!r.quick, qmode: r.quick ? (r.qmode || '2v2') : '', qIn: r.qAt && !r.started ? Math.max(0, r.qAt - Date.now()) : 0, dw: r.dw ? DW.name(r.dw) : '', members: r.members.map(m => ({ sid: m.sid, name: m.name, seat: m.seat, mic: m.mic, away: !!m.away, watch: !!m.watch, prof: m.prof || null })) });
 const GRACE = 3 * 60 * 1000; // keep a player's seat this long after they lose connection
 const token = () => crypto.randomBytes(12).toString('hex');
 const toRoom = (r, type, data) => r.members.forEach(m => send(clients.get(m.sid), type, data));
@@ -194,9 +194,9 @@ function onMessage2(c, { type, data = {}, rid }) {
       }
       if (data && data.a === 'gift') STATS.bump('gifts'); return r.game.act(m.seat, data || {});
     }
-    case 'mic': { if (!r) return; const m = r.members.find(x => x.sid === c.id); if (m) { m.mic = !!data.on && !!r.priv; toRoom(r, 'room', pub(r)); } return; }
+    case 'mic': { if (!r) return; const m = r.members.find(x => x.sid === c.id); if (m) { m.mic = !!data.on && !!r.priv && r.mic !== false; toRoom(r, 'room', pub(r)); } return; }
     case 'rtc': // voice chat signalling
-      if (!r || !r.priv || !r.members.some(m => m.sid === data.to)) return; // voice only in private rooms
+      if (!r || !r.priv || r.mic === false || !r.members.some(m => m.sid === data.to)) return; // voice only in private rooms that kept the mic on
       return send(clients.get(data.to), 'rtc', { from: c.id, data: data.data });
     case 'resume': { // come back after leaving the page (sharing on WhatsApp, a call, the screen locking)
       const room = rooms.get(String(data.code || '').toUpperCase().trim());
@@ -230,6 +230,11 @@ function onMessage2(c, { type, data = {}, rid }) {
       c.authP = ACC.load(tok).then(a => { if (!a) { c.atoken = null; return } goOnline(c, a.id); c.rp = a.st.rp || 0; c.pubProf = ACC.pub(a); const rr = rooms.get(c.room); const m = rr && rr.members.find(x => x.sid === c.id);
         if (m) { m.atoken = tok; m.aid = a.id; m.prof = ACC.pub(a); if (a.prof.name) m.name = clean(a.prof.name); if (rr.game) rr.game.syncSeats(); toRoom(rr, 'room', pub(rr)) } }).catch(() => {});
       return reply && rid ? reply({ ok: true }) : undefined; }
+    case 'rset': { // round 161: the host sets the room's theme (everyone plays on it) and whether the room has voice chat
+      if (!r || r.host !== c.id || r.started) return;
+      if (typeof data.theme === 'string') r.theme = /^[a-z0-9_-]{1,24}$/i.test(data.theme) ? data.theme : '';
+      if (typeof data.mic === 'boolean') { r.mic = data.mic; if (!r.mic) r.members.forEach(m => { m.mic = false; }); }
+      return toRoom(r, 'room', pub(r)); }
     case 'priv': { if (!r || r.host !== c.id) return; r.priv = !!data.on; return toRoom(r, 'room', pub(r)); }
     case 'leave': return drop(c, true, true);
   }

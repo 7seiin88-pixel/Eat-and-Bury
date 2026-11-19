@@ -223,7 +223,7 @@ function aiWantsIntercept(j){
 exposed=function(pile){if(!pile||!pile.length)return null;
   if(pile[pile.length-1].r==='JK'){let n=0;for(let k=pile.length-1;k>=0&&pile[k].r==='JK';k--)n++;return {rank:'JK',n,cards:pile.slice(pile.length-n)}}
   let rank=null,n=0;
-  for(let k=pile.length-1;k>=0;k--){const c=pile[k];if(c.r==='JK'){n++;continue}if(rank===null){rank=c.r;n++;continue}if(c.r===rank){n++;continue}break}
+  for(let k=pile.length-1;k>=0;k--){const c=pile[k];if(c.r==='JK'){if(c.wr===rank){n++;continue}break} /* round 160: a joker that was not won together with this rank ends the group, also when the same rank lies under it (two jokers eaten alone, then a 9 on top of older 9s: the 9 used to swallow the jokers) */ if(rank===null){rank=c.r;n++;continue}if(c.r===rank){n++;continue}break}
   while(n>0&&pile[pile.length-n].r==='JK'&&pile[pile.length-n].wr!==rank)n--; // a joker under the group stays with it only if it was won together with that rank
   return n?{rank,n,cards:pile.slice(pile.length-n)}:null};
 // a war won on a rank with jokers in it (e.g. a 10 eaten with a joker): the jokers are marked as part of that group,
