@@ -8,7 +8,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { Game } = require('./game');
+const { Game, MCSTAT } = require('./game');
 const ACC = require('./accounts');
 const DW = require('./diwan');
 const SO = require('./social');
@@ -35,7 +35,7 @@ const server = http.createServer((req, res) => {
       res.writeHead(204); res.end() }); return }
   if (url === '/api/admin/stats') { if (!STATS.okKey(req)) { res.writeHead(403, { 'Content-Type': 'application/json' }); return res.end('{"err":"no"}') }
     const started = [...rooms.values()].filter(r => r.started), inRooms = started.reduce((n, r) => n + r.members.filter(m => !m.watch && !m.away).length, 0);
-    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); return res.end(JSON.stringify(STATS.report({ connected: clients.size, rooms: started.length, waiting: rooms.size - started.length, playingOnline: inRooms, watching: [...rooms.values()].reduce((n, r) => n + r.members.filter(m => m.watch).length, 0) }))) }
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); return res.end(JSON.stringify(STATS.report({ connected: clients.size, rooms: started.length, waiting: rooms.size - started.length, playingOnline: inRooms, watching: [...rooms.values()].reduce((n, r) => n + r.members.filter(m => m.watch).length, 0), mcAsk: MCSTAT.ask, mcUsed: MCSTAT.used, mcLate: MCSTAT.late, mcErr: MCSTAT.err }))) }
   // voice relay (TURN) for players on mobile data: set TURN_URLS (comma separated), TURN_USER, TURN_PASS in the hosting settings
   if (url.split('?')[0] === '/api/ice') { const urls = String(process.env.TURN_URLS || '').split(',').map(x => x.trim()).filter(Boolean);
     const ice = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }]; if (urls.length) ice.push({ urls, username: process.env.TURN_USER || '', credential: process.env.TURN_PASS || '' });
@@ -180,11 +180,17 @@ function onMessage2(c, { type, data = {}, rid }) {
         const qm = QMODES[data && data.mode] ? data.mode : '2v2', cap = QMODES[qm]; // round 146: the quick game has three kinds, each with its own waiting tables
         const wait = [...rooms.values()].filter(r => r.quick && (r.qmode || '2v2') === qm && !r.started && r.members.filter(m => !m.watch).length < cap).sort((a, b) => (Math.abs(avg(a) - my) > 1500) - (Math.abs(avg(b) - my) > 1500) || a.qAt - b.qAt)[0];
         if (wait) { joinRoom(c, wait, data, reply); if (wait.members.filter(m => !m.watch).length >= cap) setTimeout(() => quickGo(wait), 1500); return; }
+        // round 181: the quick game starts at once. A table that has just started and still has a computer on a chair takes the next player (he takes that chair and its cards);
+        // otherwise a new table opens and deals immediately, computers on the other chairs, and people who press the button after him take those chairs.
+        const fresh = [...rooms.values()].filter(r => { try { if (!r.quick || !r.started || (r.qmode || '2v2') !== qm || !r.game || !r.n || !r.d0) return false; const S = r.game.S; if (!S || S.over) return false;
+          return r.members.filter(m => !m.watch).length < r.n && (1 - S.draw.length / r.d0) <= QUICK_LATE && Date.now() - (r.t0 || 0) < 120000 } catch (e) { return false } })
+          .sort((a, b) => b.members.filter(m => !m.watch).length - a.members.filter(m => !m.watch).length || (Math.abs(avg(a) - my) - Math.abs(avg(b) - my)))[0];
+        if (fresh) return joinRoom(c, fresh, data, reply);
         const tk = token();
-        const room = { code: newCode(), host: c.id, started: false, quick: true, qmode: qm, qAt: Date.now() + QUICK_WAIT, members: [member(c, data.name, 0, tk)] };
+        const room = { code: newCode(), host: c.id, started: false, quick: true, qmode: qm, qAt: Date.now(), members: [member(c, data.name, 0, tk)] };
         rooms.set(room.code, room); c.room = room.code; STATS.roomMade();
-        room.qt = setTimeout(() => quickGo(room), QUICK_WAIT);
         reply({ ok: true, room: pub(room), me: c.id, token: tk });
+        room.qt = setTimeout(() => quickGo(room), 150);
       });
     }
     case 'swap': { // host moves players between seats in the lobby
@@ -293,7 +299,7 @@ function joinRoom(c, room, data, reply) {
   toRoom(room, 'room', pub(room));
 }
 // by the best rank in the room: newcomers meet normal computers, sergeants and up meet hard ones, majors and up the strongest
-function botLevel(r) { let top = 0; for (const m of r.members || []) if (!m.watch && m.prof && m.prof.rp > top) top = m.prof.rp; const hum = (r.members || []).filter(m => !m.watch); return hum.length && hum.every(m => !(m.prof && m.prof.games >= 3)) ? 'easy' : 'legend' /* the computers play legendary; only a table of brand-new players (fewer than 3 games each) gets the easy one */ }
+function botLevel(r) { return 'legend' /* the computers in a room always play legendary, new players included */ }
 function startGame(r, cfg, ranked) {
   r.ranked = !!ranked;
   const safe = { mode: ['solo', '2v2', '3v3'].includes(cfg.mode) ? cfg.mode : '2v2', decks: Math.min(12, Math.max(1, +cfg.decks || 4)), timer: Math.min(15, Math.max(2, +cfg.timer || 3)), level: botLevel(r) /* the computers that fill the seats play at the level of the people in the room */, hints: !!cfg.hints, lang: cfg.lang === 'en' ? 'en' : 'ar', fx: cfg.fx !== false };
@@ -305,6 +311,7 @@ function startGame(r, cfg, ranked) {
   r.started = true; r.n = r.game.S.players.length; r.d0 = r.game.S.draw.length || 1; r.t0 = Date.now(); STATS.gameStart(r.ranked ? 'quick' : 'online'); { const hum = r.members.filter(m => !m.watch); r.gDay = STATS.DAY(); r.gIdx = STATS.addGame({ kind: r.ranked ? 'سريع' : (r.priv ? 'غرفة خاصة' : 'غرفة'), mode: safe.mode, names: hum.map(m => m.name), bots: Math.max(0, r.n - hum.length) }) } toRoom(r, 'room', pub(r)); toRoom(r, 'started', {}); r.game.flush();
 }
 const QUICK_WAIT = 15000;
+const QUICK_LATE = .2; // a quick table takes new players until a fifth of the draw pile is gone
 const QMODES = { '2v2': 4, '3v3': 6, solo: 4 }; // kind of quick game -> seats at the table
 function quickGo(r) { if (!rooms.has(r.code) || r.started || !r.members.some(m => !m.watch)) return; startGame(r, { mode: QMODES[r.qmode] ? r.qmode : '2v2', decks: 4, timer: 3, level: 'legend' }, true); }
 

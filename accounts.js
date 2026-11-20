@@ -206,6 +206,7 @@ async function save(a) { await store.put(a) }
 const SLAM_COST = 50; // the fire button costs rupees each time
 async function spend(a, n) { if (a.w.tokens < n) return null; a.w.tokens -= n; await store.put(a); return me(a) }
 
+const XFER = new Map(), XTRY = new Map();
 // ---------- HTTP: /api/... ----------
 async function http(req, res, url) {
   const send = (code, obj) => { res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(obj)) };
@@ -216,7 +217,15 @@ async function http(req, res, url) {
     if (url === '/api/admin/verify' && req.method === 'POST') { // you give the blue check yourself: ADMIN_KEY on Render, then the player's account number
       if (!process.env.ADMIN_KEY || req.headers['x-admin-key'] !== process.env.ADMIN_KEY) return send(403, { err: 'no' });
       const t = await store.byId(String(body.id || '')); if (!t) return send(404, { err: 'nf' }); t.verified = body.on !== false; await store.put(t); return send(200, { ok: true, verified: t.verified }) }
+    // move an account to another phone or browser: the old one asks for a 6-digit code (10 minutes, one use), the new one types it and gets the same account
+    if (url === '/api/xfer/use' && req.method === 'POST') { const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim(), now = Date.now();
+      const t = XTRY.get(ip) || { n: 0, t: now }; if (now - t.t > 600000) { t.n = 0; t.t = now } if (t.n >= 6) return send(429, { err: 'slow' });
+      const code = String(body.code || '').replace(/\D/g, ''), x = XFER.get(code);
+      if (!x || now > x.until) { t.n++; XTRY.set(ip, t); return send(404, { err: 'nf' }) }
+      XFER.delete(code); const acc = await load(x.token); if (!acc) return send(404, { err: 'nf' }); return send(200, { token: x.token, name: acc.prof.name || '' }) }
     const a = await load(tok); if (!a) return send(401, { err: 'auth' });
+    if (url === '/api/xfer/make' && req.method === 'POST') { const now = Date.now(); for (const [k, v] of XFER) if (now > v.until || v.id === a.id) XFER.delete(k);
+      let code; do { code = String(crypto.randomInt(100000, 1000000)) } while (XFER.has(code)); XFER.set(code, { id: a.id, token: tok, until: now + 600000 }); return send(200, { code, min: 10 }) }
     if (url === '/api/me') { const sz = season(a); const g = daily(a); const got = checkAch(a); let tt = false; if (TEST_MODE && !a.w.t100) { a.w.t100 = 1; tt = true; if (a.w.tokens < 100000) a.w.tokens = 100000 } /* test phase: everyone is topped up to 100,000 once */ if (g || got.length || sz || tt) await store.put(a); return send(200, me(a, g || got.length || sz ? { daily: g, ach: got, season: sz } : null)) }
     if (url === '/api/top') { const list = await store.top(50); const mine = await store.above(a.st.rp || 0);
       return send(200, { me: { pos: mine + 1, rp: a.st.rp || 0 }, list: list.map((x, k) => ({ pos: k + 1, id: x.id === a.id ? 'me' : '', name: x.prof.name || 'لاعب', av: /^p:/.test(x.prof.av || '') ? x.prof.av : (x.prof.av && x.prof.av.length < 40000 ? x.prof.av : 'p:0'), flag: x.prof.flag, rp: x.st.rp || 0, vip: isVip(x), verified: !!x.verified, title: titleOf(x) })) }) }
