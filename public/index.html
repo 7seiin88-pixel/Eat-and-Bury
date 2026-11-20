@@ -14991,7 +14991,7 @@ html body .fr-jking{background:conic-gradient(#ff3d6e,#ffd23f,#2ec4ff,#9b5cff,#f
 // 2) shop layout: front screen with four boxes; inside a box one section at a time (no ten-screen scroll); big preview for jokers
 (function(){
 if(typeof renderShop!=='function')return;
-let front=false;const sel={},tier={},only={};let stallName='';
+let front=false;const sel={},tier={},only={};let stallName='';let emoPart='ph';
 const css=document.createElement('style');css.textContent=`
 #shop .front159{padding:10px 12px 18px;direction:rtl}
 #shop .front159 .bal159{display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:10px 14px;margin-bottom:12px;font-weight:800}
@@ -15019,7 +15019,7 @@ const css=document.createElement('style');css.textContent=`
 #shop .stall168 .stb{display:flex;align-items:center;gap:10px;padding:17px 12px 11px}#shop .stall168 .big{font-style:normal;font-size:36px;width:50px;text-align:center;flex:none}
 #shop .stall168 .tx{flex:1;min-width:0;display:flex;flex-direction:column}#shop .stall168 .tx b{font-size:17px;font-weight:900}#shop .stall168 .tx small{font-size:12px;color:#bfae90;font-weight:700}
 #shop .stall168 .peek{display:flex;gap:5px;flex:none}#shop .stall168 .peek i{width:36px;height:36px;border-radius:10px;background:#120a08;font-style:normal;font-size:18px;display:grid;place-items:center;box-shadow:inset 0 0 0 1px rgba(242,210,122,.3)}
-#shop .sec159 .top159 b{font-size:16px;font-weight:900;color:#f2d27a}#shop .sec159.solo{background:none;border:0;padding:0 2px}
+#shop .sec159 .top159 b{font-size:16px;font-weight:900;color:#f2d27a}#shop .sec159.solo{padding:8px}#shop .sec159 .tabdock168+.dock168{border-top:1px solid rgba(242,210,122,.2);margin-top:8px;padding-top:10px}
 #shop .sec159 .dock168{display:flex;justify-content:space-around;gap:6px;padding:4px 0 2px}#shop .sec159 .dock168 button{border:0;background:none;color:#bfae90;font:inherit;font-size:12px;font-weight:800;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:0;min-width:64px}
 #shop .sec159 .dock168 button i{font-style:normal;display:grid;place-items:center;width:56px;height:56px;border-radius:50%;font-size:27px;background:#1a100b;box-shadow:inset 0 0 0 1.5px rgba(242,210,122,.35)}
 #shop .sec159 .dock168 button.on{color:#f2d27a}#shop .sec159 .dock168 button.on i{background:#f2d27a;box-shadow:0 0 16px rgba(242,210,122,.6)}
@@ -15048,7 +15048,7 @@ function tierGroups(sh){const tg=sh.querySelector('.tgrid');if(!tg)return null;c
   [...tg.children].forEach(c=>{if(c.tagName==='H4'&&c.classList.contains('tthead')){cur={t:c.textContent.trim().split(/[\s👑✨]/)[0],els:[c]};out.push(cur)}else if(cur)cur.els.push(c)});return out}
 function organise(sh){
   const G=groups(sh);const k=shopTab;sh.classList.add('stage168');
-  if(!G){if(!sh.querySelector('.sec159')){const b0=document.createElement('div');b0.className='sec159 solo';b0.innerHTML=`<div class="top159"><button type="button" class="back159" data-back159>‹ السوق</button><b>${stallName||''}</b></div>`;const tb=sh.querySelector('.tabs');tb&&tb.insertAdjacentElement('afterend',b0)}return}
+  if(!G){if(!sh.querySelector('.sec159')){const b0=document.createElement('div');b0.className='sec159 solo';b0.innerHTML=`<div class="top159"><button type="button" class="back159" data-back159>‹ السوق</button><b>${stallName||''}</b></div>`;const tb=sh.querySelector('.tabs');tb&&tb.insertAdjacentElement('afterend',b0)}tabDock(sh);return}
   const allow=G.gs.map((g,n)=>n).filter(n=>!only[k]||only[k].some(p=>G.gs[n].t.trim().startsWith(p)));const al=allow.length?allow:G.gs.map((g,n)=>n);
   let i=sel[k];if(i==null||i<0||i>=G.gs.length||!al.includes(i)){i=al[0];if(only[k]){const f=G.gs.findIndex(g=>g.t.trim().startsWith(only[k][0]));if(f>=0)i=f}}sel[k]=i;
   if(only[k])al.sort((x,y)=>only[k].findIndex(p=>G.gs[x].t.trim().startsWith(p))-only[k].findIndex(p=>G.gs[y].t.trim().startsWith(p)));
@@ -15059,7 +15059,10 @@ function organise(sh){
     h+=`<div class="tier159"><button type="button" data-tier159="-1" class="${ti<0?'on':''}">الكل</button>${T.map((g,n)=>`<button type="button" data-tier159="${n}" class="${n===ti?'on':''}">${g.t}</button>`).join('')}</div>`;
     T.forEach((g,n)=>g.els.forEach(e=>{if(ti<0||n===ti)e.removeAttribute('data-h159');else e.setAttribute('data-h159','1')}));
     const nr=sh.querySelector('.noirrug');if(nr){if(ti<0)nr.removeAttribute('data-h159');else nr.setAttribute('data-h159','1')}}}
-  box.innerHTML=h;sh.querySelector('.tabs').insertAdjacentElement('afterend',box)}
+  box.innerHTML=h;sh.querySelector('.tabs').insertAdjacentElement('afterend',box);tabDock(sh)}
+// the gifts stall has two rooms: gifts, and phrases + bubble shape (they are two tabs of the old shop)
+function tabDock(sh){const k=shopTab;if(k!=='gifts'&&k!=='emotes')return;const box=sh.querySelector('.sec159');if(!box||box.querySelector('.tabdock168'))return;const d=document.createElement('div');d.className='dock168 tabdock168';
+  d.innerHTML=[['gifts','🎁','الهدايا',''],['emotes','💬','العبارات','ph'],['emotes','🗯','شكل الفقاعة','bub']].map(([t,i,n,w])=>`<button type="button" data-tabgo168="${t}" data-w168="${w}" class="${t===k&&(t==='gifts'||w===emoPart)?'on':''}"><i>${i}</i><span>${n}</span></button>`).join('');box.querySelector('.top159').insertAdjacentElement('afterend',d)}
 function frontScreen(sh){
   const head=sh.querySelector('.head');[...sh.children].forEach(c=>{if(c!==head)c.remove()});
   const d=document.createElement('div');d.className='front159';
@@ -15071,6 +15074,7 @@ function frontScreen(sh){
 renderShop=(function(p){return function(){const r=p.apply(this,arguments);try{const sh=document.getElementById('shop');if(sh){if(front)frontScreen(sh);else organise(sh)}}catch(e){console.error(e)}return r}})(renderShop);
 openShop=(function(p){return function(tab){front=!tab;return p.apply(this,arguments)}})(openShop);
 window.addEventListener('click',e=>{
+  const tg=e.target.closest('#shop [data-tabgo168]');if(tg){e.preventDefault();e.stopPropagation();front=false;shopTab=tg.dataset.tabgo168;only[shopTab]=null;sel[shopTab]=-1;if(tg.dataset.w168)emoPart=tg.dataset.w168;renderShop();if(shopTab==='emotes')setTimeout(()=>{try{const sh=document.getElementById('shop');const hs=[...sh.querySelectorAll('.label,h4,h3')].filter(x=>x.offsetParent);const h=emoPart==='ph'?hs.find(x=>x.textContent.trim().startsWith('العبارات')||/^Phrases/i.test(x.textContent.trim())):hs[0];if(h)h.scrollIntoView({block:'start'});const sc=sh.closest('.sheet')||sh;if(emoPart!=='ph')sc.scrollTop=0}catch(x){}},80);return}
   const hw=e.target.closest('#shop .slamnote.fhow');if(hw){hw.classList.toggle('open');return}
   const g=e.target.closest('#shop [data-go159]');
   if(g){e.preventDefault();e.stopPropagation();front=false;shopTab=g.dataset.go159;const o=g.dataset.only168;only[shopTab]=o?o.split('|'):null;stallName=g.dataset.nm168||'';sel[shopTab]=-1;tier[shopTab]=-1;renderShop();return}
@@ -15435,7 +15439,7 @@ window.__snd157=()=>pend;
 
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1119.2241';
+const EB_VERSION='v1119.2252';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
