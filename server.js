@@ -52,9 +52,17 @@ const server = http.createServer((req, res) => {
   if (!file.startsWith(PUBLIC)) { res.writeHead(403); res.end(); return; }
   // The game page can also sit next to server.js (easier to upload from a phone or iPad)
   if ((url === '/' || url === '/index.html') && !fs.existsSync(file)) file = path.join(__dirname, 'index.html');
+  // a file that did not change is not sent again: the phone asks "still the same?" and gets a short yes (the game page is big, so this is most of the wait on a second visit)
+  let tag = ''; try { const st0 = fs.statSync(file); tag = '"' + st0.size + '-' + Math.round(st0.mtimeMs) + '"'; if (String(req.headers['if-none-match'] || '') === tag) { res.writeHead(304, { 'ETag': tag, 'Cache-Control': 'no-cache', 'Vary': 'Accept-Encoding' }); res.end(); return } } catch (e) {}
   fs.readFile(file, (err, data) => {
     if (err) { res.writeHead(404); res.end('Not found'); return; }
-    const type = TYPES[path.extname(file)] || 'application/octet-stream', head = { 'Content-Type': type, 'Cache-Control': 'no-cache' };
+    const type = TYPES[path.extname(file)] || 'application/octet-stream', head = { 'Content-Type': type, 'Cache-Control': 'no-cache' }; if (tag) head['ETag'] = tag;
+    // brotli is about a sixth smaller than gzip on this page; made once per file and kept
+    if (/html|javascript|json|css|svg/.test(type) && data.length > 2048 && /\bbr\b/.test(String(req.headers['accept-encoding'] || ''))) {
+      try { const st = fs.statSync(file), key = 'br:' + file + ':' + st.mtimeMs + ':' + st.size; let z = GZ.get('br:' + file); const zl = require('zlib');
+        if (!z || z.key !== key) { z = { key, buf: zl.brotliCompressSync(data, { params: { [zl.constants.BROTLI_PARAM_QUALITY]: 9, [zl.constants.BROTLI_PARAM_SIZE_HINT]: data.length } }) }; GZ.set('br:' + file, z) }
+        head['Content-Encoding'] = 'br'; head['Vary'] = 'Accept-Encoding'; res.writeHead(200, head); res.end(z.buf); return } catch (e) {}
+    }
     // text files go out compressed (about half the size); each file is compressed once and kept until it changes
     if (/html|javascript|json|css|svg/.test(type) && data.length > 2048 && /\bgzip\b/.test(String(req.headers['accept-encoding'] || ''))) {
       try { const st = fs.statSync(file), key = file + ':' + st.mtimeMs + ':' + st.size; let z = GZ.get(file);
