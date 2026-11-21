@@ -17,18 +17,20 @@ const short = (v, n) => String(v == null ? '' : v).replace(/[<>"]/g, '').slice(0
 
 // ---------- storage ----------
 class FileStore {
-  constructor(file) { this.file = file; this.map = new Map(); this.tok = new Map(); try { for (const a of JSON.parse(fs.readFileSync(file, 'utf8'))) { this.map.set(a.id, a); this.tok.set(a.token, a.id) } } catch (e) {} this.t = null }
+  constructor(file) { this.file = file; this.map = new Map(); this.tok = new Map(); try { for (const a of JSON.parse(fs.readFileSync(file, 'utf8'))) { this.map.set(a.id, a); this.tok.set(a.token, a.id); (a.tk2 || []).forEach(t => this.tok.set(t, a.id)) } } catch (e) {} this.t = null }
+  async byGid(g) { for (const a of this.map.values()) if (a.gid === g) return JSON.parse(JSON.stringify(a)); return null }
   async init() {}
   async byToken(h) { const id = this.tok.get(h); return id ? JSON.parse(JSON.stringify(this.map.get(id))) : null }
   async byId(id) { const a = this.map.get(id); return a ? JSON.parse(JSON.stringify(a)) : null }
   async top(n) { return [...this.map.values()].sort((x, y) => (y.st.rp || 0) - (x.st.rp || 0)).slice(0, n) }
   async above(rp) { let k = 0; for (const a of this.map.values()) if ((a.st.rp || 0) > rp) k++; return k }
-  async put(a) { this.map.set(a.id, JSON.parse(JSON.stringify(a))); this.tok.set(a.token, a.id); if (!this.t) this.t = setTimeout(() => { this.t = null; try { fs.mkdirSync(path.dirname(this.file), { recursive: true }); fs.writeFileSync(this.file, JSON.stringify([...this.map.values()])) } catch (e) { console.error('save', e) } }, 500) }
+  async put(a) { this.map.set(a.id, JSON.parse(JSON.stringify(a))); this.tok.set(a.token, a.id); (a.tk2 || []).forEach(t => this.tok.set(t, a.id)); if (!this.t) this.t = setTimeout(() => { this.t = null; try { fs.mkdirSync(path.dirname(this.file), { recursive: true }); fs.writeFileSync(this.file, JSON.stringify([...this.map.values()])) } catch (e) { console.error('save', e) } }, 500) }
 }
 class PgStore {
   constructor(url) { const { Pool } = require('pg'); this.pool = new Pool({ connectionString: url, ssl: (process.env.PGSSL === 'on' || /\.render\.com/.test(url)) ? { rejectUnauthorized: false } : false, max: 5 }) }
   async init() { await this.pool.query(`CREATE TABLE IF NOT EXISTS accounts (id TEXT PRIMARY KEY, token TEXT UNIQUE NOT NULL, data JSONB NOT NULL, updated TIMESTAMPTZ NOT NULL DEFAULT now())`) }
-  async byToken(h) { const r = await this.pool.query('SELECT data FROM accounts WHERE token=$1', [h]); return r.rows[0] ? r.rows[0].data : null }
+  async byToken(h) { let r = await this.pool.query('SELECT data FROM accounts WHERE token=$1', [h]); if (!r.rows[0]) { try { r = await this.pool.query("SELECT data FROM accounts WHERE data->'tk2' @> $1::jsonb LIMIT 1", [JSON.stringify([h])]) } catch (e) { console.error('tk2 lookup', e.message); return null } } /* if this new lookup ever fails, the answer is the same as before it existed: key not found */ return r.rows[0] ? r.rows[0].data : null } // tk2: the keys of the other devices signed in to this account
+  async byGid(g) { const r = await this.pool.query("SELECT data FROM accounts WHERE data->>'gid'=$1 LIMIT 1", [g]); return r.rows[0] ? r.rows[0].data : null } // only ever called by the Google sign-in
   async byId(id) { const r = await this.pool.query('SELECT data FROM accounts WHERE id=$1', [id]); return r.rows[0] ? r.rows[0].data : null }
   async top(n) { const r = await this.pool.query("SELECT data FROM accounts ORDER BY COALESCE((data->'st'->>'rp')::int,0) DESC LIMIT $1", [n]); return r.rows.map(x => x.data) }
   async above(rp) { const r = await this.pool.query("SELECT count(*)::int AS n FROM accounts WHERE COALESCE((data->'st'->>'rp')::int,0) > $1", [rp]); return r.rows[0].n }
@@ -107,7 +109,8 @@ function levelUp(a, xpBefore) { const out = [], now = levelOf(a.st.xp);
 function checkAch(a) { const got = []; for (const x of ACH) if (!a.st.ach[x.id] && x.ok(a.st)) { a.st.ach[x.id] = Date.now(); a.w.tokens += x.r; got.push({ id: x.id, r: x.r }) } return got }
 function daily(a) { const d = today(); if (a.w.day !== d) { a.w.day = d; const g = DAILY * (isVip(a) ? 2 : 1); a.w.tokens += g; return g } return 0 }
 // what the phone gets
-function me(a, note) { return { verified: !!a.verified, title: titleOf(a), season: a.st.season || '', seasons: a.st.seasons || [], shield: !!a.st.shield, id: a.id, prof: a.prof, st: { ...a.st, level: levelOf(a.st.xp) }, wal: { tokens: a.w.tokens, owned: a.w.owned, slams: a.w.slams, boost: a.w.boost || 0 }, boostCost: BOOST_COST, boostGames: BOOST_GAMES, note: note || null, test: TEST_MODE, vip: isVip(a) ? a.vip : 0, vipPrice: '$4.99', vipTest: TEST_MODE ? VIP_TEST_PRICE : 0 } }
+const maskMail = m => { m = String(m || ''); const k = m.indexOf('@'); return k < 1 ? '' : m[0] + '***' + m.slice(k) };
+function me(a, note) { return { google: a.gid ? (maskMail(a.gmail) || 'google') : '', verified: !!a.verified, title: titleOf(a), season: a.st.season || '', seasons: a.st.seasons || [], shield: !!a.st.shield, id: a.id, prof: a.prof, st: { ...a.st, level: levelOf(a.st.xp) }, wal: { tokens: a.w.tokens, owned: a.w.owned, slams: a.w.slams, boost: a.w.boost || 0 }, boostCost: BOOST_COST, boostGames: BOOST_GAMES, note: note || null, test: TEST_MODE, vip: isVip(a) ? a.vip : 0, vipPrice: '$4.99', vipTest: TEST_MODE ? VIP_TEST_PRICE : 0 } }
 function pub(a) { return { id: a.id, name: a.prof.name, av: a.prof.av, flag: a.prof.flag, frame: a.prof.frame, efx: a.prof.efx, sfx: a.prof.sfx || 'plain', bub: a.prof.bub || 'plain', hit: a.prof.hit || 'classic', kit: { theme: (a.prof.prefs || {}).theme || '', back: (a.prof.prefs || {}).back || '', face: (a.prof.prefs || {}).face || '', joker: (a.prof.prefs || {}).joker || '' }, auto: a.prof.auto, level: levelOf(a.st.xp), games: a.st.games, wins: a.st.wins, wars: a.st.wars, rp: a.st.rp, streak: a.st.streak, tauf: a.st.tauf, vip: isVip(a), verified: !!a.verified, title: titleOf(a) } }
 
 // ---------- what a phone may ask ----------
@@ -206,6 +209,28 @@ async function save(a) { await store.put(a) }
 const SLAM_COST = 50; // the fire button costs rupees each time
 async function spend(a, n) { if (a.w.tokens < n) return null; a.w.tokens -= n; await store.put(a); return me(a) }
 
+// ---------- sign in with Google: the account is tied to the person, not to one phone ----------
+// The phone gets a signed note from Google (an "ID token"); we check Google's signature on it ourselves, that it was made for THIS game (GOOGLE_CLIENT_ID on Render) and that it has not expired. No password ever reaches us.
+const GOOGLE_ID = String(process.env.GOOGLE_CLIENT_ID || '').trim();
+let GCERT = { at: 0, keys: [] };
+function gCerts() { if (Date.now() - GCERT.at < 3600e3 && GCERT.keys.length) return Promise.resolve(GCERT.keys);
+  return new Promise((res, rej) => { require('https').get('https://www.googleapis.com/oauth2/v3/certs', r => { let b = ''; r.on('data', d => b += d); r.on('end', () => { try { const k = JSON.parse(b).keys || []; if (k.length) GCERT = { at: Date.now(), keys: k }; res(GCERT.keys) } catch (e) { GCERT.keys.length ? res(GCERT.keys) : rej(e) } }) }).on('error', e => GCERT.keys.length ? res(GCERT.keys) : rej(e)) }) }
+if (process.env.GOOGLE_FAKE === '1' && process.env.GOOGLE_TEST_JWK) { try { GCERT = { at: Date.now() + 1e12, keys: [JSON.parse(process.env.GOOGLE_TEST_JWK)] } } catch (e) {} } // tests only: never set on the real server
+const b64u = s => Buffer.from(String(s).replace(/-/g, '+').replace(/_/g, '/'), 'base64');
+async function gVerify(jwt, aud = GOOGLE_ID) { const p = String(jwt || '').split('.'); if (p.length !== 3 || !aud) return null;
+  let h, c; try { h = JSON.parse(b64u(p[0])); c = JSON.parse(b64u(p[1])) } catch (e) { return null }
+  if (h.alg !== 'RS256') return null; const jwk = (await gCerts()).find(k => k.kid === h.kid); if (!jwk) return null;
+  let ok = false; try { ok = crypto.verify('RSA-SHA256', Buffer.from(p[0] + '.' + p[1]), crypto.createPublicKey({ key: jwk, format: 'jwk' }), b64u(p[2])) } catch (e) { ok = false }
+  if (!ok || c.aud !== aud || !['accounts.google.com', 'https://accounts.google.com'].includes(c.iss) || !(c.exp * 1000 > Date.now()) || !c.sub) return null;
+  if (c.email && c.email_verified === false) return null; return { sub: String(c.sub), email: String(c.email || '').slice(0, 120), name: String(c.name || '').slice(0, 40) } }
+// what to do with a proven Google identity, given the account this phone is using now (cur may be null)
+async function gSignIn(g, cur, force) { await ready; const has = await store.byGid(g.sub);
+  if (has) { if (cur && cur.id === has.id) return { ok: true, linked: true, same: true, me: me(has) };
+    const used = cur && ((cur.st && cur.st.games > 0) || (cur.w && (cur.w.owned || []).length > 8)) && !cur.gid;
+    if (used && !force) return { exists: true, name: has.prof.name || '', level: levelOf(has.st.xp), games: has.st.games || 0 }; // this phone has its own progress: ask before leaving it
+    const token = crypto.randomBytes(24).toString('base64url'); has.tk2 = [...(has.tk2 || []), hash(token)].slice(-8); await store.put(has); return { ok: true, token, switched: true, name: has.prof.name || '', me: me(has) } }
+  if (cur && !cur.gid) { cur.gid = g.sub; cur.gmail = g.email; await store.put(cur); return { ok: true, linked: true, me: me(cur) } } // first time: this phone's account is now saved with Google
+  const { token, a } = await create(null); a.gid = g.sub; a.gmail = g.email; if (g.name && !a.prof.name) a.prof.name = short(g.name, 16).trim(); await store.put(a); return { ok: true, token, switched: true, fresh: true, me: me(a) } }
 const XFER = new Map(), XTRY = new Map();
 // ---------- HTTP: /api/... ----------
 async function http(req, res, url) {
@@ -218,6 +243,10 @@ async function http(req, res, url) {
       if (!process.env.ADMIN_KEY || req.headers['x-admin-key'] !== process.env.ADMIN_KEY) return send(403, { err: 'no' });
       const t = await store.byId(String(body.id || '')); if (!t) return send(404, { err: 'nf' }); t.verified = body.on !== false; await store.put(t); return send(200, { ok: true, verified: t.verified }) }
     // move an account to another phone or browser: the old one asks for a 6-digit code (10 minutes, one use), the new one types it and gets the same account
+    if (url === '/api/auth/config') return send(200, { google: GOOGLE_ID });
+    if (url === '/api/auth/google' && req.method === 'POST') { if (!GOOGLE_ID) return send(503, { err: 'off' });
+      let g = null; try { g = await gVerify(body.credential) } catch (e) { console.error('google', e); return send(502, { err: 'google' }) } if (!g) return send(401, { err: 'bad' });
+      const cur = tok ? await load(tok) : null; return send(200, await gSignIn(g, cur, !!body.force)) }
     if (url === '/api/xfer/use' && req.method === 'POST') { const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim(), now = Date.now();
       const t = XTRY.get(ip) || { n: 0, t: now }; if (now - t.t > 600000) { t.n = 0; t.t = now } if (t.n >= 6) return send(429, { err: 'slow' });
       const code = String(body.code || '').replace(/\D/g, ''), x = XFER.get(code);
@@ -241,4 +270,4 @@ async function http(req, res, url) {
   } catch (e) { console.error('api', e); return send(500, { err: 'server' }) }
 }
 const byId = async id => { await ready; return /^[0-9a-f]{12}$/.test(String(id)) ? store.byId(String(id)) : null };
-module.exports = { byId, titleOf, SLAM_COST, spend, isVip, http, load, pub, me, warWon, gameOver, save, CAT, ready };
+module.exports = { _g: { verify: gVerify, signIn: gSignIn, setCerts: k => { GCERT = { at: Date.now(), keys: k } } }, byId, titleOf, SLAM_COST, spend, isVip, http, load, pub, me, warWon, gameOver, save, CAT, ready };
