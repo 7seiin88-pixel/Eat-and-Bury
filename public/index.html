@@ -14594,21 +14594,28 @@ document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.tar
 // ---------- 7) first visit: three short steps (name and picture, where things are, a trial game). Skippable; never shown again ----------
 (function(){let viaLink=false;try{const q=new URLSearchParams(location.search);viaLink=q.has('room')||q.has('dw')}catch(e){}
   if(viaLink||LS.get('eb-first157')||LS.get('eb-played')||LS.get('eb-tut'))return;try{if(MYPROF&&(MYPROF.name||MYPROF.games))return}catch(e){}
+  // round 186: before the name, a new player is asked once: sign in with Google (an account he saved comes back) or carry on as a guest. Same sheet, no extra page. Only when the server has Google sign-in.
+  let fromG=false;try{fromG=!!(localStorage.getItem('eb-gtok')||localStorage.getItem('eb-gerr'))}catch(e){}
+  try{if(!window.__gcfg)window.__gcfg=fetch('/api/auth/config').then(r=>r.json()).catch(()=>({}))}catch(e){}
   let step=0,ov=null;const done=()=>{LS.set('eb-first157','1');if(ov){ov.remove();ov=null}};
+  window.__first186=()=>{try{if(ov&&step===-1){step=0;draw()}}catch(e){}};
   const dots=()=>'<div class="dots">'+[0,1,2].map(i=>'<i class="'+(i<=step?'on':'')+'"></i>').join('')+'</div>';
   function draw(){if(!ov)return;let h='';
-    if(step===0)h=`<h3>${T('Welcome! What do we call you?','هلا! شنو نسميك؟')}</h3><p>${T('This is the name the others see at the table.','هذا الاسم اللي يشوفونه الباجين على الطاولة.')}</p><input id="nm157" maxlength="16" placeholder="${T('Your name','اسمك')}" value="${esc(MYPROF.name||'')}" autocomplete="off"><div class="pic"><span class="hx-av">${typeof avInner==='function'&&typeof profPublic==='function'?avInner(profPublic()):''}</span><button type="button" data-s="pic">${CAM.replace('<svg','<svg style="width:18px;height:18px;vertical-align:-3px"')} ${T('Use my photo','حط صورتي')}</button></div><div class="row"><button type="button" class="go" data-s="next">${T('Next','التالي')}</button><button type="button" class="sk" data-s="skip">${T('Skip','طوّف')}</button></div>`;
+    if(step===-1)h=`<h3>${T('Welcome to Eat & Bury','هلا فيك في حفر ودفن')}</h3><p>${T('Have a saved account? Sign in with Google and your level and things come back. Or carry on as a guest; you can save it later from "Me".','عندك حساب محفوظ؟ ادخل بقوقل ويرجع لك مستواك وأغراضك. أو كمّل كضيف، وتقدر تحفظه بعدين من «ملفي».')}</p><div class="gbtn185" style="margin:6px 0 12px"></div><div class="row"><button type="button" class="go" data-s="guest">${T('Continue as a guest','كمّل كضيف')}</button></div>`;
+    else if(step===0)h=`<h3>${T('Welcome! What do we call you?','هلا! شنو نسميك؟')}</h3><p>${T('This is the name the others see at the table.','هذا الاسم اللي يشوفونه الباجين على الطاولة.')}</p><input id="nm157" maxlength="16" placeholder="${T('Your name','اسمك')}" value="${esc(MYPROF.name||'')}" autocomplete="off"><div class="pic"><span class="hx-av">${typeof avInner==='function'&&typeof profPublic==='function'?avInner(profPublic()):''}</span><button type="button" data-s="pic">${CAM.replace('<svg','<svg style="width:18px;height:18px;vertical-align:-3px"')} ${T('Use my photo','حط صورتي')}</button></div><div class="row"><button type="button" class="go" data-s="next">${T('Next','التالي')}</button><button type="button" class="sk" data-s="skip">${T('Skip','طوّف')}</button></div>`;
     else if(step===1)h=`<h3>${T('Where everything is','وين كل شي')}</h3><ul><li><span>🛍️</span><div><b>${T('Shop','المتجر')}</b>${T('Themes, eating effects, fire button, cards and jokers. In the bar at the bottom.','ثيمات، تأثيرات الأكل، زر النار، الورق والجوكر. بالشريط تحت.')}</div></li><li><span>👤</span><div><b>${T('Me','ملفي')}</b>${T('Your picture, name and replies. Also in the bar at the bottom.','صورتك واسمك وردودك. بعد بالشريط تحت.')}</div></li><li><span>❓</span><div><b>${T('How to play?','شلون ألعب؟')}</b>${T('Short tips, on the home page under the green button.','نصايح قصيرة، بالصفحة الرئيسية تحت الزر الأخضر.')}</div></li></ul><div class="row"><button type="button" class="go" data-s="next">${T('Next','التالي')}</button><button type="button" class="sk" data-s="skip">${T('Skip','طوّف')}</button></div>`;
     else h=`<h3>${T('Try a quick game','جرب قيم سريع')}</h3><p>${T('A quick game against the computer, with hints, so you learn by playing. Nothing is counted.','قيم سريع ضد الكمبيوتر ومعاه تلميحات، تتعلم واهو يمشي. ما ينحسب عليك.')}</p><div class="row"><button type="button" class="go" data-s="play">${T('Start','يلا نبدأ')}</button><button type="button" class="sk" data-s="skip">${T('Later','بعدين')}</button></div>`;
-    ov.innerHTML='<div class="sh157 st157" dir="'+(AR()?'rtl':'ltr')+'" role="dialog" aria-label="'+T('Getting started','البداية')+'">'+dots()+h+'</div>'}
+    ov.innerHTML='<div class="sh157 st157" dir="'+(AR()?'rtl':'ltr')+'" role="dialog" aria-label="'+T('Getting started','البداية')+'">'+(step<0?'':dots())+h+'</div>'}
   const keep=()=>{try{const i=document.getElementById('nm157');if(i){const v=i.value.trim().slice(0,16);if(v&&v!==MYPROF.name){MYPROF.name=v;saveProf()}}}catch(e){}};
   function open(){try{if(typeof S!=='undefined'&&S)return;const home=document.getElementById('home');if(!home||home.hidden)return;ov=document.createElement('div');ov.className='ov157';ov.id='first157';document.body.appendChild(ov);draw();
     ov.addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(!b)return;const a=b.dataset.s;
       if(a==='pic'){keep();afterPick=()=>draw();pick.click();return}
       if(a==='skip'){keep();done();try{window.h2Tab&&h2Tab('home')}catch(x){}return}
+      if(a==='guest'){step=0;draw();return}
       if(a==='next'){keep();step++;draw();return}
       if(a==='play'){done();try{hideHome();newGame({mode:'2v2',decks:4,timer:8,level:'legend',hints:true})}catch(x){}}})}catch(e){}}
-  setTimeout(open,1200);
+  setTimeout(()=>{const go=g=>{try{if(MYPROF&&(MYPROF.name||MYPROF.games))return}catch(e){}let has=false;try{has=!!(ACCT&&ACCT.me&&ACCT.me.google)}catch(e){}step=(g&&!fromG&&!has)?-1:0;open()};
+    let fired=false;const once=g=>{if(fired)return;fired=true;go(g)};try{window.__gcfg.then(c=>once(!!(c&&c.google)))}catch(e){once(false)}setTimeout(()=>once(false),2500)},1200);
   // a game started some other way: the steps step aside
   if(typeof newGame==='function')newGame=(function(p){return function(){if(ov)done();return p.apply(this,arguments)}})(newGame);
   if(typeof hideHome==='function')hideHome=(function(p){return function(){if(ov)done();return p.apply(this,arguments)}})(hideHome)})();
@@ -16352,7 +16359,7 @@ const T=(en,ar)=>{try{return LANG==='ar'?ar:en}catch(e){return ar}};
 let CID='',gis=0,lastCred='';
 const st=document.createElement('style');st.textContent=`#gs185{margin:0 0 14px;padding:0 0 14px;border-bottom:1px solid rgba(242,210,122,.2)}#gs185 b{display:block;font-size:15px;font-weight:900;color:#f2d27a}#gs185 p{margin:4px 0 10px;font-size:12.5px;line-height:1.6;color:rgba(244,234,214,.75)}
 #gs185 .ok{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:#8fe3a8;direction:ltr;justify-content:flex-end}#gs185 .ok i{width:9px;height:9px;border-radius:50%;background:#5fd07a;flex:none}
-.gbtn185{display:flex;justify-content:center;min-height:44px;color-scheme:light}.gnote185{font-size:12px;color:#ffb1a8;margin-top:8px;line-height:1.6}#gs185 a{color:rgba(244,234,214,.6);font-size:11.5px}
+.gbtn185{display:flex;justify-content:center;min-height:44px;color-scheme:light}.gfb185{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;max-width:320px;min-height:44px;border-radius:999px;border:1px solid #dadce0;background:#fff;color:#1f1f1f;font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;direction:ltr}#gs185 a{color:rgba(244,234,214,.6);font-size:11.5px}
 #xfS176 .or185{margin:14px 0 10px;font-size:12.5px;color:rgba(244,234,214,.6)}`;document.head.appendChild(st);
 const tok=()=>{try{return (typeof ACCT!=='undefined'&&ACCT.token)||localStorage.getItem('eb-acct')||''}catch(e){return ''}};
 const post=(body)=>fetch('/api/auth/google',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},tok()?{Authorization:'Bearer '+tok()}:{}),body:JSON.stringify(body)}).then(async r=>({st:r.status,j:await r.json().catch(()=>({}))}));
@@ -16362,12 +16369,26 @@ async function done(cred,force){lastCred=cred;let r;try{r=await post({credential
   if(!r){say(T('No connection','ما في اتصال'));return}const j=r.j||{};
   if(j.exists){const d=sheet('<h3>'+T('This Google account already has a saved game','حساب قوقل هذا له لعبة محفوظة')+'</h3><p><b style="color:#fff;font-size:17px">'+String(j.name||T('Player','لاعب')).replace(/[<>&]/g,'')+'</b><br>'+T('Level ','المستوى ')+(j.level||1)+' · '+(j.games||0)+' '+T('games','قيم')+'</p><p>'+T('Open it on this device? What this device has now will be left behind.','تفتحه على هالجهاز؟ اللي على هالجهاز الحين بينترك.')+'</p><div class="r"><button type="button" data-xfx>'+T('No, stay here','لا، خلني هني')+'</button><button type="button" class="g" data-g185="go">'+T('Open my account','افتح حسابي')+'</button></div>');
     d.querySelector('[data-g185]').addEventListener('click',()=>{d.remove();done(lastCred,true)});return}
-  if(j.token){try{localStorage.setItem('eb-acct',j.token);if(j.name)localStorage.setItem('eb-name',j.name);localStorage.setItem('eb-xf176','1')}catch(e){}sheet('<h3>✅ '+T('Welcome back','هلا فيك')+(j.name?' '+String(j.name).replace(/[<>&]/g,''):'')+'</h3><p>'+T('Loading your account…','قاعد أحمّل حسابك…')+'</p>');setTimeout(()=>location.reload(),900);return}
-  if(j.ok){try{if(j.me&&typeof applyMe==='function')applyMe(j.me)}catch(e){}const o=document.getElementById('xfS176');if(o)o.remove();say(j.same?T('Already saved with this Google account','حسابك أصلاً محفوظ بهالقوقل'):T('Saved. Sign in with Google on any device to get this account back.','انحفظ حسابك. ادخل بقوقل من أي جهاز ويرجع لك.'));paint(true);return}
+  if(j.token){try{localStorage.setItem('eb-acct',j.token);if(j.name)localStorage.setItem('eb-name',j.name);localStorage.setItem('eb-xf176','1');localStorage.setItem('eb-first157','1')}catch(e){}sheet('<h3>✅ '+T('Welcome back','هلا فيك')+(j.name?' '+String(j.name).replace(/[<>&]/g,''):'')+'</h3><p>'+T('Loading your account…','قاعد أحمّل حسابك…')+'</p>');setTimeout(()=>location.reload(),900);return}
+  if(j.ok){try{if(j.me&&typeof applyMe==='function')applyMe(j.me)}catch(e){}const o=document.getElementById('xfS176');if(o)o.remove();say(j.same?T('Already saved with this Google account','حسابك أصلاً محفوظ بهالقوقل'):T('Saved. Sign in with Google on any device to get this account back.','انحفظ حسابك. ادخل بقوقل من أي جهاز ويرجع لك.'));paint(true);try{window.__first186&&window.__first186()}catch(e){}return}
   say(r.st===401?T('Google did not confirm the sign-in. Try again.','قوقل ما أكد الدخول. جرب مرة ثانية.'):T('Could not sign in now. Try again in a moment.','ما ضبط الدخول الحين. جرب بعد شوي.'))}
-function loadGis(){if(gis)return;gis=1;const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';s.async=true;s.onload=()=>{try{google.accounts.id.initialize({client_id:CID,callback:r=>{if(r&&r.credential)done(r.credential,false)},auto_select:false,cancel_on_tap_outside:true});gis=2;document.querySelectorAll('.gbtn185').forEach(btn)}catch(e){gis=3}};s.onerror=()=>{gis=3;document.querySelectorAll('.gbtn185').forEach(btn)};document.head.appendChild(s);setTimeout(()=>{if(gis===1){gis=3;document.querySelectorAll('.gbtn185').forEach(btn)}},9000)}
+// what went wrong goes to the errors report, so the reason is known without asking the player
+const note=(m,w)=>{try{let v='';try{v=EB_VERSION}catch(e){}fetch('/api/err',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msg:m,where:String(w).slice(0,118),ver:v,dev:'diag'})}).catch(()=>{})}catch(e){}};
+let tries=0,t0=0;
+function fail(why){note('GOOGLE script',why+' try'+tries+' '+Math.round((Date.now()-t0)/100)/10+'s '+(navigator.onLine?'online':'offline')+' '+((navigator.userAgent.match(/(CriOS|FxiOS|EdgiOS|Version)\/[\d.]+/)||[])[0]||'')+(navigator.standalone?' app':''));
+  if(tries<2){gis=0;setTimeout(loadGis,1500);return}gis=3;document.querySelectorAll('.gbtn185').forEach(btn)}
+function loadGis(){if(gis)return;gis=1;tries++;t0=Date.now();const my=tries;const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';s.async=true;
+  s.onload=()=>{if(my!==tries||gis!==1)return;try{google.accounts.id.initialize({client_id:CID,callback:r=>{if(r&&r.credential)done(r.credential,false)},auto_select:false,cancel_on_tap_outside:true});gis=2;document.querySelectorAll('.gbtn185').forEach(btn)}catch(e){fail('init '+String(e&&e.message||e).slice(0,60))}};
+  s.onerror=()=>{if(my===tries&&gis===1)fail('load error')};document.head.appendChild(s);setTimeout(()=>{if(my===tries&&gis===1)fail('timeout')},12000)}
+// second way in, with no Google script on the page: go to Google's own page and come back (g.html keeps what Google returns)
+function viaPage(){try{const a=new Uint8Array(16);crypto.getRandomValues(a);const n=Array.from(a,x=>x.toString(16).padStart(2,'0')).join('');localStorage.setItem('eb-gn',n);
+  location.assign('https://accounts.google.com/o/oauth2/v2/auth?client_id='+encodeURIComponent(CID)+'&redirect_uri='+encodeURIComponent(location.origin+'/g.html')+'&response_type=id_token&scope='+encodeURIComponent('openid email profile')+'&nonce='+n+'&prompt=select_account')}catch(e){say(T('Could not open Google.','ما فتح قوقل.'))}}
+function back(){let tk='',er='',n='';try{tk=localStorage.getItem('eb-gtok')||'';er=localStorage.getItem('eb-gerr')||'';n=localStorage.getItem('eb-gn')||'';localStorage.removeItem('eb-gtok');localStorage.removeItem('eb-gerr');localStorage.removeItem('eb-gn')}catch(e){}
+  if(er){note('GOOGLE page',er);if(er!=='access_denied')setTimeout(()=>say(T('Google sign-in did not finish. Try again.','الدخول بقوقل ما كمل. جرب مرة ثانية.')),1500);return}if(!tk)return;
+  let ok=false;try{const p=JSON.parse(decodeURIComponent(escape(atob(tk.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')))));ok=!!n&&p.nonce===n}catch(e){}
+  if(!ok){note('GOOGLE page','nonce');return}let k=0;const go=()=>{k++;let rdy=false;try{rdy=!!(ACCT&&ACCT.me)}catch(e){}if(rdy||k>16)done(tk,false);else setTimeout(go,300)};setTimeout(go,600)}
 function btn(el){if(!el||el.dataset.done==='2')return;if(gis===2){try{el.innerHTML='';google.accounts.id.renderButton(el,{type:'standard',theme:'outline',size:'large',shape:'pill',text:'continue_with',logo_alignment:'left',locale:T('en','ar'),width:Math.min(320,Math.max(220,(el.clientWidth||280)))});el.dataset.done='2'}catch(e){}}
-  else if(gis===3&&!el.dataset.err){el.dataset.err='1';el.innerHTML='<div class="gnote185">'+T('Google sign-in did not open here. Open the game in Safari or Chrome (not inside another app) and try again.','الدخول بقوقل ما فتح هني. افتح اللعبة بسفاري أو كروم (مو من داخل تطبيق ثاني) وجرب.')+'</div>'}}
+  else if(!el.dataset.err){el.dataset.err='1';el.innerHTML='<button type="button" class="gfb185"><svg viewBox="0 0 48 48" width="20" height="20"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.7 2.5 30.2 0 24 0 14.6 0 6.500 5.400 2.600 13.200l7.800 6.100C12.300 13.600 17.700 9.500 24 9.500z"/><path fill="#4285F4" d="M46.500 24.500c0-1.600-.100-3.100-.400-4.500H24v9h12.700c-.600 3-2.300 5.500-4.800 7.200l7.600 5.900c4.400-4.100 7-10.100 7-17.600z"/><path fill="#FBBC05" d="M10.400 28.700c-.500-1.500-.800-3-.800-4.700s.300-3.200.800-4.700l-7.800-6.100C1 16.500 0 20.100 0 24s1 7.500 2.600 10.800l7.800-6.100z"/><path fill="#34A853" d="M24 48c6.200 0 11.500-2.100 15.300-5.600l-7.600-5.900c-2.100 1.400-4.800 2.300-7.700 2.300-6.300 0-11.700-4.100-13.600-9.800l-7.800 6.100C6.500 42.600 14.600 48 24 48z"/></svg><span>'+T('Continue with Google','كمّل بقوقل')+'</span></button>';el.querySelector('.gfb185').addEventListener('click',viaPage)}}
 function paint(force){try{if(!CID)return;const card=document.getElementById('xf176');if(!card)return;let g=document.getElementById('gs185');const mail=(typeof ACCT!=='undefined'&&ACCT.me&&ACCT.me.google)||'';
   if(g&&!force&&g.dataset.m===mail)return;if(!g){g=document.createElement('div');g.id='gs185';card.insertBefore(g,card.firstChild)}g.dataset.m=mail;g.dir=T('ltr','rtl');
   g.innerHTML=mail?'<b>'+T('Your account is saved','حسابك محفوظ')+'</b><p>'+T('Sign in with the same Google account on any device and it comes back.','ادخل بنفس حساب قوقل من أي جهاز ويرجع لك حسابك.')+'</p><div class="ok"><span>'+String(mail).replace(/[<>&]/g,'')+'</span><i></i></div>'
@@ -16375,8 +16396,8 @@ function paint(force){try{if(!CID)return;const card=document.getElementById('xf1
   if(!mail){loadGis();btn(g.querySelector('.gbtn185'))}}catch(e){}}
 // the "bring my account" sheet gets the Google button too
 function inSheet(){try{if(!CID)return;const d=document.getElementById('xfS176');if(!d||d.querySelector('.gbtn185')||!d.querySelector('input'))return;const bx=d.querySelector('.bx');const w=document.createElement('div');w.innerHTML='<div class="or185">'+T('or','أو')+'</div><div class="gbtn185"></div>';bx.appendChild(w);loadGis();btn(w.querySelector('.gbtn185'))}catch(e){}}
-fetch('/api/auth/config').then(r=>r.json()).then(c=>{CID=(c&&c.google)||'';if(!CID)return;setInterval(()=>{paint(false);inSheet()},800)}).catch(()=>{});
-window.__g185={done};
+(window.__gcfg||(window.__gcfg=fetch('/api/auth/config').then(r=>r.json()).catch(()=>({})))).then(c=>{CID=(c&&c.google)||'';if(!CID)return;const tick=()=>{paint(false);inSheet();try{document.querySelectorAll('#first157 .gbtn185').forEach(el=>{loadGis();btn(el)})}catch(e){}};setInterval(tick,400);back()}).catch(()=>{});
+window.__g185={done,viaPage,st:()=>gis};
 })();
 
 </script><script>
@@ -16402,7 +16423,7 @@ window.__snd157=()=>pend;
 
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1121.1405';
+const EB_VERSION='v1121.1509';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
