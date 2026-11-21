@@ -16292,12 +16292,36 @@ const where=()=>{try{const ua=navigator.userAgent,br=/CriOS|Chrome/.test(ua)?'Ch
 try{const md=navigator.mediaDevices;if(md&&md.getUserMedia){const g=md.getUserMedia.bind(md);md.getUserMedia=function(c){return g(c).catch(e=>{try{if(c&&c.audio)note('MIC refused',(e&&e.name||'error')+' | '+where()+' | '+(typeof NET!=='undefined'&&NET.on?(NET.priv?'private room':'public room'):'no room'))}catch(x){}throw e})}}
   else if(typeof voiceToggle==='function'){const vt=voiceToggle;voiceToggle=function(){note('MIC refused','no mediaDevices | '+where());return vt.apply(this,arguments)}}}catch(e){}
 // a reload nobody asked for: the page keeps a small heartbeat in the tab; a clean leave clears it
-try{const K='eb-hb182',prev=sessionStorage.getItem(K);if(prev){try{const p=JSON.parse(prev);if(p&&p.g&&Date.now()-p.t<90000)note('RELOAD by itself',where()+' | '+p.w+' | '+Math.round((p.t-p.t0)/60000)+'min | hidden'+(p.h?'Y':'N'))}catch(e){}}
+try{const K='eb-hb182',prev=sessionStorage.getItem(K);if(prev){try{const p=JSON.parse(prev);if(p&&p.g&&Date.now()-p.t<90000){let nav='';try{nav=(performance.getEntriesByType('navigation')[0]||{}).type||''}catch(e){}let os='';try{os=(navigator.userAgent.match(/OS (\d+_\d+)/)||[])[1]||''}catch(e){}note('RELOAD by itself',where()+' iOS'+os+' | '+p.w+' | '+Math.round((p.t-p.t0)/60000)+'min | hidden'+(p.h?'Y':'N'));note('RELOAD detail',Math.round((p.t-p.t0)/60000)+'min nav='+nav+' gap'+Math.round((Date.now()-p.t)/1000)+'s '+(p.x||''))}}catch(e){}}
   const t0=Date.now();const beat=()=>{try{const g=typeof S!=='undefined'&&!!S&&!!S.players&&document.getElementById('home').hidden;const on=typeof NET!=='undefined'&&NET.on;
-    sessionStorage.setItem(K,JSON.stringify({t:Date.now(),t0,g:g?1:0,h:document.hidden?1:0,w:(on?(NET.priv?'private':NET.quick?'ranked':'room'):'computer')+' mic'+(typeof VOICE!=='undefined'&&VOICE.on?'Y':'N')+' th='+((typeof WAL!=='undefined'&&WAL.theme)||'')+' n'+(g?S.players.length:0)}))}catch(e){}};
+    sessionStorage.setItem(K,JSON.stringify({t:Date.now(),t0,g:g?1:0,h:document.hidden?1:0,x:(window.__hbx183?window.__hbx183():''),w:(on?(NET.priv?'private':NET.quick?'ranked':'room'):'computer')+' mic'+(typeof VOICE!=='undefined'&&VOICE.on?'Y':'N')+' th='+((typeof WAL!=='undefined'&&WAL.theme)||'')+' n'+(g?S.players.length:0)}))}catch(e){}};
   setInterval(beat,5000);beat();
   // leaving on purpose (closing the tab, going to another address, the account-code reload) is not "by itself"; a page the phone throws away never gets to say goodbye
   addEventListener('beforeunload',()=>{try{sessionStorage.removeItem(K)}catch(e){}})}catch(e){}
+})();
+
+</script><script>
+// ===================== round 183: a page that reloads in the middle of a game (reported twice from an iPhone in Safari, 22 and 11 minutes in; the game itself never reloads the page).
+// Two things a browser does on its own are closed off, and the next report will say which one it was:
+// 1) pulling the page down from the top reloads it in Safari ("pull to refresh"): a downward swipe on the cards could do that on iPhones that ignore the style that forbids it.
+// 2) sounds: every note leaves its small sound parts connected after it ends; Safari is slow to throw them away (about 3,000 a minute with music on). Each one is now unplugged the moment it ends. =====================
+(function(){
+// ---------- 1) no pull-to-refresh, no rubber-band: a swipe down at the top of something that cannot scroll up any more does nothing ----------
+try{let y0=0,x0=0,sc=null,top=false;
+  const scroller=el=>{while(el&&el!==document.body&&el!==document.documentElement){try{const c=getComputedStyle(el),o=c.overflowY;if((o==='auto'||o==='scroll')&&el.scrollHeight>el.clientHeight+2)return el}catch(e){}el=el.parentElement}return null};
+  document.addEventListener('touchstart',e=>{try{if(e.touches.length!==1)return;y0=e.touches[0].clientY;x0=e.touches[0].clientX;sc=scroller(e.target);top=!sc||sc.scrollTop<=0;window.__t183={t:Date.now(),y:Math.round(y0),dy:0}}catch(x){}},{passive:true,capture:true});
+  document.addEventListener('touchmove',e=>{try{if(e.touches.length!==1)return;const dy=e.touches[0].clientY-y0,dx=e.touches[0].clientX-x0;if(window.__t183)window.__t183.dy=Math.round(dy);
+    if(!e.cancelable)return;const t=e.target;if(t&&t.closest&&t.closest('input,textarea,select,[contenteditable]'))return;
+    if(dy>4&&Math.abs(dy)>Math.abs(dx)&&top&&(!sc||sc.scrollTop<=0)&&(window.scrollY||0)<=0)e.preventDefault()}catch(x){}},{passive:false,capture:true});
+  const st=document.createElement('style');st.textContent='html,body{overscroll-behavior-y:none!important}';document.head.appendChild(st)}catch(e){}
+// ---------- 2) every sound source unplugs itself when it ends ----------
+try{const N=window.AudioScheduledSourceNode;let made=0,freed=0;if(N&&N.prototype&&N.prototype.start){const st=N.prototype.start;N.prototype.start=function(){try{if(!this.__u183){this.__u183=1;made++;this.addEventListener('ended',()=>{try{this.disconnect();freed++}catch(e){}},{once:true})}}catch(e){}return st.apply(this,arguments)}}
+  window.__snd183=()=>made+'/'+freed}catch(e){}
+// ---------- what the page looked like just before it went away (kept in the tab, sent after a reload nobody asked for) ----------
+try{let lost=0,stall=0,last=performance.now();document.addEventListener('webglcontextlost',()=>{lost++},true);
+  const tick=()=>{const n=performance.now(),d=n-last;last=n;if(d>stall&&!document.hidden)stall=d;requestAnimationFrame(tick)};requestAnimationFrame(tick);setInterval(()=>{stall=stall*.5},30000);
+  window.__hbx183=()=>{try{const cs=[...document.querySelectorAll('canvas')],px=cs.reduce((a,c)=>a+c.width*c.height,0),t=window.__t183;
+    return 'nodes'+document.getElementsByTagName('*').length+' cv'+cs.length+'/'+Math.round(px*4/1e6)+'MB snd'+(window.__snd183?window.__snd183():'')+' gl'+lost+' stall'+Math.round(stall)+'ms touch'+(t?Math.round((Date.now()-t.t)/1000)+'s y'+t.y+' dy'+t.dy:'-')}catch(e){return ''}}}catch(e){}
 })();
 
 </script><script>
@@ -16323,7 +16347,7 @@ window.__snd157=()=>pend;
 
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1120.2104';
+const EB_VERSION='v1121.1207';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
