@@ -207,7 +207,10 @@ function onMessage2(c, { type, data = {}, rid }) {
       if (!r || !r.game) return; const m = r.members.find(x => x.sid === c.id); if (!m || m.watch) return;
       if (data && data.a === 'slam') { // the fire button: take the rupees first
         if (!m.atoken || Date.now() - (m.lastSlam || 0) < 1500) return; m.lastSlam = Date.now();
-        ACC.load(m.atoken).then(a => a && ACC.spend(a, ACC.SLAM_COST)).then(me => { if (!me) return; STATS.bump('fire'); STATS.bump('spent', ACC.SLAM_COST); send(clients.get(m.sid), 'me', me); if (r.game) r.game.act(m.seat, { a: 'slam' }); }).catch(e => console.error('slam', e));
+        // round 183: the fire is shown at once, with this player's own hit. It used to wait for the account to be read and charged first (two trips to the database), so on a slow moment it landed on the NEXT hit: it looked as if the computer, or a player who pressed nothing, had fired.
+        if (m.broke && Date.now() - m.broke < 60000) return; // he could not pay a moment ago: no free fire
+        r.game.act(m.seat, { a: 'slam' });
+        ACC.load(m.atoken).then(a => a && ACC.spend(a, ACC.SLAM_COST)).then(me => { if (!me) { m.broke = Date.now(); return } STATS.bump('fire'); STATS.bump('spent', ACC.SLAM_COST); send(clients.get(m.sid), 'me', me); }).catch(e => console.error('slam', e));
         return;
       }
       if (data && data.a === 'gift') STATS.bump('gifts'); return r.game.act(m.seat, data || {});
