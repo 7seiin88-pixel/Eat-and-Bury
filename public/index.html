@@ -1727,6 +1727,7 @@ function seatLabel(i){const count=nPlayersForLobby();const mode2=count===4;if(i=
   return L(`Seat ${i+1}`,`المقعد ${i+1}`)+(i%2===0?L(' · host\'s partner',' · صاحب راعي الغرفة'):L(' · other team',' · الفريق الثاني'))}
 const nPlayersForLobby=()=>(NET.size===6||NET.members.reduce((a,m)=>Math.max(a,m.seat+1),0)>4)?6:4;
 function renderLobby(){const s=$('lobbySheet');s.dir=LANG==='ar'?'rtl':'ltr';
+  if(!NET.on&&window.__in180){s.innerHTML='';return} /* the join card of round 180 draws this page itself: the first online page is no longer drawn underneath it first (it could show for a moment, or stay if the phone was slow) */
   if(!NET.on){s.innerHTML=`<h2>${L('Play online','العب أونلاين')}</h2>
     <div class="fieldset"><div class="label">${L('Your name','اسمك')}</div><input id="lbName" class="lbin" maxlength="16" value="${myName().replace(/"/g,'')}" placeholder="${L('Name','الاسم')}"></div>
     <button type="button" id="lbCreate">${L('Create a room','سوّ غرفة جديدة')}</button>
@@ -1749,7 +1750,7 @@ async function doEnter(create){const name=($('lbName').value||'').trim();if(!nam
   try{await netConnect()}catch(e){lobbyErr=L('Could not reach the server','ما قدرنا نتصل بالسيرفر');return renderLobby()}
   const code=($('lbCode')&&$('lbCode').value||'').toUpperCase().trim();
   const wantWatch=!create&&!!window.__joinWatch;window.__joinWatch=false;const res=create?await netAsk('create',{name}):await netAsk('join',wantWatch?{code,name,watch:true}:{code,name});
-  if(!res.ok){lobbyErr={notfound:L('Room not found','الغرفة مو موجودة'),full:L('The room is full','الغرفة مليانة'),started:L('The game already started','اللعبة بدأت'),nowatch:res.why==='friends'?L('A player at this table lets only friends watch','لاعب بهالطاولة يخلي ربعه بس يتفرجون'):L('A player at this table does not allow watching','لاعب بهالطاولة مسكر المشاهدة')}[res.err]||res.err;return renderLobby()}
+  if(!res.ok){lobbyErr={over:L('The game at this table has ended','القيم بهالطاولة خلص'),notfound:L('Room not found','الغرفة مو موجودة'),full:L('The room is full','الغرفة مليانة'),started:L('The game already started','اللعبة بدأت'),nowatch:res.why==='friends'?L('A player at this table lets only friends watch','لاعب بهالطاولة يخلي ربعه بس يتفرجون'):L('A player at this table does not allow watching','لاعب بهالطاولة مسكر المشاهدة')}[res.err]||res.err;return renderLobby()}
   lobbyErr='';NET.on=true;window.NET_ON=true;NET.host=create;NET.me=res.me;NET.room=res.room.code;NET.priv=!!res.room.priv;document.documentElement.classList.toggle('nomic',!NET.priv);NET.members=res.room.members;sessSave(res.token);
   NET.mySeat=(NET.members.find(m=>m.sid===NET.me)||{}).seat||0;document.documentElement.classList.add('online');
   wrapGuest();if(!create)document.documentElement.classList.add('online-guest')
@@ -6305,9 +6306,9 @@ render=(function(prev){return function(){const r=prev.apply(this,arguments);try{
 function enterRoom(res){fromHere=true;lobbyErr='';NET.on=true;window.NET_ON=true;NET.me=res.me;NET.host=res.room.host===res.me;NET.room=res.room.code;NET.members=res.room.members;sessSave(res.token);
   NET.quick=!!res.room.quick;NET.qEnd=Date.now()+(res.room.qIn||0);NET.mySeat=(NET.members.find(m=>m.sid===NET.me)||{}).seat||0;
   document.documentElement.classList.add('online');wrapGuest();document.documentElement.classList.toggle('online-guest',!NET.host);
-  try{history.replaceState(null,'','?room='+NET.room)}catch(e){}
+  try{history.replaceState(null,'',res.room.quick?location.pathname:'?room='+NET.room)}catch(e){} /* a ranked table is not a room you were invited to: its code stays out of the address, so a reload never shows "you are invited to a room" */
   hideHome();$('setup').hidden=true;renderLobby();$('lobby').hidden=false}
-const ERR={notfound:L('Room not found','الغرفة مو موجودة'),full:L('The room is full','الغرفة مليانة'),dw:L('This table is for the diwaniya members','هالطاولة لأعضاء الديوانية بس'),inroom:L('Leave your room first','اطلع من غرفتك أول')};
+const ERR={over:L('The game at this table has ended','القيم بهالطاولة خلص'),notfound:L('Room not found','الغرفة مو موجودة'),full:L('The room is full','الغرفة مليانة'),dw:L('This table is for the diwaniya members','هالطاولة لأعضاء الديوانية بس'),inroom:L('Leave your room first','اطلع من غرفتك أول')};
 async function ask(type,data){if(!online()){toast(L('Online works on the game\'s website','الأونلاين يشتغل من موقع اللعبة'));return null}
   if(NET.on){toast(ERR.inroom);return null}
   try{await netConnect()}catch(e){toast(L('Could not reach the server','ما قدرنا نتصل بالسيرفر'));return null}
@@ -16190,8 +16191,9 @@ window.__fx179={meet,grow,famOf,pairs:Object.keys(MEET)};
 // Now: with a name already saved the link goes straight into the room; without one, a single clean card asks for the name and has one green button. =====================
 (function(){try{if(typeof renderLobby!=='function')return;
 const T=(en,ar)=>{try{return LANG==='ar'?ar:en}catch(e){return ar}};const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-let tried='';
+let tried='',autoFor='';let LINK='';try{LINK=(new URLSearchParams(location.search).get('room')||'').toUpperCase().slice(0,6)}catch(e){} /* "invited" is only said when the page was opened from a room link; a room picked from the list or typed by code says "entering a room" */
 const st=document.createElement('style');st.textContent=`#lobbySheet .in180{width:100%!important;max-width:400px!important;align-self:center!important;box-sizing:border-box!important;margin:0 auto!important;padding:26px 18px 18px!important;font-family:Cairo,Tahoma,sans-serif;color:#f4ead6;text-align:center;min-height:72vh;display:flex!important;flex-direction:column!important;justify-content:center!important;align-items:stretch!important;position:static!important}
+#lobbySheet .in180>*{flex:none!important}#lobbySheet .in180 .card{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important}#lobbySheet .in180 .card>*{flex:none!important;position:static!important}
 #lobbySheet .in180 .logo{font:900 34px Cairo,Tahoma,sans-serif;color:#f2d27a;text-shadow:0 2px 12px rgba(242,210,122,.35);margin:0 0 14px}
 #lobbySheet .in180 .card{display:block!important;width:100%!important;box-sizing:border-box!important;background:rgba(255,255,255,.04)!important;border-radius:22px!important;padding:20px 16px!important;margin:0!important;box-shadow:inset 0 0 0 1px rgba(242,210,122,.35),0 18px 40px rgba(0,0,0,.45)!important}
 #lobbySheet .in180 h2{display:block!important;margin:0 0 6px!important;padding:0!important;font:900 19px Cairo,Tahoma,sans-serif!important;color:#fff!important;text-align:center!important;position:static!important;background:none!important}
@@ -16221,20 +16223,22 @@ body:has(#chatBar:not([hidden])) #hintPop,body:has(#lobby:not([hidden])) #hintPo
 /* short screens (phone on its side): the green start bar keeps only the button */
 @media (max-height:560px){.go160 p,.go160 small{display:none!important}.go160{padding-top:6px!important}#lobbySheet.lb160 .go160 #lbStart{min-height:46px!important}}
 #lobbySheet .in180 .wait{padding:30px 0;font-size:15px;font-weight:800;color:#f2d27a}`;document.head.appendChild(st);
-const R0=renderLobby;
+window.__in180=1;const R0=renderLobby;
 renderLobby=function(){const r=R0.apply(this,arguments);try{
   if(typeof NET!=='undefined'&&NET.on&&NET.quick){const s=document.getElementById('lobbySheet');if(s)s.innerHTML='<div class="in180"><div class="logo">'+T('Eat & Bury','حفر ودفن')+'</div><div class="card"><h2>⚔️ '+T('Ranked game','قيم مصنّف')+'</h2><div class="wait">'+T('Dealing the cards…','قاعد أوزّع الورق…')+'</div></div><button type="button" class="back" id="lbLeave">'+T('Leave','اطلع')+'</button></div>';return r}
   if(typeof NET==='undefined'||NET.on)return r;const s=document.getElementById('lobbySheet');if(!s)return r;
   const code=String(typeof lobbyCode!=='undefined'&&lobbyCode||'').toUpperCase().slice(0,6),err=typeof lobbyErr!=='undefined'?lobbyErr:'',name=(()=>{try{return localStorage.getItem('eb-name')||''}catch(e){return ''}})();
+  // the link was followed by itself (a saved name) and the room is gone: no card with an error, just the home page and one line
+  if(err&&code&&autoFor===code){autoFor='';try{lobbyCode='';lobbyErr=''}catch(e){}try{history.replaceState(null,'',location.pathname)}catch(e){}try{document.getElementById('lobby').hidden=true;if(typeof showHome==='function')showHome(true)}catch(e){}try{toast(String(err).replace(/<[^>]*>/g,''))}catch(e){}return r}
   const auto=code&&name&&!err&&tried!==code;
   s.innerHTML='<div class="in180">'+'<div class="logo">'+T('Eat & Bury','حفر ودفن')+'</div><div class="card">'+
-    (code?'<h2>'+T('You are invited to a room','معزوم على غرفة')+'</h2><div class="code">'+esc(code)+'</div>':'<h2>'+T('A private room','غرفة خاصة')+'</h2><p>'+T('Write your name, then send the link to your friends.','اكتب اسمك، وبعدها دز الرابط لربعك.')+'</p>')+
+    (code?'<h2>'+(code===LINK?T('You are invited to a room','معزوم على غرفة'):T('Entering a room','دخول غرفة'))+'</h2><div class="code">'+esc(code)+'</div>':'<h2>'+T('A private room','غرفة خاصة')+'</h2><p>'+T('Write your name, then send the link to your friends.','اكتب اسمك، وبعدها دز الرابط لربعك.')+'</p>')+
     (auto?'<div class="wait">'+T('Entering the room…','قاعد أدخلك الغرفة…')+'</div><input id="lbName" type="hidden" value="'+esc(name)+'">'
       :'<label for="lbName">'+T('Your name at the table','اسمك على الطاولة')+'</label><input id="lbName" maxlength="16" autocomplete="off" value="'+esc(name)+'" placeholder="'+T('Name','الاسم')+'">')+
     '<input id="lbCode" type="hidden" value="'+esc(code)+'">'+
     (auto?'':'<button type="button" class="go" id="'+(code?'lbJoin':'lbCreate')+'">'+(code?T('Enter the room','ادخل الغرفة'):T('Make the room','سوّ الغرفة'))+' ▶</button>')+
     (err?'<div class="err">'+err+'</div>':'')+'</div><button type="button" class="back" id="lbBack">'+T('Back to the home page','رجوع للرئيسية')+'</button></div>';
-  if(auto){tried=code;setTimeout(()=>{try{if(!NET.on&&typeof doEnter==='function')doEnter(false)}catch(e){}},350)}
+  if(auto){tried=code;autoFor=code;setTimeout(()=>{try{if(!NET.on&&typeof doEnter==='function')doEnter(false)}catch(e){}},350)}
   else{const n=document.getElementById('lbName');if(n&&n.type!=='hidden'){n.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();const b=s.querySelector('.go');b&&b.click()}});if(!name)setTimeout(()=>{try{if(!document.getElementById('lobby').hidden)n.focus()}catch(e){}},400)}}}catch(e){console.error('in180',e)}return r};
 try{if(typeof NET!=='undefined'&&!NET.on&&!document.getElementById('lobby').hidden)renderLobby()}catch(e){}
 }catch(e){console.error('x180',e)}})();
@@ -16325,6 +16329,57 @@ try{let lost=0,stall=0,last=performance.now();document.addEventListener('webglco
 })();
 
 </script><script>
+// ===================== round 184: the cards in each player's hand show HIS card back, on everybody's screen (they used to show the viewer's own back for all). The draw pile keeps your own back. =====================
+(function(){try{
+let busy=false;
+function paint(){busy=false;try{if(typeof S==='undefined'||!S||!S.players)return;const ids=typeof BACKS!=='undefined'?new Set(BACKS.map(b=>b.id)):null;
+  document.querySelectorAll('#seats .seat').forEach(s=>{const f=s.querySelector('.handfan');if(!f)return;const i=+s.dataset.seat;let id='';
+    try{const k=i>0&&window.__kitOf?window.__kitOf(i):null;id=k&&k.back?String(k.back):''}catch(e){}
+    if(!id||id==='ebtheme'||(ids&&!ids.has(id)))id='';                       // "follows the table" and unknown backs: leave it as you see your own
+    if((f.dataset.cb184||'')===id)return;
+    if(f.dataset.cb184)f.classList.remove('cbprev','cb-'+f.dataset.cb184);
+    if(id)f.classList.add('cbprev','cb-'+id);f.dataset.cb184=id})}catch(e){}}
+const kick=()=>{if(busy)return;busy=true;requestAnimationFrame(paint)};
+if(typeof render==='function')render=(function(p){return function(){const r=p.apply(this,arguments);kick();return r}})(render);
+const hook=()=>{const el=document.getElementById('seats');if(!el)return setTimeout(hook,800);new MutationObserver(kick).observe(el,{childList:true,subtree:true});kick()};hook();
+}catch(e){console.error('cb184',e)}})();
+
+</script><script>
+// ===================== round 185: sign in with Google. Optional: playing as a guest stays as it is. A guest who signs in keeps everything (the account he has is saved under his Google name);
+// on another phone or after reinstalling, signing in brings the same account back. Shown only when the server has a Google client id (GOOGLE_CLIENT_ID on Render); without it nothing appears. =====================
+(function(){
+const T=(en,ar)=>{try{return LANG==='ar'?ar:en}catch(e){return ar}};
+let CID='',gis=0,lastCred='';
+const st=document.createElement('style');st.textContent=`#gs185{margin:0 0 14px;padding:0 0 14px;border-bottom:1px solid rgba(242,210,122,.2)}#gs185 b{display:block;font-size:15px;font-weight:900;color:#f2d27a}#gs185 p{margin:4px 0 10px;font-size:12.5px;line-height:1.6;color:rgba(244,234,214,.75)}
+#gs185 .ok{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:#8fe3a8;direction:ltr;justify-content:flex-end}#gs185 .ok i{width:9px;height:9px;border-radius:50%;background:#5fd07a;flex:none}
+.gbtn185{display:flex;justify-content:center;min-height:44px;color-scheme:light}.gnote185{font-size:12px;color:#ffb1a8;margin-top:8px;line-height:1.6}#gs185 a{color:rgba(244,234,214,.6);font-size:11.5px}
+#xfS176 .or185{margin:14px 0 10px;font-size:12.5px;color:rgba(244,234,214,.6)}`;document.head.appendChild(st);
+const tok=()=>{try{return (typeof ACCT!=='undefined'&&ACCT.token)||localStorage.getItem('eb-acct')||''}catch(e){return ''}};
+const post=(body)=>fetch('/api/auth/google',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},tok()?{Authorization:'Bearer '+tok()}:{}),body:JSON.stringify(body)}).then(async r=>({st:r.status,j:await r.json().catch(()=>({}))}));
+const say=m=>{try{toast(m)}catch(e){}};
+function sheet(html){const o=document.getElementById('xfS176');if(o)o.remove();const d=document.createElement('div');d.id='xfS176';d.dir=T('ltr','rtl');d.innerHTML='<div class="bx">'+html+'</div>';document.body.appendChild(d);d.addEventListener('click',e=>{if(e.target===d||e.target.closest('[data-xfx]'))d.remove()});return d}
+async function done(cred,force){lastCred=cred;let r;try{r=await post({credential:cred,force:!!force})}catch(e){r=null}
+  if(!r){say(T('No connection','ما في اتصال'));return}const j=r.j||{};
+  if(j.exists){const d=sheet('<h3>'+T('This Google account already has a saved game','حساب قوقل هذا له لعبة محفوظة')+'</h3><p><b style="color:#fff;font-size:17px">'+String(j.name||T('Player','لاعب')).replace(/[<>&]/g,'')+'</b><br>'+T('Level ','المستوى ')+(j.level||1)+' · '+(j.games||0)+' '+T('games','قيم')+'</p><p>'+T('Open it on this device? What this device has now will be left behind.','تفتحه على هالجهاز؟ اللي على هالجهاز الحين بينترك.')+'</p><div class="r"><button type="button" data-xfx>'+T('No, stay here','لا، خلني هني')+'</button><button type="button" class="g" data-g185="go">'+T('Open my account','افتح حسابي')+'</button></div>');
+    d.querySelector('[data-g185]').addEventListener('click',()=>{d.remove();done(lastCred,true)});return}
+  if(j.token){try{localStorage.setItem('eb-acct',j.token);if(j.name)localStorage.setItem('eb-name',j.name);localStorage.setItem('eb-xf176','1')}catch(e){}sheet('<h3>✅ '+T('Welcome back','هلا فيك')+(j.name?' '+String(j.name).replace(/[<>&]/g,''):'')+'</h3><p>'+T('Loading your account…','قاعد أحمّل حسابك…')+'</p>');setTimeout(()=>location.reload(),900);return}
+  if(j.ok){try{if(j.me&&typeof applyMe==='function')applyMe(j.me)}catch(e){}const o=document.getElementById('xfS176');if(o)o.remove();say(j.same?T('Already saved with this Google account','حسابك أصلاً محفوظ بهالقوقل'):T('Saved. Sign in with Google on any device to get this account back.','انحفظ حسابك. ادخل بقوقل من أي جهاز ويرجع لك.'));paint(true);return}
+  say(r.st===401?T('Google did not confirm the sign-in. Try again.','قوقل ما أكد الدخول. جرب مرة ثانية.'):T('Could not sign in now. Try again in a moment.','ما ضبط الدخول الحين. جرب بعد شوي.'))}
+function loadGis(){if(gis)return;gis=1;const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';s.async=true;s.onload=()=>{try{google.accounts.id.initialize({client_id:CID,callback:r=>{if(r&&r.credential)done(r.credential,false)},auto_select:false,cancel_on_tap_outside:true});gis=2;document.querySelectorAll('.gbtn185').forEach(btn)}catch(e){gis=3}};s.onerror=()=>{gis=3;document.querySelectorAll('.gbtn185').forEach(btn)};document.head.appendChild(s);setTimeout(()=>{if(gis===1){gis=3;document.querySelectorAll('.gbtn185').forEach(btn)}},9000)}
+function btn(el){if(!el||el.dataset.done==='2')return;if(gis===2){try{el.innerHTML='';google.accounts.id.renderButton(el,{type:'standard',theme:'outline',size:'large',shape:'pill',text:'continue_with',logo_alignment:'left',locale:T('en','ar'),width:Math.min(320,Math.max(220,(el.clientWidth||280)))});el.dataset.done='2'}catch(e){}}
+  else if(gis===3&&!el.dataset.err){el.dataset.err='1';el.innerHTML='<div class="gnote185">'+T('Google sign-in did not open here. Open the game in Safari or Chrome (not inside another app) and try again.','الدخول بقوقل ما فتح هني. افتح اللعبة بسفاري أو كروم (مو من داخل تطبيق ثاني) وجرب.')+'</div>'}}
+function paint(force){try{if(!CID)return;const card=document.getElementById('xf176');if(!card)return;let g=document.getElementById('gs185');const mail=(typeof ACCT!=='undefined'&&ACCT.me&&ACCT.me.google)||'';
+  if(g&&!force&&g.dataset.m===mail)return;if(!g){g=document.createElement('div');g.id='gs185';card.insertBefore(g,card.firstChild)}g.dataset.m=mail;g.dir=T('ltr','rtl');
+  g.innerHTML=mail?'<b>'+T('Your account is saved','حسابك محفوظ')+'</b><p>'+T('Sign in with the same Google account on any device and it comes back.','ادخل بنفس حساب قوقل من أي جهاز ويرجع لك حسابك.')+'</p><div class="ok"><span>'+String(mail).replace(/[<>&]/g,'')+'</span><i></i></div>'
+    :'<b>'+T('Save your account with Google','احفظ حسابك بقوقل')+'</b><p>'+T('So your level, things and statistics never get lost, and open on any device. Your account stays as it is.','عشان مستواك وأغراضك وإحصائياتك ما تضيع، وتفتح من أي جهاز. حسابك يتم مثل ما هو.')+'</p><div class="gbtn185"></div><a href="privacy.html" target="_blank" rel="noopener">'+T('Privacy','الخصوصية')+'</a>';
+  if(!mail){loadGis();btn(g.querySelector('.gbtn185'))}}catch(e){}}
+// the "bring my account" sheet gets the Google button too
+function inSheet(){try{if(!CID)return;const d=document.getElementById('xfS176');if(!d||d.querySelector('.gbtn185')||!d.querySelector('input'))return;const bx=d.querySelector('.bx');const w=document.createElement('div');w.innerHTML='<div class="or185">'+T('or','أو')+'</div><div class="gbtn185"></div>';bx.appendChild(w);loadGis();btn(w.querySelector('.gbtn185'))}catch(e){}}
+fetch('/api/auth/config').then(r=>r.json()).then(c=>{CID=(c&&c.google)||'';if(!CID)return;setInterval(()=>{paint(false);inSheet()},800)}).catch(()=>{});
+window.__g185={done};
+})();
+
+</script><script>
 // ===================== Round 157: the choices made in the lab =====================
 // 1) every round-156 visual proposal is switched on (fire, ice, lightning, the war growing, the clashes, the finish)
 try{Object.assign(window.__fx156=window.__fx156||{},{fireScorch:1,firePillar:1,fireLight:1,iceFloor:1,iceCracks:1,iceFreeze:1,zapSky:1,zapChain:1,zapStatic:1,warEscalate:1,warClash:1,warFinish:1})}catch(e){}
@@ -16347,7 +16402,7 @@ window.__snd157=()=>pend;
 
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1121.1207';
+const EB_VERSION='v1121.1405';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
