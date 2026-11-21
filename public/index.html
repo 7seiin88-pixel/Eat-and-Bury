@@ -7940,8 +7940,8 @@ const cost=()=>window.SLAM_COST||50;
 const canPlay=()=>S&&((S.turn===0&&(S.phase==='choose'||S.phase==='throw'))||S.war);
 function setFire(on){if(on===auto)return;auto=on;slamArmed=on;try{slamIcon()}catch(e){}const g=document.querySelector('.dragghost');if(g)g.classList.toggle('onfire',on)}
 document.addEventListener('pointerdown',e=>{const el=e.target.closest('#myrow [data-card]');if(!el||!canPlay())return;
-  tr={pid:e.pointerId,y0:e.clientY,x0:e.clientX,pts:[{x:e.clientX,y:e.clientY,t:performance.now()}],pre:!!slamArmed,poorTold:false}},{capture:true,passive:true});
-window.addEventListener('pointermove',e=>{if(!tr||e.pointerId!==tr.pid)return;const now=performance.now();tr.pts.push({x:e.clientX,y:e.clientY,t:now});
+  tr={pid:e.pointerId,y0:e.clientY,x0:e.clientX,pts:[{x:e.clientX,y:e.clientY,t:(e.timeStamp>0?e.timeStamp:performance.now())}],pre:!!slamArmed,poorTold:false}},{capture:true,passive:true});
+window.addEventListener('pointermove',e=>{if(!tr||e.pointerId!==tr.pid)return;const now=(e.timeStamp>0?e.timeStamp:performance.now()); /* round 183: the finger's own clock: when the phone hangs, the moves arrive in a bunch and looked like one very fast swipe */tr.pts.push({x:e.clientX,y:e.clientY,t:now});
   while(tr.pts.length>2&&now-tr.pts[0].t>80)tr.pts.shift();
   if(tr.pre)return; // the player already armed fire with the button
   const a=tr.pts[0],b=tr.pts[tr.pts.length-1],dt=b.t-a.t;if(dt<MINDT)return; /* round 145: too little to measure yet: decide nothing (it used to count as 'stopped' and put the fire out in the middle of a flick) */ let vy=0;/* round 152: the fastest stretch of the last 80 ms that is at least 30 ms long (the pause before the finger starts moving no longer waters the speed down) */for(let k=0;k<tr.pts.length-1;k++){const p=tr.pts[k],d=b.t-p.t,u=p.y-b.y;if(d<MINDT)break;if(u>0)vy=Math.max(vy,Math.hypot(b.x-p.x,u)/d)} // speed along the finger's real direction: a flick toward a side seat is mostly sideways
@@ -7996,8 +7996,8 @@ function cut(id,fire,btn){if(!S||!S.war)return;const c=S.players[0].hand.find(x=
   if(fire&&!slamArmed){if(!online()&&(WAL.tokens||0)<cost()){toast(L(`Fire needs ${cost()} rupees`,`النار تحتاج ${cost()} روبية`));fire=false}else{slamArmed=true;window.__armWhy='2taps';try{slamIcon()}catch(e){}}}
   intercept(0,c)}
 window.addEventListener('click',e=>{const b=e.target.closest('[data-int]');if(!b||!S||!S.war)return;e.stopImmediatePropagation();e.preventDefault();
-  const id=+b.dataset.int,now=performance.now();
-  if(pend&&pend.id===id&&now-pend.t<GAP+120){window.__tapGap=Math.round(now-pend.t)+'ms trusted='+e.isTrusted;clearTimeout(pend.tm);pend=null;feel(b);setTimeout(()=>cut(id,true,b),150);return}
+  const id=+b.dataset.int,now=(e.timeStamp>0?e.timeStamp:performance.now()); /* round 183: the time the finger really touched, not the time the phone got round to it. On a phone that hangs for a moment (weak network, heavy effects) two separate taps were handled together and counted as a double tap: fire every time, 50 rupees each, without the player meaning it. A real double tap is 60 to 300 ms apart. */
+  if(pend&&pend.id===id&&now-pend.t>=60&&now-pend.t<=300){window.__tapGap=Math.round(now-pend.t)+'ms trusted='+e.isTrusted;clearTimeout(pend.tm);pend=null;feel(b);setTimeout(()=>cut(id,true,b),150);return}
   if(pend){clearTimeout(pend.tm);pend=null}
   b.classList.add('qtap');setTimeout(()=>b.classList.remove('qtap'),160);
   pend={id,t:now,tm:setTimeout(()=>{pend=null;cut(id,false,b)},GAP)}},true);
@@ -10057,7 +10057,8 @@ function botAuto(i){const p=S.players[i],o={snd:''};
 if(typeof autoOf==='function'){const _ao=autoOf;autoOf=function(j){if(!off()&&S&&S.players&&S.players[j]&&j!==0&&!S.players[j].human){const p=S.players[j];return p.__auto||(p.__auto=botAuto(j))}return _ao.apply(this,arguments)}}
 // now and then a computer cuts with the fire button, so its fire effect shows (it costs them nothing; with effects off you only see the usual fire)
 intercept=(function(prev){return function(j,card,fire){try{if(fire==null&&BOTFX&&!off()&&S&&S.war&&j!==0&&S.players[j]&&!S.players[j].human){const v=sum([...S.war.targets,...S.war.pot]);
-  if(v>=40?Math.random()<.55:v>=20?Math.random()<.25:Math.random()<.08)fire=true}}catch(e){}return prev.call(this,j,card,fire)}})(intercept);
+  const off2=(window.fxOff&&window.fxOff())||(S.cfg&&S.cfg.fx===false); /* round 182: as often as before when the table plays with effects; never when it plays without them (all you saw then was the plain flame, again and again) */
+  if(!off2&&(v>=40?Math.random()<.55:v>=20?Math.random()<.25:Math.random()<.08))fire=true}}catch(e){}return prev.call(this,j,card,fire)}})(intercept);
 })();
 
 // 5) every message shows who said it: a small name line on top of the bubble (with the team colour)
@@ -15125,14 +15126,18 @@ go();setInterval(go,1000)})();
 // ===================== Round 167: mic diagnosis. A player turned the mic on in a game and nobody heard anybody. Nine seconds after the mic opens, one anonymous line
 // (connection state, route type, bytes heard, room kind) goes to the statistics, and if nothing was heard the player is told. =====================
 (function(){try{if(typeof voiceToggle!=='function'||typeof VOICE==='undefined')return;const _vt=voiceToggle;
-voiceToggle=async function(){const r=await _vt.apply(this,arguments);try{if(VOICE&&VOICE.on){const t0=Date.now();setTimeout(async()=>{try{if(!VOICE.on)return;const rows=[];let heard=0;
+voiceToggle=async function(){const r=await _vt.apply(this,arguments);try{if(VOICE&&VOICE.on){const t0=Date.now();setTimeout(async()=>{try{if(!VOICE.on)return;const rows=[];let heard=0,sent=0,linked=0;
   for(const [sid,st] of VOICE.peers){const s=await st.pc.getStats();let rx=0,tx=0,pair='',lt='',rt='';const byId={};s.forEach(x=>{byId[x.id]=x});
     s.forEach(x=>{if(x.type==='inbound-rtp'&&x.kind==='audio')rx=x.bytesReceived||0;if(x.type==='outbound-rtp'&&x.kind==='audio')tx=x.bytesSent||0;
       if(x.type==='candidate-pair'&&(x.selected||x.nominated&&x.state==='succeeded')){const l=byId[x.localCandidateId],rm=byId[x.remoteCandidateId];lt=l&&l.candidateType||'';rt=rm&&rm.candidateType||''}});
-    heard+=rx;rows.push(st.pc.connectionState+'/'+st.pc.iceConnectionState+' rx'+rx+' tx'+tx+' '+lt+'>'+rt)}
-  const priv=typeof NET!=='undefined'&&NET.priv,where=('MIC '+(priv?'private':'public')+' peers'+VOICE.peers.size+' relay'+(window.__iceRelay?'Y':'N')+' | '+rows.join(' ; ')).slice(0,118);let v='';try{v=EB_VERSION}catch(e){}
+    heard+=rx;sent+=tx;if(st.pc.connectionState==='connected'||st.pc.iceConnectionState==='connected'||st.pc.iceConnectionState==='completed')linked++;rows.push(st.pc.connectionState+'/'+st.pc.iceConnectionState+' rx'+rx+' tx'+tx+' '+lt+'>'+rt)}
+  const priv=typeof NET!=='undefined'&&NET.priv,micN=(typeof NET!=='undefined'?NET.members:[]).filter(m=>m.mic).length,where=('MIC mics'+micN+' '+(priv?'private':'public')+' peers'+VOICE.peers.size+' relay'+(window.__iceRelay?'Y':'N')+' | '+rows.join(' ; ')).slice(0,118);let v='';try{v=EB_VERSION}catch(e){}
   fetch('/api/err',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msg:'MIC check',where,ver:v,dev:'mic'})}).catch(()=>{});
-  if(VOICE.peers.size&&!heard)toast(L('Nobody is heard yet. Mute the mic and open it again, or check your internet.','لين الحين ما وصل صوت. اقفل المايك وافتحه مرة ثانية، أو تأكد من النت.'))}catch(e){}},9000)}}catch(e){}return r};
+  const others=(typeof NET!=='undefined'?NET.members:[]).filter(m=>m.sid!==NET.me&&!m.watch),micOn=others.filter(m=>m.mic).length;
+  // round 182: say what is really going on. Hearing nothing is normal when nobody else has opened a mic; the old message blamed the connection every time.
+  if(VOICE.peers.size&&linked<VOICE.peers.size)toast(L('The voice link did not connect with '+(VOICE.peers.size-linked)+' of '+VOICE.peers.size+'. Mute and open the mic again, or check the internet.','الصوت ما اتصل مع '+(VOICE.peers.size-linked)+' من '+VOICE.peers.size+'. اقفل المايك وافتحه مرة ثانية، أو تأكد من النت.'));
+  else if(VOICE.peers.size&&!heard&&!micOn)toast(L('Your mic is on and connected. Nobody else has opened a mic yet.','مايكك شغال وواصل. بس ما أحد غيرك فاتح مايكه للحين.'));
+  else if(VOICE.peers.size&&!heard)toast(L('Connected, but no sound is arriving from the others yet. Ask them to mute and open the mic again.','الاتصال تمام بس صوتهم ما وصل للحين. خلهم يقفلون المايك ويفتحونه مرة ثانية.'))}catch(e){}},9000)}}catch(e){}return r};
 }catch(e){}})();
 
 // ===================== Round 167: the room page, tidied; table of 4 or 6; no flash of the old page; "what I own" in the shop =====================
@@ -15960,7 +15965,13 @@ function add(i,text){try{text=String(text==null?'':text).trim();if(!text||/^⟦\
   const k=i+'|'+text,now=Date.now();if(k===lastKey&&now-lastT<900)return;lastKey=k;lastT=now;
   const p=S.players[i],me=i===0;LOG.push({me,team:p.team,name:me?(AR()?'أنت':'You'):String(p.name||''),text,ts:now});if(LOG.length>60)LOG.shift();
   const bar=document.getElementById('chatBar');if(bar&&!bar.hidden)paint();else if(!me){unseen++;dot()}}catch(e){}}
-try{say=(function(p){return function(i,t){add(i,t);return p.apply(this,arguments)}})(say)}catch(e){}
+// only what people wrote or picked themselves goes in the list: no "Cut!", "Slam!", automatic replies or computer chatter
+const SYS=new Set(['قطع!','طق!','صفقة!','Cut!','Slap!','SLAM!']);let inSay=0,clickT=0;
+addEventListener('click',()=>{clickT=performance.now()},true);addEventListener('pointerup',()=>{clickT=performance.now()},true);
+try{if(typeof playFx==='function')playFx=(function(p){return function(e){const is=e&&e.t==='say';if(is)inSay++;try{return p.apply(this,arguments)}finally{if(is)inSay--}}})(playFx)}catch(e){}
+const picked=(i,t)=>{try{t=String(t==null?'':t).trim();if(SYS.has(t))return false;if(typeof NET!=='undefined'&&NET.on)return inSay>0;   /* online: a phrase somebody sent */
+  return i===0&&performance.now()-clickT<700}catch(e){return false}};                                                                   /* against the computer: the phrase you tapped */
+try{say=(function(p){return function(i,t){if(picked(i,t))add(i,t);return p.apply(this,arguments)}})(say)}catch(e){}
 try{chatBubble=(function(p){return function(i,t){add(i,t);return p.apply(this,arguments)}})(chatBubble)}catch(e){}
 try{newGame=(function(p){return function(){LOG.length=0;unseen=0;dot();return p.apply(this,arguments)}})(newGame)}catch(e){}
 function dot(){const b=document.getElementById('chatBtn');if(!b)return;let d=b.querySelector('.cdot175');if(unseen&&!d){d=document.createElement('i');d.className='cdot175';b.appendChild(d)}if(d){d.hidden=!unseen;d.textContent=unseen>9?'9+':unseen||''}}
@@ -16253,6 +16264,43 @@ try{const st=document.createElement('style');st.textContent='@media (max-width:3
 })();
 
 </script><script>
+// ===================== round 182: 1) "everyone for himself" on an upright screen: four names never fitted in the score box and were printed on top of each other; now each score sits under its player's colour (the same colour as his name plate).
+// 2) two anonymous notes to the statistics so the next report can be explained: why the microphone did not open, and a page that reloaded by itself in the middle of a game (the game has no code that reloads the page). =====================
+(function(){
+try{const st=document.createElement('style');st.textContent=`@media (orientation:portrait),(max-width:700px){
+html body .topbar #board:has(.col:nth-child(3)) .col .t{font-size:0!important;line-height:0!important;display:flex!important;justify-content:center!important;align-items:center!important;height:13px!important;overflow:visible!important;white-space:nowrap}
+html body .topbar #board:has(.col:nth-child(3)) .col .t .dot{display:block!important;width:11px!important;height:11px!important;margin:0!important;border-radius:50%!important;box-shadow:0 0 0 1.5px rgba(0,0,0,.5)!important;flex:none}
+html body .topbar #board:has(.col:nth-child(3)) .col:first-child .t .dot{box-shadow:0 0 0 1.5px #fff,0 0 0 3px rgba(0,0,0,.5)!important}
+html body .topbar #board:has(.col:nth-child(3)) .col{min-width:0!important}}`;document.head.appendChild(st)}catch(e){}
+// 3) the fire button pressed by a computer (or anybody whose fire arrives with his cut) sounds the same as when you press it: the new recorded-style sound, not the old loud thump with the long hiss
+try{const MAP={plain:'fire2',blaze:'fire2',ice:'ice157',firering:'ring157'};let hot=0,played=false;
+  const play=name=>{try{if(!SND.ok()||typeof sampleDecode!=='function'||!SAMPLES[name])return false;const c=SND.ctx;sampleDecode(name).then(b=>{try{if(!b||!SND.ok())return;const s=c.createBufferSource(),g=c.createGain();s.buffer=b;g.gain.value=1.15;s.connect(g).connect(SND.out());s.start()}catch(e){}});return true}catch(e){return false}};
+  if(typeof slapFx==='function')slapFx=(function(p){return function(card,from,power){try{if(power===3&&window.__efSeat!=null){hot=performance.now();played=false}}catch(e){}return p.apply(this,arguments)}})(slapFx);
+  const live=()=>performance.now()-hot<1600;
+  if(typeof fireSlam==='function')fireSlam=(function(p){return function(){hot=0;return p.apply(this,arguments)}})(fireSlam); /* your own press keeps its own path */
+  /* the plain flame of a computer goes through the big-slap road, not the effect road: same new sound there */
+  if(typeof SND!=='undefined'&&typeof SND.slap==='function')SND.slap=(function(p){return function(pw){try{if(pw===3&&live()){if(!played&&play('fire2'))played=true;if(played)return}}catch(e){}return p.apply(this,arguments)}})(SND.slap);
+  const prev=window.fxSound||(typeof fxSound==='function'?fxSound:null);if(prev){window.fxSound=function(id,pw){try{if(pw===3&&live()&&MAP[id]){if(!played&&play(MAP[id]))played=true;if(played)return}}catch(e){}return prev.apply(this,arguments)};try{fxSound=window.fxSound}catch(e){}}}catch(e){}
+// 4) the microphone. Found by test: when somebody else had opened his mic first, your own mic was attached to the existing voice line without telling the other side, so the line stayed "listen only" and nobody ever heard you. Now the line is switched to two-way.
+try{if(typeof VOICE!=='undefined'){const twoWay=()=>{try{if(!VOICE.stream||!VOICE.on)return;VOICE.peers.forEach(st=>{try{st.pc.getTransceivers().forEach(t=>{if(t.sender&&t.sender.track&&t.sender.track.kind==='audio'&&t.direction!=='sendrecv'&&t.direction!=='stopped')t.direction='sendrecv'})}catch(e){}})}catch(e){}};
+  if(typeof voiceToggle==='function')voiceToggle=(function(p){return async function(){const r=await p.apply(this,arguments);twoWay();setTimeout(twoWay,400);return r}})(voiceToggle);
+  setInterval(twoWay,3000)}}catch(e){}
+const note=(msg,where)=>{try{let v='';try{v=EB_VERSION}catch(e){}fetch('/api/err',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msg,where:String(where).slice(0,118),ver:v,dev:'diag'})}).catch(()=>{})}catch(e){}};
+const where=()=>{try{const ua=navigator.userAgent,br=/CriOS|Chrome/.test(ua)?'Chrome':/Safari/.test(ua)?'Safari':'other';let app=false;try{app=matchMedia('(display-mode: standalone)').matches||!!navigator.standalone}catch(e){}
+  return br+(app?' app':' tab')+(/iPad|Macintosh/.test(ua)&&'ontouchend' in document?' iPad':/iPhone/.test(ua)?' iPhone':/Android/.test(ua)?' Android':'')}catch(e){return ''}};
+// the microphone: the reason the phone gave when it refused
+try{const md=navigator.mediaDevices;if(md&&md.getUserMedia){const g=md.getUserMedia.bind(md);md.getUserMedia=function(c){return g(c).catch(e=>{try{if(c&&c.audio)note('MIC refused',(e&&e.name||'error')+' | '+where()+' | '+(typeof NET!=='undefined'&&NET.on?(NET.priv?'private room':'public room'):'no room'))}catch(x){}throw e})}}
+  else if(typeof voiceToggle==='function'){const vt=voiceToggle;voiceToggle=function(){note('MIC refused','no mediaDevices | '+where());return vt.apply(this,arguments)}}}catch(e){}
+// a reload nobody asked for: the page keeps a small heartbeat in the tab; a clean leave clears it
+try{const K='eb-hb182',prev=sessionStorage.getItem(K);if(prev){try{const p=JSON.parse(prev);if(p&&p.g&&Date.now()-p.t<90000)note('RELOAD by itself',where()+' | '+p.w+' | '+Math.round((p.t-p.t0)/60000)+'min | hidden'+(p.h?'Y':'N'))}catch(e){}}
+  const t0=Date.now();const beat=()=>{try{const g=typeof S!=='undefined'&&!!S&&!!S.players&&document.getElementById('home').hidden;const on=typeof NET!=='undefined'&&NET.on;
+    sessionStorage.setItem(K,JSON.stringify({t:Date.now(),t0,g:g?1:0,h:document.hidden?1:0,w:(on?(NET.priv?'private':NET.quick?'ranked':'room'):'computer')+' mic'+(typeof VOICE!=='undefined'&&VOICE.on?'Y':'N')+' th='+((typeof WAL!=='undefined'&&WAL.theme)||'')+' n'+(g?S.players.length:0)}))}catch(e){}};
+  setInterval(beat,5000);beat();
+  // leaving on purpose (closing the tab, going to another address, the account-code reload) is not "by itself"; a page the phone throws away never gets to say goodbye
+  addEventListener('beforeunload',()=>{try{sessionStorage.removeItem(K)}catch(e){}})}catch(e){}
+})();
+
+</script><script>
 // ===================== Round 157: the choices made in the lab =====================
 // 1) every round-156 visual proposal is switched on (fire, ice, lightning, the war growing, the clashes, the finish)
 try{Object.assign(window.__fx156=window.__fx156||{},{fireScorch:1,firePillar:1,fireLight:1,iceFloor:1,iceCracks:1,iceFreeze:1,zapSky:1,zapChain:1,zapStatic:1,warEscalate:1,warClash:1,warFinish:1})}catch(e){}
@@ -16275,7 +16323,7 @@ window.__snd157=()=>pend;
 
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1120.1627';
+const EB_VERSION='v1120.2104';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
