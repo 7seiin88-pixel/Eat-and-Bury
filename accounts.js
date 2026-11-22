@@ -213,6 +213,8 @@ async function spend(a, n) { if (a.w.tokens < n) return null; a.w.tokens -= n; a
 // The phone gets a signed note from Google (an "ID token"); we check Google's signature on it ourselves, that it was made for THIS game (GOOGLE_CLIENT_ID on Render) and that it has not expired. No password ever reaches us.
 const GOOGLE_ID = String(process.env.GOOGLE_CLIENT_ID || '').trim();
 let GCERT = { at: 0, keys: [] };
+// the game's own address (a bought domain), e.g. eatandbury.com. When set on Render, a player who opens the old onrender address is moved to it with his account. Empty = nothing moves.
+const MAIN_HOST = String(process.env.MAIN_HOST || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
 function gCerts() { if (Date.now() - GCERT.at < 3600e3 && GCERT.keys.length) return Promise.resolve(GCERT.keys);
   return new Promise((res, rej) => { require('https').get('https://www.googleapis.com/oauth2/v3/certs', r => { let b = ''; r.on('data', d => b += d); r.on('end', () => { try { const k = JSON.parse(b).keys || []; if (k.length) GCERT = { at: Date.now(), keys: k }; res(GCERT.keys) } catch (e) { GCERT.keys.length ? res(GCERT.keys) : rej(e) } }) }).on('error', e => GCERT.keys.length ? res(GCERT.keys) : rej(e)) }) }
 if (process.env.GOOGLE_FAKE === '1' && process.env.GOOGLE_TEST_JWK) { try { GCERT = { at: Date.now() + 1e12, keys: [JSON.parse(process.env.GOOGLE_TEST_JWK)] } } catch (e) {} } // tests only: never set on the real server
@@ -243,18 +245,18 @@ async function http(req, res, url) {
       if (!process.env.ADMIN_KEY || req.headers['x-admin-key'] !== process.env.ADMIN_KEY) return send(403, { err: 'no' });
       const t = await store.byId(String(body.id || '')); if (!t) return send(404, { err: 'nf' }); t.verified = body.on !== false; await store.put(t); return send(200, { ok: true, verified: t.verified }) }
     // move an account to another phone or browser: the old one asks for a 6-digit code (10 minutes, one use), the new one types it and gets the same account
-    if (url === '/api/auth/config') return send(200, { google: GOOGLE_ID });
+    if (url === '/api/auth/config') return send(200, { google: GOOGLE_ID, main: MAIN_HOST });
     if (url === '/api/auth/google' && req.method === 'POST') { if (!GOOGLE_ID) return send(503, { err: 'off' });
       let g = null; try { g = await gVerify(body.credential) } catch (e) { console.error('google', e); return send(502, { err: 'google' }) } if (!g) return send(401, { err: 'bad' });
       const cur = tok ? await load(tok) : null; return send(200, await gSignIn(g, cur, !!body.force)) }
     if (url === '/api/xfer/use' && req.method === 'POST') { const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim(), now = Date.now();
       const t = XTRY.get(ip) || { n: 0, t: now }; if (now - t.t > 600000) { t.n = 0; t.t = now } if (t.n >= 6) return send(429, { err: 'slow' });
-      const code = String(body.code || '').replace(/\D/g, ''), x = XFER.get(code);
+      const raw = String(body.code || ''), code = raw.length > 8 ? raw.slice(0, 40) : raw.replace(/\D/g, ''), x = XFER.get(code); // a long code is the one the game makes by itself when it moves a player to the new address
       if (!x || now > x.until) { t.n++; XTRY.set(ip, t); return send(404, { err: 'nf' }) }
       XFER.delete(code); const acc = await load(x.token); if (!acc) return send(404, { err: 'nf' }); return send(200, { token: x.token, name: acc.prof.name || '' }) }
     const a = await load(tok); if (!a) return send(401, { err: 'auth' });
     if (url === '/api/xfer/make' && req.method === 'POST') { const now = Date.now(); for (const [k, v] of XFER) if (now > v.until || v.id === a.id) XFER.delete(k);
-      let code; do { code = String(crypto.randomInt(100000, 1000000)) } while (XFER.has(code)); XFER.set(code, { id: a.id, token: tok, until: now + 600000 }); return send(200, { code, min: 10 }) }
+      let code; do { code = body.long ? crypto.randomBytes(18).toString('base64url') : String(crypto.randomInt(100000, 1000000)) } while (XFER.has(code)); XFER.set(code, { id: a.id, token: tok, until: now + (body.long ? 120000 : 600000) }); return send(200, { code, min: 10 }) }
     if (url === '/api/me') { const sz = season(a); const g = daily(a); const got = checkAch(a); let tt = false; if (TEST_MODE && !a.w.t100) { a.w.t100 = 1; tt = true; if (a.w.tokens < 100000) a.w.tokens = 100000 } /* test phase: everyone is topped up to 100,000 once */ if (g || got.length || sz || tt) await store.put(a); return send(200, me(a, g || got.length || sz ? { daily: g, ach: got, season: sz } : null)) }
     if (url === '/api/top') { const list = await store.top(50); const mine = await store.above(a.st.rp || 0);
       return send(200, { me: { pos: mine + 1, rp: a.st.rp || 0 }, list: list.map((x, k) => ({ pos: k + 1, id: x.id === a.id ? 'me' : '', name: x.prof.name || 'لاعب', av: /^p:/.test(x.prof.av || '') ? x.prof.av : (x.prof.av && x.prof.av.length < 40000 ? x.prof.av : 'p:0'), flag: x.prof.flag, rp: x.st.rp || 0, vip: isVip(x), verified: !!x.verified, title: titleOf(x) })) }) }

@@ -35,7 +35,7 @@ const server = http.createServer((req, res) => {
       res.writeHead(204); res.end() }); return }
   if (url === '/api/admin/stats') { if (!STATS.okKey(req)) { res.writeHead(403, { 'Content-Type': 'application/json' }); return res.end('{"err":"no"}') }
     const started = [...rooms.values()].filter(r => r.started), inRooms = started.reduce((n, r) => n + r.members.filter(m => !m.watch && !m.away).length, 0);
-    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); return res.end(JSON.stringify(STATS.report({ connected: clients.size, rooms: started.length, waiting: rooms.size - started.length, playingOnline: inRooms, watching: [...rooms.values()].reduce((n, r) => n + r.members.filter(m => m.watch).length, 0), mcAsk: MCSTAT.ask, mcUsed: MCSTAT.used, mcLate: MCSTAT.late, mcErr: MCSTAT.err }))) }
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); return res.end(JSON.stringify(STATS.report({ connected: clients.size, rooms: started.length, waiting: rooms.size - started.length, playingOnline: inRooms, watching: [...rooms.values()].reduce((n, r) => n + r.members.filter(m => m.watch).length, 0), mcAsk: MCSTAT.ask, mcUsed: MCSTAT.used, mcLate: MCSTAT.late, mcErr: MCSTAT.err, lagMax: LAG.max, lagSlow: LAG.slow, lagN: LAG.n }))) }
   // voice relay (TURN) for players on mobile data: set TURN_URLS (comma separated), TURN_USER, TURN_PASS in the hosting settings
   if (url.split('?')[0] === '/api/ice') { const urls = String(process.env.TURN_URLS || '').split(',').map(x => x.trim()).filter(Boolean);
     const ice = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }]; if (urls.length) ice.push({ urls, username: process.env.TURN_USER || '', credential: process.env.TURN_PASS || '' });
@@ -147,6 +147,8 @@ const autoOf = a => { if (!a || typeof a !== 'object') return null; const k = v 
   const o = {}; for (const e of ['def', 'save', 'took', 'win', 'lost', 'winbig', 'tauf']) { o[e] = k(a[e]); o[e + '2'] = k(a[e + '2']); o[e + '3'] = k(a[e + '3']) }
   return { ...o, snd: String(a.snd || '').replace(/[^a-z]/g, '').slice(0, 12) }; };
 const pub = r => ({ code: r.code, host: r.host, started: r.started, priv: !!r.priv, chat: (r.lchat || []).slice(-30), gcfg: r.gcfg || {}, size: r.quick ? (QMODES[r.qmode] || 4) : (r.size === 6 ? 6 : 4), theme: r.theme || '', mic: r.mic !== false, quick: !!r.quick, qmode: r.quick ? (r.qmode || '2v2') : '', qIn: r.qAt && !r.started ? Math.max(0, r.qAt - Date.now()) : 0, dw: r.dw ? DW.name(r.dw) : '', members: r.members.map(m => ({ sid: m.sid, name: m.name, seat: m.seat, mic: m.mic, away: !!m.away, watch: !!m.watch, prof: m.prof || null })) });
+// round 188: is the server itself ever late? a timer that should fire every half second says how late it fired (max, and how many times more than 150 ms late, over the last 6 hours)
+const LAG = { max: 0, slow: 0, n: 0 }; { let t = Date.now(); setInterval(() => { const n = Date.now(), d = n - t - 500; t = n; LAG.n++; if (d > LAG.max) LAG.max = d; if (d > 150) LAG.slow++ }, 500).unref(); setInterval(() => { LAG.max = 0; LAG.slow = 0; LAG.n = 0 }, 6 * 3600e3).unref() }
 const GRACE = 3 * 60 * 1000; // keep a player's seat this long after they lose connection
 const token = () => crypto.randomBytes(12).toString('hex');
 const toRoom = (r, type, data) => r.members.forEach(m => send(clients.get(m.sid), type, data));
@@ -202,6 +204,7 @@ function onMessage2(c, { type, data = {}, rid }) {
     case 'rsize': { if (!r || r.host !== c.id || r.started || r.quick) return; const n = +data.n === 6 ? 6 : 4; if (n === 4 && r.members.filter(m => !m.watch).length > 4) return; if (n === 4) for (const m of r.members) { if (m.watch || m.seat < 4) continue; let f = 1; while (r.members.some(x => !x.watch && x.seat === f)) f++; m.seat = f; } r.size = n; return toRoom(r, 'room', pub(r)); } // the host picks a table of 4 or 6
     case 'start': { if (!r || r.host !== c.id) return; return startGame(r, data.cfg || {}); }
     case 'reopen': if (!r || r.host !== c.id) return; if (r.game) { r.game.stop(); r.game = null; } r.started = false; r.over = 0; return toRoom(r, 'room', pub(r));
+    case 'ping': return reply({ ok: 1 }); // round 188: the game measures how long a message takes to go and come back
     case 'up': return; // (old app versions) the server sends the table now
     case 'act': { // a player's move: the server checks it against the rules and plays it
       if (!r || !r.game) return; const m = r.members.find(x => x.sid === c.id); if (!m || m.watch) return;
