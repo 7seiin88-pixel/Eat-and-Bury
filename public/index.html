@@ -11898,7 +11898,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)ping()});
 // games against the computer
 const off=()=>!(typeof NET!=='undefined'&&NET.on);let t0=0;
 if(typeof newGame==='function')newGame=(function(p){return function(){const r=p.apply(this,arguments);try{if(off()){t0=Date.now();post('/api/stat',{ev:'start',id:dev,mode:(arguments[0]&&arguments[0].mode)||'',name:(typeof MYPROF!=='undefined'&&MYPROF.name)||''})}}catch(e){}return r}})(newGame);
-if(typeof endGame==='function')endGame=(function(p){return function(){try{if(off()&&t0){post('/api/stat',{ev:'end',ms:Date.now()-t0,id:dev});t0=0}}catch(e){}return p.apply(this,arguments)}})(endGame);
+if(typeof endGame==='function')endGame=(function(p){return function(){try{if(off()&&t0){let won=-1;try{const rows=S.teams.map((t,k)=>({k,s:teamScore(k)})).sort((a,b)=>b.s-a.s);if(!(rows[1]&&rows[0].s===rows[1].s))won=rows[0].k===teamOf(0)?1:0}catch(e){}post('/api/stat',{ev:'end',ms:Date.now()-t0,id:dev,won,name:(typeof MYPROF!=='undefined'&&MYPROF.name)||''});t0=0}}catch(e){}return p.apply(this,arguments)}})(endGame);
 // errors: each different one once per visit, at most 15
 const sent=new Set();
 function report(msg,where){msg=String(msg||'').slice(0,160);where=String(where||'').slice(0,120);if(!msg||/^Script error/.test(msg))return;const k=msg+'|'+where;if(sent.has(k)||sent.size>=15)return;sent.add(k);
@@ -16497,11 +16497,11 @@ const inGame=()=>{try{return typeof S!=='undefined'&&!!S&&!!S.players&&S.phase!=
 const online=()=>{try{return typeof NET!=='undefined'&&!!NET.on}catch(e){return false}};
 function ping(){try{if(!online()||typeof netAsk!=='function')return;const t=performance.now();let done=false;const p=netAsk('ping');let rid=0;try{rid=NET.rid}catch(e){}if(!p||!p.then)return;p.then(()=>{if(done)return;done=true;P.rtt.push(Math.round(performance.now()-t));if(P.rtt.length>60)P.rtt.shift()}).catch(()=>{});setTimeout(()=>{if(!done){done=true;try{NET.wait.delete(rid)}catch(e){}}},8000)}catch(e){}}
 const note=(m,w)=>{try{let v='';try{v=EB_VERSION}catch(e){}fetch('/api/err',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msg:m,where:String(w).slice(0,118),ver:v,dev:'diag'}),keepalive:true}).catch(()=>{})}catch(e){}};
-function reset(){P.t0=Date.now();P.fr=P.frMs=P.slow=P.stall=P.rn=P.rMs=P.rMax=0;P.rtt=[];P.drops=0}
+function reset(){P.mid=0;P.t0=Date.now();P.fr=P.frMs=P.slow=P.stall=P.rn=P.rMs=P.rMax=0;P.rtt=[];P.drops=0}
 function report(force){try{const min=(Date.now()-P.t0)/60000;if((min<3&&!force)||!P.frMs)return;const fps=Math.round(P.fr/(P.frMs/1000)),r=P.rtt.slice().sort((a,b)=>a-b),med=r.length?r[r.length>>1]:-1,mx=r.length?r[r.length-1]:-1;
   let os='';try{os=(navigator.userAgent.match(/OS (\d+_\d+)/)||navigator.userAgent.match(/Android (\d+)/)||[])[1]||''}catch(e){}
   note('PERF '+(fps>=45&&P.stall<800?'ok':fps>=28?'so-so':'slow'),Math.round(min)+'min fps'+fps+' slow'+Math.round(P.slow/Math.max(1,P.fr)*100)+'% stall'+Math.round(P.stall)+' draw'+P.rn+'x'+Math.round(P.rMs/Math.max(1,P.rn))+'/'+Math.round(P.rMax)+'ms rtt'+med+'/'+mx+' drop'+P.drops+' | '+(/iPhone|iPad/.test(navigator.userAgent)?'iOS':/Android/.test(navigator.userAgent)?'And':'pc')+os+' '+screen.width+'x'+screen.height+' n'+((S&&S.players&&S.players.length)||0)+' th='+((typeof WAL!=='undefined'&&WAL.theme)||'')+(window.__eco132?' eco':'')+(window.__safe188?' safe':'')+((typeof VOICE!=='undefined'&&VOICE.on)?' mic':''))}catch(e){}}
-let was=false,k=0;setInterval(()=>{const g=inGame()&&online();if(g&&!was)reset();if(!g&&was)report();was=g;if(!g)return;k++;if(k%2===0)burst();if(k%4===0)ping()},5000);
+let was=false,k=0;setInterval(()=>{const g=inGame()&&online();if(g&&!was)reset();if(!g&&was)report();was=g;if(!g)return;if(!P.mid&&Date.now()-P.t0>5*60000){P.mid=1;report()} /* one report in the middle too: a player who closes the page never reaches the end-of-game one */k++;if(k%2===0)burst();if(k%4===0)ping()},5000);
 // a connection that dropped and came back during the game
 try{if(typeof netReset==='function'){/* counted through the "weak connection" sign instead: nothing to hook safely */}}catch(e){}
 setInterval(()=>{try{if(was&&document.getElementById('net157')&&!P.__n){P.__n=1;P.drops++}else if(!document.getElementById('net157'))P.__n=0}catch(e){}},1000);
@@ -16512,6 +16512,42 @@ try{if(typeof MUSIC!=='undefined'&&MUSIC.start){let over=false,told=false,was=fa
   document.addEventListener('click',e=>{try{if(e.target.closest&&e.target.closest('#musicBtn'))over=mic()}catch(x){}},true);
   setInterval(()=>{const m=mic();if(m&&!was){over=false;if(MUSIC.playing){try{MUSIC.stop()}catch(e){}if(!told){told=true;try{toast(typeof LANG!=='undefined'&&LANG==='en'?'Music paused while your mic is on':'الموسيقى وقفت دام المايك شغال')}catch(e){}}}}
     if(!m&&was){over=false;if(MUSIC.on)setTimeout(()=>{try{MUSIC.start()}catch(e){}},400)}was=m},600)}}catch(e){}
+// ---- 4) round 190: new sounds for four eat effects on a normal eat or a cut (asked for: wave, fireworks, fire ring, fire lightning). The big fire-button versions keep their own sounds.
+// four eat-effect sounds, made here from scratch (noise + tones, no recordings). Each is built from what the thing itself sounds like, about half a second, close to the loudness of the card slap.
+// each: (c: AudioContext, out: node to play into, t: start time, k: loudness 1 = normal eat, ~1.2 = a cut). A and B are two takes of the same idea.
+window.__SND190=(function(){
+let nb=null;const noise=c=>{if(nb&&nb.sampleRate===c.sampleRate)return nb;const b=c.createBuffer(1,c.sampleRate*2,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;nb=b;return b};
+// noise through a moving filter. pts = [[time, filterHz, level], ...]
+const nz=(c,out,t,type,q,pts)=>{const s=c.createBufferSource();s.buffer=noise(c);s.loop=true;const f=c.createBiquadFilter();f.type=type;f.Q.value=q;const g=c.createGain();f.frequency.setValueAtTime(pts[0][1],t);g.gain.setValueAtTime(Math.max(.0001,pts[0][2]),t);
+  for(let i=1;i<pts.length;i++){f.frequency.exponentialRampToValueAtTime(pts[i][1],t+pts[i][0]);g.gain.exponentialRampToValueAtTime(Math.max(.0001,pts[i][2]),t+pts[i][0])}const end=pts[pts.length-1][0];s.connect(f).connect(g);s.start(t,Math.random());s.stop(t+end+.05);return {node:g,end}};
+const to=(x,out)=>{x.node.connect(out);return x};
+// a flutter (the way a flame or a spark trembles): the sound's level shakes at `hz`
+const flutter=(c,x,out,t,hz,depth)=>{const g=c.createGain();g.gain.value=1-depth/2;const l=c.createOscillator(),lg=c.createGain();l.type='triangle';l.frequency.value=hz;lg.gain.value=depth/2;l.connect(lg).connect(g.gain);l.start(t);l.stop(t+x.end+.1);x.node.connect(g).connect(out)};
+const tone=(c,out,t,type,pts)=>{const o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.setValueAtTime(pts[0][1],t);g.gain.setValueAtTime(Math.max(.0001,pts[0][2]),t);for(let i=1;i<pts.length;i++){o.frequency.exponentialRampToValueAtTime(pts[i][1],t+pts[i][0]);g.gain.exponentialRampToValueAtTime(Math.max(.0001,pts[i][2]),t+pts[i][0])}o.connect(g).connect(out);o.start(t);o.stop(t+pts[pts.length-1][0]+.05)};
+// little crackles: n short bright ticks scattered over `span` seconds
+const crackle=(c,out,t,n,span,lvl,hz)=>{for(let i=0;i<n;i++){const d=Math.random()*span,f=hz*(.7+Math.random()*.8);to(nz(c,out,t+d,'bandpass',3,[[0,f,.0001],[.003,f,lvl*(.5+Math.random()*.6)],[.03+Math.random()*.03,f*.8,.0001]]),out)}};
+const R={
+ // THE WAVE: water drawing back, the wave rising, breaking, and the foam hissing away
+ waveA(c,out,t,k){to(nz(c,out,t,'lowpass',.7,[[0,250,.0001],[.22,900,.34*k],[.30,2600,.42*k],[.62,700,.0001]]),out);to(nz(c,out,t+.27,'highpass',.6,[[0,3500,.0001],[.04,4200,.09*k],[.36,6000,.0001]]),out);tone(c,out,t+.24,'sine',[[0,95,.0001],[.04,80,.26*k],[.3,55,.0001]])},
+ waveB(c,out,t,k){to(nz(c,out,t,'bandpass',.8,[[0,300,.0001],[.16,700,.3*k],[.24,1800,.46*k],[.5,500,.0001]]),out);to(nz(c,out,t+.22,'highpass',.6,[[0,3000,.0001],[.03,3800,.16*k],[.3,5200,.0001]]),out);[0,.07,.15].forEach((d,i)=>tone(c,out,t+.34+d,'sine',[[0,520+i*210,.0001],[.008,760+i*260,.07*k],[.07,1100+i*300,.0001]]))},
+ // FIREWORKS: the whistle going up, the bang, the sparkle falling
+ fworksA(c,out,t,k){tone(c,out,t,'sine',[[0,700,.0001],[.03,900,.11*k],[.17,2500,.09*k],[.2,2700,.0001]]);to(nz(c,out,t+.2,'lowpass',.8,[[0,2600,.0001],[.008,2200,.55*k],[.16,500,.0001]]),out);tone(c,out,t+.2,'sine',[[0,150,.0001],[.008,120,.5*k],[.2,48,.0001]]);crackle(c,out,t+.27,16,.34,.2*k,4200)},
+ fworksB(c,out,t,k){tone(c,out,t,'triangle',[[0,500,.0001],[.02,650,.1*k],[.14,2000,.08*k],[.17,2200,.0001]]);to(nz(c,out,t+.17,'bandpass',.7,[[0,1200,.0001],[.006,1000,.6*k],[.2,300,.0001]]),out);tone(c,out,t+.17,'sine',[[0,110,.0001],[.008,90,.55*k],[.24,40,.0001]]);crackle(c,out,t+.22,22,.4,.17*k,5200);[1568,1976,2349].forEach((f,i)=>tone(c,out,t+.3+i*.06,'sine',[[0,f,.0001],[.006,f,.05*k],[.16,f*.98,.0001]]))},
+ // FIRE RING: a ring of flame catching all at once: a roaring whoosh that trembles, with a few crackles
+ fireringA(c,out,t,k){flutter(c,nz(c,out,t,'bandpass',.7,[[0,220,.0001],[.07,650,.6*k],[.2,1300,.5*k],[.5,380,.0001]]),out,t,23,.45);to(nz(c,out,t,'lowpass',.7,[[0,160,.0001],[.06,240,.5*k],[.42,120,.0001]]),out);crackle(c,out,t+.1,7,.3,.16*k,2600)},
+ fireringB(c,out,t,k){flutter(c,nz(c,out,t,'lowpass',.9,[[0,300,.0001],[.05,900,.65*k],[.16,1900,.5*k],[.44,420,.0001]]),out,t,31,.55);tone(c,out,t,'sine',[[0,70,.0001],[.04,110,.4*k],[.36,60,.0001]]);crackle(c,out,t+.06,10,.32,.14*k,3300)},
+ // FIRE LIGHTNING: the electric snap of the bolt, the crack, then the fire it leaves
+ fboltA(c,out,t,k){const z=nz(c,out,t,'highpass',.7,[[0,2500,.0001],[.004,2200,.5*k],[.11,1800,.0001]]);flutter(c,z,out,t,95,.9);tone(c,out,t,'sawtooth',[[0,1900,.0001],[.004,1500,.14*k],[.09,190,.0001]]);to(nz(c,out,t+.05,'lowpass',.8,[[0,1500,.0001],[.008,1100,.6*k],[.2,260,.0001]]),out);tone(c,out,t+.05,'sine',[[0,120,.0001],[.008,95,.5*k],[.26,42,.0001]]);flutter(c,nz(c,out,t+.16,'bandpass',.7,[[0,500,.0001],[.05,800,.26*k],[.3,350,.0001]]),out,t+.16,26,.5)},
+ fboltB(c,out,t,k){[0,.045,.085].forEach((d,i)=>{const z=nz(c,out,t+d,'highpass',.7,[[0,3000,.0001],[.003,2600,(.42-.1*i)*k],[.035,2200,.0001]]);flutter(c,z,out,t+d,120,.95)});tone(c,out,t,'square',[[0,2400,.0001],[.003,1700,.06*k],[.12,300,.0001]]);to(nz(c,out,t+.11,'lowpass',.8,[[0,1800,.0001],[.006,1300,.62*k],[.22,240,.0001]]),out);tone(c,out,t+.11,'sine',[[0,140,.0001],[.008,100,.55*k],[.3,40,.0001]]);crackle(c,out,t+.18,6,.22,.13*k,2400)}
+};
+// level each one to sit beside the card slap (measured, not guessed)
+const LV={wave:.7,fworks:.76,firering:1,fbolt:.62};Object.keys(R).forEach(n=>{const f=R[n],m=LV[n.slice(0,-1)]||1;R[n]=(c,out,t,k)=>f(c,out,t,(k||1)*m)});
+// the takes the game uses
+R.wave=R.waveA;R.fworks=R.fworksA;R.firering=R.fireringA;R.fbolt=R.fboltA;
+return R})();
+
+try{const prev=window.fxSound||(typeof fxSound==='function'?fxSound:null);if(prev&&window.__SND190){window.fxSound=function(id,pw){try{/* round 192 (asked for): these four eat effects keep their look but make no sound of their own on an eat or a cut: only the normal card slap is heard. Their fire-button version is unchanged. */if(pw!==3&&['firering','fworks','wave'].includes(id))return; /* round 195: only on a normal eat or a cut. When the fire button is pressed they keep their full sound and animation (asked for) */
+  const f=(window.__use190||[]).includes(id)?window.__SND190[id]:null;if(f&&pw!==3){if(typeof SND==='undefined'||!SND.ok())return;const c=SND.ctx;f(c,SND.out(),c.currentTime+.01,pw===2?1.2:1);return}}catch(e){}return prev.apply(this,arguments)};try{fxSound=window.fxSound}catch(e){}}}catch(e){}
 window.__perf188=()=>JSON.stringify(P);window.__perf188r=()=>report(true);
 })();
 
@@ -16572,7 +16608,7 @@ window.__snd157=()=>pend;
 
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1122.1251';
+const EB_VERSION='v1122.2039';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
