@@ -1028,7 +1028,7 @@ let lastSec=0;
 setInterval(()=>{
   if(!S||!S.war)return;
   const left=S.war.deadline-performance.now(),tot=S.cfg.timer*1000,sec=Math.max(0,Math.ceil(left/1000));
-  const r=$('ring');if(r){r.style.setProperty('--p',Math.max(0,left/tot*100)+'%');$('ringN').textContent=sec}
+  const r=$('ring');if(r){const pv=Math.round(Math.max(0,left/tot*100))+'%';if(r.__pv!==pv){r.__pv=pv;r.style.setProperty('--p',pv)}const rn=$('ringN');if(rn&&rn.textContent!==String(sec))rn.textContent=sec} /* round 188: written only when it changes (it used to rewrite the ring and its number 12 times a second for the whole war) */
   if(sec!==lastSec){lastSec=sec;if(sec>0&&sec<=3)SND.tick()}
   if(left<=0)resolveWar();
 },80);
@@ -11819,7 +11819,7 @@ const DOOR='<svg viewBox="0 0 24 24"><path d="M5 21h14M7 21V4.5A1.5 1.5 0 0 1 8.
 function swapHome(){try{const two=document.querySelector('#h2Page .h2-two');if(two){const b=document.createElement('button');b.type='button';b.className='h2-rooms';b.dataset.rooms='1';
     b.innerHTML=`<span>${DOOR}${L('Rooms','الغرف')}</span><small>${L('play with friends · join with a code · open rooms','العب مع ربعك · ادخل بكود · الغرف المفتوحة')}</small>`;two.replaceWith(b)}
   const lv=document.querySelector('#h2Page #h2Live');if(lv)lv.remove()}catch(e){}}
-new MutationObserver(swapHome).observe(document.body,{childList:true,subtree:true});swapHome();
+window.__sw117=swapHome;new MutationObserver(swapHome).observe(document.body,{childList:true,subtree:true});swapHome();
 // the page
 const sh=document.createElement('div');sh.id='roomsSheet';sh.className='overlay';sh.hidden=true;sh.innerHTML='<div class="sheet" id="roomsBox"></div>';document.body.appendChild(sh);
 let timer=0,pub=[],fr=[],code='';
@@ -12773,7 +12773,7 @@ runEfx=(function(p){return function(id,box,at,pw){const r=p.apply(this,arguments
 //               (the quality already dropped to the light tier), the decorative motion of the rooms slows down and the effects get lighter.
 //               The game itself, the cards and the wars look and move the same. ----------
 (function(){let low=false;const st=document.createElement('style');st.textContent=`html.eco132 .table .rug,html.eco132 .table .rug::before,html.eco132 .table .field::after,html.eco132 #app::after,html.eco132 .spot132{animation-play-state:paused!important}`;document.head.appendChild(st);
-function upd(){const on=low||(window.__Q||3)<=1;window.__eco132=on;document.documentElement.classList.toggle('eco132',on);if(on&&window.__fxCap>220)window.__fxCap=220}
+function upd(){const on=low||(window.__Q||3)<=1||!!window.__safe188; /* round 188: a phone whose page was killed in a game plays lighter for 3 days */window.__eco132=on;document.documentElement.classList.toggle('eco132',on);if(on&&window.__fxCap>220)window.__fxCap=220}
 try{navigator.getBattery&&navigator.getBattery().then(b=>{const f=()=>{low=!b.charging&&b.level<=.2;upd()};f();b.addEventListener('levelchange',f);b.addEventListener('chargingchange',f)}).catch(()=>{})}catch(e){}
 setInterval(upd,3000);upd()})();
 
@@ -13948,7 +13948,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
   const t=b.dataset.h145==='quick'?page.querySelector('#h2Quick'):b.dataset.h145==='play'?page.querySelector('.hx-play'):page.querySelector('.h2-rooms');if(t)t.click()});
 let tm=0;const soon=()=>{if(tm)return;tm=setTimeout(()=>{tm=0;build()},60)};
 try{const root=document.getElementById('homeIn')||document.getElementById('home')||document.body;new MutationObserver(soon).observe(root,{childList:true,subtree:true,characterData:true})}catch(e){}
-build();setTimeout(build,600);setTimeout(build,2500);
+window.__hb145=build;build();setTimeout(build,600);setTimeout(build,2500);
 })();
 
 // ---------- 3) round 146: the green button remembers the kind of quick game you last chose (2v2, 3v3, everyone alone). One tap still takes you straight in;
@@ -13991,7 +13991,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
   if(MODES.includes(k)){cur=k;try{localStorage.setItem('eb-qmode',k)}catch(err){}open=false;draw()}},true);
 let tm=0;const soon=()=>{if(tm)return;tm=setTimeout(()=>{tm=0;draw()},90)};
 try{new MutationObserver(soon).observe(document.getElementById('homeIn')||document.body,{childList:true,subtree:true,characterData:true})}catch(e){}
-draw();setTimeout(draw,700);setTimeout(draw,2600);
+window.__hd145=draw;draw();setTimeout(draw,700);setTimeout(draw,2600);
 })();
 
 </script><script>
@@ -14203,7 +14203,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
   const r=page.querySelector('.h2-rooms');if(!r)return;r.click();
   if(k==='friendly')setTimeout(()=>{const m=document.getElementById('rmMake');m&&m.click()},80);
   if(k==='watch')setTimeout(()=>{try{const w=document.querySelector('[data-rm-watch]');(w||document.getElementById('rmCode')).scrollIntoView({block:'center'})}catch(e){}},500)});
-build();setInterval(build,120); // round 167: the four squares are built as soon as the green button exists (they used to wait for the next 1.5 s tick)
+window.__hb148=build;build();setInterval(build,120); // round 167: the four squares are built as soon as the green button exists (they used to wait for the next 1.5 s tick)
 })();
 
 // ===================== round 150/151: the glow of your cards, drawn by the graphics chip =====================
@@ -15973,14 +15973,8 @@ function add(i,text){try{text=String(text==null?'':text).trim();if(!text||/^⟦\
   const k=i+'|'+text,now=Date.now();if(k===lastKey&&now-lastT<900)return;lastKey=k;lastT=now;
   const p=S.players[i],me=i===0;LOG.push({me,team:p.team,name:me?(AR()?'أنت':'You'):String(p.name||''),text,ts:now});if(LOG.length>60)LOG.shift();
   const bar=document.getElementById('chatBar');if(bar&&!bar.hidden)paint();else if(!me){unseen++;dot()}}catch(e){}}
-// only what people wrote or picked themselves goes in the list: no "Cut!", "Slam!", automatic replies or computer chatter
-const SYS=new Set(['قطع!','طق!','صفقة!','Cut!','Slap!','SLAM!']);let inSay=0,clickT=0;
-addEventListener('click',()=>{clickT=performance.now()},true);addEventListener('pointerup',()=>{clickT=performance.now()},true);
-try{if(typeof playFx==='function')playFx=(function(p){return function(e){const is=e&&e.t==='say';if(is)inSay++;try{return p.apply(this,arguments)}finally{if(is)inSay--}}})(playFx)}catch(e){}
-const picked=(i,t)=>{try{t=String(t==null?'':t).trim();if(SYS.has(t))return false;if(typeof NET!=='undefined'&&NET.on)return inSay>0;   /* online: a phrase somebody sent */
-  return i===0&&performance.now()-clickT<700}catch(e){return false}};                                                                   /* against the computer: the phrase you tapped */
-try{say=(function(p){return function(i,t){if(picked(i,t))add(i,t);return p.apply(this,arguments)}})(say)}catch(e){}
-try{chatBubble=(function(p){return function(i,t){add(i,t);return p.apply(this,arguments)}})(chatBubble)}catch(e){}
+// only what somebody TYPED goes in the list. Phrases (picked, automatic, the computer's, "came back", "Cut!") are bubbles on the table and nothing more.
+try{chatBubble=(function(p){return function(i,t){let on=false;try{on=typeof NET!=='undefined'&&NET.on}catch(e){}if(i===0||on)add(i,t);return p.apply(this,arguments)}})(chatBubble)}catch(e){} /* against the computer its canned answer to your message is not a message */
 try{newGame=(function(p){return function(){LOG.length=0;unseen=0;dot();return p.apply(this,arguments)}})(newGame)}catch(e){}
 function dot(){const b=document.getElementById('chatBtn');if(!b)return;let d=b.querySelector('.cdot175');if(unseen&&!d){d=document.createElement('i');d.className='cdot175';b.appendChild(d)}if(d){d.hidden=!unseen;d.textContent=unseen>9?'9+':unseen||''}}
 function paint(){const bar=document.getElementById('chatBar');if(!bar)return;let box=bar.querySelector('.clog175');if(!box){box=document.createElement('div');box.className='clog175';bar.prepend(box)}
@@ -16199,7 +16193,8 @@ window.__fx179={meet,grow,famOf,pairs:Object.keys(MEET)};
 (function(){try{if(typeof renderLobby!=='function')return;
 const T=(en,ar)=>{try{return LANG==='ar'?ar:en}catch(e){return ar}};const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let tried='',autoFor='';let LINK='';try{LINK=(new URLSearchParams(location.search).get('room')||'').toUpperCase().slice(0,6)}catch(e){} /* "invited" is only said when the page was opened from a room link; a room picked from the list or typed by code says "entering a room" */
-const st=document.createElement('style');st.textContent=`#lobbySheet .in180{width:100%!important;max-width:400px!important;align-self:center!important;box-sizing:border-box!important;margin:0 auto!important;padding:26px 18px 18px!important;font-family:Cairo,Tahoma,sans-serif;color:#f4ead6;text-align:center;min-height:72vh;display:flex!important;flex-direction:column!important;justify-content:center!important;align-items:stretch!important;position:static!important}
+const st=document.createElement('style');st.textContent=`#lobbySheet .in180 .g180{margin-top:16px;padding-top:14px;border-top:1px solid rgba(242,210,122,.2)}.in180 .g180 span{display:block;font-size:12.5px;color:rgba(244,234,214,.75);margin-bottom:8px}.in180 .g180:has(.gbtn185:empty){display:none}
+.in180{width:100%!important;max-width:400px!important;align-self:center!important;box-sizing:border-box!important;margin:0 auto!important;padding:26px 18px 18px!important;font-family:Cairo,Tahoma,sans-serif;color:#f4ead6;text-align:center;min-height:72vh;display:flex!important;flex-direction:column!important;justify-content:center!important;align-items:stretch!important;position:static!important}
 #lobbySheet .in180>*{flex:none!important}#lobbySheet .in180 .card{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important}#lobbySheet .in180 .card>*{flex:none!important;position:static!important}
 #lobbySheet .in180 .logo{font:900 34px Cairo,Tahoma,sans-serif;color:#f2d27a;text-shadow:0 2px 12px rgba(242,210,122,.35);margin:0 0 14px}
 #lobbySheet .in180 .card{display:block!important;width:100%!important;box-sizing:border-box!important;background:rgba(255,255,255,.04)!important;border-radius:22px!important;padding:20px 16px!important;margin:0!important;box-shadow:inset 0 0 0 1px rgba(242,210,122,.35),0 18px 40px rgba(0,0,0,.45)!important}
@@ -16244,7 +16239,10 @@ renderLobby=function(){const r=R0.apply(this,arguments);try{
       :'<label for="lbName">'+T('Your name at the table','اسمك على الطاولة')+'</label><input id="lbName" maxlength="16" autocomplete="off" value="'+esc(name)+'" placeholder="'+T('Name','الاسم')+'">')+
     '<input id="lbCode" type="hidden" value="'+esc(code)+'">'+
     (auto?'':'<button type="button" class="go" id="'+(code?'lbJoin':'lbCreate')+'">'+(code?T('Enter the room','ادخل الغرفة'):T('Make the room','سوّ الغرفة'))+' ▶</button>')+
-    (err?'<div class="err">'+err+'</div>':'')+'</div><button type="button" class="back" id="lbBack">'+T('Back to the home page','رجوع للرئيسية')+'</button></div>';
+    (err?'<div class="err">'+err+'</div>':'')+
+    /* a browser that has no name yet opened a room link: most of the time it is a player whose account lives in another browser (the stats show dozens a day). One tap brings it back. Empty when the server has no Google sign-in. */
+    ((!auto&&code&&!name&&!(function(){try{return ACCT.me&&ACCT.me.google}catch(e){return false}})())?'<div class="g180"><span>'+T('Played before? Bring your account','لاعب من قبل؟ هات حسابك')+'</span><div class="gbtn185"></div></div>':'')+
+    '</div><button type="button" class="back" id="lbBack">'+T('Back to the home page','رجوع للرئيسية')+'</button></div>';
   if(auto){tried=code;autoFor=code;setTimeout(()=>{try{if(!NET.on&&typeof doEnter==='function')doEnter(false)}catch(e){}},350)}
   else{const n=document.getElementById('lbName');if(n&&n.type!=='hidden'){n.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();const b=s.querySelector('.go');b&&b.click()}});if(!name)setTimeout(()=>{try{if(!document.getElementById('lobby').hidden)n.focus()}catch(e){}},400)}}}catch(e){console.error('in180',e)}return r};
 try{if(typeof NET!=='undefined'&&!NET.on&&!document.getElementById('lobby').hidden)renderLobby()}catch(e){}
@@ -16278,7 +16276,7 @@ try{const st=document.createElement('style');st.textContent='@media (max-width:3
 // ===================== round 182: 1) "everyone for himself" on an upright screen: four names never fitted in the score box and were printed on top of each other; now each score sits under its player's colour (the same colour as his name plate).
 // 2) two anonymous notes to the statistics so the next report can be explained: why the microphone did not open, and a page that reloaded by itself in the middle of a game (the game has no code that reloads the page). =====================
 (function(){
-try{const st=document.createElement('style');st.textContent=`@media (orientation:portrait),(max-width:700px){
+try{const st=document.createElement('style');st.textContent=`@media all{ /* round 189: on every screen. The four names overlapped on tablets held sideways too (seen in the all-sizes check) */
 html body .topbar #board:has(.col:nth-child(3)) .col .t{font-size:0!important;line-height:0!important;display:flex!important;justify-content:center!important;align-items:center!important;height:13px!important;overflow:visible!important;white-space:nowrap}
 html body .topbar #board:has(.col:nth-child(3)) .col .t .dot{display:block!important;width:11px!important;height:11px!important;margin:0!important;border-radius:50%!important;box-shadow:0 0 0 1.5px rgba(0,0,0,.5)!important;flex:none}
 html body .topbar #board:has(.col:nth-child(3)) .col:first-child .t .dot{box-shadow:0 0 0 1.5px #fff,0 0 0 3px rgba(0,0,0,.5)!important}
@@ -16303,10 +16301,18 @@ const where=()=>{try{const ua=navigator.userAgent,br=/CriOS|Chrome/.test(ua)?'Ch
 try{const md=navigator.mediaDevices;if(md&&md.getUserMedia){const g=md.getUserMedia.bind(md);md.getUserMedia=function(c){return g(c).catch(e=>{try{if(c&&c.audio)note('MIC refused',(e&&e.name||'error')+' | '+where()+' | '+(typeof NET!=='undefined'&&NET.on?(NET.priv?'private room':'public room'):'no room'))}catch(x){}throw e})}}
   else if(typeof voiceToggle==='function'){const vt=voiceToggle;voiceToggle=function(){note('MIC refused','no mediaDevices | '+where());return vt.apply(this,arguments)}}}catch(e){}
 // a reload nobody asked for: the page keeps a small heartbeat in the tab; a clean leave clears it
-try{const K='eb-hb182',prev=sessionStorage.getItem(K);if(prev){try{const p=JSON.parse(prev);if(p&&p.g&&Date.now()-p.t<90000){let nav='';try{nav=(performance.getEntriesByType('navigation')[0]||{}).type||''}catch(e){}let os='';try{os=(navigator.userAgent.match(/OS (\d+_\d+)/)||[])[1]||''}catch(e){}note('RELOAD by itself',where()+' iOS'+os+' | '+p.w+' | '+Math.round((p.t-p.t0)/60000)+'min | hidden'+(p.h?'Y':'N'));note('RELOAD detail',Math.round((p.t-p.t0)/60000)+'min nav='+nav+' gap'+Math.round((Date.now()-p.t)/1000)+'s '+(p.x||''))}}catch(e){}}
+try{const K='eb-hb182',prev=sessionStorage.getItem(K);if(prev){try{const p=JSON.parse(prev);if(p&&p.g&&Date.now()-p.t<90000){let nav='';try{nav=(performance.getEntriesByType('navigation')[0]||{}).type||''}catch(e){}let os='';try{os=(navigator.userAgent.match(/OS (\d+_\d+)/)||[])[1]||''}catch(e){}/* round 188: the page says goodbye (pagehide) when somebody reloads or leaves; a page the phone killed never does. Only that one is a real "by itself", and that device then plays lighter for 3 days. */
+        const kind=p.b?'asked':p.h?'background':'crash';
+        if(kind==='crash'){let n=1;try{const o=JSON.parse(localStorage.getItem('eb-safe188')||'null');if(o&&Date.now()-o.t<3*864e5)n=(o.n||0)+1;localStorage.setItem('eb-safe188',JSON.stringify({t:Date.now(),n}))}catch(e){}
+          note('RELOAD by itself',where()+' iOS'+os+' | '+p.w+' | '+Math.round((p.t-p.t0)/60000)+'min | crash#'+n+' '+screen.width+'x'+screen.height+' c'+(navigator.hardwareConcurrency||'?'));note('RELOAD detail',Math.round((p.t-p.t0)/60000)+'min nav='+nav+' gap'+Math.round((Date.now()-p.t)/1000)+'s '+(p.x||''));
+          setTimeout(()=>{try{toast(typeof LANG!=='undefined'&&LANG==='en'?'The page had a problem and came back. Effects are lighter on this phone for now.':'الصفحة علقت ورجعت. خففنا التأثيرات على جهازك عشان ما تتكرر.')}catch(e){}},2500)}
+        else note('RELOAD '+kind,where()+' iOS'+os+' | '+p.w+' | '+Math.round((p.t-p.t0)/60000)+'min nav='+nav)}}catch(e){}}
   const t0=Date.now();const beat=()=>{try{const g=typeof S!=='undefined'&&!!S&&!!S.players&&document.getElementById('home').hidden;const on=typeof NET!=='undefined'&&NET.on;
-    sessionStorage.setItem(K,JSON.stringify({t:Date.now(),t0,g:g?1:0,h:document.hidden?1:0,x:(window.__hbx183?window.__hbx183():''),w:(on?(NET.priv?'private':NET.quick?'ranked':'room'):'computer')+' mic'+(typeof VOICE!=='undefined'&&VOICE.on?'Y':'N')+' th='+((typeof WAL!=='undefined'&&WAL.theme)||'')+' n'+(g?S.players.length:0)}))}catch(e){}};
+    sessionStorage.setItem(K,JSON.stringify({t:Date.now(),t0,g:g?1:0,h:document.hidden?1:0,x:(window.__hbx183?window.__hbx183():'')+(window.__lf188?' fx='+window.__lf188.id+'@'+Math.round((Date.now()-window.__lf188.t)/1000)+'s':'')+(typeof S!=='undefined'&&S&&S.war?' war':'')+(window.__eco132?' eco':'')+(window.__safe188?' safe':''),w:(on?(NET.priv?'private':NET.quick?'ranked':'room'):'computer')+' mic'+(typeof VOICE!=='undefined'&&VOICE.on?'Y':'N')+' th='+((typeof WAL!=='undefined'&&WAL.theme)||'')+' n'+(g?S.players.length:0)}))}catch(e){}};
   setInterval(beat,5000);beat();
+  addEventListener('pagehide',()=>{try{const p=JSON.parse(sessionStorage.getItem(K)||'null');if(p){p.b=1;p.t=Date.now();sessionStorage.setItem(K,JSON.stringify(p))}}catch(e){}});
+  try{const o=JSON.parse(localStorage.getItem('eb-safe188')||'null');window.__safe188=!!(o&&Date.now()-o.t<3*864e5)}catch(e){}
+  try{if(typeof runEfx==='function')runEfx=(function(f){return function(id){try{if(id&&id!=='none')window.__lf188={id:String(id).slice(0,14),t:Date.now()}}catch(e){}return f.apply(this,arguments)}})(runEfx)}catch(e){}
   // leaving on purpose (closing the tab, going to another address, the account-code reload) is not "by itself"; a page the phone throws away never gets to say goodbye
   addEventListener('beforeunload',()=>{try{sessionStorage.removeItem(K)}catch(e){}})}catch(e){}
 })();
@@ -16330,7 +16336,7 @@ try{const N=window.AudioScheduledSourceNode;let made=0,freed=0;if(N&&N.prototype
   window.__snd183=()=>made+'/'+freed}catch(e){}
 // ---------- what the page looked like just before it went away (kept in the tab, sent after a reload nobody asked for) ----------
 try{let lost=0,stall=0,last=performance.now();document.addEventListener('webglcontextlost',()=>{lost++},true);
-  const tick=()=>{const n=performance.now(),d=n-last;last=n;if(d>stall&&!document.hidden)stall=d;requestAnimationFrame(tick)};requestAnimationFrame(tick);setInterval(()=>{stall=stall*.5},30000);
+  /* round 188: this used to ask for a new frame 60 times a second for ever just to notice a freeze. A plain timer notices the same thing (it fires late when the page was stuck) without making the phone draw. */ const tick=()=>{const n=performance.now(),d=n-last-250;last=n;if(d>stall&&!document.hidden)stall=d};(window.__si188||setInterval)(tick,250);setInterval(()=>{stall=stall*.5},30000);
   window.__hbx183=()=>{try{const cs=[...document.querySelectorAll('canvas')],px=cs.reduce((a,c)=>a+c.width*c.height,0),t=window.__t183;
     return 'nodes'+document.getElementsByTagName('*').length+' cv'+cs.length+'/'+Math.round(px*4/1e6)+'MB snd'+(window.__snd183?window.__snd183():'')+' gl'+lost+' stall'+Math.round(stall)+'ms touch'+(t?Math.round((Date.now()-t.t)/1000)+'s y'+t.y+' dy'+t.dy:'-')}catch(e){return ''}}}catch(e){}
 })();
@@ -16361,14 +16367,17 @@ let CID='',gis=0,lastCred='';
 let GT=false;try{GT=new URLSearchParams(location.search).get('gtest')==='1'}catch(e){}
 const st=document.createElement('style');st.textContent=`#gs185{margin:0 0 14px;padding:0 0 14px;border-bottom:1px solid rgba(242,210,122,.2)}#gs185 b{display:block;font-size:15px;font-weight:900;color:#f2d27a}#gs185 p{margin:4px 0 10px;font-size:12.5px;line-height:1.6;color:rgba(244,234,214,.75)}
 #gs185 .ok{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:#8fe3a8;direction:ltr;justify-content:flex-end}#gs185 .ok i{width:9px;height:9px;border-radius:50%;background:#5fd07a;flex:none}
-.gbtn185{display:flex;justify-content:center;min-height:44px;color-scheme:light}.gfb185{position:relative;display:flex;align-items:center;justify-content:center;width:100%;max-width:320px;height:40px;padding:0 44px;border-radius:999px;border:1px solid #dadce0;background:#fff;color:#3c4043;font:500 14px 'Google Sans',Roboto,Arial,sans-serif;letter-spacing:.25px;cursor:pointer}.gfb185 svg{position:absolute;inset-inline-start:12px;top:50%;transform:translateY(-50%);width:18px;height:18px}.gfb185 span{white-space:nowrap}#gs185 a{color:rgba(244,234,214,.6);font-size:11.5px}
+.gbtn185{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:44px;color-scheme:light}.gfb185{position:relative;display:flex;align-items:center;justify-content:center;width:100%;max-width:320px;height:40px;padding:0 44px;border-radius:999px;border:1px solid #dadce0!important;background:#fff!important;color:#3c4043!important;font:500 14px 'Google Sans',Roboto,Arial,sans-serif!important;letter-spacing:.25px;cursor:pointer;margin:0 auto!important;box-shadow:none!important;text-shadow:none!important;opacity:1!important}@media (max-width:330px){.gfb185{padding:0 32px!important;font-size:12px!important;letter-spacing:0!important}.gfb185 svg{inset-inline-start:9px!important}}
+.gfb185 span{color:#3c4043!important;line-height:1.2!important;display:block;margin:0!important;padding:0!important}.gfb185 svg{position:absolute;inset-inline-start:12px;top:50%;transform:translateY(-50%);width:18px;height:18px}.gfb185 span{white-space:nowrap}#gs185 a{color:rgba(244,234,214,.6);font-size:11.5px}
 #xfS176 .or185{margin:14px 0 10px;font-size:12.5px;color:rgba(244,234,214,.6)}`;document.head.appendChild(st);
 const tok=()=>{try{return (typeof ACCT!=='undefined'&&ACCT.token)||localStorage.getItem('eb-acct')||''}catch(e){return ''}};
 const post=(body)=>fetch('/api/auth/google',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},tok()?{Authorization:'Bearer '+tok()}:{}),body:JSON.stringify(body)}).then(async r=>({st:r.status,j:await r.json().catch(()=>({}))}));
 const say=m=>{try{toast(m)}catch(e){}};
 function sheet(html){const o=document.getElementById('xfS176');if(o)o.remove();const d=document.createElement('div');d.id='xfS176';d.dir=T('ltr','rtl');d.innerHTML='<div class="bx">'+html+'</div>';document.body.appendChild(d);d.addEventListener('click',e=>{if(e.target===d||e.target.closest('[data-xfx]'))d.remove()});return d}
+let via='button';
 async function done(cred,force){lastCred=cred;let r;try{r=await post({credential:cred,force:!!force})}catch(e){r=null}
   if(!r){say(T('No connection','ما في اتصال'));return}const j=r.j||{};
+  if(j.ok||j.token||j.exists)note('GOOGLE in',via+(j.token?' switched':j.exists?' asked':j.same?' same':' saved'));
   if(j.exists){const d=sheet('<h3>'+T('This Google account already has a saved game','حساب قوقل هذا له لعبة محفوظة')+'</h3><p><b style="color:#fff;font-size:17px">'+String(j.name||T('Player','لاعب')).replace(/[<>&]/g,'')+'</b><br>'+T('Level ','المستوى ')+(j.level||1)+' · '+(j.games||0)+' '+T('games','قيم')+'</p><p>'+T('Open it on this device? What this device has now will be left behind.','تفتحه على هالجهاز؟ اللي على هالجهاز الحين بينترك.')+'</p><div class="r"><button type="button" data-xfx>'+T('No, stay here','لا، خلني هني')+'</button><button type="button" class="g" data-g185="go">'+T('Open my account','افتح حسابي')+'</button></div>');
     d.querySelector('[data-g185]').addEventListener('click',()=>{d.remove();done(lastCred,true)});return}
   if(j.token){try{localStorage.setItem('eb-acct',j.token);if(j.name)localStorage.setItem('eb-name',j.name);localStorage.setItem('eb-xf176','1');localStorage.setItem('eb-first157','1')}catch(e){}sheet('<h3>✅ '+T('Welcome back','هلا فيك')+(j.name?' '+String(j.name).replace(/[<>&]/g,''):'')+'</h3><p>'+T('Loading your account…','قاعد أحمّل حسابك…')+'</p>');setTimeout(()=>location.reload(),900);return}
@@ -16388,9 +16397,9 @@ function viaPage(){try{const a=new Uint8Array(16);crypto.getRandomValues(a);cons
 function back(){let tk='',er='',n='';try{tk=localStorage.getItem('eb-gtok')||'';er=localStorage.getItem('eb-gerr')||'';n=localStorage.getItem('eb-gn')||'';localStorage.removeItem('eb-gtok');localStorage.removeItem('eb-gerr');localStorage.removeItem('eb-gn')}catch(e){}
   if(er){note('GOOGLE page',er);if(er!=='access_denied')setTimeout(()=>say(T('Google sign-in did not finish. Try again.','الدخول بقوقل ما كمل. جرب مرة ثانية.')),1500);return}if(!tk)return;
   let ok=false;try{const p=JSON.parse(decodeURIComponent(escape(atob(tk.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')))));ok=!!n&&p.nonce===n}catch(e){}
-  if(!ok){note('GOOGLE page','nonce');return}let k=0;const go=()=>{k++;let rdy=false;try{rdy=!!(ACCT&&ACCT.me)}catch(e){}if(rdy||k>16)done(tk,false);else setTimeout(go,300)};setTimeout(go,600)}
+  if(!ok){note('GOOGLE page','nonce');return}let k=0;const go=()=>{k++;let rdy=false;try{rdy=!!(ACCT&&ACCT.me)}catch(e){}if(rdy||k>16){via='page';done(tk,false)}else setTimeout(go,300)};setTimeout(go,600)}
 function btn(el){if(!el||el.dataset.done==='2')return;if(gis===2){try{el.innerHTML='';google.accounts.id.renderButton(el,{type:'standard',theme:'outline',size:'large',shape:'pill',text:'continue_with',logo_alignment:'left',locale:T('en','ar'),width:Math.min(320,Math.max(220,(el.clientWidth||280)))});el.dataset.done='2'}catch(e){}}
-  else if(!el.dataset.err){el.dataset.err='1';el.innerHTML='<button type="button" class="gfb185" dir="'+T('ltr','rtl')+'"><svg viewBox="0 0 48 48" width="20" height="20"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.7 2.5 30.2 0 24 0 14.6 0 6.500 5.400 2.600 13.200l7.800 6.100C12.300 13.600 17.700 9.500 24 9.500z"/><path fill="#4285F4" d="M46.500 24.500c0-1.600-.100-3.100-.400-4.500H24v9h12.700c-.600 3-2.300 5.500-4.800 7.200l7.600 5.900c4.400-4.100 7-10.100 7-17.600z"/><path fill="#FBBC05" d="M10.400 28.700c-.500-1.500-.800-3-.800-4.700s.300-3.200.800-4.700l-7.800-6.100C1 16.500 0 20.100 0 24s1 7.500 2.600 10.800l7.800-6.100z"/><path fill="#34A853" d="M24 48c6.200 0 11.500-2.100 15.300-5.600l-7.600-5.900c-2.100 1.400-4.800 2.300-7.700 2.300-6.300 0-11.700-4.100-13.600-9.800l-7.800 6.100C6.500 42.600 14.600 48 24 48z"/></svg><span>'+T('Continue with Google','المواصلة باستخدام Google')+'</span></button>';el.querySelector('.gfb185').addEventListener('click',viaPage)}}
+  else if(!el.dataset.err){el.dataset.err='1';el.innerHTML='<button type="button" class="gfb185" dir="'+T('ltr','rtl')+'"><svg viewBox="0 0 48 48" width="20" height="20"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.7 2.5 30.2 0 24 0 14.6 0 6.500 5.400 2.600 13.200l7.800 6.100C12.300 13.600 17.700 9.500 24 9.500z"/><path fill="#4285F4" d="M46.500 24.500c0-1.600-.100-3.100-.400-4.500H24v9h12.700c-.600 3-2.300 5.500-4.800 7.200l7.600 5.900c4.400-4.100 7-10.100 7-17.600z"/><path fill="#FBBC05" d="M10.400 28.700c-.500-1.500-.800-3-.800-4.700s.300-3.200.800-4.700l-7.800-6.100C1 16.500 0 20.100 0 24s1 7.500 2.600 10.800l7.800-6.100z"/><path fill="#34A853" d="M24 48c6.200 0 11.500-2.100 15.300-5.600l-7.600-5.900c-2.100 1.400-4.800 2.300-7.700 2.300-6.300 0-11.700-4.100-13.600-9.800l-7.800 6.100C6.500 42.600 14.600 48 24 48z"/></svg><span>'+T('Continue with Google','المواصلة باستخدام Google')+'</span></button>';el.querySelector('.gfb185').addEventListener('click',viaPage);if(GT){const n=document.createElement('div');n.style.cssText='margin-top:6px;font-size:11.5px;color:#8fe3a8;text-align:center';n.textContent=T('Test mode: second way','وضع التجربة: الطريقة الثانية');el.appendChild(n)}}}
 function paint(force){try{if(!CID)return;const card=document.getElementById('xf176');if(!card)return;let g=document.getElementById('gs185');const mail=(typeof ACCT!=='undefined'&&ACCT.me&&ACCT.me.google)||'';
   if(g&&!force&&g.dataset.m===mail)return;if(!g){g=document.createElement('div');g.id='gs185';card.insertBefore(g,card.firstChild)}g.dataset.m=mail;g.dir=T('ltr','rtl');
   g.innerHTML=mail?'<b>'+T('Your account is saved','حسابك محفوظ')+'</b><p>'+T('Sign in with the same Google account on any device and it comes back.','ادخل بنفس حساب قوقل من أي جهاز ويرجع لك حسابك.')+'</p><div class="ok"><span>'+String(mail).replace(/[<>&]/g,'')+'</span><i></i></div>'
@@ -16398,8 +16407,146 @@ function paint(force){try{if(!CID)return;const card=document.getElementById('xf1
   if(!mail){loadGis();btn(g.querySelector('.gbtn185'))}}catch(e){}}
 // the "bring my account" sheet gets the Google button too
 function inSheet(){try{if(!CID)return;const d=document.getElementById('xfS176');if(!d||d.querySelector('.gbtn185')||!d.querySelector('input'))return;const bx=d.querySelector('.bx');const w=document.createElement('div');w.innerHTML='<div class="or185">'+T('or','أو')+'</div><div class="gbtn185"></div>';bx.appendChild(w);loadGis();btn(w.querySelector('.gbtn185'))}catch(e){}}
-(window.__gcfg||(window.__gcfg=fetch('/api/auth/config').then(r=>r.json()).catch(()=>({})))).then(c=>{CID=(c&&c.google)||'';if(!CID)return;const tick=()=>{paint(false);inSheet();try{document.querySelectorAll('#first157 .gbtn185').forEach(el=>{loadGis();btn(el)})}catch(e){}};setInterval(tick,400);back()}).catch(()=>{});
+(window.__gcfg||(window.__gcfg=fetch('/api/auth/config').then(r=>r.json()).catch(()=>({})))).then(c=>{CID=(c&&c.google)||'';if(!CID)return;const tick=()=>{paint(false);inSheet();try{document.querySelectorAll('#first157 .gbtn185,.in180 .gbtn185').forEach(el=>{loadGis();btn(el)})}catch(e){}};setInterval(tick,400);back()}).catch(()=>{});
 window.__g185={done,viaPage,st:()=>gis};
+})();
+
+</script><script>
+// ===================== round 186: the game gets its own address (a bought domain). The old onrender address keeps working, but a player who opens it is moved to the new one WITH his account,
+// by a one-use code the game makes by itself (2 minutes, long, used at once and removed from the address). Installed-app players are left where they are. Nothing happens until MAIN_HOST is set on Render. =====================
+(function(){
+const T=(en,ar)=>{try{return LANG==='ar'?ar:en}catch(e){return ar}};
+const LS=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
+const note=(m,w)=>{try{let v='';try{v=EB_VERSION}catch(e){}fetch('/api/err',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msg:m,where:String(w).slice(0,118),ver:v,dev:'diag'})}).catch(()=>{})}catch(e){}};
+let q;try{q=new URLSearchParams(location.search)}catch(e){return}
+const cover=t=>{try{const d=document.createElement('div');d.id='mv186';d.dir=T('ltr','rtl');d.style.cssText='position:fixed;inset:0;z-index:2147483000;background:#150b08;color:#f2d27a;display:grid;place-items:center;text-align:center;font:800 16px Cairo,Tahoma,sans-serif;padding:24px';d.textContent=t;document.body.appendChild(d);return d}catch(e){return null}};
+const jpost=(u,b,tk)=>fetch(u,{method:'POST',headers:Object.assign({'Content-Type':'application/json'},tk?{Authorization:'Bearer '+tk}:{}),body:JSON.stringify(b||{})}).then(async r=>({st:r.status,j:await r.json().catch(()=>({}))}));
+// ---- arriving on the new address with a code from the old one ----
+const mv=q.get('mv');
+if(mv){q.delete('mv');const rest=q.toString();const clean=location.pathname+(rest?'?'+rest:'');try{history.replaceState(null,'',clean)}catch(e){}
+  (async()=>{try{const tk=LS('eb-acct');let keep=false;
+    if(tk){try{const r=await fetch('/api/me',{headers:{Authorization:'Bearer '+tk}});if(r.ok){const m=await r.json();keep=!!(m&&(m.google||(m.st&&m.st.games>0)))}}catch(e){keep=true}} // this address already has an account in use: it stays
+    if(keep){note('MOVE kept','new address already had an account');return}
+    const c=cover(T('Bringing your account…','قاعد أجيب حسابك…'));const r=await jpost('/api/xfer/use',{code:mv});
+    if(r.j&&r.j.token){try{localStorage.setItem('eb-acct',r.j.token);if(r.j.name)localStorage.setItem('eb-name',r.j.name);localStorage.setItem('eb-xf176','1');localStorage.setItem('eb-first157','1')}catch(e){}note('MOVE ok','');location.replace(clean);return}
+    note('MOVE failed','use '+r.st);if(c)c.remove()}catch(e){note('MOVE failed','use '+String(e&&e.message||e).slice(0,60));const c=document.getElementById('mv186');if(c)c.remove()}})();return}
+// ---- on the old address: go to the new one ----
+(window.__gcfg||(window.__gcfg=fetch('/api/auth/config').then(r=>r.json()).catch(()=>({})))).then(async c=>{try{const main=String((c&&c.main)||'').toLowerCase();if(!main)return;const here=location.host.toLowerCase();if(here===main||here==='www.'+main)return;
+  let app=false;try{app=!!navigator.standalone||matchMedia('(display-mode: standalone)').matches}catch(e){}if(app||q.get('stay')==='1')return; // the installed app stays on its address: same server, same account
+  try{if(typeof S!=='undefined'&&S)return}catch(e){} // never in the middle of a game
+  const tk=LS('eb-acct');let code='';
+  if(tk){let r=null;try{r=await jpost('/api/xfer/make',{long:true},tk)}catch(e){r=null}if(!r)return; // no connection: stay here, try on the next visit
+    if(r.j&&r.j.code)code=r.j.code;else if(r.st!==401){note('MOVE failed','make '+r.st);return}}
+  cover(T('Taking you to the game\'s new address…','ننقلك لعنوان اللعبة اليديد…'));if(code)q.set('mv',code);const rest=q.toString();location.replace(location.protocol+'//'+main+'/'+(rest?'?'+rest:''))}catch(e){}});
+})();
+
+</script><script>
+// ===================== round 187: the player at the top stays off the rug. When his name / "computer" chip / picture would cover the top of the rug (tall screens with a short gap under the top bar),
+// the name and the chip move beside the picture and the whole plate is lifted until the picture ends at the rug's edge. Measured from the screen, so sizes where it already fits are not touched. =====================
+(function(){
+const st=document.createElement('style');st.textContent=`#seats .seat.s-top.up187 .who>.name{position:absolute!important;left:calc(100% + 14px)!important;right:auto!important;top:46%!important;bottom:auto!important;margin:0!important;transform:none!important;white-space:nowrap;z-index:6}
+#seats .seat.s-top.up187.botplay .who>.name{top:16px!important}
+#seats .seat.s-top.up187>.botchip,#seats .seat.s-top.up187 .botchip{position:absolute!important;left:calc(100% + 14px)!important;right:auto!important;top:46px!important;bottom:auto!important;margin:0!important;transform:none!important}
+html body #seats .seat.s-top.up187.hasbot135 .pilebox{translate:0 6px!important}
+html body #seats .seat.s-top.up187 .tags{left:auto!important;right:calc(100% + 18px)!important;top:40%!important;bottom:auto!important;transform:none!important;align-items:flex-end!important}`;document.head.appendChild(st);
+let sig='',dec=null,busy=false,last=0;
+const top=()=>document.querySelector('#seats .seat.s-top');
+const R=e=>e?e.getBoundingClientRect():null;
+// only the plate (cards, picture, name, chip) is lifted: what he ate stays on the rug where it was
+function lift(s,n){const v=n?'0 -'+n+'px':'';const w=s.querySelector('.who'),c=s.querySelector('.botchip');if(w)w.style.translate=v;if(c)c.style.translate=(w&&w.contains(c))?'':v}
+function measure(s){s.classList.remove('up187');lift(s,0);const rug=R(document.querySelector('#table .rug')),tile=R(s.querySelector('.tile'));if(!rug||!tile||!rug.height||!tile.height)return null;
+  let low=tile.bottom;[s.querySelector('.who>.name'),s.querySelector('.botchip')].forEach(e=>{const r=R(e);if(r&&r.height)low=Math.max(low,r.bottom)});
+  if(low<=rug.top+3)return{side:false,lift:0};                                   // nothing of his is on the rug
+  let fanTop=tile.top;s.querySelectorAll('.handfan .cardback').forEach(c=>{const r=R(c);if(r&&r.height)fanTop=Math.min(fanTop,r.top)});
+  const bar=R(document.querySelector('.topbar')),floor=bar?bar.bottom:0;
+  const need=tile.bottom-(rug.top-2),room=Math.max(0,fanTop-floor-3); // lifted only as far as his cards stay fully visible under the top bar
+  const l=Math.max(0,Math.min(Math.round(need),Math.round(room)));return{side:true,lift:l,cap:l<Math.round(need)}}
+function apply(){busy=false;try{const s=top();if(!s){sig='';return}if(window.__no187){s.classList.remove('up187');lift(s,0);return}const g=innerWidth+'x'+innerHeight+'|'+document.querySelectorAll('#seats .seat').length+'|'+(s.querySelector('.botchip')?1:0)+'|'+s.querySelectorAll('.handfan .cardback').length+'|'+((s.querySelector('.who>.name')||{}).textContent||'').length+'|'+Math.round((R(document.getElementById('table'))||{height:0}).height);
+  if(g!==sig||!dec){dec=measure(s);if(dec)sig=g;else{sig='';return}}
+  s.classList.toggle('up187',!!dec.side);lift(s,dec.lift);
+  // what was measured can go stale (cards being dealt, a plate that changed): if the picture is on the rug again, or was lifted further than needed, measure once more
+  const rug=R(document.querySelector('#table .rug')),tile=R(s.querySelector('.tile'));if(rug&&tile&&rug.height&&tile.height){const off=tile.bottom-(rug.top-2);let ft=tile.top;s.querySelectorAll('.handfan .cardback').forEach(c=>{const r=R(c);if(r&&r.height)ft=Math.min(ft,r.top)});const bar=R(document.querySelector('.topbar'));const hid=dec.lift&&bar&&ft<bar.bottom+1;if(hid&&Date.now()-last>300){last=Date.now();dec=measure(s);if(dec){s.classList.toggle('up187',!!dec.side);lift(s,dec.lift)}else sig=''}else if(((off>2&&!dec.cap)||(dec.lift&&off<-8))&&Date.now()-last>700){last=Date.now();dec=measure(s);if(dec){s.classList.toggle('up187',!!dec.side);lift(s,dec.lift)}else sig=''}}}catch(e){}}
+const kick=()=>{if(busy)return;busy=true;requestAnimationFrame(apply)};
+try{const _r=render;render=function(){const x=_r.apply(this,arguments);try{apply()}catch(e){}return x}}catch(e){}
+addEventListener('resize',()=>{sig='';kick()});setInterval(kick,900);
+try{const ro=new ResizeObserver(()=>{sig='';kick()});const w=()=>{const t=document.getElementById('table');if(!t)return setTimeout(w,900);ro.observe(t)};w()}catch(e){}
+})();
+
+</script><script>
+// ===================== round 188: the online game felt slow and "the players' places shrink and grow".
+// 1) MEASURED: when your own pile box (bottom bar) went from empty to holding a card, or back, it changed height by ~16px; the bottom bar grew, the table lost that height,
+//    and the whole table (rug, seats, cards) was re-scaled. In a war piles come and go, so everything pulsed. The box now keeps one height.
+// 2) one short report per online game with what the phone really did (frames, freezes, redraw time, message round trip), so slowness can be read from the statistics instead of guessed.
+// Nothing here changes how the game looks. =====================
+(function(){
+// ---- 1) the pile box keeps its tallest height for this screen size ----
+const ST=document.createElement('style');document.head.appendChild(ST);let mem={},key='',cur=0,base=0;
+try{mem=JSON.parse(localStorage.getItem('eb-pb189')||'{}')||{}}catch(e){mem={}}
+const setRule=h=>{if(h===cur)return;cur=h;ST.textContent=h?'html body #mebox .pilebox{min-height:'+h+'px!important;box-sizing:border-box}':''};
+function pile(){try{const pb=document.querySelector('#mebox .pilebox');if(!pb)return;const k=innerWidth+'x'+innerHeight;if(k!==key){key=k;base=0;setRule(0);void pb.offsetHeight;base=pb.offsetHeight;const m=mem[k]||0;setRule(m&&m<=base*1.45?m:0)}
+  const h=pb.offsetHeight; /* layout pixels: the bar is zoomed on big screens, so a measured (zoomed) height fed back as min-height would grow for ever */
+  if(!base)base=h;if(h>cur&&h<=base*1.45&&h<400){mem[key]=h;setRule(h);try{const ks=Object.keys(mem);if(ks.length>12)delete mem[ks[0]];localStorage.setItem('eb-pb189',JSON.stringify(mem))}catch(e){}}}catch(e){}}
+setInterval(pile,700);addEventListener('resize',()=>{key='';setTimeout(pile,300)});
+// ---- 2) what the phone really did ----
+const P={t0:0,fr:0,frMs:0,slow:0,stall:0,rn:0,rMs:0,rMax:0,rtt:[],drops:0,on:false};
+try{const _r=render;render=function(){const t=performance.now();try{return _r.apply(this,arguments)}finally{const d=performance.now()-t;P.rn++;P.rMs+=d;if(d>P.rMax)P.rMax=d}}}catch(e){}
+// frames: one second of counting every ten seconds (counting all the time would itself keep the phone drawing)
+function burst(){if(document.hidden)return;let n=0,last=performance.now(),slow=0;const t0=last;const f=()=>{const t=performance.now(),d=t-last;last=t;n++;if(d>50)slow++;if(t-t0<1000)requestAnimationFrame(f);else{P.fr+=n;P.frMs+=t-t0;P.slow+=slow}};requestAnimationFrame(f)}
+{let last=performance.now();setInterval(()=>{const n=performance.now(),d=n-last-500;last=n;if(!document.hidden&&d>P.stall)P.stall=d},500)}
+const inGame=()=>{try{return typeof S!=='undefined'&&!!S&&!!S.players&&S.phase!=='over'&&document.getElementById('home').hidden}catch(e){return false}};
+const online=()=>{try{return typeof NET!=='undefined'&&!!NET.on}catch(e){return false}};
+function ping(){try{if(!online()||typeof netAsk!=='function')return;const t=performance.now();let done=false;const p=netAsk('ping');let rid=0;try{rid=NET.rid}catch(e){}if(!p||!p.then)return;p.then(()=>{if(done)return;done=true;P.rtt.push(Math.round(performance.now()-t));if(P.rtt.length>60)P.rtt.shift()}).catch(()=>{});setTimeout(()=>{if(!done){done=true;try{NET.wait.delete(rid)}catch(e){}}},8000)}catch(e){}}
+const note=(m,w)=>{try{let v='';try{v=EB_VERSION}catch(e){}fetch('/api/err',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msg:m,where:String(w).slice(0,118),ver:v,dev:'diag'}),keepalive:true}).catch(()=>{})}catch(e){}};
+function reset(){P.t0=Date.now();P.fr=P.frMs=P.slow=P.stall=P.rn=P.rMs=P.rMax=0;P.rtt=[];P.drops=0}
+function report(force){try{const min=(Date.now()-P.t0)/60000;if((min<3&&!force)||!P.frMs)return;const fps=Math.round(P.fr/(P.frMs/1000)),r=P.rtt.slice().sort((a,b)=>a-b),med=r.length?r[r.length>>1]:-1,mx=r.length?r[r.length-1]:-1;
+  let os='';try{os=(navigator.userAgent.match(/OS (\d+_\d+)/)||navigator.userAgent.match(/Android (\d+)/)||[])[1]||''}catch(e){}
+  note('PERF '+(fps>=45&&P.stall<800?'ok':fps>=28?'so-so':'slow'),Math.round(min)+'min fps'+fps+' slow'+Math.round(P.slow/Math.max(1,P.fr)*100)+'% stall'+Math.round(P.stall)+' draw'+P.rn+'x'+Math.round(P.rMs/Math.max(1,P.rn))+'/'+Math.round(P.rMax)+'ms rtt'+med+'/'+mx+' drop'+P.drops+' | '+(/iPhone|iPad/.test(navigator.userAgent)?'iOS':/Android/.test(navigator.userAgent)?'And':'pc')+os+' '+screen.width+'x'+screen.height+' n'+((S&&S.players&&S.players.length)||0)+' th='+((typeof WAL!=='undefined'&&WAL.theme)||'')+(window.__eco132?' eco':'')+(window.__safe188?' safe':'')+((typeof VOICE!=='undefined'&&VOICE.on)?' mic':''))}catch(e){}}
+let was=false,k=0;setInterval(()=>{const g=inGame()&&online();if(g&&!was)reset();if(!g&&was)report();was=g;if(!g)return;k++;if(k%2===0)burst();if(k%4===0)ping()},5000);
+// a connection that dropped and came back during the game
+try{if(typeof netReset==='function'){/* counted through the "weak connection" sign instead: nothing to hook safely */}}catch(e){}
+setInterval(()=>{try{if(was&&document.getElementById('net157')&&!P.__n){P.__n=1;P.drops++}else if(!document.getElementById('net157'))P.__n=0}catch(e){}},1000);
+// ---- 3) the music stops while your microphone is on and comes back when you close it (asked for: with a headset the phone switches to "call" sound and the music breaks up).
+//         Pressing the music button while the mic is on is your choice and is respected until the mic changes again.
+try{if(typeof MUSIC!=='undefined'&&MUSIC.start){let over=false,told=false,was=false;const mic=()=>{try{return typeof VOICE!=='undefined'&&!!VOICE.on}catch(e){return false}};
+  const st=MUSIC.start;MUSIC.start=function(){if(mic()&&!over)return;return st.apply(this,arguments)};
+  document.addEventListener('click',e=>{try{if(e.target.closest&&e.target.closest('#musicBtn'))over=mic()}catch(x){}},true);
+  setInterval(()=>{const m=mic();if(m&&!was){over=false;if(MUSIC.playing){try{MUSIC.stop()}catch(e){}if(!told){told=true;try{toast(typeof LANG!=='undefined'&&LANG==='en'?'Music paused while your mic is on':'الموسيقى وقفت دام المايك شغال')}catch(e){}}}}
+    if(!m&&was){over=false;if(MUSIC.on)setTimeout(()=>{try{MUSIC.start()}catch(e){}},400)}was=m},600)}}catch(e){}
+window.__perf188=()=>JSON.stringify(P);window.__perf188r=()=>report(true);
+})();
+
+</script><script>
+// ===================== round 189: pages appear finished, in one step (first part of tidying the layers).
+// Filmed frame by frame on a slowed-down phone, two things showed an unfinished or old picture before the real one:
+// 1) coming back to the home page (after a game, from a room…): the OLD home (yellow "play the computer" bar, old green bar, rooms bar) was drawn first, then four later layers
+//    re-arranged it over ~150-600 ms. Those layers each waited for their own timer. They now run at once, in order, in the same step that draws the home.
+// 2) when no game is on, the empty game table behind the pages could show through for a moment (e.g. under the room-link card while the loading cover fades). It is hidden under that card while there is no game.
+// Nothing looks different once the page has settled. =====================
+(function(){
+// ---- 1) home in one step ----
+const finish=()=>{try{window.__sw117&&window.__sw117()}catch(e){}try{window.__hb145&&window.__hb145()}catch(e){}try{window.__hd145&&window.__hd145()}catch(e){}try{window.__hb148&&window.__hb148()}catch(e){}};
+try{if(typeof renderHome==='function')renderHome=(function(p){return function(){const r=p.apply(this,arguments);finish();return r}})(renderHome)}catch(e){}
+try{if(typeof showHome==='function')showHome=(function(p){return function(){const r=p.apply(this,arguments);finish();return r}})(showHome)}catch(e){}
+try{if(typeof window.h2Tab==='function'){const t=window.h2Tab;window.h2Tab=function(){const r=t.apply(this,arguments);finish();return r}}}catch(e){}
+// ---- 2) no game: nothing of the table shows ----
+const st=document.createElement('style');st.textContent='html.nog189 #table,html.nog189 .topbar,html.nog189 .handzone,html.nog189 .bottombar{visibility:hidden!important}';document.head.appendChild(st);
+const has=()=>{try{return typeof S!=='undefined'&&!!S&&!!S.players}catch(e){return false}};
+const sync=()=>{try{const lb=document.getElementById('lobby'),h=document.documentElement;h.classList.toggle('nog189',!has()&&!!lb&&!lb.hidden&&!h.classList.contains('tpv'))}catch(e){}}; /* only under the room / invite card: that is where the table showed through. The theme preview (which shows the table on purpose) is left alone. */
+try{if(typeof renderLobby==='function')renderLobby=(function(p){return function(){const r=p.apply(this,arguments);sync();return r}})(renderLobby)}catch(e){}
+try{if(typeof render==='function')render=(function(p){return function(){if(has())document.documentElement.classList.remove('nog189');return p.apply(this,arguments)}})(render)}catch(e){}
+try{if(typeof newGame==='function')newGame=(function(p){return function(){document.documentElement.classList.remove('nog189');return p.apply(this,arguments)}})(newGame)}catch(e){}
+setInterval(sync,300);sync();
+// ---- 2b) leaving a room: the "make a private room" form was drawn for a moment before the home page came. The home page now comes in the same step.
+window.addEventListener('click',e=>{try{if(!e.target.closest||!e.target.closest('#lbLeave'))return;let on=false;try{on=typeof NET!=='undefined'&&!!NET.on}catch(x){}if(on)return; /* still in the room (the leave was refused or asks first) */
+  const lb=document.getElementById('lobby');if(lb&&!lb.hidden&&!has()){lb.hidden=true;if(typeof showHome==='function')showHome(true);sync()}}catch(x){}});
+// ---- 3) a new game: the table used to be drawn with every card already in place, and two frames later the cards vanished and were dealt from the pile (dealt table -> empty -> dealing).
+//         The cards now stay unseen from the first drawing until the dealing starts, so the first thing you see is the dealing itself.
+const st2=document.createElement('style');st2.textContent='html.dl189 .who .handfan .cardback,html.dl189 #ground>.card,html.dl189 .hand .card{opacity:0}';document.head.appendChild(st2);
+let tm=0;const release=()=>{clearTimeout(tm);tm=0;document.documentElement.classList.remove('dl189')};
+const hold=()=>{try{if(typeof calm!=='undefined'&&calm)return}catch(e){}document.documentElement.classList.add('dl189');clearTimeout(tm);tm=setTimeout(release,800)}; // never left hidden: if the dealing does not start, the cards simply appear
+try{if(typeof newGame==='function')newGame=(function(p){return function(){hold();return p.apply(this,arguments)}})(newGame)}catch(e){}
+try{if(typeof applyView==='function')applyView=(function(p){return function(d){try{const v=d&&d.v,fx=(d&&d.fx)||[];const first=!S||S.phase==='over'||!S.players||(v&&v.players&&S.players.length!==v.players.length);if(first&&v&&v.phase!=='over'&&!fx.some(e=>e.t==='over'))hold()}catch(e){}return p.apply(this,arguments)}})(applyView)}catch(e){}
+try{if(typeof dealAnim==='function')dealAnim=(function(p){return function(){try{return p.apply(this,arguments)}finally{release()}}})(dealAnim)}catch(e){}
 })();
 
 </script><script>
@@ -16425,7 +16572,7 @@ window.__snd157=()=>pend;
 
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1121.1541';
+const EB_VERSION='v1122.1251';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
