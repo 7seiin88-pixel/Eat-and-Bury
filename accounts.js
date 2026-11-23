@@ -43,7 +43,7 @@ const ready = store.init().then(() => console.log('accounts:', process.env.DATAB
 function cleanProf(p, own) {
   p = p || {}; const o = {};
   const av = String(p.av || ''); o.av = (/^p:\d{1,2}$/.test(av) || (av.startsWith('data:image/jpeg;base64,') && av.length < 40000)) ? av : 'p:0';
-  o.name = short(p.name, 16).trim(); o.flag = short(p.flag, 8) || '🇰🇼';
+  o.name = short(p.name, 16).trim(); o.flag = short(p.flag, 8) || '🇰🇼'; if (o.flag.startsWith('b:') && !own('bd-' + o.flag.slice(2))) o.flag = '🇰🇼'; // a badge must be owned (round 196)
   const fr = String(p.frame || 'none'); o.frame = fr === 'none' || own('fr-' + fr) ? fr : 'none';
   const ef = String(p.efx || 'none'); o.efx = ef === 'none' || own('efx-' + ef) || (CAT.items['efx-' + ef] === 0) ? ef : 'none';
   const bb = String(p.bub || 'plain'); o.bub = bb === 'plain' || bb === 'royal' || own('bub-' + bb) ? bb : 'plain';
