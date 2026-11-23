@@ -1571,7 +1571,14 @@ function netConnect(){return new Promise((res,rej)=>{if(NET.ws&&NET.ws.readyStat
     if(m.type==='reply'){const f=NET.wait.get(m.rid);if(f){NET.wait.delete(m.rid);f(m.data)}return}
     const h=NET.handlers[m.type];if(h)h(m.data)}})}
 function netSend(type,data){if(NET.ws&&NET.ws.readyState===1)NET.ws.send(JSON.stringify({type,data}))}
-function netAsk(type,data){return new Promise(res=>{const rid=++NET.rid;NET.wait.set(rid,res);NET.ws.send(JSON.stringify({type,data,rid}))})}
+// round 209: a question sent while the connection was still opening (or had just dropped, e.g. Chrome on iPhone coming back from the background)
+// threw "The object is in an invalid state" and the answer never came, so the button did nothing. Now it waits for the connection (up to 10 s), else answers "offline".
+function netAsk(type,data){return new Promise(res=>{const rid=++NET.rid;NET.wait.set(rid,res);let done=false;
+  const fail=()=>{if(done)return;done=true;if(NET.wait.get(rid)===res){NET.wait.delete(rid);res({ok:false,err:'offline'})}};
+  const go=()=>{if(done)return;try{NET.ws.send(JSON.stringify({type,data,rid}));done=true}catch(e){fail()}};
+  const ws=NET.ws;if(ws&&ws.readyState===1)return go();
+  if(ws&&ws.readyState===0){ws.addEventListener('open',go,{once:true});ws.addEventListener('close',fail,{once:true});setTimeout(fail,10000);return}
+  fail()})}
 const on=(t,f)=>NET.handlers[t]=f;
 function netReset(){sessClear();NET.on=false;NET.host=false;NET.room=null;NET.members=[];window.NET_ON=false;voiceStop();document.documentElement.classList.remove('online','online-guest');try{NET.ws&&NET.ws.close()}catch(e){}NET.ws=null}
 // ---------- Staying in the room when you leave the page for a moment ----------
@@ -6338,7 +6345,7 @@ function enterRoom(res){fromHere=true;lobbyErr='';NET.on=true;window.NET_ON=true
   document.documentElement.classList.add('online');wrapGuest();document.documentElement.classList.toggle('online-guest',!NET.host);
   try{history.replaceState(null,'',res.room.quick?location.pathname:'?room='+NET.room)}catch(e){} /* a ranked table is not a room you were invited to: its code stays out of the address, so a reload never shows "you are invited to a room" */
   hideHome();$('setup').hidden=true;renderLobby();$('lobby').hidden=false}
-const ERR={over:L('The game at this table has ended','القيم بهالطاولة خلص'),notfound:L('Room not found','الغرفة مو موجودة'),full:L('The room is full','الغرفة مليانة'),dw:L('This table is for the diwaniya members','هالطاولة لأعضاء الديوانية بس'),inroom:L('Leave your room first','اطلع من غرفتك أول')};
+const ERR={offline:L('No connection, try again','ما في اتصال، جرب مرة ثانية'),over:L('The game at this table has ended','القيم بهالطاولة خلص'),notfound:L('Room not found','الغرفة مو موجودة'),full:L('The room is full','الغرفة مليانة'),dw:L('This table is for the diwaniya members','هالطاولة لأعضاء الديوانية بس'),inroom:L('Leave your room first','اطلع من غرفتك أول')};
 async function ask(type,data){if(!online()){toast(L('Online works on the game\'s website','الأونلاين يشتغل من موقع اللعبة'));return null}
   if(NET.on){toast(ERR.inroom);return null}
   try{await netConnect()}catch(e){toast(L('Could not reach the server','ما قدرنا نتصل بالسيرفر'));return null}
@@ -12343,7 +12350,7 @@ try{
  html body #myrow .card.big{--cw:min(calc(var(--SW,var(--W)) * .1),12.5dvh)!important}}`;document.head.appendChild(st)})();
 
 // sideways tablets: slide my hand down so its bottom sits just above the screen edge (so the table gets all the room left)
-(function(){const mq=matchMedia('(orientation:landscape) and (min-height:560px) and (min-width:900px)');let busy=0;
+(function(){const mq0=matchMedia('(orientation:landscape) and (min-height:560px) and (min-width:900px)'),mq={get matches(){return mq0.matches||document.documentElement.classList.contains('land205')}};let busy=0;
  function fit(){if(busy)return;const hz=document.querySelector('.handzone');if(!hz)return;if(!mq.matches){if(hz.style.getPropertyValue('--hzmb'))hz.style.removeProperty('--hzmb');return}
   const cs=[...document.querySelectorAll('#myrow .card')];if(!cs.length)return;let b=0;cs.forEach(c=>{const r=c.getBoundingClientRect();if(r.height)b=Math.max(b,r.bottom-(parseFloat(getComputedStyle(c).getPropertyValue('--dy'))||0))});if(!b)return;
   const m=parseFloat(getComputedStyle(hz).marginBottom)||0,want=Math.max(-140,Math.min(document.documentElement.classList.contains('land205')?80:0,m-(innerHeight-6-b)));if(Math.abs(want-m)<2)return;
@@ -17514,7 +17521,10 @@ const st=document.createElement('style');st.textContent=`
 #rp198 .pan{width:100%;max-width:520px;padding:6px 16px calc(12px + env(safe-area-inset-bottom));box-sizing:border-box}
 #rp198 .bar{position:relative;height:30px;touch-action:none;margin:0 4px}#rp198 .bar .tr{position:absolute;left:0;right:0;top:12px;height:7px;border-radius:5px;background:rgba(255,255,255,.14)}
 #rp198 .bar .cut{position:absolute;top:10px;height:11px;border-radius:5px;background:rgba(226,189,92,.28);box-shadow:inset 0 0 0 1.5px ${GOLD}}#rp198 .bar .fill{position:absolute;left:0;top:12px;height:7px;border-radius:5px;background:linear-gradient(90deg,#c9a04a,#f8e3a0)}
-#rp198 .bar .wm{position:absolute;top:6px;width:4px;height:19px;margin-left:-2px;border-radius:2px;background:#ff6b4a}#rp198 .bar .kn{position:absolute;top:5px;width:22px;height:22px;margin-left:-11px;border-radius:50%;background:#f8e3a0;box-shadow:0 0 0 3px rgba(0,0,0,.45)}
+#rp198 .bar .wm{position:absolute;top:6px;width:4px;height:19px;margin-left:-2px;border-radius:2px;background:#ff6b4a}#rp198 .wm.l0{background:#b8a58a;opacity:.75}#rp198 .wm.l1{background:#2ecc71}#rp198 .wm.l2{background:#3ba8ff}#rp198 .wm.l3{background:#ff2d55;box-shadow:0 0 6px #ff2d55;top:3px;height:25px}
+#rp198 .wlg{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:6px 0 2px}#rp198 .wlg button{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;border:1px solid rgba(242,210,122,.35);background:rgba(255,255,255,.06);color:#f3e6c8;font:700 12px inherit}
+#rp198 .wlg button i{width:10px;height:10px;border-radius:3px;display:inline-block}#rp198 .wlg .l0 i{background:#b8a58a}#rp198 .wlg .l1 i{background:#2ecc71}#rp198 .wlg .l2 i{background:#3ba8ff}#rp198 .wlg .l3 i{background:#ff2d55;box-shadow:0 0 6px #ff2d55}
+#rp198 .wlg button b{color:#f6d20d;direction:ltr}#rp198 .wlg button small{opacity:.75;font-weight:600}#rp198 .wlg button.none{opacity:.4}#rp198 .bar .kn{position:absolute;top:5px;width:22px;height:22px;margin-left:-11px;border-radius:50%;background:#f8e3a0;box-shadow:0 0 0 3px rgba(0,0,0,.45)}
 #rp198 .tm{display:flex;justify-content:space-between;font:600 12px ui-monospace,monospace;opacity:.8;direction:ltr;margin:0 4px}
 #rp198 .ctl{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:2px;direction:ltr}#rp198 .ctl button{border:0;background:rgba(255,255,255,.08);color:#f3e6c8;width:46px;height:46px;border-radius:50%;font:800 15px ${FONT};box-shadow:inset 0 0 0 1px rgba(242,210,122,.35)}
 #rp198 .ctl .pl{width:60px;height:60px;font-size:24px;background:linear-gradient(180deg,#f8e3a0,#e2bd5c 55%,#c9a04a);color:#2a1606}
@@ -17550,10 +17560,13 @@ function open(r0){if(!r0||!r0.f||r0.f.length<2)return toast(L('No recording for 
   preload(r);
   const el=document.createElement('div');el.id='rp198';el.dir=LANG==='ar'?'rtl':'ltr';
   const names=r.meta.pl.map(p=>p.n).join(' · ');
+  // round 207: each war is coloured by how many points it reached (50+, 60+, 70+), with a legend under the bar; a tap on a colour jumps to the next war of that colour
+  const WL=[];{let cur=null;r.f.forEach(s=>{if(s.ev&&s.ev.ws){cur={at:s.at,max:0};WL.push(cur)}if(cur&&s.w&&s.w.pts)cur.max=Math.max(cur.max,s.w.pts||0)});WL.forEach(w=>w.lv=w.max>=70?3:w.max>=60?2:w.max>=50?1:0)}
   el.innerHTML=`<div class="top"><span>🎬</span><b>${L('Game replay','إعادة القيم')} <small style="opacity:.7;font-weight:600">· ${esc(names)}</small></b><button type="button" class="x" aria-label="${L('Close','سكّر')}">✕</button></div>
   <div class="cv"><canvas width="${W*Q}" height="${H*Q}" style="aspect-ratio:${W}/${H}"></canvas></div>
-  <div class="pan"><div class="bar"><div class="tr"></div><div class="cut"></div><div class="fill"></div>${r.f.map(s=>s.ev&&s.ev.ws?`<i class="wm" style="left:${(s.at+OPEN)/(r.T+OPEN)*100}%"></i>`:'').join('')}<div class="kn"></div></div>
+  <div class="pan"><div class="bar"><div class="tr"></div><div class="cut"></div><div class="fill"></div>${WL.map(w=>`<i class="wm l${w.lv}" style="left:${(w.at+OPEN)/(r.T+OPEN)*100}%"></i>`).join('')}<div class="kn"></div></div>
   <div class="tm"><span class="t0">0:00</span><span class="t1">${fmt((r.T+OPEN)/1)}</span></div>
+  ${WL.length?`<div class="wlg">${[[3,'+70'],[2,'+60'],[1,'+50'],[0,L('under 50','تحت 50')]].map(([v,t])=>{const n=WL.filter(w=>w.lv===v).length;return `<button type="button" class="${'l'+v}${n?'':' none'}" data-lv="${v}"><i></i>${t} <small>${L('pts','نقطة')}</small> <b>${n}</b></button>`}).join('')}</div>`:''}
   <div class="ctl"><button type="button" data-k="pw" title="${L('Previous war','الحرب اللي قبل')}">⚔◀</button><button type="button" data-k="b10">-10</button><button type="button" class="pl" data-k="pp">⏸</button><button type="button" data-k="f10">+10</button><button type="button" data-k="nw" title="${L('Next war','الحرب الجاية')}">▶⚔</button></div>
   <div class="sp">${[.5,1,2,4,8].map(v=>`<button type="button" data-sp="${v}" class="${v===2?'on':''}">${v===.5?'½':v}×</button>`).join('')}</div>
   <div class="cutrow"><button type="button" data-k="cs">⟦ ${L('Start here','البداية من هني')}</button><button type="button" data-k="ce">${L('End here','النهاية هني')} ⟧</button><button type="button" data-k="cr">${L('Whole game','القيم كله')}</button></div>
@@ -17571,6 +17584,7 @@ function open(r0){if(!r0||!r0.f||r0.f.length<2)return toast(L('No recording for 
     if(b.dataset.sp){P.spd=+b.dataset.sp;el.querySelectorAll('[data-sp]').forEach(x=>x.classList.toggle('on',x===b));return}
     if(k==='pp'){if(!P.run&&P.pos>=r.T)P.pos=-OPEN;P.run=!P.run}
     if(k==='b10')P.pos=Math.max(-OPEN,P.pos-10000);if(k==='f10')P.pos=Math.min(r.T,P.pos+10000);
+    if(b.dataset.lv!=null){const v=+b.dataset.lv,ls=WL.filter(w=>w.lv===v).map(w=>w.at-300);if(!ls.length)return toast(L('No wars of this kind','ما في حروب من هالنوع'));const w=ls.find(t=>t>P.pos+400);P.pos=w!=null?w:ls[0];P.run=true;return}
     if(k==='nw'){const w=wars.find(t=>t>P.pos+400);if(w!=null)P.pos=w;else toast(L('No more wars','ما في حروب بعد'))}
     if(k==='pw'){const w=[...wars].reverse().find(t=>t<P.pos-1500);P.pos=w!=null?w:-OPEN}
     if(k==='cs'){P.cut[0]=Math.min(P.pos+OPEN,P.cut[1]-2000);toast(L('Start set','تحددت البداية'))}if(k==='ce'){P.cut[1]=Math.max(P.pos+OPEN,P.cut[0]+2000);toast(L('End set','تحددت النهاية'))}if(k==='cr'){P.cut=[0,TOT]}
@@ -17785,7 +17799,7 @@ window.__svgFix205=scan})();
 // round 205: iPad and big screens sideways get their own layout. The top bar row and the bottom bar row took ~150px of a short screen,
 // so the table was a long flat strip. Now the game buttons and the score stand in a rail on the left, my picture and the action buttons in a rail
 // on the right, and the table, the players and my hand use the full height between them.
-try{(function(){const MQ=matchMedia('(orientation:landscape) and (min-width:900px) and (min-height:600px)');
+try{(function(){const MQ=matchMedia('(orientation:landscape) and (min-width:640px) and (min-height:300px)');
 const st=document.createElement('style');st.textContent=`
 html.land205 body{--sx:116px!important}
 html.land205 body #app .topbar.topbar{position:absolute!important;left:0;top:0;bottom:0;width:108px;height:auto!important;display:flex!important;flex-direction:column!important;grid-template-columns:none!important;justify-content:center!important;align-items:center!important;gap:12px!important;padding:12px 0!important;zoom:1!important;border-radius:0 24px 24px 0!important;border-bottom:0!important;z-index:5;margin:0!important}
@@ -17801,6 +17815,24 @@ html.land205 #rail205 .gbtn{width:80px!important;height:62px!important;margin:0!
 html.land205 #rail205 #mebox{display:flex!important;flex-direction:column!important;align-items:center!important;gap:6px!important;width:auto!important;position:relative!important;left:auto!important;bottom:auto!important;margin:0!important}
 html.land205 #rail205 .botchip{position:absolute!important;left:50%!important;right:auto!important;top:-30px!important;translate:-50% 0!important;max-width:100px!important;white-space:normal!important;text-align:center!important;font-size:10px!important;line-height:1.2!important}
 html.land205 body .handzone{margin-bottom:var(--hzmb,0px)!important}
+@media (max-height:599px){
+html.land205 body{--sx:84px!important}
+html.land205 body #app .topbar.topbar{width:80px!important;min-width:80px!important;max-width:80px!important;left:0!important;gap:6px!important;padding:6px 0!important;border-radius:0 18px 18px 0!important}
+html.land205 body #app .topbar .tbg{gap:5px!important}
+html.land205 body #app .topbar .tbg .gbtn,html.land205 body #app .topbar button{width:62px!important;height:calc((100dvh - 110px) / 6 - 5px)!important;min-height:0!important;max-height:52px!important;font-size:9px!important}
+html.land205 body #app .topbar .gbtn svg{width:16px!important;height:16px!important}
+html.land205 body #app .topbar .score{width:72px!important;min-width:0!important;margin:0 0 2px!important;zoom:1!important;padding:4px 2px!important;height:auto!important}
+html.land205 body #app .topbar .score #board{display:grid!important;grid-template-columns:1fr 1fr!important;gap:3px 2px!important;width:100%!important}
+html.land205 body #app .topbar .score .col{flex-direction:row!important;align-items:center!important;justify-content:center!important;gap:2px!important;width:auto!important;min-width:0!important}
+html.land205 body #app .topbar .score .n{font-size:10px!important;min-width:0!important;width:auto!important;max-width:none!important;padding:1px 2px!important;letter-spacing:-.5px}html.land205 body #app .topbar .score .t{width:7px!important;height:7px!important;min-width:0!important;flex:none!important}
+html.land205 #rail205{width:80px;padding:8px 0;border-radius:18px 0 0 18px}
+html.land205 #rail205 .r205b{gap:6px}
+html.land205 #rail205 .gbtn{width:62px!important;height:calc((100dvh - 150px) / 4 - 6px)!important;max-height:56px!important;font-size:9px!important}
+html.land205 #rail205 #mebox{zoom:1;--tile:58px!important}html.land205 #rail205 #mebox .tile,html.land205 #rail205 #mebox .tilewrap{width:58px!important;height:58px!important}
+html.land205 body #myrow .card.big{--cw:min(calc((100vw - 180px) * .11),19dvh)!important}
+html.land205 body .table .seat{--tile:min(19dvh,110px)!important}
+html.land205 body .table .seat .pilebox .card,html.land205 body #seats .seat .pilebox .card.mini{--cw:min(15dvh,90px)!important}
+}
 html.land205 body .handzone #myrow{max-width:calc(100vw - 260px)!important}
 html.land205 body #myrow .card.big{--cw:min(calc((100vw - 232px) * .11),15dvh)!important}
 html.land205 body .table .seat{--tile:min(15dvh,124px)!important}
@@ -17830,7 +17862,7 @@ try{render=(function(p){return function(){const r=p.apply(this,arguments);try{if
 
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1123.2102';
+const EB_VERSION='v1123.2220';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
