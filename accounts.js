@@ -265,6 +265,9 @@ async function http(req, res, url) {
     if (url === '/api/offline' && req.method === 'POST') return send(200, await offline(a, body));
     if (url === '/api/challenge' && req.method === 'POST') return send(200, await challenge(a, body));
     if (url === '/api/boost' && req.method === 'POST') return send(200, await buyBoost(a));
+    if (url === '/api/test/topup' && req.method === 'POST') { // testing only (round 196): the money-exchange packs add rupees for free while the game is being tried; off when TEST_MODE is off
+      if (!TEST_MODE) return send(403, { err: 'store' }); const n = Math.floor(+(body && body.n)); if (![500, 1200, 3000, 8000].includes(n)) return send(400, { err: 'pack' });
+      a.w.tokens = Math.min(1000000, a.w.tokens + n); await store.put(a); return send(200, me(a, { topup: n })); }
     if (url === '/api/vip/test' && req.method === 'POST') { // testing only: buy a month of VIP with rupees (the real one is bought in the App Store)
       if (!TEST_MODE) return send(403, { err: 'store' }); if (a.w.tokens < VIP_TEST_PRICE) return send(200, me(a, { refused: ['vip'] }));
       a.w.tokens -= VIP_TEST_PRICE; const now = Date.now(); if (!isVip(a)) a.vipStart = now; a.vip = Math.max(a.vip || 0, now) + VIP_DAYS * 864e5; await store.put(a); return send(200, me(a, { vip: true })) }

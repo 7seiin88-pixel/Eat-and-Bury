@@ -41,10 +41,13 @@ const server = http.createServer((req, res) => {
     const ice = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }]; if (urls.length) ice.push({ urls, username: process.env.TURN_USER || '', credential: process.env.TURN_PASS || '' });
     res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); return res.end(JSON.stringify({ ice, relay: urls.length > 0 })) }
   if (url.startsWith('/api/')) return ACC.http(req, res, url.split('?')[0]);
+  // round 196: what the «watch» page shows for a game being played: the teams with their names and score, the pile, the mode
+  const liveOf = r => { try { if (!r.started || !r.game || r.over) return null; const S = r.game.S, E = r.game.ctx.__ctx(); if (!S || !S.teams) return null;
+    return { mode: S.cfg && S.cfg.mode || '2v2', decks: S.cfg && S.cfg.decks || 4, pile: S.draw ? S.draw.length : 0, teams: S.teams.map((t, k) => ({ names: S.players.filter(p => p.team === k).map(p => String(p.name || '').slice(0, 16)), score: E.teamScore(k) })) } } catch (e) { return null } };
   if (url === '/rooms') { // live rooms list for the "rooms now" screen
     const list = [...rooms.values()].filter(r => !r.priv && !r.dw && !r.over).map(r => {
       const players = r.members.filter(m => !m.watch), host = r.members.find(m => m.sid === r.host);
-      return { code: r.code, host: host ? host.name : '', players: players.map(m => m.name), watchers: r.members.filter(m => m.watch).length, started: !!r.started, free: r.started && r.n ? Math.max(0, r.n - players.length) : 0, away: players.filter(m => m.away).length, quick: !!r.quick, qmode: r.quick ? (r.qmode || '2v2') : '' };
+      return { code: r.code, host: host ? host.name : '', players: players.map(m => m.name), watchers: r.members.filter(m => m.watch).length, started: !!r.started, free: r.started && r.n ? Math.max(0, r.n - players.length) : 0, away: players.filter(m => m.away).length, quick: !!r.quick, qmode: r.quick ? (r.qmode || '2v2') : '', live: liveOf(r) };
     }).sort((a, b) => (b.started - a.started) || (b.players.length - a.players.length)).slice(0, 50);
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(list)); return;
   }
