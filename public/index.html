@@ -5806,12 +5806,23 @@ window.addEventListener('click',e=>{
 // ===================== Round 50: speed (layout once per frame, calmer animations), "computer is playing" badges, mic closes when you leave the app =====================
 // ---------- 1. Speed: the heavy layout passes run once per frame, not after every render ----------
 (function(){let req=0,need={g:0,s:0};const _fg=fitGround,_fs=fitSeats;
-  function flush(){if(req){cancelAnimationFrame(req);req=0}const s=need.s,g=need.g;need.s=need.g=0;try{if(s)_fs()}catch(e){}try{if(g)_fg()}catch(e){}}
+  function flush(){if(req){cancelAnimationFrame(req);req=0}const s=need.s,g=need.g;need.s=need.g=0;try{if(s)_fs()}catch(e){}try{if(g&&!sameGround())_fg()}catch(e){}}
+  // round 205: the middle cards are laid out again only when they change (a card comes or goes) or the screen changes. A label or a bubble next to a player
+  // used to change the free space by a few pixels, so the same cards jumped between one and two rows while nobody played
+  let gsig='';const sameGround=()=>{const g=document.getElementById('ground'),rug=document.querySelector('.rug');if(!g||!rug)return false;const cs=[...g.querySelectorAll(':scope>.card')];
+    const wr=document.getElementById('war'),dr=document.querySelector('.drawrow');const sig=innerWidth+'x'+innerHeight+':'+rug.offsetWidth+'x'+rug.offsetHeight+':'+(S&&S.war?'w':'')+(wr&&wr.dataset.lift||'')+':'+(dr?Math.round(dr.getBoundingClientRect().height):'')+':'+cs.map(c=>(c.dataset.r||c.dataset.eat||'?')+(c.style.left?'':'!')).join(',');const same=sig===gsig&&cs.length&&cs.every(c=>c.style.left);gsig=sig.replace(/!/g,'');return same};
   const ask=k=>{need[k]=1;if(!req)req=requestAnimationFrame(()=>{req=0;flush()})};
   fitGround=function(){ask('g')};fitSeats=function(){ask('s')};window.flushFits=flush;
   // anything that measures positions gets the finished layout
   const _pt=pt;pt=function(el){if(need.g||need.s)flush();return _pt(el)};
-  addEventListener('resize',()=>{need.g=need.s=1;flush()})})();
+  addEventListener('resize',()=>{need.g=need.s=1;gsig='';flush()})})();
+// round 205: render rebuilds the seats and wipes their place on the table; the place came back one frame later,
+// so on the iPad the side players jumped 16px out and back (a blink) and a flying card aimed at the wrong spot. The last place is put back at once.
+(function(){const _r=render;render=function(){const keep={};document.querySelectorAll('.seat[data-seat]').forEach(s=>{if(s.style.translate)keep[s.dataset.seat+'|'+((s.className.match(/\bs-(left|right|top)\b/)||[''])[0])+'|'+((window.__seatFix||{}).sig||'')]=[s.style.translate,s.dataset.ox,s.dataset.oy]});
+  // the cards in the middle lost their place the same way (a card jumped up, then down, then back): their last place is put back too, the layout then corrects it if it changed
+  const gk=c=>c.dataset.r?'r'+c.dataset.r:c.dataset.eat?'eat':null,gkeep={};document.querySelectorAll('#ground>.card').forEach(c=>{const k=gk(c);if(k&&c.style.left)gkeep[k]=[c.style.left,c.style.top,c.style.getPropertyValue('--cw'),c.style.getPropertyPriority('--cw'),c.style.zIndex]});
+  const r=_r.apply(this,arguments);try{document.querySelectorAll('#ground>.card').forEach(c=>{const k=gkeep[gk(c)];if(k&&!c.style.left){c.style.left=k[0];c.style.top=k[1];if(k[2])c.style.setProperty('--cw',k[2],k[3]);c.style.zIndex=k[4]}});if([...document.querySelectorAll('#ground>.card')].some(c=>!c.style.left))window.flushFits&&flushFits()}catch(e){}
+  try{document.querySelectorAll('.seat[data-seat]').forEach(s=>{const k=keep[s.dataset.seat+'|'+((s.className.match(/\bs-(left|right|top)\b/)||[''])[0])+'|'+((window.__seatFix||{}).sig||'')];if(k&&!s.style.translate){s.style.translate=k[0];if(k[1]!=null)s.dataset.ox=k[1];if(k[2]!=null)s.dataset.oy=k[2]}})}catch(e){}return r}})();
 // rank badges keep their shine, just a little slower
 (function(){const st=document.createElement('style');st.textContent='.rkic:not(.big)::after{animation-duration:5s!important}';document.head.appendChild(st)})();
 // voice volumes don't need checking so often
@@ -12335,7 +12346,7 @@ try{
 (function(){const mq=matchMedia('(orientation:landscape) and (min-height:560px) and (min-width:900px)');let busy=0;
  function fit(){if(busy)return;const hz=document.querySelector('.handzone');if(!hz)return;if(!mq.matches){if(hz.style.getPropertyValue('--hzmb'))hz.style.removeProperty('--hzmb');return}
   const cs=[...document.querySelectorAll('#myrow .card')];if(!cs.length)return;let b=0;cs.forEach(c=>{const r=c.getBoundingClientRect();if(r.height)b=Math.max(b,r.bottom-(parseFloat(getComputedStyle(c).getPropertyValue('--dy'))||0))});if(!b)return;
-  const m=parseFloat(getComputedStyle(hz).marginBottom)||0,want=Math.max(-140,Math.min(0,m-(innerHeight-6-b)));if(Math.abs(want-m)<2)return;
+  const m=parseFloat(getComputedStyle(hz).marginBottom)||0,want=Math.max(-140,Math.min(document.documentElement.classList.contains('land205')?80:0,m-(innerHeight-6-b)));if(Math.abs(want-m)<2)return;
   busy=1;hz.style.setProperty('--hzmb',want+'px');requestAnimationFrame(()=>{busy=0;dispatchEvent(new Event('resize'))})}
  setInterval(fit,600);addEventListener('resize',()=>setTimeout(fit,60));addEventListener('orientationchange',()=>setTimeout(fit,300))})();
 // shop jokers: no thin gold border inside the card (like the classic joker)
@@ -14147,7 +14158,7 @@ if(typeof renderWar==='function')renderWar=(function(p){return function(){const 
 // ---------- 4) a card you draw lands exactly in its own place in your hand. It used to fly to the middle of the hand while the real card
 //               was already showing in its slot, 35 px away: two cards for a moment. Now the slot stays empty until the flying card arrives on it ----------
 {const st=document.createElement('style');st.textContent=`#myrow .hand .card.inc146{opacity:0!important}#myrow .hand .card.land146{animation:land146 .16s ease-out}@keyframes land146{from{transform:translateY(var(--dy,0)) scale(1.04)}to{transform:translateY(var(--dy,0)) scale(1)}}
-.flyer.fly146>.cardback{display:block;border-radius:8px}`;document.head.appendChild(st)}
+.flyer.fly146{will-change:transform}.flyer.fly146>.cardback{display:block;border-radius:8px}`;document.head.appendChild(st)}
 let skip=null;
 if(typeof fly==='function')fly=(function(F){return function(html,from,to,o){try{if(skip&&skip.n>0&&performance.now()<skip.until&&to&&/cardback/.test(html)&&Math.abs(to.x-skip.x)<4&&Math.abs(to.y-skip.y)<4){skip.n--;return}}catch(e){}return F.apply(this,arguments)}})(fly);
 // the landing itself: the new cards wait hidden in their slots, a card back flies from the deck onto each slot, then the card shows
@@ -14159,11 +14170,14 @@ function land(fresh){try{const A=typeof ANIM==='number'?ANIM:1;const table=docum
       const d=document.createElement('div');d.className='flyer fly146';d.style.left=to.x+'px';d.style.top=to.y+'px';d.innerHTML=`<div class="cardback" style="width:${r.width}px;height:${r.height}px"></div>`;fx.appendChild(d);
       const s0=dr&&dr.width?Math.max(.3,dr.width/r.width):.5,D=300*A,t0=performance.now(),ease=x=>1-Math.pow(1-x,3);
       let fin=false;const done=()=>{if(fin)return;fin=true;try{d.remove()}catch(e){}try{el.classList.remove('inc146');el.classList.add('land146');setTimeout(()=>el.classList.remove('land146'),260)}catch(e){}};
-      // the flight follows the slot: if the hand closes up while the card is in the air (you played another card), it still lands exactly on it
-      let lx=to.x,ly=to.y;const step=()=>{if(fin)return;if(!el.isConnected){const e2=document.querySelector(`#myrow .hand [data-card="${el.dataset.card}"]`);if(e2){e2.classList.add('inc146');el=e2}}
-        const x=Math.min(1,(performance.now()-t0)/D),e=ease(x);let cx=lx,cy=ly;if(el.isConnected){const tr2=table.getBoundingClientRect(),r2=el.getBoundingClientRect();if(r2.width){cx=lx=r2.left-tr2.left+r2.width/2;cy=ly=r2.top-tr2.top+r2.height/2}}
-        const px=from.x+(cx-from.x)*e,py=from.y+(cy-from.y)*e;d.style.transform=`translate(-50%,-50%) translate(${px-to.x}px,${py-to.y}px) rotate(${14*(1-e)}deg) scale(${s0+(1-s0)*e})`;if(x>=1){done();return}requestAnimationFrame(step)};
-      d.style.transform=`translate(-50%,-50%) translate(${from.x-to.x}px,${from.y-to.y}px) rotate(14deg) scale(${s0})`;requestAnimationFrame(step);setTimeout(done,D+400)}catch(e){try{el.classList.remove('inc146')}catch(_){}}},m*90*A));
+      // round 205: the flight runs on the graphics chip (a smooth line even while the game is busy); it used to be moved by script frame by frame and stuttered on the iPad.
+      // If the hand closes up while the card is in the air (you played another card), the card glides on to the slot's new place.
+      const kf=(fx0,fy0,r0,sc0,tx,ty)=>[{transform:`translate(-50%,-50%) translate(${fx0-to.x}px,${fy0-to.y}px) rotate(${r0}deg) scale(${sc0})`},{transform:`translate(-50%,-50%) translate(${tx-to.x}px,${ty-to.y}px) rotate(0deg) scale(1)`}];
+      const an=d.animate(kf(from.x,from.y,14,s0,to.x,to.y),{duration:D,easing:'cubic-bezier(.33,1,.68,1)',fill:'forwards'});
+      an.onfinish=()=>{try{if(!el.isConnected){const e2=document.querySelector(`#myrow .hand [data-card="${el.dataset.card}"]`);if(e2){e2.classList.add('inc146');el=e2}}
+        const tr2=table.getBoundingClientRect(),r2=el.getBoundingClientRect();if(el.isConnected&&r2.width){const nx=r2.left-tr2.left+r2.width/2,ny=r2.top-tr2.top+r2.height/2;
+          if(Math.abs(nx-to.x)>3||Math.abs(ny-to.y)>3){const a2=d.animate(kf(to.x,to.y,0,1,nx,ny),{duration:110,easing:'ease-out',fill:'forwards'});a2.onfinish=done;return}}}catch(e){}done()};
+      setTimeout(done,D+400)}catch(e){try{el.classList.remove('inc146')}catch(_){}}},m*90*A));
   // safety: nothing stays hidden
   setTimeout(()=>document.querySelectorAll('#myrow .hand .card.inc146').forEach(e=>e.classList.remove('inc146')),els.length*90*A+300*A+900)}catch(e){try{document.querySelectorAll('#myrow .hand .card.inc146').forEach(x=>x.classList.remove('inc146'))}catch(_){}}}
 const ok=()=>{try{return typeof S!=='undefined'&&S&&S.players&&S.players[0]&&!(typeof calm!=='undefined'&&calm)&&!(typeof amWatch==='function'&&amWatch())}catch(e){return false}};
@@ -15103,6 +15117,18 @@ const FIGS={
  harle:(R,b,g,o,id)=>`<defs><pattern id="${id}p" width="14" height="20" patternUnits="userSpaceOnUse"><rect width="14" height="20" fill="${R}"/><path d="M7 0L14 10 7 20 0 10Z" fill="${b}"/></pattern></defs>`+BODY(`url(#${id}p)`,`url(#${id}p)`).replace(`fill="url(#${id}p)"/><path d="M0 20`,`fill="url(#${id}p)"/><path d="M0 20`)+RUFF(g,R,b)+FACE+EXTRA.mask(R,b,g).replace(/<g transform.*$/,'')+HAT.cap(R,b,g),
  venice:(R,b,g)=>BODY(R,b)+RUFF(g,R,b)+FACE+`<path d="M-14-1q4-6 14-1q10-5 14 1q-1 8-8 6q-4-1-6-4q-2 3-6 4q-7 2-8-5z" fill="${g}" stroke="${K}" stroke-width=".8"/><ellipse cx="0" cy="-8" rx="34" ry="8" fill="${R}"/><path d="M-20-10Q-18-34 0-34T20-10Z" fill="${b}"/><path d="M14-26C34-50 52-40 54-24 44-34 34-32 26-20z" fill="${g}"/><path d="M10-26C26-62 46-62 50-46 40-54 30-50 22-34z" fill="#1fb3a8"/>`+EXTRA.scepter(R,b,g)
 };
+// round 200: the Dracula joker, "the count": pale face, red eyes and fangs, a black cape lined in red with a high collar, a blood moon and bats behind him
+FIGS.drac=(R,b,g,o,id)=>`<defs><radialGradient id="${id}m" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffd2c4"/><stop offset=".7" stop-color="#e2524f"/><stop offset="1" stop-color="#7a0f1f"/></radialGradient><linearGradient id="${id}c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b0a10"/><stop offset="1" stop-color="#05020a"/></linearGradient><linearGradient id="${id}l" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d0102e"/><stop offset="1" stop-color="#6e0616"/></linearGradient></defs>
+<g transform="translate(-75 -112)"><circle cx="82" cy="70" r="30" fill="url(#${id}m)" opacity=".95"/>
+<g fill="#1b0a10"><path d="M40 52c4-5 9-6 12-2 2-4 7-5 9-1-4 0-6 3-7 6-2-3-5-3-7 0-1-2-4-3-7-3z"/><path d="M108 40c3-4 7-4 9-1 2-3 6-3 7 0-3 0-5 2-5 4-2-2-4-2-6 0-1-2-3-3-5-3z"/></g>
+<path d="M30 200 L44 120 Q75 92 106 120 L120 200 Z" fill="url(#${id}c)"/><path d="M44 120 Q60 140 75 175 Q90 140 106 120 L100 128 Q75 150 50 128 Z" fill="url(#${id}l)"/>
+<path d="M40 118 Q34 92 50 80 Q52 104 62 112 Z" fill="#12060a"/><path d="M110 118 Q116 92 100 80 Q98 104 88 112 Z" fill="#12060a"/>
+<path d="M44 117 Q38 98 50 86 Q53 104 61 111Z" fill="url(#${id}l)" opacity=".85"/><path d="M106 117 Q112 98 100 86 Q97 104 89 111Z" fill="url(#${id}l)" opacity=".85"/>
+<path d="M62 122 L75 150 L88 122 Q75 128 62 122Z" fill="#f4efe6"/><path d="M72 128 l3 8 3-8z" fill="#b3122e"/><circle cx="75" cy="139" r="3.2" fill="#e2bd5c" stroke="#7a5a12" stroke-width=".8"/>
+<path d="M75 52c-14 0-21 11-20 26 1 14 8 26 20 29 12-3 19-15 20-29 1-15-6-26-20-26z" fill="#e9e3e6"/><path d="M55 70c0-15 9-22 20-22s20 7 20 22c-3-6-7-9-11-10l-9 12-9-12c-4 1-8 4-11 10z" fill="#0d0508"/>
+<path d="M60 73q5-3 10 0" stroke="#0d0508" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M80 73q5-3 10 0" stroke="#0d0508" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+<ellipse cx="65" cy="79" rx="4.2" ry="2.6" fill="#fff"/><ellipse cx="85" cy="79" rx="4.2" ry="2.6" fill="#fff"/><circle cx="65.5" cy="79" r="1.9" fill="#c8102e"/><circle cx="85.5" cy="79" r="1.9" fill="#c8102e"/>
+<path d="M75 82 l-2 9 h4z" fill="#d4ccd0"/><path d="M66 96 q9 6 18 0 q-9 3-18 0z" fill="#6e0616"/><path d="M69 97 l2 6 2-5.5z M77 97.5 l2 5.5 2-6z" fill="#fff"/><path d="M71 103 q0 3 1 4" stroke="#c8102e" stroke-width="1.2" fill="none"/></g>`;
 const LIST=[
  ['jkjuggle','Classic juggler','الكلاسيكي الحاوي',1800,{f:'std',r:'#0e8a4f',b:'#f28a1d',g:'#ffd23f',body:'stripes',neck:'bow',face:['nose'],hat:'cap',ex:'balls',lt:'#0e8a4f',hair:'#ff7a1a'},1],
  ['jkfire','Classic fire','الكلاسيكي الناري',3000,{f:'std',r:'#d92a06',b:'#ffd23f',g:'#ffd23f',body:'flame',neck:'collar',hat:'flamehat',ex:'fire',lt:'#d92a06',glow:'#ff9a3a'},1],
@@ -15118,6 +15144,7 @@ const LIST=[
  ['jkspace','Astronaut','جوكر الفضاء',3200,{f:'std',r:'#f2f5fa',b:'#2a6cff',g:'#ff8a1a',body:'sash',neck:'none',hat:'helmet',ex:'flag',lt:'#2a4a9a',deco:'night',glow:'#8a8aff'},1],
  ['jkninja','Ninja','جوكر النينجا',2800,{f:'std',r:'#2b2c33',b:'#c8102e',g:'#e8eef5',body:'sash',neck:'none',hat:'ninja',ex:'katana',lt:'#15161a'},1],
  ['jkprison','Jailed joker','الجوكر المسجون',3000,{f:'std',r:'#f4f4f4',b:'#15161a',g:'#f2b51d',body:'stripes',neck:'collar',face:['goatee'],hat:'prison',ex:'ballchain',lt:'#15161a'},1],
+ ['jkdrac','Dracula','جوكر دراكولا',3200,{f:'drac',r:'#1b0a10',b:'#b3122e',g:'#e2bd5c',lt:'#b3122e'},1],
  ['jkarmy','Army joker','الجوكر الحربي',3000,{f:'std',r:'#5d6b34',b:'#3f4a22',g:'#e0b83a',body:'camo',neck:'none',face:['mustache'],hat:'armyhelm',ex:'binoc',lt:'#3f4a22'},1],
  // the faces that were already in the shop: same ids and prices, now in the same flat style but each with its own colours, clothes and hat
  ['jhead',0,0,0,{f:'head',r:'#f28a1d',b:'#0e8a4f',g:'#fff2a8',neck:'bow',face:['nose'],hat:'cone',hair:'#ff4a00',lt:'#e06a00'}],
@@ -17514,7 +17541,7 @@ html body #ebAsk{z-index:9900!important} /* the yes/no box comes above the log a
 #lg199 .mid,.mylog199 .mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}#lg199 .res,.mylog199 .res{display:flex;align-items:center;gap:6px;font-weight:900}#lg199 .w,.mylog199 .w{color:#8fe39f}#lg199 .l,.mylog199 .l{color:#ff9a8f}
 #lg199 .sc,.mylog199 .sc{margin-inline-start:auto;font:800 15px ui-monospace,monospace;direction:ltr;unicode-bidi:isolate;color:#fff}#lg199 .nm,.mylog199 .nm{font-size:13px;font-weight:700}#lg199 .meta,.mylog199 .meta{font-size:11px;color:#bfae8c}
 #lg199 .tg,.mylog199 .tg{display:flex;gap:5px;flex-wrap:wrap}#lg199 .tg span,.mylog199 .tg span{font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:10px;background:rgba(255,90,60,.15);color:#ffb39f}#lg199 .star,.mylog199 .star{color:#ffd34d}
-#lg199 .act,.mylog199 .act{display:flex;gap:6px;margin-top:4px}#lg199 .act button,.mylog199 .act button{flex:1;border:0;border-radius:10px;padding:7px 4px;font:800 12px ${FONT};background:rgba(255,255,255,.08);color:#f3e6c8;box-shadow:inset 0 0 0 1px rgba(242,210,122,.3)}#lg199 .act .g,.mylog199 .act .g{background:linear-gradient(180deg,#f8e3a0,#e2bd5c 55%,#c9a04a);color:#2a1606}#lg199 .act .del,.mylog199 .act .del{flex:none;width:36px}
+#lg199 .act,.mylog199 .act{display:flex;gap:6px;margin-top:4px}#lg199 .act button,.mylog199 .act button{flex:1;border:0;border-radius:10px;padding:7px 4px;font:800 12px ${FONT};background:rgba(255,255,255,.08);color:#f3e6c8;box-shadow:inset 0 0 0 1px rgba(242,210,122,.3)}#lg199 .act .g,.mylog199 .act .g{background:linear-gradient(180deg,#f8e3a0,#e2bd5c 55%,#c9a04a);color:#2a1606}#lg199 .act .del,.mylog199 .act .del{flex:none;width:36px}#lg199 .act .del.sure,.mylog199 .act .del.sure{width:auto;padding:7px 10px;background:#c0392b;color:#fff;box-shadow:none}
 .rp198list{width:100%;text-align:start}.rp198list h4{margin:14px 2px 6px;color:#e0b24e;font-size:14px}.rp198list button{display:flex;width:100%;align-items:center;gap:10px;margin:0 0 6px;padding:10px 12px;border:0;border-radius:12px;background:rgba(255,255,255,.06);color:#f3e6c8;font:700 13px ${FONT};text-align:start;box-shadow:inset 0 0 0 1px rgba(242,210,122,.3)}.rp198list button b{color:#f6d20d;margin-inline-start:auto;direction:ltr}`;
 document.head.appendChild(st);
 const fmt=ms=>{ms=Math.max(0,ms);const s=Math.round(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
@@ -17678,7 +17705,9 @@ document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.c
   if(!x)return;
   const inLog=!!t.closest('#lg199');
   if(k==='star'){x.star=!x.star;store(all);if(LAST&&LAST.meta.at===at)LAST.star=x.star;return inLog?logPage():null}
-  if(k==='del'){const ok=typeof ebAsk==='function'?await ebAsk(L('Delete this game from the log? It cannot come back.','تمسح هالقيم من السجل؟ ما يرجع.'),L('Delete','امسح'),L('Keep','لا')):true;if(!ok)return;store(all.filter(y=>y.meta.at!==at));return inLog?logPage():null}
+  // delete: the first tap turns the bin into "Delete?", the second tap (within 4 s) deletes. No pop-up box, so nothing can come between.
+  if(k==='del'){if(!t.classList.contains('sure')){t.classList.add('sure');t.textContent=L('Delete?','أمسح؟');clearTimeout(t._u);t._u=setTimeout(()=>{t.classList.remove('sure');t.textContent='🗑'},4000);return}
+    store(all.filter(y=>y.meta.at!==at));try{toast(L('Deleted','انمسح'))}catch(x){}const box=document.querySelector('.mylog199');if(box)box.dataset.k='';return inLog?logPage():null}
   if(k==='play'||k==='video'){open(x);if(k==='video'&&PLAY)setTimeout(()=>{if(PLAY){PLAY.run=false;make(PLAY,'save')}},300)}},true);
 // on "My page", under the numbers: the last three games, and "All" for the full log
 setInterval(()=>{try{const st=document.querySelector('#h2Page .me-stats');if(!st)return;const all=load(),key=all.map(x=>x.meta.at+(x.star?'*':'')).slice(0,3).join(',')+'|'+all.length;let box=document.querySelector('#h2Page .mylog199');
@@ -17702,10 +17731,106 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 const st=document.createElement('style');st.textContent=`.rm199{display:block;width:100%;margin:10px 0 0;padding:14px;border:0;border-radius:14px;font:900 17px "Cairo",system-ui,sans-serif;background:linear-gradient(180deg,#ffb06a,#e2583a);color:#fff;box-shadow:0 4px 14px rgba(226,88,58,.45)}`;document.head.appendChild(st);
 })();
 }catch(e){try{console.error('rematch199.js',e)}catch(_){}}
+try{
+// round 200: the Dracula set. A phrase bubble (dark, bat wings, blood drips), an eat effect (bats fly out of the card, red mist, drops of blood)
+// and a slam effect (blood fire, a blood moon lights up, a ring of bats), each with its own sound. Prices are in catalog.json.
+(function(){
+const B=window.BUBS||[];if(!B.some(x=>x.id==='drac'))B.push({id:'drac',en:'Dracula',ar:'دراكولا',cost:2000});
+const wing=encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><path d="M0 20 4 6 9 12 14 0 19 11 24 4 30 20Z" fill="#7a0f1f"/><path d="M100 20 96 6 91 12 86 0 81 11 76 4 70 20Z" fill="#7a0f1f"/></svg>');
+const drip=encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 14"><path d="M18 0h7v8a3.5 3.5 0 0 1-7 0zM58 0h6v12a3 3 0 0 1-6 0zM78 0h5v5a2.5 2.5 0 0 1-5 0z" fill="#b3122e"/></svg>');
+const st=document.createElement('style');st.textContent=`
+.bubble.bub-drac{background:linear-gradient(180deg,#2a0b12,#120407)!important;color:#ffd9dc!important;font-weight:900;border:0!important;border-radius:16px!important;box-shadow:0 0 0 2px #7a0f1f,0 0 0 4px #1a0306,0 8px 18px rgba(0,0,0,.6)!important;text-shadow:0 0 10px rgba(255,40,60,.65);overflow:visible!important}
+.bubble.bub-drac::before{content:'';position:absolute;left:-10px;right:-10px;top:-13px;height:15px;background:url("data:image/svg+xml,${wing}") center/100% 100% no-repeat;pointer-events:none}
+.bubble.bub-drac::after{content:'';position:absolute;left:8%;right:8%;bottom:-12px;height:13px;background:url("data:image/svg+xml,${drip}") center/100% 100% no-repeat;pointer-events:none;border:0!important;width:auto!important}`;
+document.head.appendChild(st);
+if(typeof FXS==='undefined'||typeof FXE==='undefined'||typeof FXB==='undefined')return;const R=FXE.R;
+const BAT='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 20"><path d="M20 6C16 1 9 0 2 4c3 1 4 3 4 5 2-1 4-1 5 1 1-2 3-2 5-1 1-2 2-3 4-3 2 0 3 1 4 3 2-1 4-1 5 1 1-2 3-2 5-1 0-2 1-4 4-5C31 0 24 1 20 6z" fill="#14050a"/><circle cx="20" cy="8" r="2.6" fill="#14050a"/><circle cx="19" cy="7.4" r=".6" fill="#ff3b4f"/><circle cx="21" cy="7.4" r=".6" fill="#ff3b4f"/></svg>';
+const bats=(x,y,n,sp,swirl)=>{for(let k=0;k<n;k++){const a=swirl?k/n*Math.PI*2:R(-Math.PI*.95,-Math.PI*.05),v=R(.6,1)*sp,va=swirl?a+1.2:a;FXE.add({type:'img',add:false,svg:BAT,x:x+(swirl?Math.cos(a)*20:R(-10,10)),y:y+(swirl?Math.sin(a)*20:0),size:R(22,38),ar:.5,vx:Math.cos(va)*v,vy:Math.sin(va)*v-(swirl?40:0),ay:-30,drag:.97,vr:R(-1,1),life:R(1.2,1.8),fade:2,delay:R(0,.15)})}};
+const blood=(x,y,n)=>{for(let k=0;k<n;k++)FXE.add({type:'spark',x:x+R(-30,30),y:y+R(-10,15),col:'rgba(200,16,46,1)',size:R(2,3.6),vx:R(-90,90),vy:R(-220,-60),ay:900,drag:.98,life:R(.6,1.1),trail:.02})};
+const mist=(x,y,n,col)=>{for(let k=0;k<n;k++)FXE.add({type:'smoke',x:x+R(-30,30),y:y+R(-20,25),col,size:R(26,44),size2:R(60,90),vx:R(-25,25),vy:R(-35,-8),drag:.97,life:R(1.2,1.8),fade:1.4,add:false})};
+// eat: bats out of the card, red mist, drops of blood (bigger for a cut)
+FXS.bats=function(x,y,p){FXB.core(x,y,'rgba(200,20,45,0.85)',p);FXB.ring(x,y,'rgba(255,60,80,0.9)',p,p);bats(x,y,8+p*4,220+p*50,false);mist(x,y,4+p*2,'rgba(140,10,30,0.55)');blood(x,y,6+p*4);if(p>=2)FXE.flash('rgba(160,10,30,0.25)',1,.2)};
+// slam: blood fire, the moon, a ring of bats, a hard shake
+FXS.bloodfire=function(x,y,p){FXE.flash('rgba(255,40,60,0.42)',1,.35);FXE.shake(9,520);FXB.ring(x,y,'rgba(255,50,70,1)',3,3);
+  for(let k=0;k<46;k++)FXE.add({type:'glow',x:x+R(-50,50),y:y+R(-5,25),col:`hsla(${R(345,360)|0},100%,${R(45,60)|0}%,1)`,size:R(.6,1)*30,size2:4,vx:R(-30,30),vy:R(-180,-60),ay:-90,drag:.97,life:R(.55,1.05),delay:R(0,.3)});
+  FXE.add({type:'glow',x,y:y-120,col:'rgba(230,40,60,1)',size:30,size2:78,life:1.6,fade:1.2,delay:.05});FXE.add({type:'glow',x,y:y-120,col:'rgba(255,200,180,1)',size:16,size2:36,life:1.4,fade:1.2,delay:.05});
+  bats(x,y,18,240,true);blood(x,y,14);mist(x,y,6,'rgba(120,0,20,0.6)')};
+if(typeof EFX!=='undefined'&&!EFX.some(x=>x.id==='bats'))EFX.push({id:'bats',en:'Dracula bats',ar:'خفافيش دراكولا',cost:900});
+if(typeof SFX!=='undefined'&&!SFX.some(x=>x.id==='bloodfire'))SFX.push({id:'bloodfire',en:'Dracula fire',ar:'نار دراكولا',cost:3200});
+try{const fi=fxIcon;fxIcon=function(id){return id==='bats'?'<b>🦇</b>':id==='bloodfire'?'<b>🩸</b>':fi(id)}}catch(e){}
+// their sounds: wings and a low note for the bats; a deep boom, wings and a dark organ for the fire
+const snd=(id,p,t0)=>{try{if(!SND.ok())return;const c=SND.ctx,t=t0||c.currentTime+.01,k=p===3?1:p===2?.75:.5;
+  if(id==='bats'){for(let i=0;i<8+p*2;i++)SND.hit(t+i*.045,{f:R(900,1500),q:3,gain:.25*k,decay:.04});SND.tone(t,220,110,.45,{gain:.12*k,type:'triangle'})}
+  if(id==='bloodfire'){SND.tone(t,70,38,1.1,{gain:.9*k});SND.hit(t,{type:'lowpass',f:900,gain:.6*k,decay:.9});for(let i=0;i<14;i++)SND.hit(t+.1+i*.04,{f:R(900,1600),q:3,gain:.22*k,decay:.04});[110,130.81,164.81,220].forEach(f=>SND.tone(t+.15,f,f*.999,1.6,{gain:.05*k,type:'sawtooth'}))}}catch(e){}};
+const fs=window.fxSound;window.fxSound=function(id,p){if(id==='bats'||id==='bloodfire')return snd(id,p);return fs&&fs.apply(this,arguments)};try{fxSound=window.fxSound}catch(e){}
+try{if(typeof FXSND!=='undefined'){FXSND.bats=(t,k)=>snd('bats',2,t);FXSND.bloodfire=(t,k)=>snd('bloodfire',3,t)}}catch(e){}
+})();
+}catch(e){try{console.error('drac200.js',e)}catch(_){}}
+
+// round 205: many pictures (badges, the joker, avatars) carry their own colour fills with the same names. When two copies are on the page,
+// Safari takes the colours from the FIRST copy; if that copy is hidden (a closed shop, a hidden accessory) the visible one shows with no colour.
+// Every new picture now gets its own names, so each one uses its own colours.
+try{(function(){let n=0;const DEF='linearGradient,radialGradient,pattern,filter,clipPath,mask,marker,symbol';
+const ATT=['fill','stroke','filter','clip-path','mask','marker-start','marker-mid','marker-end','href','xlink:href','style'];
+const fix=svg=>{const ds=svg.querySelectorAll(DEF.split(',').map(t=>t+'[id]').join(','));if(!ds.length)return;const map={};
+  ds.forEach(d=>{const id=d.id;if(!id||id.indexOf('_u')>0)return;const nid=id+'_u'+(n+1);d.id=nid;if(!document.getElementById(id)){d.id=id;return}n++;map[id]=nid});
+  const ks=Object.keys(map);if(!ks.length)return;const re=new RegExp('#('+ks.map(k=>k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')+')(?![\\w-])','g');
+  svg.querySelectorAll('*').forEach(e=>{for(const a of ATT){const v=e.getAttribute(a);if(v&&v.indexOf('#')>=0){const w=v.replace(re,(m,k)=>'#'+map[k]);if(w!==v)e.setAttribute(a,w)}}})};
+const scan=root=>{if(root.nodeType!==1)return;if(root.tagName==='svg'||root.tagName==='SVG')fix(root);else if(root.querySelector&&root.querySelector('svg'))root.querySelectorAll('svg').forEach(fix)};
+new MutationObserver(ms=>{for(const m of ms)for(const a of m.addedNodes)try{scan(a)}catch(e){}}).observe(document.documentElement,{childList:true,subtree:true});
+try{document.querySelectorAll('svg').forEach(fix)}catch(e){}
+window.__svgFix205=scan})();
+}catch(e){try{console.error('svgids205.js',e)}catch(_){}}
+
+// round 205: iPad and big screens sideways get their own layout. The top bar row and the bottom bar row took ~150px of a short screen,
+// so the table was a long flat strip. Now the game buttons and the score stand in a rail on the left, my picture and the action buttons in a rail
+// on the right, and the table, the players and my hand use the full height between them.
+try{(function(){const MQ=matchMedia('(orientation:landscape) and (min-width:900px) and (min-height:600px)');
+const st=document.createElement('style');st.textContent=`
+html.land205 body{--sx:116px!important}
+html.land205 body #app .topbar.topbar{position:absolute!important;left:0;top:0;bottom:0;width:108px;height:auto!important;display:flex!important;flex-direction:column!important;grid-template-columns:none!important;justify-content:center!important;align-items:center!important;gap:12px!important;padding:12px 0!important;zoom:1!important;border-radius:0 24px 24px 0!important;border-bottom:0!important;z-index:5;margin:0!important}
+html.land205 body #app .topbar .tbg{display:flex!important;flex-direction:column!important;align-items:center!important;gap:10px!important;width:auto!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important}
+html.land205 body #app .topbar .tbg .gbtn,html.land205 body #app .topbar button{transform:none!important;width:80px!important;height:56px!important;min-height:56px!important;flex:none!important;margin:0!important;zoom:1!important}
+html.land205 body #app .topbar .score{order:-1;width:96px!important;height:auto!important;min-height:0!important;flex:none!important;align-self:center!important;margin:0 0 6px!important;transform:none!important;padding:6px 4px!important}
+html.land205 body #app .topbar #board{flex-wrap:wrap;justify-content:center;row-gap:2px}
+html.land205 body #app .topbar .tbg-a{order:0}html.land205 body #app .topbar .tbg-b{order:1}
+html.land205 body #app .bottombar{display:none!important}
+html.land205 #rail205{position:absolute;right:0;top:0;bottom:0;width:108px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:16px 0 14px;z-index:5;border-radius:24px 0 0 24px;background:var(--rail205,#1a1210);border-left:1px solid #000;box-shadow:-2px 0 8px rgba(0,0,0,.4)}
+html.land205 #rail205 .r205b{display:flex;flex-direction:column;align-items:center;gap:12px}
+html.land205 #rail205 .gbtn{width:80px!important;height:62px!important;margin:0!important;position:relative!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;transform:none!important}
+html.land205 #rail205 #mebox{display:flex!important;flex-direction:column!important;align-items:center!important;gap:6px!important;width:auto!important;position:relative!important;left:auto!important;bottom:auto!important;margin:0!important}
+html.land205 #rail205 .botchip{position:absolute!important;left:50%!important;right:auto!important;top:-30px!important;translate:-50% 0!important;max-width:100px!important;white-space:normal!important;text-align:center!important;font-size:10px!important;line-height:1.2!important}
+html.land205 body .handzone{margin-bottom:var(--hzmb,0px)!important}
+html.land205 body .handzone #myrow{max-width:calc(100vw - 260px)!important}
+html.land205 body #myrow .card.big{--cw:min(calc((100vw - 232px) * .11),15dvh)!important}
+html.land205 body .table .seat{--tile:min(15dvh,124px)!important}
+html.land205 body .table .seat .pilebox .card,html.land205 body #seats .seat .pilebox .card.mini{--cw:min(12.5dvh,100px)!important}
+`;document.head.appendChild(st);
+let rail=null,home=null;
+const ids=['slamBtn','giftBtn','chatBtn','micBtn'];
+function on(){const app=document.getElementById('app'),me=document.getElementById('mebox');if(!app||!me)return false;
+  if(!rail){rail=document.createElement('div');rail.id='rail205';rail.innerHTML='<div class="r205b"></div>';}
+  if(!rail.isConnected)app.appendChild(rail);
+  if(!home){home={me:[me.parentNode,me.nextSibling],b:ids.map(i=>{const e=document.getElementById(i);return e?[e,e.parentNode,e.nextSibling]:null})}}
+  const box=rail.querySelector('.r205b');ids.forEach(i=>{const e=document.getElementById(i);if(e&&e.parentNode!==box)box.appendChild(e)});if(me.parentNode!==rail)rail.appendChild(me);
+  try{const tb=document.querySelector('.topbar');if(tb){const cs=getComputedStyle(tb);rail.style.setProperty('--rail205',cs.backgroundImage&&cs.backgroundImage!=='none'?cs.backgroundImage.replace(/180deg/g,'270deg')+','+cs.backgroundColor:cs.backgroundColor)}}catch(e){}
+  document.documentElement.classList.add('land205');return true}
+function off(){document.documentElement.classList.remove('land205');if(!home)return;
+  const [mp]=home.me,me=document.getElementById('mebox');if(me&&mp&&me.parentNode!==mp)mp.insertBefore(me,mp.firstChild);
+  home.b.forEach(x=>{if(!x)return;const [e,p]=x;if(e.parentNode!==p)p.appendChild(e)});if(rail&&rail.isConnected)rail.remove()}
+let was=null;function sync(){const m=MQ.matches;if(m===was&&(!m||document.documentElement.classList.contains('land205')))return;if(m){if(on())was=true}else{off();was=false}
+  requestAnimationFrame(()=>{try{dispatchEvent(new Event('resize'))}catch(e){}})}
+try{MQ.addEventListener('change',sync)}catch(e){MQ.addListener&&MQ.addListener(sync)}
+addEventListener('resize',()=>{if(MQ.matches!==was)sync()});
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',sync);else sync();
+// render() may rebuild the bottom bar: put the pieces back in the rail
+try{render=(function(p){return function(){const r=p.apply(this,arguments);try{if(MQ.matches&&was){const me=document.getElementById('mebox');if((me&&(!rail||me.parentNode!==rail))||(rail&&ids.some(i=>{const e=document.getElementById(i);return e&&!rail.contains(e)})))on()}}catch(e){}return r}})(render)}catch(e){}
+})();
+}catch(e){try{console.error('land205.js',e)}catch(_){}}
 
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1123.1801';
+const EB_VERSION='v1123.2102';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
