@@ -17062,6 +17062,8 @@ html body #seats .seat .tile .flg174.hasb .bdg196.rd svg{transform:scale(.86)}
 #shop .bd196 .it button.use{background:transparent;border:1px solid rgba(232,196,106,.45);color:#e8c46a}#shop .bd196 .it button.off{background:transparent;border:1px solid #2fd17a;color:#2fd17a}
 #shop .bd196 .it button:disabled{opacity:.45}
 `;document.head.appendChild(st);
+// the computer players wear badges too (asked for: they show the shop off). Same name, same badge on every phone; about 7 in 10 wear one
+try{botProf=(function(p){return function(name){const r=p.apply(this,arguments);try{let h=0;const t=String(name||'')+'#b';for(let k=0;k<t.length;k++)h=(h*31+t.charCodeAt(k))>>>0;if(r&&h%10<7)r.flag='b:'+ALL[(h>>>4)%ALL.length].id}catch(e){}return r}})(botProf)}catch(e){}
 window.__bdg196=false;
 function draw(){const sh=document.getElementById('shop');if(!sh)return;const c=cur();let tk=0;try{tk=WAL.tokens||0}catch(e){}
   const card=b=>{const o=owns(b.id),on=c==='b:'+b.id;return '<div class="it'+(b.rare?' rare':'')+(on?' on':'')+'"><span class="pv '+(b.flag?'fl':'rd')+'">'+svgOf(b)+'</span><b>'+b.ar+'</b>'+(o?'':'<small>'+b.price.toLocaleString('en')+' '+T('rupees','روبية')+(b.rare?' · '+T('rare','نادر'):'')+'</small>')
@@ -17099,7 +17101,7 @@ window.addEventListener('click',async e=>{const b=e.target.closest&&e.target.clo
 
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1123.1217';
+const EB_VERSION='v1123.1223';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
