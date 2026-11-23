@@ -17188,7 +17188,7 @@ try{
 // The last three games are kept on this phone and listed in "my profile".
 (function(){
 const L=(en,ar)=>(typeof LANG!=='undefined'&&LANG==='ar')?ar:en;
-const KEY='eb-rec198',W=720,H=1280,Q=1.5,GOLD='#e2bd5c'; // drawn on a 720×1280 plan, made at 1080×1920 (Q times sharper)
+const KEY='eb-rec198',Q=1.5,GOLD='#e2bd5c';let W=720,H=1280; // drawn on a 720×1280 plan, made at 1080×1920 (Q times sharper)
 const cs=c=>c?(c.r==='JK'?'JK':c.r+c.s):'';
 // ---------- recording ----------
 let R=null;
@@ -17291,6 +17291,7 @@ function look(){try{const app=document.getElementById('app'),rug=document.queryS
   let chrome=[];try{chrome=domOps(roots,skip)}catch(x){}
   const mp=document.querySelector('.bottombar .pilebox');
   return {W:A.width,H:A.height,page:getComputedStyle(app.parentElement).backgroundColor,app:box(app),rug:box(rug),field:box(document.querySelector('.field')),rfx:box(document.querySelector('.rfx129')),score:box(sc),
+    box:(()=>{let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;document.querySelectorAll('.topbar,.rug,.bottombar,#app .hand,#seats .seat,#drawrow').forEach(e=>{const r=e.getBoundingClientRect();if(r.width<2||r.height<2)return;x0=Math.min(x0,r.left-A.x);y0=Math.min(y0,r.top-A.y);x1=Math.max(x1,r.right-A.x);y1=Math.max(y1,r.bottom-A.y)});if(x1<=x0)return null;const p=8;x0=Math.max(0,x0-p);y0=Math.max(0,y0-p);x1=Math.min(A.width,x1+p);y1=Math.min(A.height,y1+p);return {x:x0,y:y0,w:x1-x0,h:y1-y0}})(),
     seats,chrome,mypile:mp?rect(mp):null,mine:mine?rect(mine):null,hand:hand?rect(hand):null,deck:dk?{...rect(dk),back:bgOf(dk)}:null,dcnt:dc?rect(dc):null,myback:myb?bgOf(myb):''}}catch(e){return null}}
 // ---------- painting CSS backgrounds on the canvas ----------
 const splitTop=s=>{const out=[];let d=0,cur='';for(const ch of String(s||'')){if(ch==='(')d++;if(ch===')')d--;if(ch===','&&d===0){out.push(cur.trim());cur=''}else cur+=ch}if(cur.trim())out.push(cur.trim());return out};
@@ -17346,7 +17347,9 @@ function back(c,src,x,y,w,rot){const h=w*1.26;c.save();c.translate(x,y);if(rot)c
   const im=src?img('b'+src.length+src.slice(-60),src):null;if(ok(im)){c.save();rr(-w/2,-h/2,w,h,w*.13,c);c.clip();c.drawImage(im,-w/2,-h/2,w,h);c.restore()}
   c.lineWidth=Math.max(1.5,w*.04);c.strokeStyle='#fff';rr(-w/2,-h/2,w,h,w*.13,c);c.stroke();c.restore()}
 // the place of the page on the video: the whole phone screen, scaled to fit the height, centred
-function geo(r){const lk=r.meta.look;if(!lk)return null;const s=Math.min(W/lk.W,H/lk.H),ox=(W-lk.W*s)/2,oy=(H-lk.H*s)/2;return {lk,s,X:v=>ox+v*s,Y:v=>oy+v*s,ox,oy}}
+function geo(r){const lk=r.meta.look;if(!lk)return null;const b=lk.box||{x:0,y:0,w:lk.W,h:lk.H},s=Math.min(W/b.w,H/b.h),ox=(W-b.w*s)/2-b.x*s,oy=(H-b.h*s)/2-b.y*s;return {lk,s,X:v=>ox+v*s,Y:v=>oy+v*s,ox,oy}}
+// a game played in a wide window makes a wide video (1920×1080); a phone game a tall one (1080×1920)
+function orient(r){const lk=r.meta.look,b=lk&&(lk.box||{w:lk.W,h:lk.H});const wide=!!(b&&b.w>b.h*1.1);W=wide?1280:720;H=wide?720:1280;BG=null;return wide}
 let BG=null,BGkey='';
 function background(c,r){const g=geo(r),key=r.meta.at+'|'+Object.keys(IMG).filter(k=>ok(IMG[k])).length;if(BG&&BGkey===key){c.drawImage(BG,0,0,W,H);return}
   const cv=document.createElement('canvas');cv.width=W*Q;cv.height=H*Q;const b=cv.getContext('2d');b.setTransform(Q,0,0,Q,0,0);
@@ -17498,13 +17501,13 @@ const st=document.createElement('style');st.textContent=`
 .rp198list{width:100%;text-align:start}.rp198list h4{margin:14px 2px 6px;color:#e0b24e;font-size:14px}.rp198list button{display:flex;width:100%;align-items:center;gap:10px;margin:0 0 6px;padding:10px 12px;border:0;border-radius:12px;background:rgba(255,255,255,.06);color:#f3e6c8;font:700 13px ${FONT};text-align:start;box-shadow:inset 0 0 0 1px rgba(242,210,122,.3)}.rp198list button b{color:#f6d20d;margin-inline-start:auto;direction:ltr}`;
 document.head.appendChild(st);
 const fmt=ms=>{ms=Math.max(0,ms);const s=Math.round(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
-function open(r0){if(!r0||!r0.f||r0.f.length<2)return toast(L('No recording for this game','ما في تسجيل لهالقيم'));const r=prep(JSON.parse(JSON.stringify(r0)));
+function open(r0){if(!r0||!r0.f||r0.f.length<2)return toast(L('No recording for this game','ما في تسجيل لهالقيم'));const r=prep(JSON.parse(JSON.stringify(r0)));orient(r);
   // load the pictures first
   preload(r);
   const el=document.createElement('div');el.id='rp198';el.dir=LANG==='ar'?'rtl':'ltr';
   const names=r.meta.pl.map(p=>p.n).join(' · ');
   el.innerHTML=`<div class="top"><span>🎬</span><b>${L('Game replay','إعادة القيم')} <small style="opacity:.7;font-weight:600">· ${esc(names)}</small></b><button type="button" class="x" aria-label="${L('Close','سكّر')}">✕</button></div>
-  <div class="cv"><canvas width="${W*Q}" height="${H*Q}"></canvas></div>
+  <div class="cv"><canvas width="${W*Q}" height="${H*Q}" style="aspect-ratio:${W}/${H}"></canvas></div>
   <div class="pan"><div class="bar"><div class="tr"></div><div class="cut"></div><div class="fill"></div>${r.f.map(s=>s.ev&&s.ev.ws?`<i class="wm" style="left:${(s.at+OPEN)/(r.T+OPEN)*100}%"></i>`:'').join('')}<div class="kn"></div></div>
   <div class="tm"><span class="t0">0:00</span><span class="t1">${fmt((r.T+OPEN)/1)}</span></div>
   <div class="ctl"><button type="button" data-k="pw" title="${L('Previous war','الحرب اللي قبل')}">⚔◀</button><button type="button" data-k="b10">-10</button><button type="button" class="pl" data-k="pp">⏸</button><button type="button" data-k="f10">+10</button><button type="button" data-k="nw" title="${L('Next war','الحرب الجاية')}">▶⚔</button></div>
@@ -17568,7 +17571,9 @@ async function aac(buf){try{if(!buf||typeof AudioEncoder==='undefined'||typeof A
   const enc=new AudioEncoder({output:(ch,md)=>{if(md&&md.decoderConfig&&md.decoderConfig.description&&!asc)asc=new Uint8Array(md.decoderConfig.description);const b=new Uint8Array(ch.byteLength);ch.copyTo(b);out.push({data:b})},error:e=>{err=e}});enc.configure(cfg);
   const L0=buf.getChannelData(0),R0=buf.getChannelData(1),N=1024*8;for(let at=0;at<buf.length&&!err;at+=N){const n=Math.min(N,buf.length-at),d=new Float32Array(n*2);d.set(L0.subarray(at,at+n),0);d.set(R0.subarray(at,at+n),n);
     const ad=new AudioData({format:'f32-planar',sampleRate:buf.sampleRate,numberOfFrames:n,numberOfChannels:2,timestamp:Math.round(at/buf.sampleRate*1e6),data:d});enc.encode(ad);ad.close()}
-  await enc.flush();enc.close();if(err||!out.length)return null;if(!asc)asc=new Uint8Array([0x12,0x10]);return {samples:out,asc:[...asc],sr:buf.sampleRate,ch:2}}catch(e){console.error('aac198',e);return null}}
+  await enc.flush();enc.close();if(err||!out.length)return null;if(asc&&asc[0]===0x03){const a=[...asc];let i=0,found=null;const len=()=>{let n=0,b;do{b=a[i++];n=(n<<7)|(b&0x7f)}while(b&0x80&&i<a.length);return n};
+    while(i<a.length&&!found){const tag=a[i++],n=len();if(tag===0x03){i+=3;continue}if(tag===0x04){i+=13;continue}if(tag===0x05){found=a.slice(i,i+n);break}i+=n}asc=found?new Uint8Array(found):null}
+  if(!asc)asc=new Uint8Array([0x12,0x10]);return {samples:out,asc:[...asc],sr:buf.sampleRate,ch:2}}catch(e){console.error('aac198',e);return null}}
 async function encoder(){if(typeof VideoEncoder==='undefined'||typeof VideoFrame==='undefined')return null;
   // best: the same sharpness on every frame (busy war frames get the bits they need), on phones that offer it
   for(const codec of ['avc1.640028','avc1.4D4028']){const cfg={codec,width:W*Q,height:H*Q,framerate:30,bitrateMode:'quantizer',avc:{format:'avc'}};try{const r=await VideoEncoder.isConfigSupported(cfg);if(r&&r.supported)return cfg}catch(e){}}
@@ -17643,7 +17648,7 @@ const st=document.createElement('style');st.textContent=`.rm199{display:block;wi
 
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1123.1625';
+const EB_VERSION='v1123.1707';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
