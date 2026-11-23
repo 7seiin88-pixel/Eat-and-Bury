@@ -17500,19 +17500,21 @@ const st=document.createElement('style');st.textContent=`
 .rp198btn{display:block;width:100%;margin:10px 0 0;padding:12px;border:0;border-radius:12px;font:900 16px ${FONT};background:rgba(255,255,255,.08);color:#f3e6c8;box-shadow:inset 0 0 0 1px rgba(242,210,122,.45)}
 .log199{display:flex!important;align-items:center;justify-content:center;gap:10px;margin-bottom:10px}.log199 b{font-size:17px}.log199 small{opacity:.75;font-weight:700;font-size:12px}
 #lg199{position:fixed;inset:0;z-index:9400;background:radial-gradient(ellipse at 50% 0%,#3a1418,#120806 70%);color:#f3e6c8;font-family:${FONT};overflow:auto;padding:calc(14px + env(safe-area-inset-top)) 14px calc(30px + env(safe-area-inset-bottom));box-sizing:border-box}
-#lg199[hidden]{display:none}#lg199>*{max-width:560px;margin-left:auto;margin-right:auto}
+#lg199[hidden]{display:none}
+html body #ebAsk{z-index:9900!important} /* the yes/no box comes above the log and the replay, not behind them */#lg199>*{max-width:560px;margin-left:auto;margin-right:auto}
 #lg199 .hd{display:flex;align-items:center;gap:10px;margin-bottom:6px}#lg199 .hd b{flex:1;font-size:22px;color:#f2d27a}#lg199 .hd button{border:0;background:rgba(255,255,255,.08);color:#f3e6c8;border-radius:12px;width:42px;height:42px;font:800 16px ${FONT}}
 #lg199 .sub{font-size:12px;color:#bfae8c;margin:0 2px 12px}#lg199 .empty{text-align:center;color:#bfae8c;margin:40px 0}
 #lg199 .tabs{display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap}#lg199 .tabs button{flex:none;white-space:nowrap;width:auto;border:0;padding:6px 13px;border-radius:20px;font:800 13px ${FONT};background:rgba(255,255,255,.06);color:#f3e6c8;box-shadow:inset 0 0 0 1px rgba(242,210,122,.3)}#lg199 .tabs .on{background:#e2bd5c;color:#2a1606}
 #lg199 .day{font-size:13px;color:#e0b24e;font-weight:900;margin:14px 4px 6px}
-#lg199 .it{display:flex;gap:10px;padding:10px;border-radius:16px;background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.03));box-shadow:inset 0 0 0 1px rgba(242,210,122,.25);margin-bottom:10px}
-#lg199 .th{border:0;padding:0;width:74px;height:118px;border-radius:10px;flex:none;position:relative;overflow:hidden;background:radial-gradient(circle at 50% 45%,#5a1a22,#22080b);box-shadow:inset 0 0 0 2px #c9a04a}
-#lg199 .th i{position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;background:rgba(0,0,0,.55);display:grid;place-items:center;font-style:normal;color:#fff;font-size:14px}
-#lg199 .th em{position:absolute;bottom:4px;left:4px;font:700 10px ui-monospace,monospace;background:rgba(0,0,0,.6);color:#fff;padding:1px 5px;border-radius:6px;font-style:normal}#lg199 .th .c{position:absolute;width:22px;height:31px;border-radius:3px;background:#fff;top:38px}
-#lg199 .mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}#lg199 .res{display:flex;align-items:center;gap:6px;font-weight:900}#lg199 .w{color:#8fe39f}#lg199 .l{color:#ff9a8f}
-#lg199 .sc{margin-inline-start:auto;font:800 15px ui-monospace,monospace;direction:ltr;unicode-bidi:isolate;color:#fff}#lg199 .nm{font-size:13px;font-weight:700}#lg199 .meta{font-size:11px;color:#bfae8c}
-#lg199 .tg{display:flex;gap:5px;flex-wrap:wrap}#lg199 .tg span{font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:10px;background:rgba(255,90,60,.15);color:#ffb39f}#lg199 .star{color:#ffd34d}
-#lg199 .act{display:flex;gap:6px;margin-top:4px}#lg199 .act button{flex:1;border:0;border-radius:10px;padding:7px 4px;font:800 12px ${FONT};background:rgba(255,255,255,.08);color:#f3e6c8;box-shadow:inset 0 0 0 1px rgba(242,210,122,.3)}#lg199 .act .g{background:linear-gradient(180deg,#f8e3a0,#e2bd5c 55%,#c9a04a);color:#2a1606}#lg199 .act .del{flex:none;width:36px}
+.mylog199{margin:14px 0 4px;text-align:start}.mylog199 .mh{display:flex;align-items:center;margin:0 2px 8px}.mylog199 .mh b{flex:1;font-size:19px;color:#f2d27a}.mylog199 .mh button{border:0;border-radius:20px;padding:6px 14px;font:800 13px ${FONT};background:rgba(255,255,255,.08);color:#f3e6c8;box-shadow:inset 0 0 0 1px rgba(242,210,122,.35)}.mylog199 .empty{color:#bfae8c;font-size:13px;margin:4px 2px 10px}
+#lg199 .it,.mylog199 .it{display:flex;gap:10px;padding:10px;border-radius:16px;background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.03));box-shadow:inset 0 0 0 1px rgba(242,210,122,.25);margin-bottom:10px}
+#lg199 .th,.mylog199 .th{border:0;padding:0;width:74px;height:118px;border-radius:10px;flex:none;position:relative;overflow:hidden;background:radial-gradient(circle at 50% 45%,#5a1a22,#22080b);box-shadow:inset 0 0 0 2px #c9a04a}
+#lg199 .th i,.mylog199 .th i{position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;background:rgba(0,0,0,.55);display:grid;place-items:center;font-style:normal;color:#fff;font-size:14px}
+#lg199 .th em,.mylog199 .th em{position:absolute;bottom:4px;left:4px;font:700 10px ui-monospace,monospace;background:rgba(0,0,0,.6);color:#fff;padding:1px 5px;border-radius:6px;font-style:normal}#lg199 .th .c,.mylog199 .th .c{position:absolute;width:22px;height:31px;border-radius:3px;background:#fff;top:38px}
+#lg199 .mid,.mylog199 .mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}#lg199 .res,.mylog199 .res{display:flex;align-items:center;gap:6px;font-weight:900}#lg199 .w,.mylog199 .w{color:#8fe39f}#lg199 .l,.mylog199 .l{color:#ff9a8f}
+#lg199 .sc,.mylog199 .sc{margin-inline-start:auto;font:800 15px ui-monospace,monospace;direction:ltr;unicode-bidi:isolate;color:#fff}#lg199 .nm,.mylog199 .nm{font-size:13px;font-weight:700}#lg199 .meta,.mylog199 .meta{font-size:11px;color:#bfae8c}
+#lg199 .tg,.mylog199 .tg{display:flex;gap:5px;flex-wrap:wrap}#lg199 .tg span,.mylog199 .tg span{font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:10px;background:rgba(255,90,60,.15);color:#ffb39f}#lg199 .star,.mylog199 .star{color:#ffd34d}
+#lg199 .act,.mylog199 .act{display:flex;gap:6px;margin-top:4px}#lg199 .act button,.mylog199 .act button{flex:1;border:0;border-radius:10px;padding:7px 4px;font:800 12px ${FONT};background:rgba(255,255,255,.08);color:#f3e6c8;box-shadow:inset 0 0 0 1px rgba(242,210,122,.3)}#lg199 .act .g,.mylog199 .act .g{background:linear-gradient(180deg,#f8e3a0,#e2bd5c 55%,#c9a04a);color:#2a1606}#lg199 .act .del,.mylog199 .act .del{flex:none;width:36px}
 .rp198list{width:100%;text-align:start}.rp198list h4{margin:14px 2px 6px;color:#e0b24e;font-size:14px}.rp198list button{display:flex;width:100%;align-items:center;gap:10px;margin:0 0 6px;padding:10px 12px;border:0;border-radius:12px;background:rgba(255,255,255,.06);color:#f3e6c8;font:700 13px ${FONT};text-align:start;box-shadow:inset 0 0 0 1px rgba(242,210,122,.3)}.rp198list button b{color:#f6d20d;margin-inline-start:auto;direction:ltr}`;
 document.head.appendChild(st);
 const fmt=ms=>{ms=Math.max(0,ms);const s=Math.round(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
@@ -17654,31 +17656,34 @@ function info(x){const f=x.f[x.f.length-1]||{sc:[]},pl=x.meta.pl,me=pl[0]?pl[0].
 const dayOf=at=>{try{return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kuwait'}).format(new Date(at))}catch(e){return new Date(at).toDateString()}};
 const timeOf=at=>{try{return new Intl.DateTimeFormat(LANG==='ar'?'ar-KW':'en-GB',{timeZone:'Asia/Kuwait',hour:'numeric',minute:'2-digit'}).format(new Date(at))}catch(e){return ''}};
 const dayName=at=>{const d=dayOf(at),t=dayOf(Date.now()),y=dayOf(Date.now()-864e5);if(d===t)return L('Today','اليوم');if(d===y)return L('Yesterday','أمس');try{return new Intl.DateTimeFormat(LANG==='ar'?'ar-KW':'en-GB',{timeZone:'Asia/Kuwait',weekday:'long',day:'numeric',month:'long'}).format(new Date(at))}catch(e){return d}};
+function logCard(x){const i=info(x);
+  return `<div class="it"><button type="button" class="th" data-lg="play" data-at="${x.meta.at}"><span class="c" style="left:10px;transform:rotate(-8deg)"></span><span class="c" style="left:26px"></span><span class="c" style="left:42px;transform:rotate(8deg)"></span><i>▶</i><em>${Math.floor(i.dur/60)}:${String(i.dur%60).padStart(2,'0')}</em></button>
+      <div class="mid"><div class="res"><span class="${i.res==='won'?'w':i.res==='lost'?'l':''}">${i.res==='won'?'🏆 '+L('Won','فزنا'):i.res==='lost'?L('Lost','خسرنا'):L('Tie','تعادل')}</span>${x.star?'<span class="star">★</span>':''}<bdi class="sc" dir="ltr">${i.score}</bdi></div>
+      <div class="nm">${esc(i.names)}</div><div class="meta">${timeOf(x.meta.at)} · ${i.mode} · ${i.online?L('online','أونلاين'):L('offline','بدون نت')}</div>
+      <div class="tg">${i.top>=3?`<span>${L('War of '+i.top+' hits','حرب '+i.top+' طقات')}</span>`:''}${i.wars?`<span>${i.wars===1?L('1 war','حرب وحدة'):i.wars===2?L('2 wars','حربين'):i.wars+' '+L('wars','حروب')}</span>`:''}</div>
+      <div class="act"><button type="button" class="g" data-lg="play" data-at="${x.meta.at}">▶ ${L('Replay','إعادة')}</button><button type="button" data-lg="video" data-at="${x.meta.at}">🎬 ${L('Video','فيديو')}</button><button type="button" data-lg="star" data-at="${x.meta.at}">${x.star?'★':'☆'} ${x.star?L('Kept','محفوظ'):L('Keep','احفظ')}</button><button type="button" class="del" data-lg="del" data-at="${x.meta.at}" aria-label="${L('Delete','امسح')}">🗑</button></div></div></div>`}
 let LOGTAB='all';
 function logPage(){let el=document.getElementById('lg199');if(!el){el=document.createElement('div');el.id='lg199';document.body.appendChild(el)}el.dir=LANG==='ar'?'rtl':'ltr';
   const all=load(),list=all.filter(x=>{if(LOGTAB==='star')return x.star;if(LOGTAB==='all')return true;return info(x).res===LOGTAB});
   let html=`<div class="hd"><b>🎥 ${L('Log','السجل')}</b><button type="button" data-lg="x" aria-label="${L('Close','سكّر')}">✕</button></div><div class="sub">${L('Your games are kept here by themselves (the last 10). Tap ☆ to keep a game for good.','قيماتك تنحفظ هني بروحها (آخر ١٠). اضغط ☆ عشان يظل القيم وما ينمسح.')}</div>
   <div class="tabs">${[['all',L('All','الكل')],['won',L('Won','فزت')],['lost',L('Lost','خسرت')],['star','★ '+L('Kept','محفوظة')]].map(([k,t])=>`<button type="button" data-lgtab="${k}" class="${LOGTAB===k?'on':''}">${t}</button>`).join('')}</div>`;
   if(!list.length)html+=`<p class="empty">${all.length?L('Nothing here.','ما في شي هني.'):L('No games yet. Play a game and it shows up here.','ما في قيمات للحين. العب قيم ويطلع لك هني.')}</p>`;
-  let lastDay='';list.forEach(x=>{const i=info(x),d=dayName(x.meta.at);if(d!==lastDay){html+=`<div class="day">${esc(d)}</div>`;lastDay=d}
-    html+=`<div class="it"><button type="button" class="th" data-lg="play" data-at="${x.meta.at}"><span class="c" style="left:10px;transform:rotate(-8deg)"></span><span class="c" style="left:26px"></span><span class="c" style="left:42px;transform:rotate(8deg)"></span><i>▶</i><em>${Math.floor(i.dur/60)}:${String(i.dur%60).padStart(2,'0')}</em></button>
-      <div class="mid"><div class="res"><span class="${i.res==='won'?'w':i.res==='lost'?'l':''}">${i.res==='won'?'🏆 '+L('Won','فزنا'):i.res==='lost'?L('Lost','خسرنا'):L('Tie','تعادل')}</span>${x.star?'<span class="star">★</span>':''}<bdi class="sc" dir="ltr">${i.score}</bdi></div>
-      <div class="nm">${esc(i.names)}</div><div class="meta">${timeOf(x.meta.at)} · ${i.mode} · ${i.online?L('online','أونلاين'):L('offline','بدون نت')}</div>
-      <div class="tg">${i.top>=3?`<span>${L('War of '+i.top+' hits','حرب '+i.top+' طقات')}</span>`:''}${i.wars?`<span>${i.wars} ${L('wars','حروب')}</span>`:''}</div>
-      <div class="act"><button type="button" class="g" data-lg="play" data-at="${x.meta.at}">▶ ${L('Replay','إعادة')}</button><button type="button" data-lg="video" data-at="${x.meta.at}">🎬 ${L('Video','فيديو')}</button><button type="button" data-lg="star" data-at="${x.meta.at}">${x.star?'★':'☆'} ${x.star?L('Kept','محفوظ'):L('Keep','احفظ')}</button><button type="button" class="del" data-lg="del" data-at="${x.meta.at}" aria-label="${L('Delete','امسح')}">🗑</button></div></div></div>`});
+  let lastDay='';list.forEach(x=>{const d=dayName(x.meta.at);if(d!==lastDay){html+=`<div class="day">${esc(d)}</div>`;lastDay=d}html+=logCard(x)});
   el.innerHTML=html;el.hidden=false}
-document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.closest('#lg199 [data-lg],#lg199 [data-lgtab],.log199');if(!t)return;e.preventDefault();
+document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.closest('#lg199 [data-lg],#lg199 [data-lgtab],.mylog199 [data-lg],.log199');if(!t)return;e.preventDefault();
   if(t.classList.contains('log199')){e.stopImmediatePropagation();return logPage()} // (it wears the look of the "how to play" button, not its action)
   if(t.dataset.lgtab){LOGTAB=t.dataset.lgtab;return logPage()}
   const k=t.dataset.lg,at=+t.dataset.at,all=load(),x=all.find(y=>y.meta.at===at);
   if(k==='x'){document.getElementById('lg199').hidden=true;return}
   if(!x)return;
-  if(k==='star'){x.star=!x.star;store(all);if(LAST&&LAST.meta.at===at)LAST.star=x.star;return logPage()}
-  if(k==='del'){const ok=typeof ebAsk==='function'?await ebAsk(L('Delete this game from the log? It cannot come back.','تمسح هالقيم من السجل؟ ما يرجع.'),L('Delete','امسح'),L('Keep','لا')):true;if(!ok)return;store(all.filter(y=>y.meta.at!==at));return logPage()}
+  const inLog=!!t.closest('#lg199');
+  if(k==='star'){x.star=!x.star;store(all);if(LAST&&LAST.meta.at===at)LAST.star=x.star;return inLog?logPage():null}
+  if(k==='del'){const ok=typeof ebAsk==='function'?await ebAsk(L('Delete this game from the log? It cannot come back.','تمسح هالقيم من السجل؟ ما يرجع.'),L('Delete','امسح'),L('Keep','لا')):true;if(!ok)return;store(all.filter(y=>y.meta.at!==at));return inLog?logPage():null}
   if(k==='play'||k==='video'){open(x);if(k==='video'&&PLAY)setTimeout(()=>{if(PLAY){PLAY.run=false;make(PLAY,'save')}},300)}},true);
-// the home page button, right above "How to play?"
-setInterval(()=>{try{const how=document.querySelector('#home .how157:not(.log199)');if(!how||how.previousElementSibling&&how.previousElementSibling.classList.contains('log199'))return;const b=document.createElement('button');b.type='button';b.className=how.className+' log199';
-  b.innerHTML='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="2" y="5" width="15" height="14" rx="2"/><path d="M17 10l5-3v10l-5-3z"/></svg><b>'+L('Log','السجل')+'</b><small>· '+L('replays and videos of your games','إعادة قيماتك وفيديوهاتها')+'</small>';how.before(b)}catch(e){}},700);
+// on "My page", under the numbers: the last three games, and "All" for the full log
+setInterval(()=>{try{const st=document.querySelector('#h2Page .me-stats');if(!st)return;const all=load(),key=all.map(x=>x.meta.at+(x.star?'*':'')).slice(0,3).join(',')+'|'+all.length;let box=document.querySelector('#h2Page .mylog199');
+  if(box&&box.dataset.k===key)return;if(!box){box=document.createElement('div');box.className='mylog199';st.after(box)}box.dataset.k=key;box.dir=LANG==='ar'?'rtl':'ltr';
+  box.innerHTML=`<div class="mh"><b>🎥 ${L('My games','سجل قيماتي')}</b>${all.length?`<button type="button" class="log199">${L('All','الكل')} (${all.length}) ‹</button>`:''}</div>`+(all.length?all.slice(0,3).map(logCard).join(''):`<p class="empty">${L('Your games show up here after you play: replay them or make a video.','قيماتك تطلع هني بعد ما تلعب: تعيدها أو تسوي منها فيديو.')}</p>`)}catch(e){}},800);
 window.__rp198={open,load,logPage,last:()=>LAST,now:()=>R?R.f.length:0,restart:()=>{R=null}};
 })();
 }catch(e){try{console.error('replay198.js',e)}catch(_){}}
@@ -17700,7 +17705,7 @@ const st=document.createElement('style');st.textContent=`.rm199{display:block;wi
 
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1123.1735';
+const EB_VERSION='v1123.1801';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
