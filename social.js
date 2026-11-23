@@ -63,7 +63,8 @@ async function http(req, res, url, body, live) {
     if (act === 'ping') { // badge numbers for the home page
       let unread = 0; for (const f of new Set([...Object.keys(me.friends), ...Object.keys(me.read)])) { const d = dms.get(pairKey(a.id, f)); if (d && d.length) { const last = d[d.length - 1]; if (last.f !== a.id && last.ts > (me.read[f] || 0)) unread++ } }
       const iv = invites.get(a.id); const inv = iv && now - iv.ts < 180000 ? iv : null; if (iv && !inv) invites.delete(a.id);
-      return send(200, { req: Object.keys(me.inReq).length, unread, inv });
+      const cid = Object.keys(me.chal || {}).filter(k => me.inReq[k]).sort((x, y) => me.chal[y] - me.chal[x])[0], cc = cid ? await cardOf(cid) : null;
+      return send(200, { req: Object.keys(me.inReq).length, unread, inv, chal: cid ? { id: cid, ts: me.chal[cid], name: (cc && cc.name) || '' } : null });
     }
     if (act === 'list') {
       const ids = [...new Set([...Object.keys(me.friends), ...Object.keys(me.inReq), ...Object.keys(me.outReq), ...Object.keys(me.read)])];
@@ -72,7 +73,7 @@ async function http(req, res, url, body, live) {
         return { ...c, st: status(id), room: live && live.room ? live.room(id) : null, seen: R(id).seen || 0, last: last ? { t: last.t.slice(0, 60), ts: last.ts, mine: last.f === a.id } : null, unread: !!(last && last.f !== a.id && last.ts > (me.read[id] || 0)), canDm: canDm(a.id, id) } };
       const friends = Object.keys(me.friends).map(row).filter(Boolean).sort((x, y) => (y.st !== 'off') - (x.st !== 'off') || (y.last ? y.last.ts : 0) - (x.last ? x.last.ts : 0) || y.seen - x.seen);
       const chats = Object.keys(me.read).filter(id => !me.friends[id] && dms.has(pairKey(a.id, id))).map(row).filter(Boolean);
-      return send(200, { me: a.id, dm: me.dm, watch: me.watch || 'all', friends, chats, inReq: Object.keys(me.inReq).map(row).filter(Boolean), outReq: Object.keys(me.outReq).map(row).filter(Boolean), blocked: Object.keys(me.blocked).length });
+      return send(200, { me: a.id, dm: me.dm, watch: me.watch || 'all', friends, chats, inReq: Object.keys(me.inReq).map(id => { const x = row(id); if (x && me.chal && me.chal[id]) x.chal = 1; return x }).filter(Boolean), outReq: Object.keys(me.outReq).map(row).filter(Boolean), blocked: Object.keys(me.blocked).length });
     }
     if (act === 'find') { const id = String(body.id || '').toLowerCase().replace(/[^0-9a-f]/g, ''); if (!isId(id) || id === a.id) return send(200, { err: 'nf' }); const c = await cardOf(id); if (!c) return send(200, { err: 'nf' });
       return send(200, { ...c, friend: !!me.friends[id], sent: !!me.outReq[id], got: !!me.inReq[id] }) }
@@ -80,10 +81,10 @@ async function http(req, res, url, body, live) {
       const tr = R(id); if (me.friends[id]) return send(200, { ok: true, friend: true }); if (tr.blocked[a.id] || me.blocked[id]) return send(200, { err: 'blocked' });
       if (Object.keys(me.friends).length >= FRIENDS_MAX) return send(200, { err: 'max' });
       if (me.inReq[id]) { delete me.inReq[id]; delete tr.outReq[a.id]; me.friends[id] = now; tr.friends[a.id] = now; touch('u:' + a.id); touch('u:' + id); live && live.push && live.push(id, 'social', { k: 'accepted', from: a.id, name: a.prof.name }); return send(200, { ok: true, friend: true }) }
-      me.outReq[id] = now; tr.inReq[a.id] = now; touch('u:' + a.id); touch('u:' + id); live && live.push && live.push(id, 'social', { k: 'request', from: a.id, name: a.prof.name }); return send(200, { ok: true, sent: true }) }
-    if (act === 'answer') { const id = String(body.id || ''); const tr = R(id); if (!me.inReq[id]) return send(200, { err: 'nf' }); delete me.inReq[id]; delete tr.outReq[a.id];
+      me.outReq[id] = now; tr.inReq[a.id] = now; /* round 197: a request sent from the challenge button says so */ if (body.chal) { tr.chal = tr.chal || {}; tr.chal[a.id] = now } else if (tr.chal) delete tr.chal[a.id]; touch('u:' + a.id); touch('u:' + id); live && live.push && live.push(id, 'social', { k: 'request', from: a.id, name: a.prof.name, chal: !!body.chal }); return send(200, { ok: true, sent: true }) }
+    if (act === 'answer') { const id = String(body.id || ''); const tr = R(id); if (!me.inReq[id]) return send(200, { err: 'nf' }); delete me.inReq[id]; if (me.chal) delete me.chal[id]; delete tr.outReq[a.id];
       if (body.yes) { me.friends[id] = now; tr.friends[a.id] = now; live && live.push && live.push(id, 'social', { k: 'accepted', from: a.id, name: a.prof.name }) } touch('u:' + a.id); touch('u:' + id); return send(200, { ok: true }) }
-    if (act === 'cancel') { const id = String(body.id || ''); delete me.outReq[id]; delete R(id).inReq[a.id]; touch('u:' + a.id); touch('u:' + id); return send(200, { ok: true }) }
+    if (act === 'cancel') { const id = String(body.id || ''); delete me.outReq[id]; delete R(id).inReq[a.id]; if (R(id).chal) delete R(id).chal[a.id]; touch('u:' + a.id); touch('u:' + id); return send(200, { ok: true }) }
     if (act === 'unfriend') { const id = String(body.id || ''); delete me.friends[id]; delete R(id).friends[a.id]; touch('u:' + a.id); touch('u:' + id); return send(200, { ok: true }) }
     if (act === 'block') { const id = String(body.id || ''); if (!isId(id) || id === a.id) return send(200, { err: 'nf' }); const tr = R(id);
       if (body.on === false) delete me.blocked[id]; else { me.blocked[id] = now; delete me.friends[id]; delete tr.friends[a.id]; delete me.inReq[id]; delete me.outReq[id]; delete tr.inReq[a.id]; delete tr.outReq[a.id] }
@@ -101,7 +102,7 @@ async function http(req, res, url, body, live) {
       const id = String(body.id || ''), code = String(body.code || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
       if (!isId(id) || !code || !me.friends[id]) return send(200, { err: 'nf' }); if (R(id).blocked[a.id]) return send(200, { err: 'closed' });
       const old = invites.get(id); if (old && old.from === a.id && now - old.ts < 5000) return send(200, { err: 'slow' });
-      invites.set(id, { from: a.id, name: a.prof.name, code, ts: now }); live && live.push && live.push(id, 'social', { k: 'invite', from: a.id, name: a.prof.name, code });
+      invites.set(id, { from: a.id, name: a.prof.name, code, ts: now, chal: !!body.chal }); live && live.push && live.push(id, 'social', { k: 'invite', from: a.id, name: a.prof.name, code, chal: !!body.chal });
       return send(200, { ok: true, st: status(id) }) }
     if (act === 'invdone') { invites.delete(a.id); return send(200, { ok: true }) }
     if (act === 'send') { const id = String(body.id || ''); const t = CLEAN.mask(short(body.text, DM_LEN)); if (!isId(id) || !t) return send(200, { err: 'empty' });

@@ -30,9 +30,9 @@ function log(msg){S.log.unshift(msg);S.log.length=Math.min(S.log.length,6)}
 
 function newGame(cfg){
   gen++;
-  const count=cfg.mode==='3v3'?6:4,names=NAMES[LANG].slice(0,count);
-  const players=names.map((n,i)=>({name:n,f:FEMALE[i],human:i===0,team:cfg.mode==='solo'?i:i%2,hand:[],pile:[]}));
-  const teams=cfg.mode==='solo'?names.map((n,i)=>({name:n,ar:'',color:COLORS[i]})):[{name:'Us',ar:'لنا',color:COLORS[0]},{name:'Them',ar:'لهم',color:COLORS[1]}];
+  const count=cfg.mode==='3v3'?6:cfg.mode==='1v1'?2:4,names=NAMES[LANG].slice(0,count);
+  const players=names.map((n,i)=>({name:n,f:FEMALE[i],human:i===0,team:(cfg.mode==='solo'||cfg.mode==='1v1')?i:i%2,hand:[],pile:[]}));
+  const teams=(cfg.mode==='solo'||cfg.mode==='1v1')?names.map((n,i)=>({name:n,ar:'',color:COLORS[i]})):[{name:'Us',ar:'لنا',color:COLORS[0]},{name:'Them',ar:'لهم',color:COLORS[1]}];
   S={cfg,players,teams,draw:buildDeck(cfg.decks),ground:[],turn:0,phase:'idle',war:null,sel:null,log:[],aiTimers:[],passes:0,lone:false,moves:0,stats:players.map(()=>({wars:0,best:0}))};
   for(const p of players)p.hand=S.draw.splice(0,4);
   S.ground=S.draw.splice(0,4);

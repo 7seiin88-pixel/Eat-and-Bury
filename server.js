@@ -149,7 +149,7 @@ function newCode() { let c; do { c = Math.random().toString(36).slice(2, 7).toUp
 const autoOf = a => { if (!a || typeof a !== 'object') return null; const k = v => { v = Math.floor(+v); return Number.isFinite(v) ? Math.max(-1, Math.min(300, v)) : -1; };
   const o = {}; for (const e of ['def', 'save', 'took', 'win', 'lost', 'winbig', 'tauf']) { o[e] = k(a[e]); o[e + '2'] = k(a[e + '2']); o[e + '3'] = k(a[e + '3']) }
   return { ...o, snd: String(a.snd || '').replace(/[^a-z]/g, '').slice(0, 12) }; };
-const pub = r => ({ code: r.code, host: r.host, started: r.started, priv: !!r.priv, chat: (r.lchat || []).slice(-30), gcfg: r.gcfg || {}, size: r.quick ? (QMODES[r.qmode] || 4) : (r.size === 6 ? 6 : 4), theme: r.theme || '', mic: r.mic !== false, quick: !!r.quick, qmode: r.quick ? (r.qmode || '2v2') : '', qIn: r.qAt && !r.started ? Math.max(0, r.qAt - Date.now()) : 0, dw: r.dw ? DW.name(r.dw) : '', members: r.members.map(m => ({ sid: m.sid, name: m.name, seat: m.seat, mic: m.mic, away: !!m.away, watch: !!m.watch, prof: m.prof || null })) });
+const pub = r => ({ code: r.code, host: r.host, started: r.started, priv: !!r.priv, chat: (r.lchat || []).slice(-30), gcfg: r.gcfg || {}, size: r.quick ? (QMODES[r.qmode] || 4) : (r.size === 6 ? 6 : r.size === 2 ? 2 : 4), theme: r.theme || '', mic: r.mic !== false, quick: !!r.quick, qmode: r.quick ? (r.qmode || '2v2') : '', qIn: r.qAt && !r.started ? Math.max(0, r.qAt - Date.now()) : 0, dw: r.dw ? DW.name(r.dw) : '', members: r.members.map(m => ({ sid: m.sid, name: m.name, seat: m.seat, mic: m.mic, away: !!m.away, watch: !!m.watch, prof: m.prof || null })) });
 // round 188: is the server itself ever late? a timer that should fire every half second says how late it fired (max, and how many times more than 150 ms late, over the last 6 hours)
 const LAG = { max: 0, slow: 0, n: 0 }; { let t = Date.now(); setInterval(() => { const n = Date.now(), d = n - t - 500; t = n; LAG.n++; if (d > LAG.max) LAG.max = d; if (d > 150) LAG.slow++ }, 500).unref(); setInterval(() => { LAG.max = 0; LAG.slow = 0; LAG.n = 0 }, 6 * 3600e3).unref() }
 const OFFG = new Map(); // round 191: games against the computer: which list entry is whose, so the end of the game is written into it (the list used to show every such game as unfinished)
@@ -205,7 +205,7 @@ function onMessage2(c, { type, data = {}, rid }) {
       if (a) a.seat = data.b; if (b) b.seat = data.a;
       return toRoom(r, 'room', pub(r));
     }
-    case 'rsize': { if (!r || r.host !== c.id || r.started || r.quick) return; const n = +data.n === 6 ? 6 : 4; if (n === 4 && r.members.filter(m => !m.watch).length > 4) return; if (n === 4) for (const m of r.members) { if (m.watch || m.seat < 4) continue; let f = 1; while (r.members.some(x => !x.watch && x.seat === f)) f++; m.seat = f; } r.size = n; return toRoom(r, 'room', pub(r)); } // the host picks a table of 4 or 6
+    case 'rsize': { if (!r || r.host !== c.id || r.started || r.quick) return; const n = +data.n === 6 ? 6 : +data.n === 2 ? 2 : 4; if (n < 6 && r.members.filter(m => !m.watch).length > n) return; if (n < 6) for (const m of r.members) { if (m.watch || m.seat < n) continue; let f = 1; while (r.members.some(x => !x.watch && x.seat === f)) f++; m.seat = f; } r.size = n; return toRoom(r, 'room', pub(r)); } // the host picks a table of 4 or 6
     case 'start': { if (!r || r.host !== c.id) return; return startGame(r, data.cfg || {}); }
     case 'reopen': if (!r || r.host !== c.id) return; if (r.game) { r.game.stop(); r.game = null; } r.started = false; r.over = 0; return toRoom(r, 'room', pub(r));
     case 'ping': return reply({ ok: 1 }); // round 188: the game measures how long a message takes to go and come back
@@ -253,7 +253,7 @@ function onMessage2(c, { type, data = {}, rid }) {
       if (av.length > 40000 || !(/^p:\d{1,2}$/.test(av) || av.startsWith('data:image/jpeg;base64,'))) return;
       const short = (v, n) => String(v || '').replace(/[<>"]/g, '').slice(0, n);
       const num = v => Math.max(0, Math.min(1e7, Math.floor(+v || 0)));
-      m.prof = { av, flag: short(p.flag, 8), frame: short(p.frame, 16), level: num(p.level), games: num(p.games), wins: num(p.wins), wars: num(p.wars), rp: num(p.rp), streak: num(p.streak), auto: autoOf(p.auto), efx: String(p.efx || '').replace(/[^a-z]/g, '').slice(0, 12), sfx: String(p.sfx || '').replace(/[^a-z]/g, '').slice(0, 12), bub: String(p.bub || '').replace(/[^a-z]/g, '').slice(0, 12) };
+      m.prof = { av, flag: short(p.flag, 8), frame: short(p.frame, 16), level: num(p.level), games: num(p.games), wins: num(p.wins), wars: num(p.wars), rp: num(p.rp), streak: num(p.streak), bestStreak: num(p.bestStreak), last: (Array.isArray(p.last) ? p.last : []).slice(0, 5).map(x => ({ w: x && x.w ? 1 : 0, a: Math.round(+(x && x.a) || 0) % 1e5, b: Math.round(+(x && x.b) || 0) % 1e5 })), auto: autoOf(p.auto), efx: String(p.efx || '').replace(/[^a-z]/g, '').slice(0, 12), sfx: String(p.sfx || '').replace(/[^a-z]/g, '').slice(0, 12), bub: String(p.bub || '').replace(/[^a-z]/g, '').slice(0, 12) };
       if (p.name) m.name = clean(p.name);
       if (r.game) r.game.syncSeats();
       return toRoom(r, 'room', pub(r));
@@ -270,9 +270,9 @@ function onMessage2(c, { type, data = {}, rid }) {
       return toRoom(r, 'room', pub(r)); }
     case 'priv': { if (!r || r.host !== c.id) return; r.priv = !!data.on; return toRoom(r, 'room', pub(r)); }
     case 'rcfg': { if (!r || r.host !== c.id || r.started || r.quick) return; const k = String(data && data.k), v = String(data && data.v); // the host sets the game from inside the room
-      const OK = { decks: ['4', '8', '10', '12'], timer: ['2', '3', '5', '8'], hints: ['on', 'off'], fx: ['on', 'off'], solo: ['on', 'off'] }; if (!OK[k] || !OK[k].includes(v)) return; (r.gcfg = r.gcfg || {})[k] = v; return toRoom(r, 'room', pub(r)); }
+      const OK = { decks: ['2', '4', '8', '10', '12'], timer: ['2', '3', '5', '8'], hints: ['on', 'off'], fx: ['on', 'off'], solo: ['on', 'off'], lock: ['on', 'off'] }; if (!OK[k] || !OK[k].includes(v)) return; (r.gcfg = r.gcfg || {})[k] = v; return toRoom(r, 'room', pub(r)); }
     case 'sit': { if (!r || r.started || r.quick) return; const m = r.members.find(x => x.sid === c.id); if (!m || m.watch || m.seat === 0) return; // a player moves to an empty chair, and his old chair becomes empty
-      const n = data && +data.n, top = r.size === 6 || r.members.some(x => !x.watch && x.seat >= 4) ? 6 : 4; if (!Number.isInteger(n) || n < 1 || n >= top || r.members.some(x => !x.watch && x.seat === n)) return; m.seat = n; return toRoom(r, 'room', pub(r)); }
+      const n = data && +data.n, top = r.size === 2 ? 2 : r.size === 6 || r.members.some(x => !x.watch && x.seat >= 4) ? 6 : 4; if (!Number.isInteger(n) || n < 1 || n >= top || r.members.some(x => !x.watch && x.seat === n)) return; m.seat = n; return toRoom(r, 'room', pub(r)); }
     case 'rkick': { if (!r || r.host !== c.id || r.started || r.quick) return; const m = r.members.find(x => x.sid === String(data && data.sid)); if (!m || m.sid === c.id) return; // the host removes a player before the game starts
       const kc = clients.get(m.sid); if (kc && kc.room === r.code) { send(kc, 'ended', { why: 'kick' }); return drop(kc, true, true); } remove(r, m); return; }
     case 'leave': return drop(c, true, true);
@@ -286,6 +286,7 @@ function whenAuthed(c, fn) { const p = c.authP || Promise.resolve(); p.catch(() 
 function joinRoom(c, room, data, reply) {
   if (c.room === room.code) return reply({ ok: true, room: pub(room), me: c.id });
   if (room.over) return reply({ ok: false, err: 'over' }); // the game at this table has ended
+  if (!room.quick && room.gcfg && room.gcfg.lock === 'on') return reply({ ok: false, err: 'locked' }); // round 199: the host closed the room
   const players = room.members.filter(m => !m.watch).length;
   if (room.started && !data.watch && room.n) { // take a computer's seat in a game that already started
     const used = new Set(room.members.filter(m => !m.watch).map(m => m.seat)); let seat = 1; while (used.has(seat)) seat++;
@@ -294,7 +295,7 @@ function joinRoom(c, room, data, reply) {
       reply({ ok: true, room: pub(room), me: c.id, token: tk, late: true }); sweepWatch(room, c.aid);
       toRoom(room, 'room', pub(room)); if (room.game) { room.game.syncSeats(); room.game.flush(c.id); } return; }
   }
-  if (room.started || players >= (room.quick ? (QMODES[room.qmode] || 4) : 6) || data.watch) { // watch the game instead of playing
+  if (room.started || players >= (room.quick ? (QMODES[room.qmode] || 4) : room.size === 2 ? 2 : 6) || data.watch) { // watch the game instead of playing
     if (room.members.filter(m => m.watch).length >= 30) return reply({ ok: false, err: 'full' });
     // every player at the table decides who may watch him (everyone / friends only / nobody), and a blocked player never can
     try { for (const m of room.members) { if (m.watch || !m.aid) continue; const why = SO.canWatch(c.aid || null, m.aid); if (why !== 'ok') return reply({ ok: false, err: 'nowatch', why }) } } catch (e) { console.error('canWatch', e) }
@@ -313,12 +314,12 @@ function joinRoom(c, room, data, reply) {
 function botLevel(r) { return 'legend' /* the computers in a room always play legendary, new players included */ }
 function startGame(r, cfg, ranked) {
   r.ranked = !!ranked; r.over = 0;
-  const safe = { mode: ['solo', '2v2', '3v3'].includes(cfg.mode) ? cfg.mode : '2v2', decks: Math.min(12, Math.max(1, +cfg.decks || 4)), timer: Math.min(15, Math.max(2, +cfg.timer || 3)), level: botLevel(r) /* the computers that fill the seats play at the level of the people in the room */, hints: !!cfg.hints, lang: cfg.lang === 'en' ? 'en' : 'ar', fx: cfg.fx !== false };
+  const safe = { mode: ['solo', '2v2', '3v3', '1v1'].includes(cfg.mode) ? cfg.mode : '2v2', decks: Math.min(12, Math.max(1, +cfg.decks || 4)), timer: Math.min(15, Math.max(2, +cfg.timer || 3)), level: botLevel(r) /* the computers that fill the seats play at the level of the people in the room */, hints: !!cfg.hints, lang: cfg.lang === 'en' ? 'en' : 'ar', fx: cfg.fx !== false };
   if (!r.quick && r.members.filter(m => !m.watch).length > 4) safe.mode = '3v3'; // more than four people at the table: it has to be 3 against 3
   if (r.qt) { clearTimeout(r.qt); r.qt = null; }
   if (r.game) r.game.stop();
   try { r.game = new Game(r, safe, { send: (sid, type, d) => send(clients.get(sid), type, d), war: (seat, gain) => reward(r, seat, a => ACC.warWon(a, gain)), over: g => { r.over = Date.now(); /* round 186: a finished table is not shown in any list and takes no newcomers; it comes back when the host opens a new game, and closes by itself after ten minutes */ setTimeout(() => { try { if (rooms.get(r.code) === r && r.over && Date.now() - r.over >= 599000) { for (const m of [...r.members]) { const wc = clients.get(m.sid); if (wc) { send(wc, 'ended', { why: 'over' }); drop(wc, true, true) } } if (rooms.get(r.code) === r) { try { r.game && r.game.stop() } catch (e) {} rooms.delete(r.code) } } } catch (e) { console.error('over close', e) } }, 600000).unref(); STATS.gameEnd('online', Date.now() - (r.t0 || Date.now())); try { const S = g.S, E = g.ctx.__ctx(), sc = S.teams.map((t, k) => E.teamScore(k)), best = Math.max(...sc), wk = sc.indexOf(best), tie = sc.filter(x => x === best).length > 1; STATS.endGameRec(r.gDay, r.gIdx, { end: Date.now(), min: Math.round((Date.now() - r.t0) / 6000) / 10, won: tie ? 'تعادل' : S.players.filter(p => p.team === wk).map(p => p.name + (p.human ? '' : ' 🤖')).join(' + '), score: sc.join('-') }) } catch (e) {} const ranked = !!r.ranked, res = g.results(); if (r.dw) { try { DW.played(r.dw, res.map(x => { const m = r.members.find(y => !y.watch && y.seat === x.seat); return m && m.aid ? { id: m.aid, won: !!x.won, wars: x.wars || 0, team: x.team } : null })) } catch (e) { console.error('dw played', e) } } const keyOf = seat => { const m = r.members.find(y => !y.watch && y.seat === seat); return m && m.atoken ? crypto.createHash('sha256').update(String(m.atoken)).digest('hex').slice(0, 12) : null };
-      for (const x of res) { const partners = res.filter(y => y.team === x.team && y.seat !== x.seat).map(y => keyOf(y.seat)).filter(Boolean); const mm = r.members.find(m => !m.watch && m.seat === x.seat), late = !!(mm && mm.lateFrac >= .5); /* joined after half the deck was drawn: rupees and XP, but rank points neither go up nor down */ reward(r, x.seat, a => ACC.gameOver(a, { ...x, ranked: ranked && !late, partners, solo: safe.mode === 'solo' })) } } }); } catch (e) { console.error('game start', e); r.game = null; return; }
+      for (const x of res) { const partners = res.filter(y => y.team === x.team && y.seat !== x.seat).map(y => keyOf(y.seat)).filter(Boolean), mates = res.filter(y => y.team === x.team && y.seat !== x.seat).map(y => r.members.find(m => !m.watch && m.seat === y.seat && m.aid)).filter(Boolean).map(m => ({ n: m.name, av: m.prof && m.prof.av })); const mm = r.members.find(m => !m.watch && m.seat === x.seat), late = !!(mm && mm.lateFrac >= .5); /* joined after half the deck was drawn: rupees and XP, but rank points neither go up nor down */ reward(r, x.seat, a => ACC.gameOver(a, { ...x, ranked: ranked && !late, partners, mates, solo: safe.mode === 'solo' })) } } }); } catch (e) { console.error('game start', e); r.game = null; return; }
   r.started = true; r.n = r.game.S.players.length; r.d0 = r.game.S.draw.length || 1; r.t0 = Date.now(); STATS.gameStart(r.ranked ? 'quick' : 'online'); { const hum = r.members.filter(m => !m.watch); r.gDay = STATS.DAY(); r.gIdx = STATS.addGame({ kind: r.ranked ? 'سريع' : (r.priv ? 'غرفة خاصة' : 'غرفة'), mode: safe.mode, names: hum.map(m => m.name), bots: Math.max(0, r.n - hum.length) }) } toRoom(r, 'room', pub(r)); toRoom(r, 'started', {}); r.game.flush();
 }
 const QUICK_WAIT = 15000;
@@ -327,7 +328,7 @@ const QMODES = { '2v2': 4, '3v3': 6, solo: 4 }; // kind of quick game -> seats a
 function quickGo(r) { if (!rooms.has(r.code) || r.started || !r.members.some(m => !m.watch)) return; startGame(r, { mode: QMODES[r.qmode] ? r.qmode : '2v2', decks: 4, timer: 3, level: 'legend' }, true); }
 
 function reward(r, seat, fn) { const m = r.members.find(x => !x.watch && x.seat === seat); if (!m || !m.atoken) return;
-  ACC.load(m.atoken).then(a => a && fn(a)).then(me => { if (!me) return; send(clients.get(m.sid), 'me', me); m.prof = { ...(m.prof || {}), level: me.st.level, rp: me.st.rp, streak: me.st.streak, wins: me.st.wins, games: me.st.games, wars: me.st.wars } }).catch(e => console.error('reward', e)); }
+  ACC.load(m.atoken).then(a => a && fn(a)).then(me => { if (!me) return; send(clients.get(m.sid), 'me', me); m.prof = { ...(m.prof || {}), level: me.st.level, rp: me.st.rp, streak: me.st.streak, wins: me.st.wins, games: me.st.games, wars: me.st.wars, bestStreak: me.st.bestStreak || 0, last: me.st.last || [] } }).catch(e => console.error('reward', e)); }
 function drop(c, keepSocket, now) {
   const r = rooms.get(c.room); c.room = null;
   if (!keepSocket) { clients.delete(c.id); goOffline(c); }

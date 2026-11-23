@@ -86,6 +86,12 @@ const OFF_CAP = { fire: 40, jk: 30, pile: 30, dig: 5, gifts: 20, lastw: 15, come
 function addPartners(st, r) { if (!r.won || !Array.isArray(r.partners)) return; st.pw = st.pw && typeof st.pw === 'object' ? st.pw : {};
   for (const k of r.partners.slice(0, 2)) { if (typeof k !== 'string' || !/^[0-9a-f]{12}$/.test(k)) continue; st.pw[k] = (st.pw[k] || 0) + 1 }
   const ks = Object.keys(st.pw); if (ks.length > 40) ks.sort((x, y) => st.pw[x] - st.pw[y]).slice(0, ks.length - 40).forEach(k => delete st.pw[k]) }
+// round 197: the profile shows the last five games and the teammate played with most
+function addHist(st, r, won) { if (r.my == null) return; st.last = [{ w: won ? 1 : 0, a: clamp(r.my, -99999, 99999), b: clamp(r.op, -99999, 99999) }, ...(Array.isArray(st.last) ? st.last : [])].slice(0, 5) }
+function addPal(st, mates) { if (!Array.isArray(mates) || !mates.length) return; st.pal = st.pal && typeof st.pal === 'object' ? st.pal : {};
+  for (const m of mates.slice(0, 2)) { const n = String((m && m.n) || '').trim().slice(0, 16); if (!n) continue; const o = st.pal[n] || { c: 0 }; o.c++; if (m.av && /^p:\d{1,3}$/.test(m.av)) o.av = m.av; st.pal[n] = o }
+  const ks = Object.keys(st.pal); if (ks.length > 30) ks.sort((x, y) => st.pal[x].c - st.pal[y].c).slice(0, ks.length - 30).forEach(k => delete st.pal[k]) }
+function favOf(st) { let f = null; for (const [n, o] of Object.entries(st.pal || {})) if (o && o.c >= 2 && (!f || o.c > f.c)) f = { n, c: o.c, av: o.av || '' }; return f }
 const palBest = st => Math.max(0, ...Object.values(st.pw || {}))
 const TITLES = ['lv50', 'lv40', 'legend', 'w50', 's5', 'war100', 'g100', 'gold', 'war5', 'big200', 'comeback', 'pal10', 'dig', 'big', 'w10', 's3', 'war25', 'jk25', 'fire20', 'faz50', 'pile20', 'last10', 'faz10', 'fg10', 'tw5', 'lv10', 'g10', 'w1'];
 const titleOf = a => TITLES.find(k => a.st.ach && a.st.ach[k]) || '';
@@ -111,7 +117,7 @@ function daily(a) { const d = today(); if (a.w.day !== d) { a.w.day = d; const g
 // what the phone gets
 const maskMail = m => { m = String(m || ''); const k = m.indexOf('@'); return k < 1 ? '' : m[0] + '***' + m.slice(k) };
 function me(a, note) { return { google: a.gid ? (maskMail(a.gmail) || 'google') : '', verified: !!a.verified, title: titleOf(a), season: a.st.season || '', seasons: a.st.seasons || [], shield: !!a.st.shield, id: a.id, prof: a.prof, st: { ...a.st, level: levelOf(a.st.xp) }, wal: { tokens: a.w.tokens, owned: a.w.owned, slams: a.w.slams, boost: a.w.boost || 0 }, boostCost: BOOST_COST, boostGames: BOOST_GAMES, note: note || null, test: TEST_MODE, vip: isVip(a) ? a.vip : 0, vipPrice: '$4.99', vipTest: TEST_MODE ? VIP_TEST_PRICE : 0 } }
-function pub(a) { return { id: a.id, name: a.prof.name, av: a.prof.av, flag: a.prof.flag, frame: a.prof.frame, efx: a.prof.efx, sfx: a.prof.sfx || 'plain', bub: a.prof.bub || 'plain', hit: a.prof.hit || 'classic', kit: { theme: (a.prof.prefs || {}).theme || '', back: (a.prof.prefs || {}).back || '', face: (a.prof.prefs || {}).face || '', joker: (a.prof.prefs || {}).joker || '' }, auto: a.prof.auto, level: levelOf(a.st.xp), games: a.st.games, wins: a.st.wins, wars: a.st.wars, rp: a.st.rp, streak: a.st.streak, tauf: a.st.tauf, vip: isVip(a), verified: !!a.verified, title: titleOf(a) } }
+function pub(a) { return { id: a.id, name: a.prof.name, av: a.prof.av, flag: a.prof.flag, frame: a.prof.frame, efx: a.prof.efx, sfx: a.prof.sfx || 'plain', bub: a.prof.bub || 'plain', hit: a.prof.hit || 'classic', kit: { theme: (a.prof.prefs || {}).theme || '', back: (a.prof.prefs || {}).back || '', face: (a.prof.prefs || {}).face || '', joker: (a.prof.prefs || {}).joker || '' }, auto: a.prof.auto, level: levelOf(a.st.xp), games: a.st.games, wins: a.st.wins, wars: a.st.wars, rp: a.st.rp, streak: a.st.streak, tauf: a.st.tauf, bestStreak: a.st.bestStreak || 0, last: a.st.last || [], fav: favOf(a.st), bd: (a.w.owned || []).filter(x => /^bd-/.test(x)).map(x => x.slice(3)).slice(0, 80), vip: isVip(a), verified: !!a.verified, title: titleOf(a) } }
 
 // ---------- what a phone may ask ----------
 async function load(token) { await ready; if (!token) return null; return store.byToken(hash(token)) }
@@ -152,7 +158,7 @@ async function challenge(a, r) {
 }
 async function offline(a, r) {
   const won = !!r.won, wars = clamp(r.wars, 0, 60), best = clamp(r.best, 0, 2000), tauf = clamp(r.tauf, 0, 60);
-  a.st.games++; if (won) a.st.wins++; a.st.wars += wars; a.st.best = Math.max(a.st.best, best); a.st.tauf += tauf; addStats(a.st, r, OFF_CAP); const pf = perf({ wars, best, bigwar: clamp(r.bigwar, 0, 20), tw: clamp(r.tw, 0, 10), faz: clamp(r.faz, 0, 15), ttw: clamp(r.ttw, 0, 5), fazb: clamp(r.fazb, 0, 8), jtw: clamp(r.jtw, 0, 5), jkn: clamp(r.jkn, 0, 24) }), bx = useBoost(a), xp = (10 + (won ? 25 : 0) + wars * 3 + Math.min(8, pf.total) * 2) * bx; const xp0 = a.st.xp; a.st.xp += xp; const lvup = levelUp(a, xp0);
+  a.st.games++; if (won) a.st.wins++; a.st.wars += wars; a.st.best = Math.max(a.st.best, best); a.st.tauf += tauf; addStats(a.st, r, OFF_CAP); addHist(a.st, r, won); const pf = perf({ wars, best, bigwar: clamp(r.bigwar, 0, 20), tw: clamp(r.tw, 0, 10), faz: clamp(r.faz, 0, 15), ttw: clamp(r.ttw, 0, 5), fazb: clamp(r.fazb, 0, 8), jtw: clamp(r.jtw, 0, 5), jkn: clamp(r.jkn, 0, 24) }), bx = useBoost(a), xp = (10 + (won ? 25 : 0) + wars * 3 + Math.min(8, pf.total) * 2) * bx; const xp0 = a.st.xp; a.st.xp += xp; const lvup = levelUp(a, xp0);
   const d = today(); if (a.w.offDay !== d) { a.w.offDay = d; a.w.offGot = 0 } const give = Math.max(0, Math.min(won ? 15 : 5, OFFLINE_CAP - a.w.offGot)); a.w.offGot += give; a.w.tokens += give;
   // rank points against the computer too (round 135): smaller than online and capped each day, but a win, a streak and this game's badges all multiply it
   season(a); const st = a.st, before = st.rp || 0; let mult = 1;
@@ -173,7 +179,7 @@ const OFF_RP_CAP = 160; // most rank points a day from games against the compute
 async function warWon(a, gain) { const n = Math.max(1, Math.round(gain / 20)); a.w.tokens += n; await store.put(a); return me(a, { war: n }) }
 async function gameOver(a, r) {
   const sz = season(a); const won = !!r.won, st = a.st, before = st.rp; let mult = 1, d = 0; const bx = useBoost(a), pf = perf(r);
-  st.games++; st.wars += r.wars || 0; st.best = Math.max(st.best, r.best || 0); st.tauf += r.tauf || 0; addStats(st, r, ON_CAP); if (!r.ranked) st.fg = (st.fg || 0) + 1; addPartners(st, { ...r, won });
+  st.games++; st.wars += r.wars || 0; st.best = Math.max(st.best, r.best || 0); st.tauf += r.tauf || 0; addStats(st, r, ON_CAP); if (!r.ranked) st.fg = (st.fg || 0) + 1; addPartners(st, { ...r, won }); addHist(st, r, won); addPal(st, r.mates);
   if (won) { st.wins++; st.streak++; st.bestStreak = Math.max(st.bestStreak, st.streak); mult = 1 + Math.min(st.streak - 1, 6) * .25 /* up to x2.5 on a 7-win streak */ } else st.streak = 0;
   let shielded = false;
   if (r.ranked) { // rank points move only in ranked games (the quick game), not in rooms with friends

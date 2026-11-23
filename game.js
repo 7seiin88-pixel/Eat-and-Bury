@@ -35,7 +35,7 @@ class Game {
       clearTimeout: h => { clearTimeout(h); T.delete(h) },
       render: () => this.changed(),
       say: (i, t) => this.push({ t: 'say', s: i, text: String(t) }),
-      endGame: () => { const S = this.S; if (S) S.phase = 'over'; this.push({ t: 'over' }); this.flush(); this.hooks.over && this.hooks.over(this) },
+      endGame: () => { const S = this.S; if (S) S.phase = 'over'; this.push({ t: 'over' }); this.flush(); this.sendHands(); this.hooks.over && this.hooks.over(this) },
     };
     vm.createContext(ctx); SCRIPT.runInContext(ctx); this.ctx = ctx;
     // moves made by anyone (people or the computer) become effects every phone animates
@@ -123,7 +123,7 @@ class Game {
     if (vic.includes(j)) ev(j, 'def'); vic.forEach(v => { if (mates(v, j)) ev(v, 'save') }); if (pl != null && mates(pl, j)) ev(pl, 'took');
   }
   viewFor(k, watcher) {
-    const S = this.S, n = S.players.length, r = i => (i - k + n) % n, me = S.players[k], myTeam = me.team, solo = S.cfg.mode === 'solo';
+    const S = this.S, n = S.players.length, r = i => (i - k + n) % n, me = S.players[k], myTeam = me.team, solo = S.cfg.mode === 'solo' || S.cfg.mode === '1v1';
     const tm = t => solo ? (t - k + n) % n : (t - myTeam + 2) % 2; const players = [];
     S.players.forEach((p, i) => { players[r(i)] = { name: p.name, f: p.f, team: tm(p.team), human: i === k && !watcher, pile: p.pile, hand: i === k || watcher ? p.hand : p.hand.map(() => ({ id: -1, r: '?', s: '' })) } });
     const teams = solo ? S.teams.map((t, i) => S.teams[(i + k) % n]) : S.teams;
@@ -132,8 +132,13 @@ class Game {
     return { cfg: S.cfg, players, teams, drawN: S.draw.length, ground: S.ground, turn: r(S.turn), phase: S.phase, war: w, log: S.log, passes: S.passes, lone: S.lone, wasLone: S.wasLone, chain: S.chain, moves: S.moves, decor: {}, stats, turnLeft: this.turnDeadline ? Math.max(0, this.turnDeadline - now) : 0 };
   }
   rotFx(e, k) { const n = this.S.players.length, r = i => (i - k + n) % n, o = { ...e }; ['s', 'f', 'to'].forEach(f => { if (typeof o[f] === 'number') o[f] = r(o[f]) }); return o }
+  // round 198: every player's cards through the game, sent to each player only when the game is over, so his replay shows all hands face up
+  recHands() { const S = this.S; if (!S || !S.players) return; const cs = c => c ? (c.r === 'JK' ? 'JK' : c.r + c.s) : '', h = S.players.map(p => (p.hand || []).map(cs)), j = JSON.stringify(h);
+    if (j === this.lastHands) return; this.lastHands = j; (this.hands = this.hands || []).push({ k: [S.moves || 0, (S.draw || []).length, (S.ground || []).length].join('|'), h }); if (this.hands.length > 4000) this.hands.shift() }
+  sendHands() { try { const n = this.S.players.length, all = this.hands || []; for (const m of this.room.members) { if (m.away) continue; const k = m.watch || m.seat >= n ? 0 : m.seat;
+      this.hooks.send(m.sid, 'hands', { f: all.map(x => ({ k: x.k, h: x.h.map((_, i) => x.h[(i + k) % n]) })) }) } } catch (e) { console.error('hands', e) } }
   flush(onlySid) {
-    if (this.upT) { clearTimeout(this.upT); this.upT = null } const S = this.S; if (!S || this.dead) return;
+    if (this.upT) { clearTimeout(this.upT); this.upT = null } const S = this.S; if (!S || this.dead) return; this.recHands();
     const fx = onlySid ? [] : this.fx.splice(0);
     for (const m of this.room.members) { if (onlySid && m.sid !== onlySid) continue; if (m.away) continue;
       const watcher = !!m.watch || m.seat >= S.players.length, k = watcher ? 0 : m.seat;
@@ -141,7 +146,7 @@ class Game {
   }
   statOf(i) { const S = this.S; if (!S || !S.players || !S.players[i]) return null; S.stats = S.stats || S.players.map(() => ({ wars: 0, best: 0 })); return S.stats[i] || (S.stats[i] = { wars: 0, best: 0 }) }
   results() { const S = this.S, E = this.ctx.__ctx(); const rows = S.teams.map((t, k) => ({ k, s: E.teamScore(k) })).sort((a, b) => b.s - a.s); const tie = rows[1] && rows[0].s === rows[1].s;
-    return S.players.map((p, i) => ({ seat: i, won: !tie && rows[0].k === p.team, wars: (S.stats && S.stats[i] && S.stats[i].wars) || 0, best: (S.stats && S.stats[i] && S.stats[i].best) || 0, tauf: (S.stats && S.stats[i] && S.stats[i].tauf) || 0, team: p.team, ...(() => { const t = (S.stats && S.stats[i]) || {}, won = !tie && rows[0].k === p.team; return { fire: t.fire || 0, bigwar: t.bigwar || 0, jk: t.jk || 0, pile: t.pile || 0, dig: t.dig || 0, gifts: t.gifts || 0, lastw: t.lastw || 0, tw: t.tw || 0, faz: t.faz || 0, ttw: t.ttw || 0, fazb: t.fazb || 0, jtw: t.jtw || 0, jkg: t.jkg ? 1 : 0, jkn: t.jkn || 0, comeback: won && (t.low || 0) <= -300 ? 1 : 0 } })() })) }
+    return S.players.map((p, i) => ({ seat: i, my: (rows.find(r => r.k === p.team) || {}).s || 0, op: Math.max(...rows.filter(r => r.k !== p.team).map(r => r.s)), won: !tie && rows[0].k === p.team, wars: (S.stats && S.stats[i] && S.stats[i].wars) || 0, best: (S.stats && S.stats[i] && S.stats[i].best) || 0, tauf: (S.stats && S.stats[i] && S.stats[i].tauf) || 0, team: p.team, ...(() => { const t = (S.stats && S.stats[i]) || {}, won = !tie && rows[0].k === p.team; return { fire: t.fire || 0, bigwar: t.bigwar || 0, jk: t.jk || 0, pile: t.pile || 0, dig: t.dig || 0, gifts: t.gifts || 0, lastw: t.lastw || 0, tw: t.tw || 0, faz: t.faz || 0, ttw: t.ttw || 0, fazb: t.fazb || 0, jtw: t.jtw || 0, jkg: t.jkg ? 1 : 0, jkn: t.jkn || 0, comeback: won && (t.low || 0) <= -300 ? 1 : 0 } })() })) }
   stop() { this.dead = true; clearInterval(this.clock); for (const h of this.timers) clearTimeout(h); this.timers.clear(); if (this.upT) clearTimeout(this.upT); try { this.ctx.__setGen() } catch (e) {} }
 }
 module.exports = { Game, MCSTAT };
