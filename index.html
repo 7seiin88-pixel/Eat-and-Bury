@@ -1571,7 +1571,14 @@ function netConnect(){return new Promise((res,rej)=>{if(NET.ws&&NET.ws.readyStat
     if(m.type==='reply'){const f=NET.wait.get(m.rid);if(f){NET.wait.delete(m.rid);f(m.data)}return}
     const h=NET.handlers[m.type];if(h)h(m.data)}})}
 function netSend(type,data){if(NET.ws&&NET.ws.readyState===1)NET.ws.send(JSON.stringify({type,data}))}
-function netAsk(type,data){return new Promise(res=>{const rid=++NET.rid;NET.wait.set(rid,res);NET.ws.send(JSON.stringify({type,data,rid}))})}
+// round 209: a question sent while the connection was still opening (or had just dropped, e.g. Chrome on iPhone coming back from the background)
+// threw "The object is in an invalid state" and the answer never came, so the button did nothing. Now it waits for the connection (up to 10 s), else answers "offline".
+function netAsk(type,data){return new Promise(res=>{const rid=++NET.rid;NET.wait.set(rid,res);let done=false;
+  const fail=()=>{if(done)return;done=true;if(NET.wait.get(rid)===res){NET.wait.delete(rid);res({ok:false,err:'offline'})}};
+  const go=()=>{if(done)return;try{NET.ws.send(JSON.stringify({type,data,rid}));done=true}catch(e){fail()}};
+  const ws=NET.ws;if(ws&&ws.readyState===1)return go();
+  if(ws&&ws.readyState===0){ws.addEventListener('open',go,{once:true});ws.addEventListener('close',fail,{once:true});setTimeout(fail,10000);return}
+  fail()})}
 const on=(t,f)=>NET.handlers[t]=f;
 function netReset(){sessClear();NET.on=false;NET.host=false;NET.room=null;NET.members=[];window.NET_ON=false;voiceStop();document.documentElement.classList.remove('online','online-guest');try{NET.ws&&NET.ws.close()}catch(e){}NET.ws=null}
 // ---------- Staying in the room when you leave the page for a moment ----------
@@ -5862,7 +5869,7 @@ if(typeof voiceToggle==='function'){const _vt=voiceToggle;voiceToggle=async func
 #mebox .botchip{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:4px;z-index:5}#mebox{position:relative}`;document.head.appendChild(st)})();
 // ---------- War buttons float above your hand instead of making the bottom bar taller ----------
 (function(){let q=0;const place=()=>{q=0;const a=$('actions'),hz=document.querySelector('.handzone'),bar=document.querySelector('.bottombar');if(!a||!hz||!bar)return;
-    if(a.parentElement!==document.body)document.body.appendChild(a);const top=Math.min(hz.getBoundingClientRect().top,bar.getBoundingClientRect().top);a.style.bottom=(innerHeight-top+8)+'px'};
+    if(a.parentElement!==document.body)document.body.appendChild(a);const br=bar.getBoundingClientRect(),top=br.height?Math.min(hz.getBoundingClientRect().top,br.top):hz.getBoundingClientRect().top; /* round 210: the sideways tablet layout hides the bottom bar (its place reads 0) and sent the cut button off the top of the screen */a.style.bottom=(innerHeight-top+8)+'px'};
   render=(function(prev){return function(){const r=prev.apply(this,arguments);if(!q)q=requestAnimationFrame(place);return r}})(render);addEventListener('resize',()=>{if(!q)q=requestAnimationFrame(place)});
   const st=document.createElement('style');st.textContent=`
 html body #actions{position:fixed!important;left:0;right:0;display:flex;justify-content:center;align-items:center;gap:10px;z-index:60;pointer-events:none;margin:0!important;padding:0!important;height:auto!important}
@@ -6338,7 +6345,7 @@ function enterRoom(res){fromHere=true;lobbyErr='';NET.on=true;window.NET_ON=true
   document.documentElement.classList.add('online');wrapGuest();document.documentElement.classList.toggle('online-guest',!NET.host);
   try{history.replaceState(null,'',res.room.quick?location.pathname:'?room='+NET.room)}catch(e){} /* a ranked table is not a room you were invited to: its code stays out of the address, so a reload never shows "you are invited to a room" */
   hideHome();$('setup').hidden=true;renderLobby();$('lobby').hidden=false}
-const ERR={over:L('The game at this table has ended','القيم بهالطاولة خلص'),notfound:L('Room not found','الغرفة مو موجودة'),full:L('The room is full','الغرفة مليانة'),dw:L('This table is for the diwaniya members','هالطاولة لأعضاء الديوانية بس'),inroom:L('Leave your room first','اطلع من غرفتك أول')};
+const ERR={offline:L('No connection, try again','ما في اتصال، جرب مرة ثانية'),over:L('The game at this table has ended','القيم بهالطاولة خلص'),notfound:L('Room not found','الغرفة مو موجودة'),full:L('The room is full','الغرفة مليانة'),dw:L('This table is for the diwaniya members','هالطاولة لأعضاء الديوانية بس'),inroom:L('Leave your room first','اطلع من غرفتك أول')};
 async function ask(type,data){if(!online()){toast(L('Online works on the game\'s website','الأونلاين يشتغل من موقع اللعبة'));return null}
   if(NET.on){toast(ERR.inroom);return null}
   try{await netConnect()}catch(e){toast(L('Could not reach the server','ما قدرنا نتصل بالسيرفر'));return null}
@@ -12343,10 +12350,10 @@ try{
  html body #myrow .card.big{--cw:min(calc(var(--SW,var(--W)) * .1),12.5dvh)!important}}`;document.head.appendChild(st)})();
 
 // sideways tablets: slide my hand down so its bottom sits just above the screen edge (so the table gets all the room left)
-(function(){const mq0=matchMedia('(orientation:landscape) and (min-height:560px) and (min-width:900px)'),mq={get matches(){return mq0.matches||document.documentElement.classList.contains('land205')}};let busy=0;
+(function(){/* round 210: the real bottom of the game (on iPad Safari with tabs the window can reach below what is visible) */const BOT=()=>{let v=innerHeight;try{const a=document.getElementById('app');if(a){const r=a.getBoundingClientRect();if(r.height)v=Math.min(v,r.bottom)}if(window.visualViewport)v=Math.min(v,visualViewport.height+visualViewport.offsetTop)}catch(e){}return v};const mq0=matchMedia('(orientation:landscape) and (min-height:560px) and (min-width:900px)'),mq={get matches(){return mq0.matches||document.documentElement.classList.contains('land205')}};let busy=0;
  function fit(){if(busy)return;const hz=document.querySelector('.handzone');if(!hz)return;if(!mq.matches){if(hz.style.getPropertyValue('--hzmb'))hz.style.removeProperty('--hzmb');return}
   const cs=[...document.querySelectorAll('#myrow .card')];if(!cs.length)return;let b=0;cs.forEach(c=>{const r=c.getBoundingClientRect();if(r.height)b=Math.max(b,r.bottom-(parseFloat(getComputedStyle(c).getPropertyValue('--dy'))||0))});if(!b)return;
-  const m=parseFloat(getComputedStyle(hz).marginBottom)||0,want=Math.max(-140,Math.min(document.documentElement.classList.contains('land205')?80:0,m-(innerHeight-6-b)));if(Math.abs(want-m)<2)return;
+  const m=parseFloat(getComputedStyle(hz).marginBottom)||0,want=Math.max(-140,Math.min(document.documentElement.classList.contains('land205')?160:0,m-(BOT()-6-b)));if(Math.abs(want-m)<2)return;
   busy=1;hz.style.setProperty('--hzmb',want+'px');requestAnimationFrame(()=>{busy=0;dispatchEvent(new Event('resize'))})}
  setInterval(fit,600);addEventListener('resize',()=>setTimeout(fit,60));addEventListener('orientationchange',()=>setTimeout(fit,300))})();
 // shop jokers: no thin gold border inside the card (like the classic joker)
@@ -17794,8 +17801,8 @@ window.__svgFix205=scan})();
 // on the right, and the table, the players and my hand use the full height between them.
 try{(function(){const MQ=matchMedia('(orientation:landscape) and (min-width:640px) and (min-height:300px)');
 const st=document.createElement('style');st.textContent=`
-html.land205 body{--sx:116px!important}
-html.land205 body #app .topbar.topbar{position:absolute!important;left:0;top:0;bottom:0;width:108px;height:auto!important;display:flex!important;flex-direction:column!important;grid-template-columns:none!important;justify-content:center!important;align-items:center!important;gap:12px!important;padding:12px 0!important;zoom:1!important;border-radius:0 24px 24px 0!important;border-bottom:0!important;z-index:5;margin:0!important}
+html.land205 body,html.land205 body #app,html.land205 body .table,html.land205 body .stage{--sx:116px!important;--SW:calc(100vw - 2 * 116px - 16px)!important}
+html.land205 body #app .topbar.topbar{position:absolute!important;left:0;top:0;bottom:0;width:108px;height:auto!important;display:flex!important;flex-direction:column!important;grid-template-columns:none!important;justify-content:flex-start!important;align-items:center!important;gap:12px!important;padding:16px 0!important;zoom:1!important;border-radius:0 24px 24px 0!important;border-bottom:0!important;z-index:5;margin:0!important}
 html.land205 body #app .topbar .tbg{display:flex!important;flex-direction:column!important;align-items:center!important;gap:10px!important;width:auto!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important}
 html.land205 body #app .topbar .tbg .gbtn,html.land205 body #app .topbar button{transform:none!important;width:80px!important;height:56px!important;min-height:56px!important;flex:none!important;margin:0!important;zoom:1!important}
 html.land205 body #app .topbar .score{order:-1;width:96px!important;height:auto!important;min-height:0!important;flex:none!important;align-self:center!important;margin:0 0 6px!important;transform:none!important;padding:6px 4px!important}
@@ -17806,10 +17813,39 @@ html.land205 #rail205{position:absolute;right:0;top:0;bottom:0;width:108px;displ
 html.land205 #rail205 .r205b{display:flex;flex-direction:column;align-items:center;gap:12px}
 html.land205 #rail205 .gbtn{width:80px!important;height:62px!important;margin:0!important;position:relative!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;transform:none!important}
 html.land205 #rail205 #mebox{display:flex!important;flex-direction:column!important;align-items:center!important;gap:6px!important;width:auto!important;position:relative!important;left:auto!important;bottom:auto!important;margin:0!important}
-html.land205 #rail205 .botchip{position:absolute!important;left:50%!important;right:auto!important;top:-30px!important;translate:-50% 0!important;max-width:100px!important;white-space:normal!important;text-align:center!important;font-size:10px!important;line-height:1.2!important}
+html.land205 #hintPop{left:auto!important;right:124px!important;top:10px!important;bottom:auto!important;max-width:min(300px,calc(50vw - 250px))!important;transform:none!important;translate:none!important}
+html.land205 #rail205 #mebox .pilebox .card,html.land205 #rail205 #mebox .pilebox .card.mini{--cw:54px!important;width:54px!important}
+html.land205 #rail205 #mebox .pilebox{max-width:96px!important}
+html.land205 #rail205 .botchip{position:absolute!important;left:auto!important;right:4px!important;top:-30px!important;translate:none!important;max-width:96px!important;white-space:normal!important;text-align:center!important;font-size:10px!important;line-height:1.2!important}
 html.land205 body .handzone{margin-bottom:var(--hzmb,0px)!important}
+/* round 212: one rail on the left only. The score sits in the top corner, my picture and pile beside my hand on the left,
+   and the fire / gifts / chat / mic buttons beside my hand on the right (no second rail), so the table takes the rest of the width */
+html.land205 body,html.land205 body #app,html.land205 body .table,html.land205 body .stage{--sx:84px!important;--SW:calc(100vw - 84px - 28px)!important}
+html.land205 body #table{margin-left:84px!important;margin-right:4px!important;width:auto!important}
+html.land205 body #app .topbar.topbar{width:80px!important;justify-content:center!important}
+html.land205 body #app .topbar .tbg .gbtn,html.land205 body #app .topbar button{width:62px!important;height:62px!important;min-height:0!important;font-size:10px!important}
+html.land205 body #app .topbar .score{position:fixed!important;left:92px!important;top:10px!important;width:auto!important;z-index:6;margin:0!important}
+html.land205 #rail205{top:auto!important;left:auto!important;right:14px!important;bottom:14px!important;width:auto!important;height:auto!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important;border-radius:0!important;flex-direction:row!important;align-items:flex-end!important;position:fixed!important;z-index:30!important}
+html.land205 #rail205 .r205b{display:grid!important;grid-template-columns:repeat(2,auto);gap:10px!important}
+html.land205 #rail205 .gbtn{width:72px!important;height:58px!important;background-color:#1c120e!important;box-shadow:0 4px 12px rgba(0,0,0,.45)!important}
+html.land205 #hintPop{right:16px!important}
+html.land205 #rail205 #mebox{position:fixed!important;z-index:30!important;left:96px!important;bottom:14px!important;flex-direction:row!important;align-items:flex-end!important;gap:10px!important;zoom:1.15}
+html.land205 body .handzone #myrow{max-width:calc(100vw - 600px)!important}
+html.land205 body .handzone{margin-left:80px!important}
+html.land205 body #seats .seat .name,html.land205 body .table .s-left .name,html.land205 body .table .s-right .name{font-size:15px!important;max-width:150px!important;padding:3px 12px!important}
 @media (max-height:599px){
-html.land205 body{--sx:84px!important}
+html.land205 body #app .topbar .score{position:relative!important;left:auto!important;top:auto!important}
+/* phones sideways keep the right rail: there is no room beside the hand */
+html.land205 #hintPop{right:92px!important}
+html.land205 #rail205{position:absolute!important;top:0!important;bottom:0!important;right:0!important;left:auto!important;width:80px!important;height:auto!important;padding:8px 0!important;background:var(--rail205,#1a1210)!important;border-left:1px solid #000!important;box-shadow:-2px 0 8px rgba(0,0,0,.4)!important;border-radius:18px 0 0 18px!important;flex-direction:column!important;justify-content:space-between!important;align-items:center!important}
+html.land205 #rail205 .r205b{display:flex!important;flex-direction:column!important;gap:6px!important}
+html.land205 #rail205 .gbtn{width:62px!important;height:calc((100dvh - 200px) / 4 - 5px)!important;max-height:56px!important;font-size:9px!important}
+html.land205 #rail205 #mebox{position:relative!important;left:auto!important;bottom:auto!important;flex-direction:column!important;align-items:center!important;gap:6px!important;zoom:1!important}
+html.land205 body #table{margin-right:84px!important}
+html.land205 body .handzone #myrow{max-width:calc(100vw - 180px)!important}
+html.land205 body #seats .seat .name,html.land205 body .table .s-left .name,html.land205 body .table .s-right .name{font-size:12px!important;max-width:110px!important;padding:2px 8px!important}
+
+html.land205 body,html.land205 body #app,html.land205 body .table,html.land205 body .stage{--sx:84px!important;--SW:calc(100vw - 2 * 84px - 12px)!important}
 html.land205 body #app .topbar.topbar{width:80px!important;min-width:80px!important;max-width:80px!important;left:0!important;gap:6px!important;padding:6px 0!important;border-radius:0 18px 18px 0!important}
 html.land205 body #app .topbar .tbg{gap:5px!important}
 html.land205 body #app .topbar .tbg .gbtn,html.land205 body #app .topbar button{width:62px!important;height:calc((100dvh - 110px) / 6 - 5px)!important;min-height:0!important;max-height:52px!important;font-size:9px!important}
@@ -17820,7 +17856,10 @@ html.land205 body #app .topbar .score .col{flex-direction:row!important;align-it
 html.land205 body #app .topbar .score .n{font-size:10px!important;min-width:0!important;width:auto!important;max-width:none!important;padding:1px 2px!important;letter-spacing:-.5px}html.land205 body #app .topbar .score .t{width:7px!important;height:7px!important;min-width:0!important;flex:none!important}
 html.land205 #rail205{width:80px;padding:8px 0;border-radius:18px 0 0 18px}
 html.land205 #rail205 .r205b{gap:6px}
-html.land205 #rail205 .gbtn{width:62px!important;height:calc((100dvh - 150px) / 4 - 6px)!important;max-height:56px!important;font-size:9px!important}
+
+html.land205 #rail205 #mebox{--tile:48px!important}html.land205 #rail205 #mebox .tile,html.land205 #rail205 #mebox .tilewrap{width:48px!important;height:48px!important}
+html.land205 #rail205 #mebox .pilebox .card,html.land205 #rail205 #mebox .pilebox .card.mini{--cw:40px!important;width:40px!important}
+html.land205 #rail205 .botchip{top:-24px!important;font-size:9px!important;max-width:74px!important}
 html.land205 #rail205 #mebox{zoom:1;--tile:58px!important}html.land205 #rail205 #mebox .tile,html.land205 #rail205 #mebox .tilewrap{width:58px!important;height:58px!important}
 html.land205 body #myrow .card.big{--cw:min(calc((100vw - 180px) * .11),19dvh)!important}
 html.land205 body .table .seat{--tile:min(19dvh,110px)!important}
@@ -17855,7 +17894,7 @@ try{render=(function(p){return function(){const r=p.apply(this,arguments);try{if
 
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1123.2145';
+const EB_VERSION='v1123.2312';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
