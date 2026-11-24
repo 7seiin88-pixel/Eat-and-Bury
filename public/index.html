@@ -5869,7 +5869,7 @@ if(typeof voiceToggle==='function'){const _vt=voiceToggle;voiceToggle=async func
 #mebox .botchip{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:4px;z-index:5}#mebox{position:relative}`;document.head.appendChild(st)})();
 // ---------- War buttons float above your hand instead of making the bottom bar taller ----------
 (function(){let q=0;const place=()=>{q=0;const a=$('actions'),hz=document.querySelector('.handzone'),bar=document.querySelector('.bottombar');if(!a||!hz||!bar)return;
-    if(a.parentElement!==document.body)document.body.appendChild(a);const top=Math.min(hz.getBoundingClientRect().top,bar.getBoundingClientRect().top);a.style.bottom=(innerHeight-top+8)+'px'};
+    if(a.parentElement!==document.body)document.body.appendChild(a);const br=bar.getBoundingClientRect(),top=br.height?Math.min(hz.getBoundingClientRect().top,br.top):hz.getBoundingClientRect().top; /* round 210: the sideways tablet layout hides the bottom bar (its place reads 0) and sent the cut button off the top of the screen */a.style.bottom=(innerHeight-top+8)+'px'};
   render=(function(prev){return function(){const r=prev.apply(this,arguments);if(!q)q=requestAnimationFrame(place);return r}})(render);addEventListener('resize',()=>{if(!q)q=requestAnimationFrame(place)});
   const st=document.createElement('style');st.textContent=`
 html body #actions{position:fixed!important;left:0;right:0;display:flex;justify-content:center;align-items:center;gap:10px;z-index:60;pointer-events:none;margin:0!important;padding:0!important;height:auto!important}
@@ -10473,11 +10473,14 @@ const st2=document.createElement('style');st2.textContent=`.h2-sorow{display:fle
 function fit(){try{{const ae=document.activeElement;if(ae&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA')&&!/^(checkbox|radio|range|button|submit)$/.test(ae.type||''))return}/* while the keyboard is open the page is left alone: re-measuring made it jump and blink */ /* measure with our own fixed size removed: a page that is wider than the screen keeps the phone's layout wide after it is turned back upright */de.style.removeProperty('--appW');de.style.removeProperty('--appH');void de.offsetWidth;const vv=window.visualViewport;const w=Math.round(Math.max(innerWidth,vv?vv.width:0)),h=Math.round(Math.max(innerHeight,vv?vv.height:0));
   de.style.setProperty('--appW',w+'px');de.style.setProperty('--appH',h+'px');if(de.__fw===w&&de.__fh===h)return;de.__fw=w;de.__fh=h;
   const rr=()=>{try{if(typeof S!=='undefined'&&S&&typeof render==='function')render()}catch(e){}};rr();setTimeout(rr,300);setTimeout(rr,900);try{window.scrollTo(0,0)}catch(e){}}catch(e){}}
-const burst=()=>[0,80,250,600,1200,2000].forEach(d=>setTimeout(fit,d));
+const burst=()=>[0,80,250,600,1200,2000,3500,5000].forEach(d=>setTimeout(fit,d));
 addEventListener('resize',burst);addEventListener('orientationchange',burst);addEventListener('pageshow',burst);try{visualViewport.addEventListener('resize',burst)}catch(e){}
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)burst()});fit();
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)burst()});try{screen.orientation.addEventListener('change',burst)}catch(e){}try{if(matchMedia('(display-mode: standalone)').matches||navigator.standalone)setInterval(fit,2500)}catch(e){}fit();
 const st=document.createElement('style');st.textContent=`html,body{width:100%!important;min-height:100%}
-html body #app{width:var(--appW,100%)!important;max-width:none!important;height:calc(var(--appH,100dvh) - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))!important}`;document.head.appendChild(st);
+html body #app{width:var(--appW,100%)!important;max-width:none!important;height:calc(var(--appH,100dvh) - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))!important}
+/* round 213: the home-screen app on iPad sometimes keeps the old size for a while after turning (black band at the bottom or the side):
+   it never gets smaller than what the screen itself says */
+@media (display-mode:standalone){html body #app{width:max(var(--appW,100vw),100vw)!important;height:calc(max(var(--appH,100dvh),100dvh) - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))!important}}`;document.head.appendChild(st);
 })();
 
 // ===================== table shape for every theme: square (default) or round — the player's own choice, in the themes page =====================
@@ -12291,7 +12294,7 @@ try{
 // The slapped card starts at the cutter's seat, big. For the player at the top that start was above the table, over the buttons and the score.
 // The start point is kept inside the table (it still comes from his side).
 (function(){if(typeof slapFx!=='function')return;
-slapFx=(function(p){return function(card,from,power){try{const t=document.getElementById('table');if(from&&t){const r=t.getBoundingClientRect(),tb=document.querySelector('.topbar'),top=Math.max(r.top,tb?tb.getBoundingClientRect().bottom:0);
+slapFx=(function(p){return function(card,from,power){try{const t=document.getElementById('table');if(from&&t){const r=t.getBoundingClientRect(),tb=document.querySelector('.topbar'),tbr=tb?tb.getBoundingClientRect():null,top=Math.max(r.top,tbr&&tbr.width>tbr.height?tbr.bottom:0); /* round 215: sideways the top bar is a tall rail on the left; its bottom is the screen bottom, which pushed every eaten card to start from my corner */
   const cw=(document.querySelector('#ground>.card')||{}).offsetWidth||60,big=(power===3?2.8:1.6)*cw*.75;
   from={x:Math.min(r.right-big*.6,Math.max(r.left+big*.6,from.x)),y:Math.min(r.bottom-big*.5,Math.max(top+big*.75,from.y))}}}catch(e){}return p.call(this,card,from,power)}})(slapFx);
 })();
@@ -12350,10 +12353,10 @@ try{
  html body #myrow .card.big{--cw:min(calc(var(--SW,var(--W)) * .1),12.5dvh)!important}}`;document.head.appendChild(st)})();
 
 // sideways tablets: slide my hand down so its bottom sits just above the screen edge (so the table gets all the room left)
-(function(){const mq0=matchMedia('(orientation:landscape) and (min-height:560px) and (min-width:900px)'),mq={get matches(){return mq0.matches||document.documentElement.classList.contains('land205')}};let busy=0;
+(function(){/* round 210: the real bottom of the game (on iPad Safari with tabs the window can reach below what is visible) */const BOT=()=>{let v=innerHeight;try{const a=document.getElementById('app');if(a){const r=a.getBoundingClientRect();if(r.height)v=Math.min(v,r.bottom)}if(window.visualViewport)v=Math.min(v,visualViewport.height+visualViewport.offsetTop)}catch(e){}return v};const mq0=matchMedia('(orientation:landscape) and (min-height:560px) and (min-width:900px)'),mq={get matches(){return mq0.matches||document.documentElement.classList.contains('land205')}};let busy=0;
  function fit(){if(busy)return;const hz=document.querySelector('.handzone');if(!hz)return;if(!mq.matches){if(hz.style.getPropertyValue('--hzmb'))hz.style.removeProperty('--hzmb');return}
   const cs=[...document.querySelectorAll('#myrow .card')];if(!cs.length)return;let b=0;cs.forEach(c=>{const r=c.getBoundingClientRect();if(r.height)b=Math.max(b,r.bottom-(parseFloat(getComputedStyle(c).getPropertyValue('--dy'))||0))});if(!b)return;
-  const m=parseFloat(getComputedStyle(hz).marginBottom)||0,want=Math.max(-140,Math.min(document.documentElement.classList.contains('land205')?80:0,m-(innerHeight-6-b)));if(Math.abs(want-m)<2)return;
+  const m=parseFloat(getComputedStyle(hz).marginBottom)||0,want=Math.max(-140,Math.min(document.documentElement.classList.contains('land205')?160:0,m-(BOT()-6-b)));if(Math.abs(want-m)<2)return;
   busy=1;hz.style.setProperty('--hzmb',want+'px');requestAnimationFrame(()=>{busy=0;dispatchEvent(new Event('resize'))})}
  setInterval(fit,600);addEventListener('resize',()=>setTimeout(fit,60));addEventListener('orientationchange',()=>setTimeout(fit,300))})();
 // shop jokers: no thin gold border inside the card (like the classic joker)
@@ -17796,73 +17799,179 @@ try{document.querySelectorAll('svg').forEach(fix)}catch(e){}
 window.__svgFix205=scan})();
 }catch(e){try{console.error('svgids205.js',e)}catch(_){}}
 
-// round 205: iPad and big screens sideways get their own layout. The top bar row and the bottom bar row took ~150px of a short screen,
-// so the table was a long flat strip. Now the game buttons and the score stand in a rail on the left, my picture and the action buttons in a rail
-// on the right, and the table, the players and my hand use the full height between them.
+// Sideways layout (rounds 205-213, rewritten in round 214).
+// BIG screens (iPad, iPhone Duo open, height >= 600): one fixed design (1180x820, the iPad Air) that grows and shrinks as a whole.
+//   The game frame keeps a ratio between 1.3 and 1.5; extra screen space around it is plain background, so every device shows the same layout.
+//   All sizes are written in design pixels times --u (frame height / 820).
+//   Left rail: game buttons; score in the top corner; my picture and pile left of my hand; fire / gifts / chat / mic right of my hand.
+// SHORT screens (phones and the closed iPhone Duo sideways): the frame is the whole screen, game buttons in a left rail,
+//   my picture and the action buttons in a right rail (there is no room beside the hand).
 try{(function(){const MQ=matchMedia('(orientation:landscape) and (min-width:640px) and (min-height:300px)');
 const st=document.createElement('style');st.textContent=`
-html.land205 body{--sx:116px!important}
-html.land205 body #app .topbar.topbar{position:absolute!important;left:0;top:0;bottom:0;width:108px;height:auto!important;display:flex!important;flex-direction:column!important;grid-template-columns:none!important;justify-content:center!important;align-items:center!important;gap:12px!important;padding:12px 0!important;zoom:1!important;border-radius:0 24px 24px 0!important;border-bottom:0!important;z-index:5;margin:0!important}
-html.land205 body #app .topbar .tbg{display:flex!important;flex-direction:column!important;align-items:center!important;gap:10px!important;width:auto!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important}
-html.land205 body #app .topbar .tbg .gbtn,html.land205 body #app .topbar button{transform:none!important;width:80px!important;height:56px!important;min-height:56px!important;flex:none!important;margin:0!important;zoom:1!important}
-html.land205 body #app .topbar .score{order:-1;width:96px!important;height:auto!important;min-height:0!important;flex:none!important;align-self:center!important;margin:0 0 6px!important;transform:none!important;padding:6px 4px!important}
-html.land205 body #app .topbar #board{flex-wrap:wrap;justify-content:center;row-gap:2px}
-html.land205 body #app .topbar .tbg-a{order:0}html.land205 body #app .topbar .tbg-b{order:1}
+html.land205 body{background:#0d0806!important}
+html.land205 body #app{width:var(--AW)!important;height:var(--AH)!important;margin:var(--AT,0px) auto 0!important}
+html.land205 body,html.land205 body #app,html.land205 body .table,html.land205 body .stage{--sx:calc(var(--u) * 84px)!important;--SW:calc(var(--AW) - var(--u) * 112px)!important}
 html.land205 body #app .bottombar{display:none!important}
-html.land205 #rail205{position:absolute;right:0;top:0;bottom:0;width:108px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:16px 0 14px;z-index:5;border-radius:24px 0 0 24px;background:var(--rail205,#1a1210);border-left:1px solid #000;box-shadow:-2px 0 8px rgba(0,0,0,.4)}
-html.land205 #rail205 .r205b{display:flex;flex-direction:column;align-items:center;gap:12px}
-html.land205 #rail205 .gbtn{width:80px!important;height:62px!important;margin:0!important;position:relative!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;transform:none!important}
-html.land205 #rail205 #mebox{display:flex!important;flex-direction:column!important;align-items:center!important;gap:6px!important;width:auto!important;position:relative!important;left:auto!important;bottom:auto!important;margin:0!important}
-html.land205 #rail205 .botchip{position:absolute!important;left:50%!important;right:auto!important;top:-30px!important;translate:-50% 0!important;max-width:100px!important;white-space:normal!important;text-align:center!important;font-size:10px!important;line-height:1.2!important}
-html.land205 body .handzone{margin-bottom:var(--hzmb,0px)!important}
-@media (max-height:599px){
-html.land205 body{--sx:84px!important}
-html.land205 body #app .topbar.topbar{width:80px!important;min-width:80px!important;max-width:80px!important;left:0!important;gap:6px!important;padding:6px 0!important;border-radius:0 18px 18px 0!important}
-html.land205 body #app .topbar .tbg{gap:5px!important}
-html.land205 body #app .topbar .tbg .gbtn,html.land205 body #app .topbar button{width:62px!important;height:calc((100dvh - 110px) / 6 - 5px)!important;min-height:0!important;max-height:52px!important;font-size:9px!important}
-html.land205 body #app .topbar .gbtn svg{width:16px!important;height:16px!important}
-html.land205 body #app .topbar .score{width:72px!important;min-width:0!important;margin:0 0 2px!important;zoom:1!important;padding:4px 2px!important;height:auto!important}
-html.land205 body #app .topbar .score #board{display:grid!important;grid-template-columns:1fr 1fr!important;gap:3px 2px!important;width:100%!important}
-html.land205 body #app .topbar .score .col{flex-direction:row!important;align-items:center!important;justify-content:center!important;gap:2px!important;width:auto!important;min-width:0!important}
-html.land205 body #app .topbar .score .n{font-size:10px!important;min-width:0!important;width:auto!important;max-width:none!important;padding:1px 2px!important;letter-spacing:-.5px}html.land205 body #app .topbar .score .t{width:7px!important;height:7px!important;min-width:0!important;flex:none!important}
-html.land205 #rail205{width:80px;padding:8px 0;border-radius:18px 0 0 18px}
-html.land205 #rail205 .r205b{gap:6px}
-html.land205 #rail205 .gbtn{width:62px!important;height:calc((100dvh - 150px) / 4 - 6px)!important;max-height:56px!important;font-size:9px!important}
-html.land205 #rail205 #mebox{zoom:1;--tile:58px!important}html.land205 #rail205 #mebox .tile,html.land205 #rail205 #mebox .tilewrap{width:58px!important;height:58px!important}
-html.land205 body #myrow .card.big{--cw:min(calc((100vw - 180px) * .11),19dvh)!important}
-html.land205 body .table .seat{--tile:min(19dvh,110px)!important}
-html.land205 body .table .seat .pilebox .card,html.land205 body #seats .seat .pilebox .card.mini{--cw:min(15dvh,90px)!important}
-}
-html.land205 body .handzone #myrow{max-width:calc(100vw - 260px)!important}
-html.land205 body #myrow .card.big{--cw:min(calc((100vw - 232px) * .11),15dvh)!important}
-html.land205 body .table .seat{--tile:min(15dvh,124px)!important}
-html.land205 body .table .seat .pilebox .card,html.land205 body #seats .seat .pilebox .card.mini{--cw:min(12.5dvh,100px)!important}
+html.land205 body #table{margin-left:calc(var(--u) * 84px)!important;margin-right:calc(var(--u) * 4px)!important;width:auto!important}
+/* left rail */
+html.land205 body #app .topbar.topbar{position:absolute!important;left:0!important;top:0;bottom:0;width:calc(var(--u) * 80px)!important;min-width:0!important;max-width:none!important;height:auto!important;display:flex!important;flex-direction:column!important;grid-template-columns:none!important;justify-content:center!important;align-items:center!important;gap:calc(var(--u) * 12px)!important;padding:calc(var(--u) * 12px) 0!important;zoom:1!important;border-radius:0 calc(var(--u) * 22px) calc(var(--u) * 22px) 0!important;border-bottom:0!important;z-index:5;margin:0!important}
+html.land205 body #app .topbar .tbg{display:flex!important;flex-direction:column!important;align-items:center!important;gap:calc(var(--u) * 10px)!important;width:auto!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important}
+html.land205 body #app .topbar .tbg-a{order:0}html.land205 body #app .topbar .tbg-b{order:1}
+html.land205 body #app .topbar .tbg .gbtn,html.land205 body #app .topbar button{transform:none!important;width:calc(var(--u) * 62px)!important;height:calc(var(--u) * 62px)!important;min-height:0!important;flex:none!important;margin:0!important;zoom:1!important;font-size:calc(var(--u) * 10.5px)!important}
+html.land205 body #app .topbar .gbtn svg{width:calc(var(--u) * 20px)!important;height:calc(var(--u) * 20px)!important}
+/* score: top corner of the table */
+html.land205 body #app .topbar .score{position:absolute!important;left:calc(var(--u) * 92px)!important;top:calc(var(--u) * 10px)!important;width:auto!important;height:auto!important;min-height:0!important;margin:0!important;transform:none!important;zoom:calc(var(--u) * 1.15);z-index:6}
+/* fire / gifts / chat / mic: right of my hand */
+html.land205 #rail205{position:absolute!important;right:calc(var(--u) * 14px);bottom:calc(var(--u) * 14px);z-index:30;display:grid;grid-template-columns:repeat(2,auto);gap:calc(var(--u) * 16px) calc(var(--u) * 14px);padding-top:10px}
+html.land205 #rail205 #giftBtn .badge{right:auto!important;left:50%!important;translate:-50% 0!important}
+html.land205 #rail205 .slamcost{right:auto!important;left:-6px!important}
+html.land205 #rail205 .gbtn{position:relative!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;transform:none!important;margin:0!important;width:calc(var(--u) * 72px)!important;height:calc(var(--u) * 58px)!important;font-size:calc(var(--u) * 11px)!important;background-color:#1c120e!important;box-shadow:0 4px 12px rgba(0,0,0,.45)!important}
+/* me: left of my hand */
+html.land205 body #app>#mebox{position:absolute!important;left:calc(var(--u) * 96px)!important;bottom:calc(var(--u) * 14px)!important;z-index:30;display:flex!important;flex-direction:row!important;align-items:flex-end!important;gap:calc(var(--u) * 10px)!important;width:auto!important;margin:0!important;zoom:min(calc(var(--u) * 1.3),1.35)}
+html.land205 body #app>#mebox .botchip{position:absolute!important;left:0!important;right:auto!important;top:-28px!important;translate:none!important;max-width:130px!important;white-space:nowrap!important;font-size:11px!important}
+/* my hand */
+html.land205 body .handzone{margin-left:0!important;padding-left:calc(var(--u) * 420px)!important;padding-right:calc(var(--u) * 220px)!important;box-sizing:border-box!important;margin-bottom:var(--hzmb,0px)!important}
+html.land205.short205 body .handzone{padding-left:0!important;padding-right:0!important}
+html.land205 body .handzone #myrow{max-width:calc(var(--AW) - var(--u) * 720px)!important;margin-left:auto!important;margin-right:auto!important}
+html.land205 body #myrow .card.big{--cw:min(calc((var(--AW) - var(--u) * 232px) * .11),calc(var(--AH) * .15))!important}
+/* players and names */
+html.land205 body .table .seat{--tile:min(calc(var(--AH) * .15),calc(var(--u) * 124px))!important}
+html.land205 body .table .seat .pilebox .card,html.land205 body #seats .seat .pilebox .card.mini{--cw:min(calc(var(--AH) * .125),calc(var(--u) * 100px))!important}
+html.land205 body #seats .seat .name,html.land205 body .table .s-left .name,html.land205 body .table .s-right .name{font-size:calc(var(--u) * 15px)!important;max-width:calc(var(--u) * 150px)!important;padding:calc(var(--u) * 3px) calc(var(--u) * 12px)!important}
+/* round 215: the small pieces on a player (flag or badge, level, gift button, pile numbers) and the name grow with the picture,
+   by the same ratio (--sk = picture size / 67, the phone size); they used to stay phone-sized next to a big picture */
+html.land205 body #seats .seat .flg174,html.land205 body #seats .seat .lvl,html.land205 body #seats .seat .seatgift,html.land205 body #seats .seat .pilebox>span{zoom:var(--sk,1)}
+html.land205 body #seats .seat .pilebox .count{zoom:var(--sk,1)}
+/* the left player's badge sat on the top-left number of his pile card: it moves onto the edge of his picture */
+html.land205 body #seats .seat.s-left .flg174{translate:-18px -6px!important}
+html.land205 body #seats .seat .name,html.land205 body .table .s-left .name,html.land205 body .table .s-right .name{font-size:calc(11px * var(--sk,1))!important;max-width:calc(80px * var(--sk,1))!important;padding:calc(2px * var(--sk,1)) calc(8px * var(--sk,1))!important}
+/* the "done" tags on players and the speech bubbles (eat, cut, phrases) grow with the pictures too */
+html.land205 body #seats .seat .tags{zoom:var(--sk,1)}
+html.land205 body #fx .bubble{scale:min(var(--sk,1),1.45)}
+/* the attack swords on a pile under attack: bigger and above the count badge */
+html.land205 body .atk137f .pilebox .card::before,html.land205 body .atk137m .pilebox .card::before{width:30px!important;height:30px!important;font-size:18px!important;top:-17px!important;z-index:9!important}
+html.land205 body .atk137f .pilebox .count,html.land205 body .atk137m .pilebox .count{z-index:8}
+/* the tip: top right corner of the frame */
+html.land205 #hintPop{left:auto!important;right:calc((100vw - var(--AW)) / 2 + var(--u) * 16px)!important;top:calc(var(--AT,0px) + var(--u) * 10px)!important;bottom:auto!important;max-width:calc(var(--u) * 320px)!important;transform:none!important;translate:none!important}
+
+/* ---------- short screens ---------- */
+html.land205.short205 #rail205{top:0!important;bottom:0!important;right:0!important;width:80px!important;padding:8px 0!important;display:flex!important;flex-direction:column!important;justify-content:flex-start!important;align-items:center!important;gap:6px!important;background:var(--rail205,#1a1210)!important;border-left:1px solid #000;box-shadow:-2px 0 8px rgba(0,0,0,.4);border-radius:18px 0 0 18px;z-index:5}
+html.land205.short205 #rail205 .gbtn{width:62px!important;height:calc((var(--AH) - 200px) / 4 - 5px)!important;max-height:52px!important;font-size:9px!important;box-shadow:none!important}
+html.land205.short205 body #app>#mebox{left:auto!important;right:8px!important;bottom:6px!important;width:64px!important;flex-direction:column!important;align-items:center!important;gap:4px!important;zoom:1}
+html.land205.short205 body #app>#mebox .tile,html.land205.short205 body #app>#mebox .tilewrap{width:52px!important;height:52px!important}
+html.land205.short205 body #app>#mebox{--tile:52px!important}
+html.land205.short205 body #app>#mebox .pilebox .card,html.land205.short205 body #app>#mebox .pilebox .card.mini{--cw:40px!important;width:40px!important}
+html.land205.short205 body #app>#mebox .botchip{left:auto!important;right:0!important;top:-22px!important;font-size:9px!important}
+html.land205.short205 body #table{margin-right:84px!important}
+html.land205.short205 body,html.land205.short205 body #app,html.land205.short205 body .table,html.land205.short205 body .stage{--SW:calc(var(--AW) - 2 * 84px - 12px)!important}
+html.land205.short205 body .handzone{margin-left:0!important}
+html.land205.short205 body .handzone #myrow{max-width:calc(var(--AW) - 180px)!important}
+html.land205.short205 body #myrow .card.big{--cw:min(calc((var(--AW) - 180px) * .11),calc(var(--AH) * .19))!important}
+html.land205.short205 body .table .seat{--tile:min(calc(var(--AH) * .19),110px)!important}
+html.land205.short205 body .table .seat .pilebox .card,html.land205.short205 body #seats .seat .pilebox .card.mini{--cw:min(calc(var(--AH) * .15),90px)!important}
+html.land205.short205 body #app .topbar.topbar{width:80px!important;gap:6px!important;padding:6px 0!important;justify-content:flex-start!important;border-radius:0 18px 18px 0!important}
+html.land205.short205 body #app .topbar .tbg{gap:5px!important}
+html.land205.short205 body #app .topbar .tbg .gbtn,html.land205.short205 body #app .topbar button{width:62px!important;height:calc((var(--AH) - 110px) / 6 - 5px)!important;max-height:52px!important;font-size:9px!important}
+html.land205.short205 body #app .topbar .gbtn svg{width:16px!important;height:16px!important}
+html.land205.short205 body #app .topbar .score{position:absolute!important;left:112px!important;top:5px!important;order:0;zoom:.78!important;width:auto!important;height:auto!important;flex:none!important;padding:4px 6px!important;margin:0!important}
+html.land205.short205 body #app .topbar .score:has(.col:nth-child(4)){zoom:.7!important;left:124px!important;top:6px!important}
+html.land205.short205 #hintPop{right:92px!important;left:auto!important;top:4px!important;max-width:min(340px,calc(var(--AW) / 2 - 110px))!important}
 `;document.head.appendChild(st);
+const de=document.documentElement;
+// the frame: ratio kept between 1.3 and 1.5 on big screens, the whole screen on short ones
+function frame(){if(!de.classList.contains('land205'))return;let W=innerWidth,H=innerHeight;try{const a=parseFloat(de.style.getPropertyValue('--appW')),b=parseFloat(de.style.getPropertyValue('--appH'));if(a>0)W=a;if(b>0)H=b}catch(e){}
+  const short=H<500; /* round 215: only phones and the closed iPhone Duo; the open Duo inside an app with a toolbar (about 950x585) keeps the big design */let AW=W,AH=H;if(!short){AW=Math.min(W,Math.round(H*1.5));AH=Math.min(H,Math.round(AW/1.3))}
+  const u=short?1:AH/820;de.classList.toggle('short205',short);const tile=short?Math.min(AH*.19,110):Math.min(AH*.15,u*124);
+  const set=(k,v)=>{if(de.style.getPropertyValue(k)!==v)de.style.setProperty(k,v)};set('--AW',AW+'px');set('--AH',AH+'px');set('--AT',Math.max(0,Math.round((H-AH)/2))+'px');set('--u',String(+u.toFixed(4)));set('--sk',String(+Math.max(1,tile/67).toFixed(3)))}
 let rail=null,home=null;
 const ids=['slamBtn','giftBtn','chatBtn','micBtn'];
 function on(){const app=document.getElementById('app'),me=document.getElementById('mebox');if(!app||!me)return false;
-  if(!rail){rail=document.createElement('div');rail.id='rail205';rail.innerHTML='<div class="r205b"></div>';}
+  if(!rail){rail=document.createElement('div');rail.id='rail205'}
   if(!rail.isConnected)app.appendChild(rail);
   if(!home){home={me:[me.parentNode,me.nextSibling],b:ids.map(i=>{const e=document.getElementById(i);return e?[e,e.parentNode,e.nextSibling]:null})}}
-  const box=rail.querySelector('.r205b');ids.forEach(i=>{const e=document.getElementById(i);if(e&&e.parentNode!==box)box.appendChild(e)});if(me.parentNode!==rail)rail.appendChild(me);
+  ids.forEach(i=>{const e=document.getElementById(i);if(e&&e.parentNode!==rail)rail.appendChild(e)});if(me.parentNode!==app)app.appendChild(me);
+  /* round 215: the chat box lived inside the hidden bottom bar, so it never showed sideways (iPhone Duo): it moves to the page */
+  {const cb=document.getElementById('chatBar');if(cb&&cb.parentNode!==document.body){home.cb=home.cb||[cb.parentNode,cb.nextSibling];document.body.appendChild(cb)}}
   try{const tb=document.querySelector('.topbar');if(tb){const cs=getComputedStyle(tb);rail.style.setProperty('--rail205',cs.backgroundImage&&cs.backgroundImage!=='none'?cs.backgroundImage.replace(/180deg/g,'270deg')+','+cs.backgroundColor:cs.backgroundColor)}}catch(e){}
-  document.documentElement.classList.add('land205');return true}
-function off(){document.documentElement.classList.remove('land205');if(!home)return;
+  de.classList.add('land205');frame();return true}
+function off(){de.classList.remove('land205','short205');['--AW','--AH','--AT','--u','--sk'].forEach(k=>de.style.removeProperty(k));if(!home)return;
   const [mp]=home.me,me=document.getElementById('mebox');if(me&&mp&&me.parentNode!==mp)mp.insertBefore(me,mp.firstChild);
-  home.b.forEach(x=>{if(!x)return;const [e,p]=x;if(e.parentNode!==p)p.appendChild(e)});if(rail&&rail.isConnected)rail.remove()}
-let was=null;function sync(){const m=MQ.matches;if(m===was&&(!m||document.documentElement.classList.contains('land205')))return;if(m){if(on())was=true}else{off();was=false}
+  home.b.forEach(x=>{if(!x)return;const [e,p]=x;if(e.parentNode!==p)p.appendChild(e)});try{const cb=document.getElementById('chatBar');if(cb&&home.cb&&cb.parentNode!==home.cb[0])home.cb[0].insertBefore(cb,home.cb[1]&&home.cb[1].parentNode===home.cb[0]?home.cb[1]:null)}catch(e){}if(rail&&rail.isConnected)rail.remove()}
+let was=null;function sync(){const m=MQ.matches;if(m===was&&(!m||de.classList.contains('land205'))){if(m)frame();return}if(m){if(on())was=true}else{off();was=false}
   requestAnimationFrame(()=>{try{dispatchEvent(new Event('resize'))}catch(e){}})}
 try{MQ.addEventListener('change',sync)}catch(e){MQ.addListener&&MQ.addListener(sync)}
-addEventListener('resize',()=>{if(MQ.matches!==was)sync()});
+addEventListener('resize',()=>{sync();setTimeout(frame,60);setTimeout(frame,400)});addEventListener('orientationchange',()=>{setTimeout(sync,100);setTimeout(frame,700)});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',sync);else sync();
-// render() may rebuild the bottom bar: put the pieces back in the rail
-try{render=(function(p){return function(){const r=p.apply(this,arguments);try{if(MQ.matches&&was){const me=document.getElementById('mebox');if((me&&(!rail||me.parentNode!==rail))||(rail&&ids.some(i=>{const e=document.getElementById(i);return e&&!rail.contains(e)})))on()}}catch(e){}return r}})(render)}catch(e){}
+// render() may rebuild the bottom bar: put the pieces back
+try{render=(function(p){return function(){const r=p.apply(this,arguments);try{if(MQ.matches&&was){const me=document.getElementById('mebox'),app=document.getElementById('app');const cb=document.getElementById('chatBar');if((me&&me.parentNode!==app)||(cb&&cb.parentNode!==document.body)||(rail&&ids.some(i=>{const e=document.getElementById(i);return e&&!rail.contains(e)})))on()}}catch(e){}return r}})(render)}catch(e){}
 })();
 }catch(e){try{console.error('land205.js',e)}catch(_){}}
 
+
+// round 215: the score keeps its gold look. Upright: the box takes the width of its numbers so 4 digits (1200) show whole, same height (the table does not move).
+// Sideways: the same box stretched sideways, never taller.
+try{(function(){const st=document.createElement("style");st.textContent=`
+@media (orientation:portrait){
+html body #app .topbar.topbar{grid-template-columns:minmax(0,1fr) max-content minmax(0,1fr)!important}
+html body #app .topbar.topbar .score #board{gap:3px!important;justify-content:center!important}
+html body #app .topbar.topbar .score #board .col{min-width:0!important;flex:0 0 auto!important}
+html body #app .topbar.topbar .score #board .col .n{width:auto!important;min-width:20px!important;max-width:none!important;padding:0 3px!important;font-size:12px!important;letter-spacing:-.4px!important;overflow:visible!important;text-overflow:clip!important}
+}
+@media (orientation:landscape){
+html.land205 body #app .topbar .score{padding-left:12px!important;padding-right:12px!important}
+html.land205 body #app .topbar .score #board{gap:7px!important}
+html.land205 body #app .topbar .score .n{width:auto!important;min-width:34px!important;max-width:none!important;padding:0 6px!important;overflow:visible!important}
+html.land205 body #app .topbar .score #board:has(.col:nth-child(4)){gap:3px!important}
+html.land205 body #app .topbar .score #board:has(.col:nth-child(4)) .n{min-width:28px!important;padding:0 3px!important;letter-spacing:-.4px!important}
+html.land205 body #app .topbar .score:has(.col:nth-child(4)){padding-left:6px!important;padding-right:6px!important}
+}
+`;document.head.appendChild(st)})();
+}catch(e){try{console.error("score215.js",e)}catch(_){}}
+
+// round 215: the eat / fire effects were drawn at phone size, so on an iPad (13 inch) the bats, rings and sparks looked tiny next to the big table.
+// Every particle now grows with the table: size, speed and gravity times k (1 on phones, up to 1.8 on the biggest iPad).
+try{(function(){if(typeof FXE==='undefined'||!FXE.add)return;const A=FXE.add.bind(FXE);
+ const K=()=>{try{const r=document.querySelector('.rug');const w=r?Math.min(r.getBoundingClientRect().width,r.getBoundingClientRect().height*1.6):0;return Math.max(1,Math.min(1.8,w/440))}catch(e){return 1}};
+ let k=1,t=0;FXE.add=function(o){try{const n=performance.now();if(n-t>500){k=K();t=n}if(k>1.02&&o){for(const f of ['size','size2','w','vx','vy','ay'])if(typeof o[f]==='number')o[f]*=k}}catch(e){}return A(o)}})();
+}catch(e){try{console.error('fxscale215.js',e)}catch(_){}}
+
+// round 215: the joker mark on a pile card stayed 30px; on a big card (iPad upright, sideways) it looked tiny. It now grows with the card
+// (a third of its width, 30px at least, so phones do not change).
+try{(function(){const st=document.createElement('style');st.textContent=`
+html body #seats .seat .pilebox .card .jk135,html body #mebox .pilebox .card .jk135,html body #app>#mebox .pilebox .card .jk135{width:max(30px,calc(var(--cw,60px) * .46))!important;height:max(30px,calc(var(--cw,60px) * .46))!important;margin-top:calc(max(30px,calc(var(--cw,60px) * .46)) / -2)!important;left:calc(max(30px,calc(var(--cw,60px) * .46)) * -.42)!important}
+html body #seats .seat.s-left .pilebox .card .jk135{left:auto!important;right:calc(max(30px,calc(var(--cw,60px) * .46)) * -.42)!important}
+`;document.head.appendChild(st)})();
+}catch(e){try{console.error('jkmark215.js',e)}catch(_){}}
+
+// round 215: on a big upright screen (iPad) the left player's badge sat on the number in the corner of his pile card; it moves onto the edge of his picture
+try{(function(){const st=document.createElement('style');st.textContent=`@media (orientation:portrait) and (min-width:700px){
+html body #seats .seat.s-left .flg174{translate:-22px -8px!important}
+/* the badge, level, gift button, pile count and done tag grow with the picture (about 1.75x the phone size here) */
+html body #seats .seat .flg174,html body #seats .seat .lvl,html body #seats .seat .seatgift,html body #seats .seat .pilebox .count,html body #seats .seat .tags{zoom:1.6}
+html body #seats .seat .name{font-size:15px!important;max-width:130px!important}}`;document.head.appendChild(st)})();
+}catch(e){try{console.error('badge215.js',e)}catch(_){}}
+
+// round 215: a full check of every piece on big screens (iPad upright and sideways, iPhone Duo open). Pieces that kept the phone size
+// next to a picture almost twice as big: the war panel with its countdown ring, the deck count, the eat shock ring, the fire price /
+// gift balance chips sideways. They now grow with the player pictures (--bk = picture size / phone picture size, 1 on phones, up to 1.7).
+// The attack swords of the TOP player sat under his picture: they show under his pile card instead.
+try{(function(){const de=document.documentElement;
+ const upd=()=>{try{const t=document.querySelector('#seats .seat .tile');const w=t?t.getBoundingClientRect().width:0;const k=w?Math.max(1,Math.min(1.7,w/67*.85)):1;const v=String(+k.toFixed(3));if(de.style.getPropertyValue('--bk')!==v)de.style.setProperty('--bk',v)}catch(e){}};
+ addEventListener('resize',()=>setTimeout(upd,120));setInterval(upd,1500);try{render=(function(p){return function(){const r=p.apply(this,arguments);upd();return r}})(render)}catch(e){}
+ const st=document.createElement('style');st.textContent=`
+html body #war{scale:var(--bk,1);transform-origin:50% 50%}
+html body .drawrow .dcnt{zoom:var(--bk,1)}
+html body #fx .shock{scale:var(--bk,1)}
+html.land205 body #rail205 .gbtn .slamcost,html.land205 body #rail205 .gbtn #coinBadge,html.land205 body #rail205 .gbtn .badge,html.land205 body #rail205 .gbtn .fbx{zoom:var(--u,1)!important}
+html body #seats .seat.s-top.atk137f .pilebox .card::before,html body #seats .seat.s-top.atk137m .pilebox .card::before{top:auto!important;bottom:-14px!important}
+@media (orientation:portrait){html body .atk137f .pilebox .card::before,html body .atk137m .pilebox .card::before{zoom:var(--bk,1)}}
+html.land205 body #seats .seat.s-top.atk137f .pilebox .card::before,html.land205 body #seats .seat.s-top.atk137m .pilebox .card::before{bottom:-19px!important}
+`;document.head.appendChild(st);upd()})();
+}catch(e){try{console.error('bigk215.js',e)}catch(_){}}
+
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1123.2220';
+const EB_VERSION='v1124.1436';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
