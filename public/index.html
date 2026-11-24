@@ -18045,7 +18045,13 @@ try{(function(){const st=document.createElement('style');st.textContent=`@media 
 // label stayed phone-sized there (levels, card counters, points, "done" tags, deck count, button labels) while they were fine on the iPhone Duo and the Mac.
 // The page now tests this once; on such a browser the writing of those pieces is sized by hand to match (font size x the piece's zoom).
 try{(function(){let bad=null;
- const test=()=>{try{const d=document.createElement('div');d.style.cssText='position:absolute;left:-999px;top:0;font:20px/1 monospace;white-space:nowrap;visibility:hidden';d.innerHTML='<span>0000000000</span><span style="zoom:2">0000000000</span>';document.body.appendChild(d);const a=d.children[0].getBoundingClientRect().width,b=d.children[1].getBoundingClientRect().width;d.remove();return a>0&&b/a<1.5}catch(e){return false}};
+ /* round 227: the first test measured the BOX, and on the iPad the box does grow (only the letters stay small), so it never fired there.
+    Now: the letters themselves are measured, and Safari older than version 18 (the iPad here is 17.4) is treated as such a browser in any case. One short report is sent so the result can be read from the stats. */
+ const test=()=>{let box=0,rng=0,ver=0,saf=false,bad=false;try{const ua=navigator.userAgent;saf=/Safari/.test(ua)&&!/Chrome|CriOS|Chromium|Edg|Android/.test(ua);ver=+((ua.match(/Version\/(\d+)/)||[])[1]||0);
+   const d=document.createElement('div');d.style.cssText='position:absolute;left:-999px;top:0;font:20px/1 monospace;white-space:nowrap;visibility:hidden';d.innerHTML='<span>0000000000</span><span style="zoom:2">0000000000</span>';document.body.appendChild(d);
+   const a=d.children[0].getBoundingClientRect().width,b2=d.children[1].getBoundingClientRect().width;box=a?b2/a:0;try{const r1=document.createRange(),r2=document.createRange();r1.selectNodeContents(d.children[0]);r2.selectNodeContents(d.children[1]);const w1=r1.getBoundingClientRect().width,w2=r2.getBoundingClientRect().width;rng=w1?w2/w1:0}catch(e){}d.remove();
+   bad=(box>0&&box<1.5)||(rng>0&&rng<1.5)||(saf&&ver>0&&ver<18);
+   try{const k='eb-zt227';let v='';try{v=EB_VERSION}catch(e){}if(localStorage.getItem(k)!==v){localStorage.setItem(k,v);fetch('/api/err',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msg:'ZOOMTEST '+(bad?'fix on':'fix off'),where:('box'+box.toFixed(2)+' rng'+rng.toFixed(2)+' saf'+(saf?1:0)+' v'+ver+' '+innerWidth+'x'+innerHeight+' '+ua.replace(/Mozilla\/5.0 /,'')).slice(0,118),ver:v,dev:'diag'})}).catch(()=>{})}}catch(e){}}catch(e){}return bad};
  const SEL='#seats .lvl,#seats .pilebox .count,#seats .pilebox>span,#seats .tags .tag,#seats .seatgift,.drawrow .dcnt,#mebox .lvl,#mebox .pilebox .count,#mebox .pilebox>span,#mebox .rkwrap,.botchip,#rail205 .badge,#rail205 .gbtn,.bottombar .gbtn,.bottombar .badge,.topbar .score .n,.topbar .score .t,.topbar .score .sub,.topbar .score .sub span,.wc116lab';
  const zoomOf=e=>{let z=1;for(let x=e;x&&x!==document.documentElement;x=x.parentElement){const v=parseFloat(getComputedStyle(x).zoom);if(v&&v!==1)z*=v}return z};
  function fix(){if(bad===null){if(!document.body)return;bad=window.__forceZoomText||test();if(bad)document.documentElement.classList.add('nozt222')}if(!bad)return;
@@ -18088,7 +18094,7 @@ try{(function(){let since=0;setInterval(()=>{try{if(typeof S==='undefined'||!S||
 
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1124.1914';
+const EB_VERSION='v1124.1955';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
