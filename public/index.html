@@ -11467,7 +11467,7 @@ function show(who){try{clear();if(typeof S==='undefined'||!S||!S.war||!S.players
   document.body.appendChild(chip);document.body.appendChild(lab);
   const pos=()=>{const cs=[...document.querySelectorAll('#ground>.card')].filter(e=>e.getBoundingClientRect().width);const cd=cs[cs.length-1];if(!cd||!S||!S.war){clear();return}
     document.querySelectorAll('.wc116c').forEach(c=>{if(c!==cd){c.classList.remove('wc116c');c.style.removeProperty('--wc')}});cd.classList.add('wc116c');cd.style.setProperty('--wc',col);
-    const r=cd.getBoundingClientRect(),s=Math.max(30,Math.min(40,r.width*.5));chip.style.width=chip.style.height=s+'px';chip.style.left=(r.right-s*.6)+'px';chip.style.top=(r.top-s*.42)+'px';
+    const r=cd.getBoundingClientRect(),bk=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--bk'))||1,s=Math.max(30,Math.min(40*bk,r.width*.5)); /* round 221: grows with the players' pictures on big screens */chip.style.width=chip.style.height=s+'px';chip.style.left=(r.right-s*.6)+'px';chip.style.top=(r.top-s*.42)+'px';
     const lw=lab.offsetWidth||90,lh=lab.offsetHeight||22,bx={l:r.left+r.width/2-lw/2,r:r.left+r.width/2+lw/2,t:r.bottom+5,b:r.bottom+5+lh};
     const hit=[...document.querySelectorAll('#war,#myrow .card,#actions button')].some(e=>{const o=e.getBoundingClientRect();return o.width&&o.left<bx.r&&o.right>bx.l&&o.top<bx.b&&o.bottom>bx.t});
     if(hit){lab.style.transform='none';lab.style.top=(r.top+r.height*.5-lh/2)+'px';lab.style.left=Math.max(6,r.left-lw-10)+'px'}
@@ -17831,7 +17831,7 @@ html.land205 #rail205 .gbtn{position:relative!important;left:auto!important;righ
 html.land205 body #app>#mebox{position:absolute!important;left:calc(var(--u) * 96px)!important;bottom:calc(var(--u) * 14px)!important;z-index:30;display:flex!important;flex-direction:row!important;align-items:flex-end!important;gap:calc(var(--u) * 10px)!important;width:auto!important;margin:0!important;zoom:min(calc(var(--u) * 1.3),1.35)}
 html.land205 body #app>#mebox .botchip{position:absolute!important;left:0!important;right:auto!important;top:-28px!important;translate:none!important;max-width:130px!important;white-space:nowrap!important;font-size:11px!important}
 /* my hand */
-html.land205 body .handzone{margin-left:0!important;padding-left:calc(var(--u) * 318px)!important;padding-right:calc(var(--u) * 112px)!important;box-sizing:border-box!important;margin-bottom:var(--hzmb,0px)!important}
+html.land205 body .handzone{margin-left:0!important;padding-left:calc(var(--u) * 330px)!important;padding-right:calc(var(--u) * 196px)!important;box-sizing:border-box!important;margin-bottom:var(--hzmb,0px)!important}
 html.land205.short205 body .handzone{padding-left:0!important;padding-right:0!important}
 html.land205 body .handzone #myrow{max-width:none!important;margin-left:auto!important;margin-right:auto!important}
 /* round 218 (design A): my hand is 30% bigger sideways, a little bigger than the cards on the table (it used to be smaller than them) */
@@ -17851,7 +17851,7 @@ html.land205 body #seats .seat .name,html.land205 body .table .s-left .name,html
 html.land205 body #seats .seat .tags{zoom:var(--sk,1)}
 html.land205 body #fx .bubble{scale:min(var(--sk,1),1.45)}
 /* the attack swords on a pile under attack: bigger and above the count badge */
-html.land205 body .atk137f .pilebox .card::before,html.land205 body .atk137m .pilebox .card::before{width:30px!important;height:30px!important;font-size:18px!important;top:-17px!important;z-index:9!important}
+html.land205 body .atk137f .pilebox .card::before,html.land205 body .atk137m .pilebox .card::before{z-index:9!important}
 html.land205 body .atk137f .pilebox .count,html.land205 body .atk137m .pilebox .count{z-index:8}
 /* the tip: top right corner of the frame */
 html.land205 #hintPop{left:auto!important;right:calc((100vw - var(--AW)) / 2 + var(--u) * 16px)!important;top:calc(env(safe-area-inset-top,0px) + var(--AT,0px) + var(--u) * 10px)!important;bottom:auto!important;max-width:calc(var(--u) * 320px)!important;transform:none!important;translate:none!important}
@@ -17963,7 +17963,7 @@ try{(function(){const st=document.createElement('style');st.textContent=`@media 
 html body #seats .seat.s-left .flg174{translate:-22px -8px!important}
 /* the badge, level, gift button, pile count and done tag grow with the picture (about 1.75x the phone size here) */
 html body #seats .seat .flg174,html body #seats .seat .lvl,html body #seats .seat .seatgift,html body #seats .seat .pilebox .count,html body #seats .seat .tags{zoom:1.6}
-html body #seats .seat .name{font-size:15px!important;max-width:130px!important}}`;document.head.appendChild(st)})();
+html body #seats .seat .name{font-size:18px!important;max-width:150px!important;padding:3px 12px!important}}`;document.head.appendChild(st)})();
 }catch(e){try{console.error('badge215.js',e)}catch(_){}}
 
 // round 215: a full check of every piece on big screens (iPad upright and sideways, iPhone Duo open). Pieces that kept the phone size
@@ -17980,7 +17980,10 @@ html body #fx .shock{scale:var(--bk,1)}
 html.land205 body #rail205 .gbtn .slamcost,html.land205 body #rail205 .gbtn #coinBadge,html.land205 body #rail205 .gbtn .badge,html.land205 body #rail205 .gbtn .fbx{zoom:var(--u,1)!important}
 /* round 219: the top player's attack mark sits on the side of his card, at its middle (asked for) */
 html body #seats .seat.s-top.atk137f .pilebox .card::before,html body #seats .seat.s-top.atk137m .pilebox .card::before{top:50%!important;bottom:auto!important;left:-13px!important;right:auto!important;transform:translateY(-50%)!important}
-@media (orientation:portrait){html body .atk137f .pilebox .card::before,html body .atk137m .pilebox .card::before{zoom:var(--bk,1)}}
+/* round 221: the swords badge and the friend/foe label grow with the pictures in every layout (text, so they stay sharp) */
+html body .atk137f .pilebox .card::before,html body .atk137m .pilebox .card::before{zoom:var(--bk,1)}
+html body .wc116lab{font-size:calc(13px * var(--bk,1))!important;padding:calc(3px * var(--bk,1)) calc(12px * var(--bk,1))!important}
+html.land205:not(.short205) #hintPop{font-size:calc(var(--u) * 14.5px)!important;padding:calc(var(--u) * 7px) calc(var(--u) * 12px)!important}
 `;document.head.appendChild(st);upd()})();
 }catch(e){try{console.error('bigk215.js',e)}catch(_){}}
 
@@ -17990,7 +17993,9 @@ try{(function(){const st=document.createElement("style");st.textContent=`
 @media (orientation:portrait) and (min-width:700px){
 html body #app .topbar .gbtn{font-size:16px!important}
 html body #app .topbar .gbtn svg{width:28px!important;height:28px!important}
-html body #app .topbar .score{zoom:1.15}
+html body #app .topbar .score{zoom:1.17}
+html body #hintPop{font-size:15.5px!important;max-width:min(60vw,520px)!important}
+html body #seats .seat .pilebox>span:not(.count){zoom:1.85!important}
 html body .bottombar #slamBtn,html body .bottombar #giftBtn,html body .bottombar #chatBtn,html body .bottombar #micBtn{zoom:1.4}
 html body #mebox .lvl,html body #mebox .pilebox>span:not(.count),html body #mebox .pilebox .count,html body #mebox .rkwrap{zoom:1.5}
 html body #seats .seat .pilebox>span:not(.count){zoom:1.6}
@@ -18034,9 +18039,43 @@ try{(function(){const fit=b=>{try{const app=document.getElementById('app');if(!a
 try{(function(){const st=document.createElement('style');st.textContent=`@media (orientation:portrait) and (min-width:560px) and (max-width:699px){html body #app .topbar .score{zoom:1.18}}`;document.head.appendChild(st)})();
 }catch(e){try{console.error('duoscore220.js',e)}catch(_){}}
 
+// round 222: on the iPad (its Safari), making a piece bigger with "zoom" grew the box and the pictures but NOT the writing inside it, so every small
+// label stayed phone-sized there (levels, card counters, points, "done" tags, deck count, button labels) while they were fine on the iPhone Duo and the Mac.
+// The page now tests this once; on such a browser the writing of those pieces is sized by hand to match (font size x the piece's zoom).
+try{(function(){let bad=null;
+ const test=()=>{try{const d=document.createElement('div');d.style.cssText='position:absolute;left:-999px;top:0;font:20px/1 monospace;white-space:nowrap;visibility:hidden';d.innerHTML='<span>0000000000</span><span style="zoom:2">0000000000</span>';document.body.appendChild(d);const a=d.children[0].getBoundingClientRect().width,b=d.children[1].getBoundingClientRect().width;d.remove();return a>0&&b/a<1.5}catch(e){return false}};
+ const SEL='#seats .lvl,#seats .pilebox .count,#seats .pilebox>span,#seats .tags .tag,#seats .seatgift,.drawrow .dcnt,#mebox .lvl,#mebox .pilebox .count,#mebox .pilebox>span,#mebox .rkwrap,.botchip,#rail205 .badge,#rail205 .gbtn,.bottombar .gbtn,.bottombar .badge,.topbar .score .n,.topbar .score .t,.topbar .score .sub,.topbar .score .sub span,.wc116lab';
+ const zoomOf=e=>{let z=1;for(let x=e;x&&x!==document.documentElement;x=x.parentElement){const v=parseFloat(getComputedStyle(x).zoom);if(v&&v!==1)z*=v}return z};
+ function fix(){if(bad===null){if(!document.body)return;bad=window.__forceZoomText||test();if(bad)document.documentElement.classList.add('nozt222')}if(!bad)return;
+  try{document.querySelectorAll(SEL).forEach(e=>{const z=zoomOf(e);let base=parseFloat(e.dataset.fz222);if(!base){const keep=e.style.fontSize;e.style.fontSize='';base=parseFloat(getComputedStyle(e).fontSize)||0;e.style.fontSize=keep;if(!base)return;e.dataset.fz222=base}
+    const want=z>1.02?(base*z).toFixed(1)+'px':'';if(e.style.getPropertyValue('font-size')!==want){if(want)e.style.setProperty('font-size',want,'important');else e.style.removeProperty('font-size')}})}catch(e){}}
+ window.__zoomText222=fix;try{render=(function(p){return function(){const r=p.apply(this,arguments);try{fix()}catch(e){}return r}})(render)}catch(e){}
+ addEventListener('resize',()=>{setTimeout(fix,200);setTimeout(fix,900)});setInterval(fix,2000)})();
+}catch(e){try{console.error('zoomtext222.js',e)}catch(_){}}
+
+try{(function(){const st=document.createElement('style');st.textContent=`
+html body #seats .seat.s-right .pilebox>.card .count{top:auto!important;bottom:-8px!important}
+html body .drawrow .dcnt{position:relative;z-index:9}
+`;document.head.appendChild(st)})();
+}catch(e){try{console.error('small222.js',e)}catch(_){}}
+
+// round 223: two overlaps on the top player, fixed by measuring after each draw:
+// 1) on a short sideways screen (iPhone Duo in Safari) his pile card sits beside his picture and his name lay on top of it: the card moves just past the name.
+// 2) his "friend" tag lay on the deck's card count: the tag moves up just enough.
+try{(function(){const hit=(a,b)=>a.width&&b.width&&a.left<b.right-1&&a.right>b.left+1&&a.top<b.bottom-1&&a.bottom>b.top+1;
+ function fix(){try{const t=document.querySelector('#seats .seat.s-top');if(!t)return;
+  const pb=t.querySelector('.pilebox'),nm=t.querySelector('.name');
+  if(pb){const cd=pb.querySelector('.card');if(cd&&nm){const had=parseFloat(pb.dataset.dx223)||0;const n=nm.getBoundingClientRect(),c=cd.getBoundingClientRect();const c0={left:c.left-had,right:c.right-had,top:c.top,bottom:c.bottom,width:c.width};let dx=0;if(hit(n,c0))dx=Math.ceil(n.right+8-c0.left);if(dx!==had){pb.dataset.dx223=dx;const cs=getComputedStyle(pb);pb.style.translate='';const base=(getComputedStyle(pb).translate||'none');const parts=base==='none'?['0px','0px']:base.split(' ');pb.style.setProperty('translate',dx?(parseFloat(parts[0])+dx)+'px '+(parts[1]||'0px'):'')}}}
+  const tg=t.querySelector('.tags .tag'),dc=document.querySelector('.drawrow .dcnt');
+  if(tg){if(tg.style.top){tg.style.top=''}if(dc){const a=tg.getBoundingClientRect(),b=dc.getBoundingClientRect();if(hit(a,b)){let z=1;for(let x=tg;x&&x!==document.body;x=x.parentElement){const v=parseFloat(getComputedStyle(x).zoom);if(v)z*=v}tg.style.position='relative';tg.style.top=-Math.ceil((a.bottom-b.top+3)/z)+'px'}}}}catch(e){}}
+ let q=0;const ask=()=>{if(!q)q=requestAnimationFrame(()=>{q=0;fix()})};
+ try{render=(function(p){return function(){const r=p.apply(this,arguments);ask();return r}})(render)}catch(e){}
+ addEventListener('resize',()=>{setTimeout(fix,250);setTimeout(fix,1000)});setInterval(fix,1500)})();
+}catch(e){try{console.error('topfix223.js',e)}catch(_){}}
+
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1124.1741';
+const EB_VERSION='v1124.1832';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
