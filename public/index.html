@@ -2361,6 +2361,8 @@ function tpvEnd(reopen){const fs=tpv&&tpv.fromSetup;tpv=null;themeTry=null;apply
 function refreshThemeBtn(){const b=$('themeBtn');if(!b)return;const th=THEMES.find(x=>x.id===WAL.theme)||THEMES[0];b.innerHTML=`${themePrev(th.id)}<span><b>${L(th.en,th.ar)}</b><small>${L('Table & cards','الثيمات والورق')}</small></span>`}
 window.addEventListener('click',e=>{const t=e.target.closest('#shop [data-tpick],#tpvBar button');if(!t)return;e.stopImmediatePropagation();e.preventDefault();
   if(t.dataset.tpick)return tpvShow(t.dataset.tpick);
+  /* round 224: a second tap on the preview bar after the preview had already closed (a quick double tap) crashed with "tpv.id" */
+  if(!tpv){try{const b=$('tpvBar');if(b)b.hidden=true}catch(e){}return}
   if(t.dataset.tpvnav){const i=THEMES.findIndex(z=>z.id===tpv.id),n=THEMES.length;return tpvShow(THEMES[(i+ +t.dataset.tpvnav+n)%n].id)}
   if(t.dataset.tpvback)return tpvEnd(true);
   if(t.dataset.tpvdone)return tpvEnd(false);
@@ -5820,7 +5822,7 @@ window.addEventListener('click',e=>{
     /* round 219: also the players' places and my hand's top (rounded): cards laid out while the table was still settling stayed tiny */let seatSig='';try{document.querySelectorAll('.table .seat:not([data-seat="0"])').forEach(q=>{const w=q.querySelector('.who'),pc=q.querySelector('.pilebox .card');const r=w&&w.getBoundingClientRect();seatSig+=(r?Math.round(r.left/8)+'.'+Math.round(r.top/8)+'.'+Math.round(r.width/8):'')+(pc?'p':'')+';'});const hc=document.querySelector('#myrow .card');if(hc)seatSig+='h'+Math.round(hc.getBoundingClientRect().top/8)}catch(e){}
     const wr=document.getElementById('war'),dr=document.querySelector('.drawrow');const sig=seatSig+'|'+innerWidth+'x'+innerHeight+':'+rug.offsetWidth+'x'+rug.offsetHeight+':'+(S&&S.war?'w':'')+(wr&&wr.dataset.lift||'')+':'+(dr?Math.round(dr.getBoundingClientRect().height):'')+':'+cs.map(c=>(c.dataset.r||c.dataset.eat||'?')+(c.style.left?'':'!')).join(',');const same=sig===gsig&&cs.length&&cs.every(c=>c.style.left);gsig=sig.replace(/!/g,'');return same};
   const ask=k=>{need[k]=1;if(!req)req=requestAnimationFrame(()=>{req=0;flush()})};
-  fitGround=function(){ask('g')};fitSeats=function(){ask('s')};window.flushFits=flush;
+  fitGround=function(){ask('g')};fitSeats=function(){ask('s')};window.flushFits=flush;window.__regnd226=function(){gsig='';need.g=1;flush()};
   // anything that measures positions gets the finished layout
   const _pt=pt;pt=function(el){if(need.g||need.s)flush();return _pt(el)};
   addEventListener('resize',()=>{need.g=need.s=1;gsig='';flush()})})();
@@ -18066,6 +18068,8 @@ try{(function(){const hit=(a,b)=>a.width&&b.width&&a.left<b.right-1&&a.right>b.l
  function fix(){try{const t=document.querySelector('#seats .seat.s-top');if(!t)return;
   const pb=t.querySelector('.pilebox'),nm=t.querySelector('.name');
   if(pb){const cd=pb.querySelector('.card');if(cd&&nm){const had=parseFloat(pb.dataset.dx223)||0;const n=nm.getBoundingClientRect(),c=cd.getBoundingClientRect();const c0={left:c.left-had,right:c.right-had,top:c.top,bottom:c.bottom,width:c.width};let dx=0;if(hit(n,c0))dx=Math.ceil(n.right+8-c0.left);if(dx!==had){pb.dataset.dx223=dx;const cs=getComputedStyle(pb);pb.style.translate='';const base=(getComputedStyle(pb).translate||'none');const parts=base==='none'?['0px','0px']:base.split(' ');pb.style.setProperty('translate',dx?(parseFloat(parts[0])+dx)+'px '+(parts[1]||'0px'):'')}}}
+  /* round 225: a side player's name with extra badges (VIP, rank, fire streak) ran off the edge of the screen: it is pulled back inside */
+  try{const A0=(document.getElementById('app')||document.body).getBoundingClientRect(),stg=document.querySelector('.stage'),clip=stg&&getComputedStyle(stg).overflow!=='visible'?stg.getBoundingClientRect():A0,A={left:Math.max(A0.left,clip.left),right:Math.min(A0.right,clip.right)};document.querySelectorAll('#seats .seat.s-right .name,#seats .seat.s-left .name').forEach(n=>{const had=parseFloat(n.dataset.dx225)||0;const r=n.getBoundingClientRect();if(!r.width)return;const L=r.left-had,R=r.right-had;let dx=0;if(R>A.right-4)dx=Math.floor(A.right-4-R);else if(L<A.left+4)dx=Math.ceil(A.left+4-L);if(dx!==had){n.dataset.dx225=dx;n.style.position='relative';n.style.left=dx?dx+'px':''}})}catch(e){}
   const tg=t.querySelector('.tags .tag'),dc=document.querySelector('.drawrow .dcnt');
   if(tg){if(tg.style.top){tg.style.top=''}if(dc){const a=tg.getBoundingClientRect(),b=dc.getBoundingClientRect();if(hit(a,b)){let z=1;for(let x=tg;x&&x!==document.body;x=x.parentElement){const v=parseFloat(getComputedStyle(x).zoom);if(v)z*=v}tg.style.position='relative';tg.style.top=-Math.ceil((a.bottom-b.top+3)/z)+'px'}}}}catch(e){}}
  let q=0;const ask=()=>{if(!q)q=requestAnimationFrame(()=>{q=0;fix()})};
@@ -18073,9 +18077,18 @@ try{(function(){const hit=(a,b)=>a.width&&b.width&&a.left<b.right-1&&a.right>b.l
  addEventListener('resize',()=>{setTimeout(fix,250);setTimeout(fix,1000)});setInterval(fix,1500)})();
 }catch(e){try{console.error('topfix223.js',e)}catch(_){}}
 
+// round 226: safety net for the cards in the middle: they must all be the same size. Seen on the iPhone Duo in an online game: two cards big and two small.
+// It could not be reproduced here, so the game now checks by itself: if the middle cards differ in size for more than half a second (outside a war and
+// not while one is landing), they are laid out again; if they still differ, they are all given the size of the layout.
+try{(function(){let since=0;setInterval(()=>{try{if(typeof S==='undefined'||!S||S.war){since=0;return}const cs=[...document.querySelectorAll('#ground>.card')].filter(c=>!c.classList.contains('landing')&&!c.classList.contains('eating'));if(cs.length<2){since=0;return}
+  const ws=cs.map(c=>c.offsetWidth),mn=Math.min(...ws),mx=Math.max(...ws);if(mx-mn<=4){since=0;return}const now=performance.now();if(!since){since=now;return}if(now-since<500)return;since=0;
+  try{window.__evenFix226=(window.__evenFix226||0)+1;window.__regnd226&&__regnd226()}catch(e){}
+  const ws2=cs.map(c=>c.offsetWidth);if(Math.max(...ws2)-Math.min(...ws2)>4){const cw=cs.map(c=>parseFloat(c.style.getPropertyValue('--cw'))).filter(Boolean).sort((a,b)=>a-b)[0]||mn;cs.forEach(c=>{c.style.setProperty('--cw',cw+'px','important');c.style.setProperty('width',cw+'px','important')})}}catch(e){}},250)})();
+}catch(e){try{console.error('even226.js',e)}catch(_){}}
+
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1124.1832';
+const EB_VERSION='v1124.1914';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
