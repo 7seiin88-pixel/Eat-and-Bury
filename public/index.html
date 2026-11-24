@@ -2607,10 +2607,16 @@ const _flyC=fly;fly=function(html,from,to,o={}){
   if(o.ms!==420||calm||!from||!to||!/class="card/.test(html))return _flyC(html,from,to,o);
   const land=document.querySelector('#ground .landing');const tilt=land?(parseFloat(land.style.getPropertyValue('--tilt'))||0):0;
   const d=addFx(html,'flyer cardtoss',to),dx=from.x-to.x,dy=from.y-to.y,spin=(Math.random()<.5?-1:1)*(70+Math.random()*60);
+  // round 228: the flying copy has one fixed size (60) but the cards in the middle are bigger on wide screens (iPhone Duo, iPad): the copy landed small and
+  // then "popped" to the real size. It now lands at exactly the size of its place. And its end no longer hangs on one browser event: if that event is late
+  // (seen on Safari: the small copy sat on the table for a second), a timer finishes the landing.
+  let k=1;try{const fc=d.querySelector('.card'),fw=fc?fc.offsetWidth:0,lw=land?land.offsetWidth:0;if(fw&&lw)k=Math.max(.6,Math.min(3,lw/fw))}catch(e){}
+  let done=false;const fin=late=>{if(done)return;done=true;try{d.remove()}catch(e){}try{o.after&&o.after()}catch(e){}if(late===true)try{if(!window.__flyLate228){window.__flyLate228=1;let v='';try{v=EB_VERSION}catch(e){}fetch('/api/err',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msg:'FLYLATE toss',where:innerWidth+'x'+innerHeight+' k'+k.toFixed(2),ver:v,dev:'diag'})}).catch(()=>{})}}catch(e){}};
+  setTimeout(()=>fin(true),TOSS*(typeof ANIM==='number'?ANIM:1)+350);
   // straight to its own spot (no slow creep at the end): it arrives at 78% of the time, then a short settle "tap" on the cloth
-  d.animate([{transform:`translate(-50%,-50%) translate(${dx}px,${dy}px) rotate(${spin}deg) scale(${o.s0||1})`,easing:'cubic-bezier(.25,.8,.4,1)'},
-    {transform:`translate(-50%,-50%) rotate(${tilt}deg) scale(1.07)`,offset:.78,easing:'cubic-bezier(.3,0,.4,1)'},
-    {transform:`translate(-50%,-50%) rotate(${tilt}deg) scale(1)`}],{duration:TOSS,easing:'linear'}).onfinish=()=>{d.remove();o.after&&o.after()}};
+  d.animate([{transform:`translate(-50%,-50%) translate(${dx}px,${dy}px) rotate(${spin}deg) scale(${(o.s0||1)*k})`,easing:'cubic-bezier(.25,.8,.4,1)'},
+    {transform:`translate(-50%,-50%) rotate(${tilt}deg) scale(${1.07*k})`,offset:.78,easing:'cubic-bezier(.3,0,.4,1)'},
+    {transform:`translate(-50%,-50%) rotate(${tilt}deg) scale(${k})`}],{duration:TOSS,easing:'linear'}).onfinish=()=>fin()};
 
 // ---------- Agal: thrown with a streak, swings over the head and lashes down ----------
 const AGAL_BIG='<svg viewBox="0 0 120 60"><defs><linearGradient id="ag3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3a3a"/><stop offset=".5" stop-color="#0c0c0c"/><stop offset="1" stop-color="#000"/></linearGradient></defs>'+
@@ -12947,7 +12953,7 @@ if(typeof fly==='function'){const F=fly;fly=function(html,from,to,o={}){
   if(!o||o.ms===420||calm||!from||!to||o.raw)return F(html,from,to,o);
   const ms=/cardback/.test(html)?185:o.s1===.4?235:Math.round((o.ms||380)*.6),s0=o.s0==null?1:o.s0,s1=o.s1==null?1:o.s1,r0=o.r0||0,r1=o.r1||0;
   const d=addFx(html,'flyer',to),dx=from.x-to.x,dy=from.y-to.y;
-  d.animate([{transform:`translate(-50%,-50%) translate(${dx}px,${dy}px) rotate(${r0}deg) scale(${s0})`,easing:'cubic-bezier(.4,.05,.25,1)'},{transform:`translate(-50%,-50%) rotate(${r1}deg) scale(${s1*1.04})`,opacity:1,offset:.82,easing:'ease-out'},{transform:`translate(-50%,-50%) rotate(${r1}deg) scale(${s1})`,opacity:s1<.6?0:1}],{duration:ms,easing:'linear'}).onfinish=()=>{d.remove();o.after&&o.after()}}}
+  d.animate([{transform:`translate(-50%,-50%) translate(${dx}px,${dy}px) rotate(${r0}deg) scale(${s0})`,easing:'cubic-bezier(.4,.05,.25,1)'},{transform:`translate(-50%,-50%) rotate(${r1}deg) scale(${s1*1.04})`,opacity:1,offset:.82,easing:'ease-out'},{transform:`translate(-50%,-50%) rotate(${r1}deg) scale(${s1})`,opacity:s1<.6?0:1}],{duration:ms,easing:'linear'}).onfinish=()=>fin();/* round 228: the end of a flight no longer hangs on that one event: a timer finishes it if the event is late */let done=false;function fin(){if(done)return;done=true;try{d.remove()}catch(e){}try{o.after&&o.after()}catch(e){}}setTimeout(fin,ms*(typeof ANIM==='number'?ANIM:1)+350)}}
 
 // ---------- 2) the war bar steps back a little after the 3rd cut (like the effects do), and fully while a big fire effect plays ----------
 const sync=()=>{try{const w=typeof S!=='undefined'&&S&&S.war,c=w&&w.pot?w.pot.length-1:0,d=document.documentElement;
@@ -18043,26 +18049,56 @@ try{(function(){const st=document.createElement('style');st.textContent=`@media 
 
 // round 222: on the iPad (its Safari), making a piece bigger with "zoom" grew the box and the pictures but NOT the writing inside it, so every small
 // label stayed phone-sized there (levels, card counters, points, "done" tags, deck count, button labels) while they were fine on the iPhone Duo and the Mac.
-// The page now tests this once; on such a browser the writing of those pieces is sized by hand to match (font size x the piece's zoom).
-try{(function(){let bad=null;
- /* round 227: the first test measured the BOX, and on the iPad the box does grow (only the letters stay small), so it never fired there.
-    Now: the letters themselves are measured, and Safari older than version 18 (the iPad here is 17.4) is treated as such a browser in any case. One short report is sent so the result can be read from the stats. */
- const test=()=>{let box=0,rng=0,ver=0,saf=false,bad=false;try{const ua=navigator.userAgent;saf=/Safari/.test(ua)&&!/Chrome|CriOS|Chromium|Edg|Android/.test(ua);ver=+((ua.match(/Version\/(\d+)/)||[])[1]||0);
-   const d=document.createElement('div');d.style.cssText='position:absolute;left:-999px;top:0;font:20px/1 monospace;white-space:nowrap;visibility:hidden';d.innerHTML='<span>0000000000</span><span style="zoom:2">0000000000</span>';document.body.appendChild(d);
-   const a=d.children[0].getBoundingClientRect().width,b2=d.children[1].getBoundingClientRect().width;box=a?b2/a:0;try{const r1=document.createRange(),r2=document.createRange();r1.selectNodeContents(d.children[0]);r2.selectNodeContents(d.children[1]);const w1=r1.getBoundingClientRect().width,w2=r2.getBoundingClientRect().width;rng=w1?w2/w1:0}catch(e){}d.remove();
-   bad=(box>0&&box<1.5)||(rng>0&&rng<1.5)||(saf&&ver>0&&ver<18);
-   try{const k='eb-zt227';let v='';try{v=EB_VERSION}catch(e){}if(localStorage.getItem(k)!==v){localStorage.setItem(k,v);fetch('/api/err',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msg:'ZOOMTEST '+(bad?'fix on':'fix off'),where:('box'+box.toFixed(2)+' rng'+rng.toFixed(2)+' saf'+(saf?1:0)+' v'+ver+' '+innerWidth+'x'+innerHeight+' '+ua.replace(/Mozilla\/5.0 /,'')).slice(0,118),ver:v,dev:'diag'})}).catch(()=>{})}}catch(e){}}catch(e){}return bad};
+// round 228: the real cause, read from the iPad's own report and WebKit's notes: the iPad runs Safari in "desktop" mode with its text autosizing on, and that
+// autosizing throws the zoom away when the page says text-size-adjust:100% (ours did). Saying "none" turns it off, so the writing grows with its box again.
+//  1) on the iPad only (iPhones keep 100%: older iPhones had the opposite fault with "none"), the page now says text-size-adjust:none.
+//  2) the old hand-sizing guessed wrong on the iPad (it read the letter size already divided by the zoom, so it set the same small size again).
+//     It now MEASURES the letters against a box of known size inside the same piece, and only if they are still too small sizes them by hand
+//     and measures again. On a healthy browser it measures, finds nothing wrong, and switches itself off.
+//  3) one short report (ZOOMCAL) is sent so the result can be read from the stats.
+try{(function(){let bad=null,okN=0;const cache=new Map(),refs=new Map(),diag=[];let sent=false;
+ let ipad=false;try{const ua=navigator.userAgent;ipad=/iPad/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1);if(ipad){document.documentElement.classList.add('ipad228');const st=document.createElement('style');st.textContent='html.ipad228,html.ipad228 body{-webkit-text-size-adjust:none!important;text-size-adjust:none!important}';document.head.appendChild(st)}}catch(e){}
  const SEL='#seats .lvl,#seats .pilebox .count,#seats .pilebox>span,#seats .tags .tag,#seats .seatgift,.drawrow .dcnt,#mebox .lvl,#mebox .pilebox .count,#mebox .pilebox>span,#mebox .rkwrap,.botchip,#rail205 .badge,#rail205 .gbtn,.bottombar .gbtn,.bottombar .badge,.topbar .score .n,.topbar .score .t,.topbar .score .sub,.topbar .score .sub span,.wc116lab';
  const zoomOf=e=>{let z=1;for(let x=e;x&&x!==document.documentElement;x=x.parentElement){const v=parseFloat(getComputedStyle(x).zoom);if(v&&v!==1)z*=v}return z};
- function fix(){if(bad===null){if(!document.body)return;bad=window.__forceZoomText||test();if(bad)document.documentElement.classList.add('nozt222')}if(!bad)return;
-  try{document.querySelectorAll(SEL).forEach(e=>{const z=zoomOf(e);let base=parseFloat(e.dataset.fz222);if(!base){const keep=e.style.fontSize;e.style.fontSize='';base=parseFloat(getComputedStyle(e).fontSize)||0;e.style.fontSize=keep;if(!base)return;e.dataset.fz222=base}
-    const want=z>1.02?(base*z).toFixed(1)+'px':'';if(e.style.getPropertyValue('font-size')!==want){if(want)e.style.setProperty('font-size',want,'important');else e.style.removeProperty('font-size')}})}catch(e){}}
- window.__zoomText222=fix;try{render=(function(p){return function(){const r=p.apply(this,arguments);try{fix()}catch(e){}return r}})(render)}catch(e){}
+ const BASEP='position:absolute!important;left:0!important;top:0!important;right:auto!important;bottom:auto!important;visibility:hidden!important;pointer-events:none!important;padding:0!important;margin:0!important;border:0!important;zoom:1!important;transform:none!important;translate:none!important;scale:none!important;min-width:0!important;max-width:none!important;min-height:0!important;max-height:none!important;box-sizing:content-box!important;float:none!important;';
+ const TP=BASEP+'display:inline-block!important;width:auto!important;height:auto!important;white-space:nowrap!important;font:inherit!important;letter-spacing:0!important;word-spacing:0!important;text-indent:0!important;text-transform:none!important;';
+ const BP=BASEP+'display:block!important;width:100px!important;height:1px!important;font-size:0!important;';
+ const mk=(css,txt)=>{const s=document.createElement('zt-p');s.setAttribute('aria-hidden','true');s.style.cssText=css;if(txt)s.textContent=txt;return s};
+ const W=x=>x.getBoundingClientRect().width;
+ /* width of ten zeros per 1px of font, against a 100px box, measured where zoom plays no part */
+ const ref=cs=>{const k=[cs.fontFamily,cs.fontWeight,cs.fontStyle,cs.fontStretch,cs.fontVariantNumeric,cs.fontFeatureSettings].join('|');let u=refs.get(k);if(u===undefined){const h=document.createElement('div');h.style.cssText='position:absolute;left:-9999px;top:0;visibility:hidden;zoom:1';const t=mk(TP,'0000000000');t.style.setProperty('font','inherit');h.style.fontFamily=cs.fontFamily;h.style.fontWeight=cs.fontWeight;h.style.fontStyle=cs.fontStyle;h.style.fontStretch=cs.fontStretch;h.style.fontVariantNumeric=cs.fontVariantNumeric;h.style.fontFeatureSettings=cs.fontFeatureSettings;h.style.fontSize='20px';const b=mk(BP);h.appendChild(t);h.appendChild(b);document.documentElement.appendChild(h);const tw=W(t),bw=W(b);h.remove();u=tw&&bw?(tw/bw)/20:0;refs.set(k,u)}return u};
+ /* the size the letters of e are really drawn at, in e's own (zoomed) measure: equal to its font-size where zoom works */
+ const eff=e=>{const t=mk(TP,'0000000000'),b=mk(BP);e.appendChild(t);e.appendChild(b);let f=0;try{const tw=W(t),bw=W(b),u=ref(getComputedStyle(t));if(tw&&bw&&u)f=(tw/bw)/u}catch(_){}t.remove();b.remove();if(window.__ztSim)try{f=window.__ztSim(e,f)}catch(_){}return f};
+ /* how this browser reports a font size inside e (1 = as written; less = divided by the zoom) */
+ const rdq=e=>{const t=mk(TP+'font-size:20px!important;');e.appendChild(t);let q=1;try{q=(parseFloat(getComputedStyle(t).fontSize)||20)/20}catch(_){}t.remove();return q||1};
+ const put=(e,s)=>{if(s){if(e.dataset.fz228===undefined)e.dataset.fp228=e.style.fontSize||'';e.dataset.fz228=s;e.style.setProperty('font-size',s,'important')}else if(e.dataset.fz228!==undefined){const p=e.dataset.fp228||'';delete e.dataset.fz228;delete e.dataset.fp228;if(p)e.style.fontSize=p;else e.style.removeProperty('font-size')}};
+ const off=x=>Math.abs(x-1)>.07;
+ const send=()=>{if(sent||!diag.length)return;sent=true;if(!bad&&!ipad)return;try{const k='eb-zc228';let v='';try{v=EB_VERSION}catch(e){}if(localStorage.getItem(k)===v+(bad?'1':'0'))return;localStorage.setItem(k,v+(bad?'1':'0'));let tsa='';try{const c=getComputedStyle(document.documentElement);tsa=c.webkitTextSizeAdjust||c.textSizeAdjust||''}catch(e){}fetch('/api/err',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msg:'ZOOMCAL '+(bad?'by hand':'healthy'),where:('ipad'+(ipad?1:0)+' tsa='+tsa+' '+innerWidth+'x'+innerHeight+' | '+diag.slice(0,4).join(' ; ')).slice(0,118),ver:v,dev:'diag'})}).catch(()=>{})}catch(e){}};
+ function fix(){if(bad===false||!document.body)return;
+  try{const els=[...document.querySelectorAll(SEL)],todo=[];
+   for(const e of els){const z=zoomOf(e);if(z<=1.02){if(e.dataset.fz228!==undefined)put(e,'');continue}
+    const key=e.tagName+'|'+e.className+'|'+(e.parentElement?e.parentElement.className:'')+'|'+((e.closest('[id]')||{}).id||'')+'|'+z.toFixed(2)+'|'+(e.dataset.fz228!==undefined?e.dataset.fp228:e.style.fontSize||'');
+    const c=cache.get(key);if(c!==undefined){if((e.dataset.fz228||'')!==c||(c&&e.style.getPropertyValue('font-size')!==c))put(e,c);continue}
+    if(!e.getClientRects().length)continue;todo.push({e,key,z})}
+   if(!todo.length)return;
+   /* new kinds of piece: measured with every hand-set size taken off, so each one's own written size is read clean */
+   const had=[...document.querySelectorAll('[data-fz228]')].map(e=>({e,s:e.dataset.fz228}));had.forEach(h=>put(h.e,''));
+   for(const t of todo){const q=rdq(t.e);t.base=(parseFloat(getComputedStyle(t.e).fontSize)||0)/q;t.q=q;t.f0=eff(t.e)}
+   had.forEach(h=>{if(h.e.isConnected)put(h.e,h.s)});
+   for(const t of todo){if(cache.has(t.key)){put(t.e,cache.get(t.key));continue}if(!t.base||!t.f0)continue;let s='',f=t.f0;
+    if(off(t.f0/t.base)){let px=t.base*t.base/t.f0;for(let i=0;i<3;i++){px=Math.max(t.base*.5,Math.min(t.base*8,px));put(t.e,px.toFixed(1)+'px');f=eff(t.e);if(!f||!off(f/t.base))break;px=px*t.base/f}s=px.toFixed(1)+'px';if(f&&off(f/t.base)&&Math.abs(f/t.base-1)>=Math.abs(t.f0/t.base-1)){s='';put(t.e,'')}}
+    cache.set(t.key,s);if(s)put(t.e,s);
+    if(bad===null){if(s)bad=true;else if(++okN>=6)bad=false}
+    if(diag.length<4)diag.push((t.e.className||t.e.tagName).toString().split(' ')[0].slice(0,6)+' z'+t.z.toFixed(2)+' q'+t.q.toFixed(2)+' b'+t.base.toFixed(1)+' f'+t.f0.toFixed(1)+(s?'>'+f.toFixed(1)+' s'+parseFloat(s):' ok'))}
+   if(bad)document.documentElement.classList.add('nozt222');
+   if(bad!==null&&!sent)setTimeout(send,1500)}catch(e){}}
+ window.__zoomText222=fix;window.__zoomDiag228=()=>({bad,ipad,diag:diag.slice(),cache:[...cache]});try{render=(function(p){return function(){const r=p.apply(this,arguments);try{fix()}catch(e){}return r}})(render)}catch(e){}
  addEventListener('resize',()=>{setTimeout(fix,200);setTimeout(fix,900)});setInterval(fix,2000)})();
 }catch(e){try{console.error('zoomtext222.js',e)}catch(_){}}
 
 try{(function(){const st=document.createElement('style');st.textContent=`
-html body #seats .seat.s-right .pilebox>.card .count{top:auto!important;bottom:-8px!important}
+/* round 228: the right player's card count is back in the TOP corner like everyone else's (it had been moved to the bottom). It sits just above the card's edge, so it still does not cover the card's number */
+html body #seats .seat.s-right .pilebox>.card .count{top:auto!important;bottom:calc(100% - 3px)!important}
 html body .drawrow .dcnt{position:relative;z-index:9}
 `;document.head.appendChild(st)})();
 }catch(e){try{console.error('small222.js',e)}catch(_){}}
@@ -18086,15 +18122,15 @@ try{(function(){const hit=(a,b)=>a.width&&b.width&&a.left<b.right-1&&a.right>b.l
 // round 226: safety net for the cards in the middle: they must all be the same size. Seen on the iPhone Duo in an online game: two cards big and two small.
 // It could not be reproduced here, so the game now checks by itself: if the middle cards differ in size for more than half a second (outside a war and
 // not while one is landing), they are laid out again; if they still differ, they are all given the size of the layout.
-try{(function(){let since=0;setInterval(()=>{try{if(typeof S==='undefined'||!S||S.war){since=0;return}const cs=[...document.querySelectorAll('#ground>.card')].filter(c=>!c.classList.contains('landing')&&!c.classList.contains('eating'));if(cs.length<2){since=0;return}
-  const ws=cs.map(c=>c.offsetWidth),mn=Math.min(...ws),mx=Math.max(...ws);if(mx-mn<=4){since=0;return}const now=performance.now();if(!since){since=now;return}if(now-since<500)return;since=0;
-  try{window.__evenFix226=(window.__evenFix226||0)+1;window.__regnd226&&__regnd226()}catch(e){}
+try{(function(){let since=0;setInterval(()=>{try{if(typeof S==='undefined'||!S||S.war){since=0;return}/* round 228: a card still landing counts too, and so does a card that was never given a place */const cs=[...document.querySelectorAll('#ground>.card')].filter(c=>!c.classList.contains('eating'));if(!cs.length){since=0;return}
+  const ws=cs.map(c=>c.offsetWidth),mn=Math.min(...ws),mx=Math.max(...ws),lost=cs.some(c=>!c.style.left);if(mx-mn<=4&&!lost){since=0;return}const now=performance.now();if(!since){since=now;return}if(now-since<(lost?250:500))return;since=0;
+  try{window.__evenFix226=(window.__evenFix226||0)+1;if(!window.__evenSent228){window.__evenSent228=1;let v='';try{v=EB_VERSION}catch(e){}fetch('/api/err',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msg:'UNEVEN ground'+(lost?' lost':''),where:innerWidth+'x'+innerHeight+' w '+ws.join(',')+' cls '+cs.map(c=>c.className.replace(/card|hd|red|black/g,'').trim()||'-').join('|').slice(0,50),ver:v,dev:'diag'})}).catch(()=>{})}window.__regnd226&&__regnd226()}catch(e){}
   const ws2=cs.map(c=>c.offsetWidth);if(Math.max(...ws2)-Math.min(...ws2)>4){const cw=cs.map(c=>parseFloat(c.style.getPropertyValue('--cw'))).filter(Boolean).sort((a,b)=>a-b)[0]||mn;cs.forEach(c=>{c.style.setProperty('--cw',cw+'px','important');c.style.setProperty('width',cw+'px','important')})}}catch(e){}},250)})();
 }catch(e){try{console.error('even226.js',e)}catch(_){}}
 
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1124.1955';
+const EB_VERSION='v1124.2046';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
