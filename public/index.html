@@ -5817,7 +5817,8 @@ window.addEventListener('click',e=>{
   // round 205: the middle cards are laid out again only when they change (a card comes or goes) or the screen changes. A label or a bubble next to a player
   // used to change the free space by a few pixels, so the same cards jumped between one and two rows while nobody played
   let gsig='';const sameGround=()=>{const g=document.getElementById('ground'),rug=document.querySelector('.rug');if(!g||!rug)return false;const cs=[...g.querySelectorAll(':scope>.card')];
-    const wr=document.getElementById('war'),dr=document.querySelector('.drawrow');const sig=innerWidth+'x'+innerHeight+':'+rug.offsetWidth+'x'+rug.offsetHeight+':'+(S&&S.war?'w':'')+(wr&&wr.dataset.lift||'')+':'+(dr?Math.round(dr.getBoundingClientRect().height):'')+':'+cs.map(c=>(c.dataset.r||c.dataset.eat||'?')+(c.style.left?'':'!')).join(',');const same=sig===gsig&&cs.length&&cs.every(c=>c.style.left);gsig=sig.replace(/!/g,'');return same};
+    /* round 219: also the players' places and my hand's top (rounded): cards laid out while the table was still settling stayed tiny */let seatSig='';try{document.querySelectorAll('.table .seat:not([data-seat="0"])').forEach(q=>{const w=q.querySelector('.who'),pc=q.querySelector('.pilebox .card');const r=w&&w.getBoundingClientRect();seatSig+=(r?Math.round(r.left/8)+'.'+Math.round(r.top/8)+'.'+Math.round(r.width/8):'')+(pc?'p':'')+';'});const hc=document.querySelector('#myrow .card');if(hc)seatSig+='h'+Math.round(hc.getBoundingClientRect().top/8)}catch(e){}
+    const wr=document.getElementById('war'),dr=document.querySelector('.drawrow');const sig=seatSig+'|'+innerWidth+'x'+innerHeight+':'+rug.offsetWidth+'x'+rug.offsetHeight+':'+(S&&S.war?'w':'')+(wr&&wr.dataset.lift||'')+':'+(dr?Math.round(dr.getBoundingClientRect().height):'')+':'+cs.map(c=>(c.dataset.r||c.dataset.eat||'?')+(c.style.left?'':'!')).join(',');const same=sig===gsig&&cs.length&&cs.every(c=>c.style.left);gsig=sig.replace(/!/g,'');return same};
   const ask=k=>{need[k]=1;if(!req)req=requestAnimationFrame(()=>{req=0;flush()})};
   fitGround=function(){ask('g')};fitSeats=function(){ask('s')};window.flushFits=flush;
   // anything that measures positions gets the finished layout
@@ -6054,7 +6055,7 @@ function applyMe(m,quiet){if(!m)return;ACCT.me=m;ACCT.on=true;applyingMe=true;
   if(!quiet)acctNotes(m.note)}
 function acctNotes(n){if(!n)return;
   if(n.daily)setTimeout(()=>toast(L(`+${n.daily} daily gift`,`+${n.daily} هدية اليوم`)),600);
-  if(n.war)toast(L(`+${n.war} war won`,`+${n.war} ربحت حرب`));
+  if(n.war&&(window.__warGain||0)>=50)toast(L(`+${n.war} war won`,`+${n.war} ربحت حرب`)); /* round 219: only for a war of 50 points or more (agreed); small eats stay quiet */
   if(n.offline)setTimeout(()=>toast(L(`+${n.offline} rupees`,`+${n.offline} روبية`)),1400);
   if(n.refused&&n.refused.length)toast(L('Not enough rupees','ما عندك روبيات كافية'));
   const ach=(n.ach||[]).map(x=>ACH.find(a=>a.id===x.id)).filter(Boolean);
@@ -12355,10 +12356,10 @@ try{
 // sideways tablets: slide my hand down so its bottom sits just above the screen edge (so the table gets all the room left)
 (function(){/* round 210: the real bottom of the game (on iPad Safari with tabs the window can reach below what is visible) */const BOT=()=>{let v=innerHeight;try{const a=document.getElementById('app');if(a){const r=a.getBoundingClientRect();if(r.height)v=Math.min(v,r.bottom)}if(window.visualViewport)v=Math.min(v,visualViewport.height+visualViewport.offsetTop)}catch(e){}return v};const mq0=matchMedia('(orientation:landscape) and (min-height:560px) and (min-width:900px)'),mq={get matches(){return mq0.matches||document.documentElement.classList.contains('land205')}};let busy=0;
  function fit(){if(busy)return;const hz=document.querySelector('.handzone');if(!hz)return;if(!mq.matches){if(hz.style.getPropertyValue('--hzmb'))hz.style.removeProperty('--hzmb');return}
-  const cs=[...document.querySelectorAll('#myrow .card')];if(!cs.length)return;let b=0;cs.forEach(c=>{const r=c.getBoundingClientRect();if(r.height)b=Math.max(b,r.bottom-(parseFloat(getComputedStyle(c).getPropertyValue('--dy'))||0))});if(!b)return;
+  const cs=[...document.querySelectorAll('#myrow .card')];if(!cs.length)return;let b=0;/* round 219: while the cards are being dealt they fly in from the deck; measuring them then put the hand in the wrong place and the table grew and shrank. A flying card is measured where it will rest */const rowB=(document.getElementById('myrow')||hz).getBoundingClientRect().bottom;cs.forEach(c=>{let fly=false;try{fly=c.getAnimations().some(a=>a.playState==='running')}catch(e){}if(fly||c.classList.contains('inc146')){b=Math.max(b,rowB);return}const r=c.getBoundingClientRect();if(r.height)b=Math.max(b,r.bottom-(parseFloat(getComputedStyle(c).getPropertyValue('--dy'))||0))});if(!b)return;
   const m=parseFloat(getComputedStyle(hz).marginBottom)||0,want=Math.max(-140,Math.min(document.documentElement.classList.contains('land205')?160:0,m-(BOT()-6-b)));if(Math.abs(want-m)<2)return;
   busy=1;hz.style.setProperty('--hzmb',want+'px');requestAnimationFrame(()=>{busy=0;dispatchEvent(new Event('resize'))})}
- setInterval(fit,600);addEventListener('resize',()=>setTimeout(fit,60));addEventListener('orientationchange',()=>setTimeout(fit,300))})();
+ window.__hzFit=fit; setInterval(fit,600);addEventListener('resize',()=>setTimeout(fit,60));addEventListener('orientationchange',()=>setTimeout(fit,300))})();
 // shop jokers: no thin gold border inside the card (like the classic joker)
 (function(){const st=document.createElement('style');st.textContent=`.card.hd.joker::after{border:0!important;box-shadow:none!important}`;document.head.appendChild(st)})();
 }catch(e){try{console.error('extras122.js',e)}catch(_){}}
@@ -17830,10 +17831,11 @@ html.land205 #rail205 .gbtn{position:relative!important;left:auto!important;righ
 html.land205 body #app>#mebox{position:absolute!important;left:calc(var(--u) * 96px)!important;bottom:calc(var(--u) * 14px)!important;z-index:30;display:flex!important;flex-direction:row!important;align-items:flex-end!important;gap:calc(var(--u) * 10px)!important;width:auto!important;margin:0!important;zoom:min(calc(var(--u) * 1.3),1.35)}
 html.land205 body #app>#mebox .botchip{position:absolute!important;left:0!important;right:auto!important;top:-28px!important;translate:none!important;max-width:130px!important;white-space:nowrap!important;font-size:11px!important}
 /* my hand */
-html.land205 body .handzone{margin-left:0!important;padding-left:calc(var(--u) * 420px)!important;padding-right:calc(var(--u) * 220px)!important;box-sizing:border-box!important;margin-bottom:var(--hzmb,0px)!important}
+html.land205 body .handzone{margin-left:0!important;padding-left:calc(var(--u) * 318px)!important;padding-right:calc(var(--u) * 112px)!important;box-sizing:border-box!important;margin-bottom:var(--hzmb,0px)!important}
 html.land205.short205 body .handzone{padding-left:0!important;padding-right:0!important}
-html.land205 body .handzone #myrow{max-width:calc(var(--AW) - var(--u) * 720px)!important;margin-left:auto!important;margin-right:auto!important}
-html.land205 body #myrow .card.big{--cw:min(calc((var(--AW) - var(--u) * 232px) * .11),calc(var(--AH) * .15))!important}
+html.land205 body .handzone #myrow{max-width:none!important;margin-left:auto!important;margin-right:auto!important}
+/* round 218 (design A): my hand is 30% bigger sideways, a little bigger than the cards on the table (it used to be smaller than them) */
+html.land205 body #myrow .card.big{--cw:min(calc((var(--AW) - var(--u) * 232px) * .143),calc(var(--AH) * .165))!important}
 /* players and names */
 html.land205 body .table .seat{--tile:min(calc(var(--AH) * .15),calc(var(--u) * 124px))!important}
 html.land205 body .table .seat .pilebox .card,html.land205 body #seats .seat .pilebox .card.mini{--cw:min(calc(var(--AH) * .125),calc(var(--u) * 100px))!important}
@@ -17885,6 +17887,13 @@ function frame(){if(!de.classList.contains('land205'))return;let W=innerWidth,H=
   const short=H<500; /* round 215: only phones and the closed iPhone Duo; the open Duo inside an app with a toolbar (about 950x585) keeps the big design */let AW=W,AH=H;if(!short){AW=Math.min(W,Math.round(H*1.5));AH=Math.min(H,Math.round(AW/1.3))}
   const u=short?1:AH/820;de.classList.toggle('short205',short);const tile=short?Math.min(AH*.19,110):Math.min(AH*.15,u*124);
   const set=(k,v)=>{if(de.style.getPropertyValue(k)!==v)de.style.setProperty(k,v)};set('--AW',AW+'px');set('--AH',AH+'px');set('--AT',Math.max(0,Math.round((H-AH)/2))+'px');set('--u',String(+u.toFixed(4)));set('--sk',String(+Math.max(1,tile/67).toFixed(3)))}
+// round 218: my cards overlap just enough to stay between my picture and the action buttons (the old rule did not know the real sizes sideways)
+function fitHand(){try{if(!de.classList.contains('land205'))return;const h=document.querySelector('#myrow .hand');if(!h)return;const cs=h.querySelectorAll(':scope>.card'),n=cs.length;if(n<2)return;
+  const cw=cs[0].offsetWidth,row=document.getElementById('myrow');let avail=row.clientWidth-12;
+  if(!de.classList.contains('short205')){const me=document.getElementById('mebox'),zr=document.querySelector('.handzone').getBoundingClientRect();if(me){const mr=me.getBoundingClientRect();const rr=rail&&rail.getBoundingClientRect();if(mr.width&&rr&&rr.width)avail=Math.min(avail,rr.left-mr.right-24)}}
+  if(!cw||avail<cw)return;const ov=Math.max(cw*.28,Math.ceil((n*cw-avail)/(n-1)));const v=ov+'px';if(h.style.getPropertyValue('--ov')!==v)h.style.setProperty('--ov',v)}catch(e){}}
+// round 219: the same for the room left for the cards in the middle: a hand card still flying in from the deck is counted at its resting place
+try{const gb0=window.__groundBottom;window.__groundBottom=function(){try{const h=document.querySelector('#myrow .card');if(h){let fly=false;try{fly=h.getAnimations().some(a=>a.playState==='running')}catch(e){}if(fly){const row=document.getElementById('myrow').getBoundingClientRect();return row.bottom-h.offsetHeight-6}}}catch(e){}return gb0?gb0():1e9}}catch(e){}
 let rail=null,home=null;
 const ids=['slamBtn','giftBtn','chatBtn','micBtn'];
 function on(){const app=document.getElementById('app'),me=document.getElementById('mebox');if(!app||!me)return false;
@@ -17899,13 +17908,17 @@ function on(){const app=document.getElementById('app'),me=document.getElementByI
 function off(){de.classList.remove('land205','short205');['--AW','--AH','--AT','--u','--sk'].forEach(k=>de.style.removeProperty(k));if(!home)return;
   const [mp]=home.me,me=document.getElementById('mebox');if(me&&mp&&me.parentNode!==mp)mp.insertBefore(me,mp.firstChild);
   home.b.forEach(x=>{if(!x)return;const [e,p]=x;if(e.parentNode!==p)p.appendChild(e)});try{const cb=document.getElementById('chatBar');if(cb&&home.cb&&cb.parentNode!==home.cb[0])home.cb[0].insertBefore(cb,home.cb[1]&&home.cb[1].parentNode===home.cb[0]?home.cb[1]:null)}catch(e){}if(rail&&rail.isConnected)rail.remove()}
-let was=null;function sync(){const m=MQ.matches;if(m===was&&(!m||de.classList.contains('land205'))){if(m)frame();return}if(m){if(on())was=true}else{off();was=false}
+// round 219: turning the device: the table used to be seen re-measuring itself several times (growing, shrinking, jumping). The game is hidden for
+// a moment while it settles and then fades in once, in its final shape.
+let veilT=0;function veil(){try{const app=document.getElementById('app');if(!app||was===null)return;app.style.transition='none';app.style.opacity='0';clearTimeout(veilT);
+  veilT=setTimeout(()=>{try{frame();if(typeof S!=='undefined'&&S&&typeof render==='function')render();window.flushFits&&flushFits()}catch(e){}app.style.transition='opacity .22s ease';app.style.opacity='';setTimeout(()=>{app.style.transition=''},300)},650)}catch(e){}}
+let was=null;function sync(){const m=MQ.matches;if(m===was&&(!m||de.classList.contains('land205'))){if(m)frame();return}veil();if(m){if(on())was=true}else{off();was=false}
   requestAnimationFrame(()=>{try{dispatchEvent(new Event('resize'))}catch(e){}})}
 try{MQ.addEventListener('change',sync)}catch(e){MQ.addListener&&MQ.addListener(sync)}
 addEventListener('resize',()=>{sync();setTimeout(frame,60);setTimeout(frame,400)});addEventListener('orientationchange',()=>{setTimeout(sync,100);setTimeout(frame,700)});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',sync);else sync();
 // render() may rebuild the bottom bar: put the pieces back
-try{render=(function(p){return function(){const r=p.apply(this,arguments);try{if(MQ.matches&&was){const me=document.getElementById('mebox'),app=document.getElementById('app');const cb=document.getElementById('chatBar');if((me&&me.parentNode!==app)||(cb&&cb.parentNode!==document.body)||(rail&&ids.some(i=>{const e=document.getElementById(i);return e&&!rail.contains(e)})))on()}}catch(e){}return r}})(render)}catch(e){}
+try{render=(function(p){return function(){const r=p.apply(this,arguments);fitHand();try{if(was&&window.__hzFit)__hzFit()}catch(e){}try{if(MQ.matches&&was){const me=document.getElementById('mebox'),app=document.getElementById('app');const cb=document.getElementById('chatBar');if((me&&me.parentNode!==app)||(cb&&cb.parentNode!==document.body)||(rail&&ids.some(i=>{const e=document.getElementById(i);return e&&!rail.contains(e)})))on()}}catch(e){}return r}})(render)}catch(e){}
 })();
 }catch(e){try{console.error('land205.js',e)}catch(_){}}
 
@@ -17965,9 +17978,9 @@ html body #war{scale:var(--bk,1);transform-origin:50% 50%}
 html body .drawrow .dcnt{zoom:var(--bk,1)}
 html body #fx .shock{scale:var(--bk,1)}
 html.land205 body #rail205 .gbtn .slamcost,html.land205 body #rail205 .gbtn #coinBadge,html.land205 body #rail205 .gbtn .badge,html.land205 body #rail205 .gbtn .fbx{zoom:var(--u,1)!important}
-html body #seats .seat.s-top.atk137f .pilebox .card::before,html body #seats .seat.s-top.atk137m .pilebox .card::before{top:auto!important;bottom:-14px!important}
+/* round 219: the top player's attack mark sits on the side of his card, at its middle (asked for) */
+html body #seats .seat.s-top.atk137f .pilebox .card::before,html body #seats .seat.s-top.atk137m .pilebox .card::before{top:50%!important;bottom:auto!important;left:-13px!important;right:auto!important;transform:translateY(-50%)!important}
 @media (orientation:portrait){html body .atk137f .pilebox .card::before,html body .atk137m .pilebox .card::before{zoom:var(--bk,1)}}
-html.land205 body #seats .seat.s-top.atk137f .pilebox .card::before,html.land205 body #seats .seat.s-top.atk137m .pilebox .card::before{bottom:-19px!important}
 `;document.head.appendChild(st);upd()})();
 }catch(e){try{console.error('bigk215.js',e)}catch(_){}}
 
@@ -17988,9 +18001,42 @@ html.land205 body #app>#mebox .lvl,html.land205 body #app>#mebox .pilebox>span:n
 `;document.head.appendChild(st)})();
 }catch(e){try{console.error("ipadup216.js",e)}catch(_){}}
 
+// round 219:
+// 1) the "war won" message only for a war worth 50 points or more (agreed). The rupees are still added for every war.
+// 2) the beginner tip box: dark and gold like the rest of the game; sideways it sits in the top right corner instead of on the table.
+// 3) sideways: bigger labels on the game buttons and a bigger score.
+try{(function(){
+ try{if(typeof collectFx==='function')collectFx=(function(p){return function(W,gain){try{if(W===0)window.__warGain=+gain||0}catch(e){}return p.apply(this,arguments)}})(collectFx)}catch(e){}
+ try{if(typeof addTokens==='function')addTokens=(function(p){return function(n,why){try{if(/war won|ربحت حرب/.test(why||'')&&(window.__warGain||0)<50){if(!(typeof ACCT!=='undefined'&&ACCT.on)){WAL.tokens+=n;saveWal()}return}}catch(e){}return p.apply(this,arguments)}})(addTokens)}catch(e){}
+ const st=document.createElement('style');st.textContent=`
+html body #beg157{background:linear-gradient(180deg,#2c1b12,#150c08)!important;color:#f6e7c3!important;border:1.5px solid #d9b25c!important;border-radius:16px!important;box-shadow:0 10px 26px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,230,160,.18)!important;padding:10px 16px 8px!important;font-weight:700!important;line-height:1.6!important}
+html body #beg157 small{display:block!important;margin-top:2px;color:#c9a96a!important;font-size:11px!important;font-weight:600!important}
+html.land205:not(.short205) body #beg157{left:auto!important;transform:none!important;right:calc((100vw - var(--AW)) / 2 + var(--u) * 16px)!important;top:calc(env(safe-area-inset-top,0px) + var(--AT,0px) + var(--u) * 78px)!important;max-width:calc(var(--u) * 330px)!important;font-size:calc(var(--u) * 15px)!important}
+html.land205.short205 body #beg157{top:44px!important;max-width:min(60vw,360px)!important;font-size:12px!important}
+html.land205:not(.short205) body #app .topbar .tbg .gbtn,html.land205:not(.short205) body #app .topbar button{width:calc(var(--u) * 70px)!important;height:calc(var(--u) * 68px)!important;font-size:calc(var(--u) * 13.5px)!important;gap:calc(var(--u) * 3px)!important}
+html.land205:not(.short205) body #app .topbar .gbtn svg{width:calc(var(--u) * 25px)!important;height:calc(var(--u) * 25px)!important}
+html.land205:not(.short205) body #app .topbar .score:not(:has(.col:nth-child(3))){zoom:calc(var(--u) * 1.5)!important}
+html.land205:not(.short205) body #app .topbar .score:has(.col:nth-child(3)){zoom:calc(var(--u) * 1.25)!important}
+html.land205:not(.short205) body #app .topbar .score:has(.col:nth-child(4)){zoom:calc(var(--u) * 1.15)!important}
+`;document.head.appendChild(st)})();
+}catch(e){try{console.error('polish219.js',e)}catch(_){}}
+
+// round 219: a speech bubble that grew with the pictures could run off the side of the game (the right player's "cut!" was cut off):
+// each new bubble is nudged back inside the game frame.
+try{(function(){const fit=b=>{try{const app=document.getElementById('app');if(!app||!b.isConnected)return;const a=app.getBoundingClientRect(),r=b.getBoundingClientRect();if(!r.width)return;let dx=0,dy=0;
+  if(r.right>a.right-8)dx=a.right-8-r.right;else if(r.left<a.left+8)dx=a.left+8-r.left;if(r.top<a.top+6)dy=a.top+6-r.top;else if(r.bottom>a.bottom-6)dy=a.bottom-6-r.bottom;
+  if(dx||dy){b.style.translate=Math.round(dx)+'px '+Math.round(dy)+'px'}}catch(e){}};
+ const start=()=>{const fx=document.getElementById('fx');if(!fx)return;new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedNodes)if(n.nodeType===1&&n.classList&&n.classList.contains('bubble')){requestAnimationFrame(()=>fit(n));setTimeout(()=>fit(n),260)}}).observe(fx,{childList:true})};
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start()})();
+}catch(e){try{console.error('bubfit219.js',e)}catch(_){}}
+
+// round 220: iPhone Duo open and upright (and other mid-size upright screens): the score was phone-sized between big buttons. It grows to the height of the buttons; the bar keeps its height.
+try{(function(){const st=document.createElement('style');st.textContent=`@media (orientation:portrait) and (min-width:560px) and (max-width:699px){html body #app .topbar .score{zoom:1.18}}`;document.head.appendChild(st)})();
+}catch(e){try{console.error('duoscore220.js',e)}catch(_){}}
+
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1124.1605';
+const EB_VERSION='v1124.1741';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
