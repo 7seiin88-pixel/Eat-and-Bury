@@ -17809,7 +17809,7 @@ window.__svgFix205=scan})();
 try{(function(){const MQ=matchMedia('(orientation:landscape) and (min-width:640px) and (min-height:300px)');
 const st=document.createElement('style');st.textContent=`
 html.land205 body{background:#0d0806!important}
-html.land205 body #app{width:var(--AW)!important;height:var(--AH)!important;margin:var(--AT,0px) auto 0!important}
+html.land205 body #app{width:var(--AW)!important;height:var(--AH)!important;min-height:0!important;max-height:var(--AH)!important;margin:var(--AT,0px) auto 0!important}
 html.land205 body,html.land205 body #app,html.land205 body .table,html.land205 body .stage{--sx:calc(var(--u) * 84px)!important;--SW:calc(var(--AW) - var(--u) * 112px)!important}
 html.land205 body #app .bottombar{display:none!important}
 html.land205 body #table{margin-left:calc(var(--u) * 84px)!important;margin-right:calc(var(--u) * 4px)!important;width:auto!important}
@@ -17852,7 +17852,7 @@ html.land205 body #fx .bubble{scale:min(var(--sk,1),1.45)}
 html.land205 body .atk137f .pilebox .card::before,html.land205 body .atk137m .pilebox .card::before{width:30px!important;height:30px!important;font-size:18px!important;top:-17px!important;z-index:9!important}
 html.land205 body .atk137f .pilebox .count,html.land205 body .atk137m .pilebox .count{z-index:8}
 /* the tip: top right corner of the frame */
-html.land205 #hintPop{left:auto!important;right:calc((100vw - var(--AW)) / 2 + var(--u) * 16px)!important;top:calc(var(--AT,0px) + var(--u) * 10px)!important;bottom:auto!important;max-width:calc(var(--u) * 320px)!important;transform:none!important;translate:none!important}
+html.land205 #hintPop{left:auto!important;right:calc((100vw - var(--AW)) / 2 + var(--u) * 16px)!important;top:calc(env(safe-area-inset-top,0px) + var(--AT,0px) + var(--u) * 10px)!important;bottom:auto!important;max-width:calc(var(--u) * 320px)!important;transform:none!important;translate:none!important}
 
 /* ---------- short screens ---------- */
 html.land205.short205 #rail205{top:0!important;bottom:0!important;right:0!important;width:80px!important;padding:8px 0!important;display:flex!important;flex-direction:column!important;justify-content:flex-start!important;align-items:center!important;gap:6px!important;background:var(--rail205,#1a1210)!important;border-left:1px solid #000;box-shadow:-2px 0 8px rgba(0,0,0,.4);border-radius:18px 0 0 18px;z-index:5}
@@ -17880,6 +17880,8 @@ html.land205.short205 #hintPop{right:92px!important;left:auto!important;top:4px!
 const de=document.documentElement;
 // the frame: ratio kept between 1.3 and 1.5 on big screens, the whole screen on short ones
 function frame(){if(!de.classList.contains('land205'))return;let W=innerWidth,H=innerHeight;try{const a=parseFloat(de.style.getPropertyValue('--appW')),b=parseFloat(de.style.getPropertyValue('--appH'));if(a>0)W=a;if(b>0)H=b}catch(e){}
+  /* round 216: the page keeps room for the phone's status bar (padding on the page); the frame used the full window height and ran off the bottom on iPad */
+  try{const cs=getComputedStyle(de);H-=(parseFloat(cs.paddingTop)||0)+(parseFloat(cs.paddingBottom)||0)}catch(e){}
   const short=H<500; /* round 215: only phones and the closed iPhone Duo; the open Duo inside an app with a toolbar (about 950x585) keeps the big design */let AW=W,AH=H;if(!short){AW=Math.min(W,Math.round(H*1.5));AH=Math.min(H,Math.round(AW/1.3))}
   const u=short?1:AH/820;de.classList.toggle('short205',short);const tile=short?Math.min(AH*.19,110):Math.min(AH*.15,u*124);
   const set=(k,v)=>{if(de.style.getPropertyValue(k)!==v)de.style.setProperty(k,v)};set('--AW',AW+'px');set('--AH',AH+'px');set('--AT',Math.max(0,Math.round((H-AH)/2))+'px');set('--u',String(+u.toFixed(4)));set('--sk',String(+Math.max(1,tile/67).toFixed(3)))}
@@ -17969,9 +17971,26 @@ html.land205 body #seats .seat.s-top.atk137f .pilebox .card::before,html.land205
 `;document.head.appendChild(st);upd()})();
 }catch(e){try{console.error('bigk215.js',e)}catch(_){}}
 
+// round 216: iPad upright: button labels and icons, score, deck count, pile points, my level and chips and the action buttons grow;
+// the table keeps exactly its size (only pieces inside rows that already had room grow). Sideways: pile points a bit bigger.
+try{(function(){const st=document.createElement("style");st.textContent=`
+@media (orientation:portrait) and (min-width:700px){
+html body #app .topbar .gbtn{font-size:16px!important}
+html body #app .topbar .gbtn svg{width:28px!important;height:28px!important}
+html body #app .topbar .score{zoom:1.15}
+html body .bottombar #slamBtn,html body .bottombar #giftBtn,html body .bottombar #chatBtn,html body .bottombar #micBtn{zoom:1.4}
+html body #mebox .lvl,html body #mebox .pilebox>span:not(.count),html body #mebox .pilebox .count,html body #mebox .rkwrap{zoom:1.5}
+html body #seats .seat .pilebox>span:not(.count){zoom:1.6}
+html body .drawrow .dcnt{zoom:1.3}
+}
+html.land205 body #seats .seat .pilebox>span:not(.count){zoom:calc(var(--sk,1) * 1.2)!important}
+html.land205 body #app>#mebox .lvl,html.land205 body #app>#mebox .pilebox>span:not(.count){zoom:1.25}
+`;document.head.appendChild(st)})();
+}catch(e){try{console.error("ipadup216.js",e)}catch(_){}}
+
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1124.1436';
+const EB_VERSION='v1124.1605';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
