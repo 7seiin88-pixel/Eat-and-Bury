@@ -5821,7 +5821,11 @@ window.addEventListener('click',e=>{
 // ===================== Round 50: speed (layout once per frame, calmer animations), "computer is playing" badges, mic closes when you leave the app =====================
 // ---------- 1. Speed: the heavy layout passes run once per frame, not after every render ----------
 (function(){let req=0,need={g:0,s:0};const _fg=fitGround,_fs=fitSeats;
-  function flush(){if(req){cancelAnimationFrame(req);req=0}const s=need.s,g=need.g;need.s=need.g=0;try{if(s)_fs()}catch(e){}try{if(g&&!sameGround())_fg()}catch(e){}}
+  function flush(){if(req){cancelAnimationFrame(req);req=0}const s=need.s,g=need.g;need.s=need.g=0;try{if(s)_fs()}catch(e){}try{if(g&&!sameGround()){_fg();pinG()}}catch(e){}}
+  // round 230: on upright phones and the upright iPhone Duo the size of a middle card is not the one the layout writes on it: a style rule decides it from the table's
+  // height at that moment. Two cards drawn at different moments could so get two sizes (reported by a Duo: 73 and 64). Right after each layout the size the first
+  // card really has is now written on ALL of them, so they are the same by construction and stay so until the next layout. The size itself is unchanged.
+  function pinG(){try{const cs=[...document.querySelectorAll('#ground>.card')];if(!cs.length||cs[0].style.getPropertyPriority('--cw'))return;const w=cs[0].offsetWidth;if(w>20)cs.forEach(c=>c.style.setProperty('--cw',w+'px','important'))}catch(e){}}
   // round 205: the middle cards are laid out again only when they change (a card comes or goes) or the screen changes. A label or a bubble next to a player
   // used to change the free space by a few pixels, so the same cards jumped between one and two rows while nobody played
   let gsig='';const sameGround=()=>{const g=document.getElementById('ground'),rug=document.querySelector('.rug');if(!g||!rug)return false;const cs=[...g.querySelectorAll(':scope>.card')];
@@ -17954,7 +17958,7 @@ html.land205 body #app .topbar .score:has(.col:nth-child(4)){padding-left:6px!im
 // round 215: the eat / fire effects were drawn at phone size, so on an iPad (13 inch) the bats, rings and sparks looked tiny next to the big table.
 // Every particle now grows with the table: size, speed and gravity times k (1 on phones, up to 1.8 on the biggest iPad).
 try{(function(){if(typeof FXE==='undefined'||!FXE.add)return;const A=FXE.add.bind(FXE);
- const K=()=>{try{const r=document.querySelector('.rug');const w=r?Math.min(r.getBoundingClientRect().width,r.getBoundingClientRect().height*1.6):0;return Math.max(1,Math.min(1.8,w/440))}catch(e){return 1}};
+ const K=()=>{try{const r=document.querySelector('.rug');const w=r?Math.min(r.getBoundingClientRect().width,r.getBoundingClientRect().height*1.6):0;/* round 230: upright on a big screen (iPad) the table is very wide and not tall, and the effects covered only its middle; there they now follow the table's width (up to 2.4). Sideways and phones are unchanged */if(r&&innerHeight>innerWidth&&innerWidth>=700){const b=r.getBoundingClientRect();return Math.max(1,Math.min(2.4,Math.min(b.width,b.height*2.2)/400))}return Math.max(1,Math.min(1.8,w/440))}catch(e){return 1}};
  let k=1,t=0;FXE.add=function(o){try{const n=performance.now();if(n-t>500){k=K();t=n}if(k>1.02&&o){for(const f of ['size','size2','w','vx','vy','ay'])if(typeof o[f]==='number')o[f]*=k}}catch(e){}return A(o)}})();
 }catch(e){try{console.error('fxscale215.js',e)}catch(_){}}
 
@@ -17987,7 +17991,7 @@ html body .drawrow .dcnt{zoom:var(--bk,1)}
 html body #fx .shock{scale:var(--bk,1)}
 html.land205 body #rail205 .gbtn .slamcost,html.land205 body #rail205 .gbtn #coinBadge,html.land205 body #rail205 .gbtn .badge,html.land205 body #rail205 .gbtn .fbx{zoom:var(--u,1)!important}
 /* round 219: the top player's attack mark sits on the side of his card, at its middle (asked for) */
-html body #seats .seat.s-top.atk137f .pilebox .card::before,html body #seats .seat.s-top.atk137m .pilebox .card::before{top:50%!important;bottom:auto!important;left:-13px!important;right:auto!important;transform:translateY(-50%)!important}
+html body #seats .seat.s-top.atk137f .pilebox .card::before,html body #seats .seat.s-top.atk137m .pilebox .card::before{top:50%!important;bottom:auto!important;left:-19px!important;right:auto!important;transform:translateY(-50%)!important}
 /* round 221: the swords badge and the friend/foe label grow with the pictures in every layout (text, so they stay sharp) */
 html body .atk137f .pilebox .card::before,html body .atk137m .pilebox .card::before{zoom:var(--bk,1)}
 html body .wc116lab{font-size:calc(13px * var(--bk,1))!important;padding:calc(3px * var(--bk,1)) calc(12px * var(--bk,1))!important}
@@ -18097,9 +18101,23 @@ try{(function(){let bad=null,okN=0;const cache=new Map(),refs=new Map(),diag=[];
 }catch(e){try{console.error('zoomtext222.js',e)}catch(_){}}
 
 try{(function(){const st=document.createElement('style');st.textContent=`
-/* round 228: the right player's card count is back in the TOP corner like everyone else's (it had been moved to the bottom). It sits just above the card's edge, so it still does not cover the card's number */
-html body #seats .seat.s-right .pilebox>.card .count{top:auto!important;bottom:calc(100% - 3px)!important}
+/* round 230: the right player's card count sits at the SAME height as everyone else's (top corner, half over the edge); it is only pushed a little further out so it stays off the card's number */
+html body.n4x160 #seats .seat.s-right .pilebox>.card .count{left:-19px!important}
+/* round 230: a highlighted pile card ("you can play on this") clipped everything that sticks out of it: the right player's count and anyone's joker mark were cut.
+   The clipping was only there for the moving shine; the shine now stays inside the card by itself, so the card no longer clips, and the count keeps its normal place. */
+html body #seats .seat .pilebox>.card.target,html body #mebox .pilebox>.card.target,html body .bottombar .pilebox>.card.target{overflow:visible!important}
+html body #seats .seat .pilebox>.card.target::before,html body #mebox .pilebox>.card.target::before,html body .bottombar .pilebox>.card.target::before{inset:0!important;border-radius:inherit!important;background-size:280% 100%!important;background-repeat:no-repeat!important;transform:none!important;will-change:auto!important;animation:tgPile230 2.4s ease-in-out infinite!important}
+@keyframes tgPile230{0%{background-position:89% 0}60%,100%{background-position:11% 0}}
+html body #seats .seat .pilebox>.card.target .count{top:-7px!important;right:-7px!important}
+html body.n4x160 #seats .seat.s-right .pilebox>.card.target .count{right:auto!important;left:-19px!important}
 html body .drawrow .dcnt{position:relative;z-index:9}
+/* round 230: on a big upright screen (iPad) the spoken phrases, the "your turn" pill and the top message stayed phone-sized while everything around them grew.
+   They now grow with the player pictures there (--bk: 1 on phones, so phones do not change; sideways already had its own rule for the phrases). */
+html:not(.land205) body #fx .bubble,html:not(.land205) body>.bubble{scale:var(--bk,1)}
+html body .turnpill134{scale:var(--bk,1)}
+html body .toast{scale:var(--bk,1)}
+/* round 228b: back to how it always was: when a card comes or goes, the other cards take their new places AT ONCE. Since round 205 (cards keep their place across a redraw) an old CSS transition woke up and made them slide; on Safari, upright, that slide started late, so the old cards stood still under the new card and then jumped */
+html body .ground>.card{transition:none!important}
 `;document.head.appendChild(st)})();
 }catch(e){try{console.error('small222.js',e)}catch(_){}}
 
@@ -18124,13 +18142,14 @@ try{(function(){const hit=(a,b)=>a.width&&b.width&&a.left<b.right-1&&a.right>b.l
 // not while one is landing), they are laid out again; if they still differ, they are all given the size of the layout.
 try{(function(){let since=0;setInterval(()=>{try{if(typeof S==='undefined'||!S||S.war){since=0;return}/* round 228: a card still landing counts too, and so does a card that was never given a place */const cs=[...document.querySelectorAll('#ground>.card')].filter(c=>!c.classList.contains('eating'));if(!cs.length){since=0;return}
   const ws=cs.map(c=>c.offsetWidth),mn=Math.min(...ws),mx=Math.max(...ws),lost=cs.some(c=>!c.style.left);if(mx-mn<=4&&!lost){since=0;return}const now=performance.now();if(!since){since=now;return}if(now-since<(lost?250:500))return;since=0;
-  try{window.__evenFix226=(window.__evenFix226||0)+1;if(!window.__evenSent228){window.__evenSent228=1;let v='';try{v=EB_VERSION}catch(e){}fetch('/api/err',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msg:'UNEVEN ground'+(lost?' lost':''),where:innerWidth+'x'+innerHeight+' w '+ws.join(',')+' cls '+cs.map(c=>c.className.replace(/card|hd|red|black/g,'').trim()||'-').join('|').slice(0,50),ver:v,dev:'diag'})}).catch(()=>{})}window.__regnd226&&__regnd226()}catch(e){}
-  const ws2=cs.map(c=>c.offsetWidth);if(Math.max(...ws2)-Math.min(...ws2)>4){const cw=cs.map(c=>parseFloat(c.style.getPropertyValue('--cw'))).filter(Boolean).sort((a,b)=>a-b)[0]||mn;cs.forEach(c=>{c.style.setProperty('--cw',cw+'px','important');c.style.setProperty('width',cw+'px','important')})}}catch(e){}},250)})();
+  try{window.__evenFix226=(window.__evenFix226||0)+1;if(!window.__evenSent228){window.__evenSent228=1;let v='';try{v=EB_VERSION}catch(e){}fetch('/api/err',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msg:'UNEVEN ground'+(lost?' lost':''),where:innerWidth+'x'+innerHeight+' w '+ws.join(',')+' cw '+cs.map(c=>parseInt(c.style.getPropertyValue('--cw'))+(c.style.getPropertyPriority('--cw')?'!':'')+(c.style.width?'W':'')).join(',')+' cls '+cs.map(c=>c.className.replace(/card|hd|red|black/g,'').trim()||'-').join('|').slice(0,50),ver:v,dev:'diag'})}).catch(()=>{})}window.__regnd226&&__regnd226()}catch(e){}
+  /* round 230: the old last resort here forced every card to the SMALLEST size written on them; upright that number is not the real size, so after leaving the app and coming back the cards could all turn tiny (seen on the Duo). The new layout pass already makes them equal at their real size; if they still differ, the biggest real size wins */
+  const ws2=cs.map(c=>c.offsetWidth);if(Math.max(...ws2)-Math.min(...ws2)>4){const cw=Math.max(...ws2);cs.forEach(c=>c.style.setProperty('--cw',cw+'px','important'))}}catch(e){}},250)})();
 }catch(e){try{console.error('even226.js',e)}catch(_){}}
 
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1124.2046';
+const EB_VERSION='v1124.2136';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
