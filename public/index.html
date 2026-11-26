@@ -86,18 +86,18 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
 
 /* Table */
-.table{position:relative;flex:1 1 auto;min-height:0;container-type:size;--tile:min(calc(var(--W) * .16),15cqh)}
-.rug{position:absolute;left:50%;top:57%;width:min(calc(var(--W) * .88),68cqh);aspect-ratio:1;transform:translate(-50%,-50%);padding:calc(var(--W) * .03);box-sizing:border-box;border-radius:4px;
+.table{position:relative;flex:1 1 auto;min-height:0;container-type:size;--tile:min(calc(var(--W) * .16),calc(15 * var(--q1,1cqh)))}
+.rug{position:absolute;left:50%;top:57%;width:min(calc(var(--W) * .88),calc(68 * var(--q1,1cqh)));aspect-ratio:1;transform:translate(-50%,-50%);padding:calc(var(--W) * .03);box-sizing:border-box;border-radius:4px;
   background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='34' height='34' viewBox='0 0 34 34'%3E%3Crect width='34' height='34' fill='%23ead9ad'/%3E%3Cpath d='M17 7l6 10-6 10-6-10z' fill='%23b8322a' stroke='%236a1a14' stroke-width='1'/%3E%3Cpath d='M17 12l3 5-3 5-3-5z' fill='%23ead9ad'/%3E%3Ccircle cx='4' cy='4' r='2' fill='%23c8372d'/%3E%3Ccircle cx='30' cy='4' r='2' fill='%23c8372d'/%3E%3Ccircle cx='4' cy='30' r='2' fill='%23c8372d'/%3E%3Ccircle cx='30' cy='30' r='2' fill='%23c8372d'/%3E%3Cpath d='M17 0v5M17 29v5M0 17h5M29 17h5' stroke='%238a2a1f' stroke-width='1.6'/%3E%3C/svg%3E") 0 0/calc(var(--W) * .066) calc(var(--W) * .066);
   box-shadow:0 0 0 1px #8b6d3c,0 10px 22px rgba(70,45,10,.45)}
 .field{position:relative;width:100%;height:100%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.35),inset 0 0 30px rgba(60,10,0,.35);
   background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='120' viewBox='0 0 80 120'%3E%3Crect width='80' height='120' fill='%23b8402f'/%3E%3Crect y='0' width='80' height='4' fill='%234c3b78'/%3E%3Cpath d='M0 4h80v20H0z' fill='%233e6a4c'/%3E%3Cpath d='M0 24l20-20 20 20 20-20 20 20z' fill='%23d9a040'/%3E%3Crect y='24' width='80' height='4' fill='%234c3b78'/%3E%3Crect y='58' width='80' height='3' fill='%23ec6a50'/%3E%3Crect y='61' width='80' height='12' fill='%234d6b45'/%3E%3Cg fill='%232fae47'%3E%3Ccircle cx='10' cy='67' r='2.2'/%3E%3Ccircle cx='30' cy='67' r='2.2'/%3E%3Ccircle cx='50' cy='67' r='2.2'/%3E%3Ccircle cx='70' cy='67' r='2.2'/%3E%3C/g%3E%3Crect y='73' width='80' height='3' fill='%23ec6a50'/%3E%3Crect y='100' width='80' height='3' fill='%234c3b78'/%3E%3C/svg%3E") 0 0/calc(var(--W) * .2) calc(var(--W) * .3)}
 .field::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,rgba(255,220,180,.18),transparent 60%),radial-gradient(ellipse at center,transparent 55%,rgba(40,5,0,.35));pointer-events:none}
-.center{position:absolute;left:50%;top:57%;width:min(calc(var(--W) * .88),68cqh);aspect-ratio:1;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;z-index:2;padding:calc(var(--W) * .03);box-sizing:border-box}
-.drawrow{position:absolute;left:calc(50% + min(calc(var(--W) * .88),68cqh)/2 - var(--W)*.1);top:calc(57% + min(calc(var(--W) * .88),68cqh)/2 - var(--W)*.16);display:flex;flex-direction:column;align-items:center;gap:2px;color:#fff;font-size:11px;font-weight:800;text-shadow:0 1px 2px #000;z-index:1}
+.center{position:absolute;left:50%;top:57%;width:min(calc(var(--W) * .88),calc(68 * var(--q1,1cqh)));aspect-ratio:1;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;z-index:2;padding:calc(var(--W) * .03);box-sizing:border-box}
+.drawrow{position:absolute;left:calc(50% + min(calc(var(--W) * .88),calc(68 * var(--q1,1cqh)))/2 - var(--W)*.1);top:calc(57% + min(calc(var(--W) * .88),calc(68 * var(--q1,1cqh)))/2 - var(--W)*.16);display:flex;flex-direction:column;align-items:center;gap:2px;color:#fff;font-size:11px;font-weight:800;text-shadow:0 1px 2px #000;z-index:1}
 .ground{display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:5px 3px;max-width:100%}
-.ground .card{rotate:var(--tilt,0deg);--cw:min(calc(var(--W) * .18),14cqh)}
-.seat .card.mini{--cw:min(var(--cw-mini),12cqh)}
+.ground .card{rotate:var(--tilt,0deg);--cw:min(calc(var(--W) * .18),calc(14 * var(--q1,1cqh)))}
+.seat .card.mini{--cw:min(var(--cw-mini),calc(12 * var(--q1,1cqh)))}
 .empty{color:rgba(255,255,255,.75);font-weight:800;text-shadow:0 1px 2px #000}
 
 /* Card backs: light grey with a simple emblem */
@@ -363,8 +363,8 @@ html.cb-green .cardback{background:radial-gradient(circle at 50% 50%,transparent
 .ground{gap:var(--gg,5px)}
 .ground .card{--cw:var(--gcw,calc(var(--W) * .18))}
 :root{--cw-mini:min(calc(var(--W) * .19),10.5dvh)}
-.seat .card.mini{--cw:min(var(--cw-mini),15cqh)}
-.s-top .card.mini{--cw:min(var(--cw-mini),13cqh)}
+.seat .card.mini{--cw:min(var(--cw-mini),calc(15 * var(--q1,1cqh)))}
+.s-top .card.mini{--cw:min(var(--cw-mini),calc(13 * var(--q1,1cqh)))}
 .drawrow{left:calc(50% - var(--W) * .34);top:calc(var(--tile) * .55);transform:none}
 .drawrow .stack{width:calc(var(--W) * .1);height:calc(var(--W) * .14);--cw:calc(var(--W) * .088);--ch:calc(var(--W) * .125)}
 
@@ -411,7 +411,7 @@ html.cb-green .cardback{background:radial-gradient(circle at 50% 50%,transparent
 .cbprev.cb-blue .cardback.cardback{background:radial-gradient(circle at 50% 50%,transparent 0 20%,rgba(255,255,255,.75) 21% 24%,transparent 25%),repeating-linear-gradient(45deg,rgba(255,255,255,.22) 0 1px,transparent 1px 6px),repeating-linear-gradient(-45deg,rgba(255,255,255,.22) 0 1px,transparent 1px 6px),linear-gradient(160deg,#1f4f9a,#0f2a5c);box-shadow:inset 0 0 0 2px #fff,inset 0 0 0 3.5px #8fb4e8,0 2px 4px rgba(0,0,0,.5)}
 .cbprev.cb-green .cardback.cardback{background:radial-gradient(circle at 50% 50%,transparent 0 20%,rgba(240,220,160,.8) 21% 24%,transparent 25%),repeating-linear-gradient(90deg,rgba(240,220,160,.25) 0 1px,transparent 1px 5px),linear-gradient(160deg,#1f6b4c,#0d3a28);box-shadow:inset 0 0 0 2px #f3e6c8,inset 0 0 0 3.5px #c9a24a,0 2px 4px rgba(0,0,0,.5)}
 .cbprev{display:grid;place-items:center;height:60px;width:100%}
-.center{height:min(calc(var(--W) * .88),68cqh);min-height:0;aspect-ratio:auto}
+.center{height:min(calc(var(--W) * .88),calc(68 * var(--q1,1cqh)));min-height:0;aspect-ratio:auto}
 
 /* ===== v28: vector suits, classic courts, fixed big table cards ===== */
 .sv{display:block;width:1em;height:1em;fill:currentColor}
@@ -422,13 +422,13 @@ html.cb-green .cardback{background:radial-gradient(circle at 50% 50%,transparent
 .face.court::before{display:none}
 .face.court svg{width:100%;height:100%;display:block}
 .ground{position:relative;width:100%;height:100%;display:block}
-.ground>.card{position:absolute;--cw:min(calc(var(--W) * .21),16cqh);transition:left .25s,top .25s}
+.ground>.card{position:absolute;--cw:min(calc(var(--W) * .21),calc(16 * var(--q1,1cqh)));transition:left .25s,top .25s}
 .ground>.empty{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
 .center{padding:0}
 .war{position:absolute;left:50%;top:-6px;transform:translateX(-50%);z-index:30}
 :root{--cw-mini:min(calc(var(--W) * .22),12dvh)}
-.seat .card.mini{--cw:min(var(--cw-mini),17cqh)}
-.s-top .card.mini{--cw:min(var(--cw-mini),15cqh)}
+.seat .card.mini{--cw:min(var(--cw-mini),calc(17 * var(--q1,1cqh)))}
+.s-top .card.mini{--cw:min(var(--cw-mini),calc(15 * var(--q1,1cqh)))}
 #mebox .card.mini{--cw:min(calc(var(--W) * .11),6.5dvh)}
 
 .giftto{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 8px}
@@ -451,10 +451,10 @@ html.cb-green .cardback{background:radial-gradient(circle at 50% 50%,transparent
 @media (max-width:520px){#giftBtn,#chatBtn{min-width:40px;height:40px;flex-basis:40px}#giftBtn span,#chatBtn span{display:none}#giftBtn svg,#chatBtn svg{width:20px;height:20px}}
 #mebox .nopile{width:calc(var(--W) * .09);height:calc(var(--W) * .13)}
 :root{--cw-mini:min(calc(var(--W) * .18),10dvh)}
-.seat .card.mini{--cw:min(var(--cw-mini),14cqh)}
-.s-top .card.mini{--cw:min(var(--cw-mini),12.5cqh)}
+.seat .card.mini{--cw:min(var(--cw-mini),calc(14 * var(--q1,1cqh)))}
+.s-top .card.mini{--cw:min(var(--cw-mini),calc(12.5 * var(--q1,1cqh)))}
 .bottombar{padding-top:20px}
-.ground>.card{--cw:min(calc(var(--W) * .18),14cqh)}
+.ground>.card{--cw:min(calc(var(--W) * .18),calc(14 * var(--q1,1cqh)))}
 
 /* ===== Realistic materials (Sadu theme): wood floor, woven wool rug, leather bars, brass details, paper cards ===== */
 .card{background:linear-gradient(155deg,rgba(255,255,255,.55),rgba(255,255,255,0) 38%),var(--tx-paper,#fff) 0 0/160px 160px,#fffdf7;box-shadow:0 0 0 .5px rgba(0,0,0,.35),0 1px 1px rgba(0,0,0,.25),0 5px 12px rgba(30,15,5,.32)}
@@ -510,7 +510,7 @@ html.t-sadu .table::before,html.t-sadu .table::after{filter:saturate(.9);box-sha
 /* war banner above the players' names */
 html.inwar131 .center{z-index:20}
 .war{z-index:40;box-shadow:0 6px 18px rgba(0,0,0,.6);top:auto!important;bottom:4%}
-#table>#war{position:absolute;z-index:70;left:50%;transform:translateX(-50%);top:calc(57% + min(calc(var(--W) * .88),68cqh)/2 - 64px)!important;bottom:auto}
+#table>#war{position:absolute;z-index:70;left:50%;transform:translateX(-50%);top:calc(57% + min(calc(var(--W) * .88),calc(68 * var(--q1,1cqh)))/2 - 64px)!important;bottom:auto}
 /* popups and effects above players, names, hand and bars */
 .table{z-index:7}
 #fx{z-index:50}
@@ -1006,7 +1006,7 @@ function render(){
       if(sug.kind==='eat')st=L(`<b>Hint:</b> double-tap your <b>${lab(c)}</b> or drag it to the ground to eat the ${sug.r}.`,`<b>تلميح:</b> كُل ${rankAr(sug.r)} اللي على الأرض: اضغط مرتين على <b>${cardName(c)}</b> أو اسحبها للأرض.`);
       else if(sug.kind==='attack'){const own=S.players.find((q,j)=>j&&exposed(q.pile)&&exposed(q.pile).rank===sug.r);st=L(`<b>Hint:</b> tap ${own?own.name+"'s":'the'} glowing pile to take their ${sug.r}s with your ${lab(c)}.`,`<b>تلميح:</b> خذ ${rankAr(sug.r)} من كومة ${own?own.name:''}: اضغط على الكومة المضيئة، أو اسحب <b>${cardName(c)}</b> عليها.`)}
       else if(sug.kind==='sleep')st=L(`<b>Hint:</b> double-tap your <b>${lab(c)}</b> to throw it, then sleep on your ${lab(sug.keep)} and wait to cut in.`,`<b>تلميح:</b> ارمِ <b>${cardName(c)}</b> (اضغطها مرتين أو اسحبها للأرض)، ونام على ${theCard(sug.keep)} لين تقطع.`);
-      else if(sug.kind==='throw')st=L(`<b>Hint:</b> nothing worth eating. Double-tap your <b>${lab(c)}</b> to throw it; it's your least valuable card.`,`<b>تلميح:</b> ما في أكلة تستاهل. ارمِ <b>${cardName(c)}</b> لأنها أقل ورقة قيمة: اضغطها مرتين أو اسحبها للأرض.`)}}
+      else if(sug.kind==='throw')st=L(`<b>Hint:</b> nothing worth eating. Double-tap your <b>${lab(c)}</b> to throw it; it's your least valuable card.`,`<b>تلميح:</b> ${(window.__throwWhy&&window.__throwWhy(c))||('ما في أكلة تستاهل. ارمِ <b>'+cardName(c)+'</b> لأنها أقل ورقة قيمة: اضغطها مرتين أو اسحبها للأرض.')}`)}}
   if(hint&&myTurn){st=hint;hint=''}
   $('status').innerHTML=st;$('status').dir=LANG==='ar'?'rtl':'ltr';
   $('last').textContent=S.log[0]||'';
@@ -2222,7 +2222,7 @@ const _shopG=renderShop;renderShop=function(){_shopG();if(shopTab!=='gifts'||!S)
 (function fixCSS(){const st=document.createElement('style');st.textContent=`
 #shopSheet,#profSheet,#slamSheet{z-index:45}
 /* story-ring style round pictures, a bit bigger */
-.table{--tile:min(calc(var(--W) * .19),17.5cqh)}
+.table{--tile:min(calc(var(--W) * .19),calc(17.5 * var(--q1,1cqh)))}
 #mebox{--tile:calc(var(--W) * .145)}
 html .tile,html[class] .tile{background:none!important;box-shadow:none!important;outline:none!important;border-radius:50%}
 html .tile::before{display:none!important}
@@ -2235,8 +2235,8 @@ html .tile::before{display:none!important}
 .turn .tring{width:100%;height:100%}
 /* bigger face-up cards in front of players */
 :root{--cw-mini:min(calc(var(--W) * .21),11.5dvh)}
-.seat .card.mini{--cw:min(var(--cw-mini),16cqh)}
-.s-top .card.mini{--cw:min(var(--cw-mini),14.5cqh)}
+.seat .card.mini{--cw:min(var(--cw-mini),calc(16 * var(--q1,1cqh)))}
+.s-top .card.mini{--cw:min(var(--cw-mini),calc(14.5 * var(--q1,1cqh)))}
 /* gift picking */
 .shop>*{flex:none}
 .giftto{min-height:74px;align-items:flex-start}
@@ -2499,7 +2499,7 @@ if(typeof renderShop==='function'&&!$('shopSheet').hidden)renderShop();
 (function r5CSS(){const st=document.createElement('style');st.textContent=`
 /* Rug sits a bit lower so it is not on top of the partner */
 .table .rug,.table .center{top:calc(57% + var(--tile) * .3)}
-#table>#war{top:calc(57% + var(--tile) * .3 + min(calc(var(--W) * .88),68cqh)/2 - 64px)!important}
+#table>#war{top:calc(57% + var(--tile) * .3 + min(calc(var(--W) * .88),calc(68 * var(--q1,1cqh)))/2 - 64px)!important}
 
 /* Test-rupees button */
 .testtok{width:100%;margin:6px 0 2px;padding:9px;border-radius:12px;border:1px dashed #e0b45a;background:rgba(224,180,90,.12);color:inherit;font-weight:800;display:flex;gap:6px;align-items:center;justify-content:center}
@@ -2611,7 +2611,7 @@ const _flyC=fly;fly=function(html,from,to,o={}){
   // then "popped" to the real size. It now lands at exactly the size of its place. And its end no longer hangs on one browser event: if that event is late
   // (seen on Safari: the small copy sat on the table for a second), a timer finishes the landing.
   let k=1;try{const fc=d.querySelector('.card'),fw=fc?fc.offsetWidth:0,lw=land?land.offsetWidth:0;if(fw&&lw)k=Math.max(.6,Math.min(3,lw/fw))}catch(e){}
-  let done=false;const fin=late=>{if(done)return;done=true;try{d.remove()}catch(e){}try{o.after&&o.after()}catch(e){}if(late===true)try{if(!window.__flyLate228){window.__flyLate228=1;let v='';try{v=EB_VERSION}catch(e){}fetch('/api/err',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msg:'FLYLATE toss',where:innerWidth+'x'+innerHeight+' k'+k.toFixed(2),ver:v,dev:'diag'})}).catch(()=>{})}}catch(e){}};
+  let done=false;const fin=late=>{if(done)return;done=true;try{d.remove()}catch(e){}try{o.after&&o.after()}catch(e){}if(late===true)try{/* round 276: the report says more (how late, which toss of the visit, who threw, a phrase on screen or not, a war or not), up to 3 times a visit, so the cause can be read from the statistics */window.__flyLate228=(window.__flyLate228||0)+1;if(window.__flyLate228<=3){let v='';try{v=EB_VERSION}catch(e){}fetch('/api/err',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msg:'FLYLATE toss',where:innerWidth+'x'+innerHeight+' k'+k.toFixed(2)+' +'+Math.round(performance.now()-t0276)+'ms toss#'+window.__tossN276+' from '+Math.round(from.x)+','+Math.round(from.y)+' bub'+document.querySelectorAll('#fx .bubble').length+(typeof S!=='undefined'&&S&&S.war?' war':'')+' n'+(typeof S!=='undefined'&&S&&S.players?S.players.length:0)+(document.hidden?' hidden':''),ver:v,dev:'diag'})}).catch(()=>{})}}catch(e){}};const t0276=performance.now();window.__tossN276=(window.__tossN276||0)+1;
   setTimeout(()=>fin(true),TOSS*(typeof ANIM==='number'?ANIM:1)+350);
   // straight to its own spot (no slow creep at the end): it arrives at 78% of the time, then a short settle "tap" on the cloth
   d.animate([{transform:`translate(-50%,-50%) translate(${dx}px,${dy}px) rotate(${spin}deg) scale(${(o.s0||1)*k})`,easing:'cubic-bezier(.25,.8,.4,1)'},
@@ -2776,7 +2776,7 @@ html.t-winter .td-tray{display:block;left:1%;top:calc(var(--tile) * .15);width:c
 .mj-l i,.mj-r i{width:80%;height:14%;border-radius:9px}
 .mj-top,.mj-l,.mj-r{box-shadow:inset 0 0 0 2px var(--mjt),inset 0 0 0 5px rgba(0,0,0,.18),0 3px 5px rgba(0,0,0,.35)!important}
 /* Rug lower: its bottom sits just above your cards */
-.table .rug,.table .center{width:min(calc(var(--W) * .88),65cqh)!important;top:calc(100% - min(calc(var(--W) * .88),65cqh)/2 - 6px)!important}
+.table .rug,.table .center{width:min(calc(var(--W) * .88),calc(65 * var(--q1,1cqh)))!important;top:calc(100% - min(calc(var(--W) * .88),calc(65 * var(--q1,1cqh)))/2 - 6px)!important}
 #table>#war{top:calc(100% - 70px)!important}
 `;document.head.appendChild(st)})();
 
@@ -2870,6 +2870,14 @@ function fitSeats(){const st=document.querySelector('.stage');if(!st||!S)return;
     const moves=[];document.querySelectorAll('.seat[data-seat]').forEach(s=>{if(s.dataset.seat==='0')return;const tw=s.querySelector('.tilewrap');if(!tw)return;const r=tw.getBoundingClientRect();if(!r.width)return;
       const ox=+(s.dataset.ox||0),oy=+(s.dataset.oy||0),cx=r.left+r.width/2-ox,cy=r.top+r.height/2-oy;let nx=ox,ny=oy;
       if(s.classList.contains('s-left')||s.classList.contains('s-right')){const K=innerWidth>innerHeight?.31:.25,k=s.classList.contains('hi')?-K:s.classList.contains('lo')?K:0;ny=ry+rr.height*k-cy;
+        // round 254: six players sideways (iPad, Mac, iPhone Duo): the two lower side players sat so low that their names and pile numbers were cut by the table's edge. A lower seat now stops where its lowest part (name, pile number) still shows whole.
+        if(s.classList.contains('lo'))try{let bot=r.bottom;s.querySelectorAll('.who .name,.pilebox,.pilebox .count,.pilebox>span,.tags').forEach(e=>{const q=e.getBoundingClientRect();if(q.width&&q.bottom>bot)bot=q.bottom});let lim=sr.bottom-5;
+          // round 272: sideways the lower side players also stop above your own pile (and its joker mark) and above the fire / gifts buttons, which rise over the table's edge on the iPhone Duo. Never lifted by more than a third of the picture.
+          if(document.documentElement.classList.contains('land205')){let L=1e9,Rr=-1e9;s.querySelectorAll('.who .name,.pilebox,.tilewrap').forEach(e=>{const q=e.getBoundingClientRect();if(q.width){L=Math.min(L,q.left);Rr=Math.max(Rr,q.right)}});
+            document.querySelectorAll('#mebox .pilebox .card,#mebox .jk135,#mebox .jk133,#mebox .lvl,#rail205 .gbtn,#rail205 .badge').forEach(o=>{const q=o.getBoundingClientRect();if(q.width&&q.left<Rr+2&&q.right>L-2&&q.top>sr.top+sr.height*.55)lim=Math.min(lim,q.top-4)})
+            // your pile's place is measured even while it is empty (the seats are placed once, at the start): a card there is taller than the empty slot, and a joker mark sits on its top corner
+            try{const mp=document.querySelector('#mebox .pilebox');if(mp){const q=mp.getBoundingClientRect();if(q.width&&q.left<Rr+2&&q.right>L-2)lim=Math.min(lim,Math.min(q.top,q.bottom-q.width*1.45)-18)}}catch(e){}}
+          const want=Math.min(ny,Math.floor(lim-(bot-oy)));ny=Math.max(want,Math.min(ny,Math.floor(sr.bottom-5-(bot-oy)))-Math.round(r.height*.34))}catch(e){}
         // round 145: the number badge on the outer side of a side player was cut by the edge of the table (a few pixels on a phone, a third of it on an iPad): the seat moves in just enough to show it whole
         try{const lv=s.querySelector('.lvl'),lr=lv?lv.getBoundingClientRect():r,Lx=Math.min(r.left,lr.width?lr.left:r.left)-ox,Rx=Math.max(r.right,lr.width?lr.right:r.right)-ox;
           nx=s.classList.contains('s-left')?Math.max(0,Math.ceil(sr.left+3-Lx)):Math.min(0,Math.floor(sr.right-3-Rx))}catch(e){}}
@@ -2894,8 +2902,11 @@ function fitSeats(){const st=document.querySelector('.stage');if(!st||!S)return;
     let m=st.querySelector(`.mjs[data-for="${s.dataset.seat}"]`);
     if(!m){m=document.createElement('div');m.dataset.for=s.dataset.seat;m.setAttribute('aria-hidden','true');st.insertBefore(m,st.firstChild)}
     const kind=side?'mj mjs mj-v':'mj mjs mj-h';if(m.className!==kind){m.className=kind;m.innerHTML='<i></i><i></i>'}
-    const W2=side?w*1.3:w*3.1,H2=side?w*2.9:w*1.3;
-    m.style.width=W2+'px';m.style.height=H2+'px';m.style.left=(cx-W2/2)+'px';m.style.top=(cy-H2/2)+'px'})}
+    // round 273: the picture swells a little while it is that player's turn, and the cushion behind him was measured from it, so the top cushion jumped a few pixels at every turn (seen upright on the Duo and the Galaxy).
+    // A change of less than 8% in the picture's size or 4px in its place is that swelling, not a new layout: the cushion keeps its measure
+    let w1=w,cx1=cx,cy1=cy;{const o=m.__m273,key=innerWidth+'x'+innerHeight+(s.className.match(/s-\w+/)||[''])[0];if(o&&o.key===key&&Math.abs(o.w-w)/o.w<.08&&Math.abs(o.cx-cx)<4+Math.abs(o.w-w)&&Math.abs(o.cy-cy)<4+Math.abs(o.w-w)){w1=o.w;cx1=o.cx;cy1=o.cy}else m.__m273={key,w,cx,cy}}
+    const W2=side?w1*1.3:w1*3.1,H2=side?w1*2.9:w1*1.3;
+    m.style.width=W2+'px';m.style.height=H2+'px';m.style.left=(cx1-W2/2)+'px';m.style.top=(cy1-H2/2)+'px'})}
 const _rSeat=render;render=function(){_rSeat();try{fitSeats()}catch(e){}};
 addEventListener('resize',()=>{try{fitSeats()}catch(e){}});
 
@@ -2942,7 +2953,7 @@ SND.msg=function(){if(!this.ok())return;const t=this.ctx.currentTime,c=this.ctx,
 
 // ---------- Side players sit level with the middle of the rug ----------
 (function balanceCSS(){const st=document.createElement('style');st.textContent=`
-.table{--rugS:min(calc(var(--W) * .88),65cqh);--rugC:calc(100% - var(--rugS) / 2 - 6px)}
+.table{--rugS:min(calc(var(--W) * .88),calc(65 * var(--q1,1cqh)));--rugC:calc(100% - var(--rugS) / 2 - 6px)}
 .table .s-left,.table .s-right{top:var(--rugC)}
 .table .s-left.hi,.table .s-right.hi{top:calc(var(--rugC) - var(--rugS) * .25)}
 .table .s-left.lo,.table .s-right.lo{top:calc(var(--rugC) + var(--rugS) * .25)}
@@ -3945,13 +3956,13 @@ if(!$('home').hidden)renderHome();
 
 // ===================== Round 23: bigger table, bigger cards; smaller sofas to make the room =====================
 (function bigTableCSS(){const st=document.createElement('style');st.textContent=`
-.table{--rugS:min(calc(var(--W) * .97),71cqh)!important;--rugC:calc(100% - var(--rugS) / 2 - 4px)!important;--tile:min(calc(var(--W) * .16),15cqh)!important}
+.table{--rugS:min(calc(var(--W) * .97),calc(71 * var(--q1,1cqh)))!important;--rugC:calc(100% - var(--rugS) / 2 - 4px)!important;--tile:min(calc(var(--W) * .16),calc(15 * var(--q1,1cqh)))!important}
 .table .rug,.table .center{width:var(--rugS)!important;top:var(--rugC)!important}
 #table>#war{top:calc(100% - 70px)!important}
 /* side players sit right at the edge, over the rug border */
 .table .s-left{left:calc(var(--tile) * .5)!important}.table .s-right{left:calc(100% - var(--tile) * .5)!important}
 /* bigger cards: ground and the face-up piles */
-.ground>.card{--cw:min(calc(var(--W) * .2),15.5cqh)!important}
+.ground>.card{--cw:min(calc(var(--W) * .2),calc(15.5 * var(--q1,1cqh)))!important}
 .table .seat:not([data-seat="0"]) .card.mini{--cw:calc(var(--W) * .135)!important}
 .drawrow{z-index:5}
 `;document.head.appendChild(st)})();
@@ -5821,11 +5832,7 @@ window.addEventListener('click',e=>{
 // ===================== Round 50: speed (layout once per frame, calmer animations), "computer is playing" badges, mic closes when you leave the app =====================
 // ---------- 1. Speed: the heavy layout passes run once per frame, not after every render ----------
 (function(){let req=0,need={g:0,s:0};const _fg=fitGround,_fs=fitSeats;
-  function flush(){if(req){cancelAnimationFrame(req);req=0}const s=need.s,g=need.g;need.s=need.g=0;try{if(s)_fs()}catch(e){}try{if(g&&!sameGround()){_fg();pinG()}}catch(e){}}
-  // round 230: on upright phones and the upright iPhone Duo the size of a middle card is not the one the layout writes on it: a style rule decides it from the table's
-  // height at that moment. Two cards drawn at different moments could so get two sizes (reported by a Duo: 73 and 64). Right after each layout the size the first
-  // card really has is now written on ALL of them, so they are the same by construction and stay so until the next layout. The size itself is unchanged.
-  function pinG(){try{const cs=[...document.querySelectorAll('#ground>.card')];if(!cs.length||cs[0].style.getPropertyPriority('--cw'))return;const w=cs[0].offsetWidth;if(w>20)cs.forEach(c=>c.style.setProperty('--cw',w+'px','important'))}catch(e){}}
+  function flush(){if(req){cancelAnimationFrame(req);req=0}const s=need.s,g=need.g;need.s=need.g=0;try{if(s)_fs()}catch(e){}try{if(g&&!sameGround())_fg()}catch(e){}}
   // round 205: the middle cards are laid out again only when they change (a card comes or goes) or the screen changes. A label or a bubble next to a player
   // used to change the free space by a few pixels, so the same cards jumped between one and two rows while nobody played
   let gsig='';const sameGround=()=>{const g=document.getElementById('ground'),rug=document.querySelector('.rug');if(!g||!rug)return false;const cs=[...g.querySelectorAll(':scope>.card')];
@@ -6136,7 +6143,11 @@ const FXE=(function(){const cv=document.createElement('canvas');cv.id='fxCanvas'
     gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.18,col);gr.addColorStop(.5,col.replace(/[\d.]+\)$/,'0.35)'));gr.addColorStop(1,col.replace(/[\d.]+\)$/,'0)'));g.fillStyle=gr;g.fillRect(0,0,128,128);return sprites[col]=s}
   function soft(col,key){key=key||col;if(sprites['s'+key])return sprites['s'+key];const s=document.createElement('canvas');s.width=s.height=128;const g=s.getContext('2d'),gr=g.createRadialGradient(64,64,0,64,64,64);
     gr.addColorStop(0,col);gr.addColorStop(.55,col.replace(/[\d.]+\)$/,'0.45)'));gr.addColorStop(1,col.replace(/[\d.]+\)$/,'0)'));g.fillStyle=gr;g.fillRect(0,0,128,128);return sprites['s'+key]=s}
-  function svgImg(svg){if(sprites[svg])return sprites[svg];const i=new Image();i.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);return sprites[svg]=i}
+  function svgImg(svg){if(sprites[svg])return sprites[svg];const i=new Image();let src=svg;
+    /* round 239: a drawing with no size of its own (bats, stars, bullets...) was turned into a tiny picture by Safari and then stretched, so it looked soft on a big screen.
+       It is now given a real size (about 256 on its long side) before it becomes a picture: same drawing, sharp at every size */
+    try{if(!/<svg[^>]*\swidth=/.test(svg)){const m=svg.match(/viewBox="\s*[\d.-]+[ ,]+[\d.-]+[ ,]+([\d.]+)[ ,]+([\d.]+)/);if(m){const w=+m[1],h=+m[2],k=256/Math.max(w,h);if(w>0&&h>0&&k>1)src=svg.replace('<svg','<svg width="'+Math.round(w*k)+'" height="'+Math.round(h*k)+'"')}}}catch(e){}
+    i.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(src);return sprites[svg]=i}
 
   // ---------- graphics-chip (WebGL) layer for glows, smoke, sparks and flashes; falls back to the 2D canvas if the phone has no WebGL ----------
   const G=(function(){if(window.__noGL)return null;try{const v=document.createElement('canvas');v.id='fxGL';v.style.cssText='position:fixed;left:0;top:0;pointer-events:none;z-index:61';document.body.appendChild(v);
@@ -6181,7 +6192,12 @@ const FXE=(function(){const cv=document.createElement('canvas');cv.id='fxCanvas'
   function decal(x,y,r,col,dur){decals.push({x,y,r,col,dur,t:0});go()}
   function bolt(x,y,ang,len,seg){const pts=[[x,y]];let cx=x,cy=y;for(let k=1;k<=seg;k++){const d=len/seg;const a=ang+R(-.6,.6);cx+=Math.cos(a)*d;cy+=Math.sin(a)*d;pts.push([cx,cy])}return pts}
   function go(){window.__fxBusyT=performance.now();if(!running){running=true;last=performance.now();requestAnimationFrame(loop)}}
-  let slow=0;function loop(now){slow=slow*.9+((now-last)>34?.1:0);window.__fxSlowV=slow; /* sharp on strong phones; drops to a lighter canvas only if this phone struggles */if(innerWidth!==W||innerHeight!==H||Math.min(window.__fxTgt||2,window.devicePixelRatio||1)!==DPR)size();const dt=Math.min(.05,(now-last)/1000);last=now;c.setTransform(DPR,0,0,DPR,0,0);c.clearRect(0,0,W,H);const useG=G&&G.ok();if(useG)G.begin();
+  // round 273: a picture of an effect stayed on the screen for minutes after "play again" (seen on a Mac). If one frame fails the loop no longer dies with its last frame left on the screen,
+  // every frame wipes the whole canvas whatever its size, and a new game starts with a clean canvas.
+  function wipe(){try{c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,cv.width,cv.height)}catch(e){}try{G&&G.clear()}catch(e){}}
+  function reset(dead){parts=[];decals=[];flashes=[];if(dead)running=false;wipe()}
+  function loop(now){try{loop0(now)}catch(e){reset(true)}}
+  let slow=0;function loop0(now){slow=slow*.9+((now-last)>34?.1:0);window.__fxSlowV=slow; /* sharp on strong phones; drops to a lighter canvas only if this phone struggles */if(innerWidth!==W||innerHeight!==H||Math.min(window.__fxTgt||2,window.devicePixelRatio||1)!==DPR)size();const dt=Math.min(.05,(now-last)/1000);last=now;c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,cv.width,cv.height);c.setTransform(DPR,0,0,DPR,0,0);const useG=G&&G.ok();if(useG)G.begin();
     // scorch marks first
     c.globalCompositeOperation='source-over';decals=decals.filter(d=>{d.t+=dt;const k=1-d.t/d.dur;if(k<=0)return false;const g=c.createRadialGradient(d.x,d.y,0,d.x,d.y,d.r);g.addColorStop(0,d.col.replace(/[\d.]+\)$/,(.55*k)+')'));g.addColorStop(1,d.col.replace(/[\d.]+\)$/,'0)'));c.fillStyle=g;c.beginPath();c.arc(d.x,d.y,d.r,0,7);c.fill();return true});
     parts=parts.filter(p=>{p.t+=dt;if(p.t<(p.delay||0))return true;const t=p.t-(p.delay||0),k=t/p.life;if(k>=1)return false;
@@ -6198,9 +6214,10 @@ const FXE=(function(){const cv=document.createElement('canvas');cv.id='fxCanvas'
       return true});
     c.globalCompositeOperation='lighter';flashes=flashes.filter(f=>{f.t+=dt;const k=f.t/f.dur;if(k>=1)return false;if(useG){G.fill(W,H,f.col,f.a*(1-k)*(1-k));return true}c.globalAlpha=f.a*(1-k)*(1-k);c.fillStyle=f.col;c.fillRect(0,0,W,H);return true});if(useG)G.end();
     c.globalAlpha=1;c.globalCompositeOperation='source-over';
-    if(parts.length||decals.length||flashes.length)requestAnimationFrame(loop);else{running=false;c.clearRect(0,0,W,H);try{G&&G.clear()}catch(e){}}}
+    if(parts.length||decals.length||flashes.length)requestAnimationFrame(loop);else{running=false;wipe()}}
   function shake(px,ms){px=Math.min(px,7);const a=$('table')||$('app');if(!a||!a.animate)return;const kf=[];for(let k=0;k<8;k++)kf.push({transform:`translate(${R(-px,px)}px,${R(-px,px)}px)`});kf.push({transform:'none'});a.animate(kf,{duration:ms,easing:'ease-out'})}
-  return {add,flash,decal,shake,R,glow}})();
+  return {add,flash,decal,shake,R,glow,reset}})();
+try{if(typeof newGame==='function')newGame=(function(p){return function(){try{FXE.reset()}catch(e){}return p.apply(this,arguments)}})(newGame)}catch(e){}
 
 // colour helpers
 const CA=(h,s,l,a=1)=>`hsla(${h},${s}%,${l}%,${a})`;
@@ -7542,8 +7559,8 @@ if(window.__seatPaint)setTimeout(__seatPaint,900);
 }`;document.head.appendChild(st)})();
 // big screens (iPad, open Duo): bigger cards on the rug; side seats only in landscape
 (function(){const st=document.createElement('style');st.textContent=`
-@media (min-width:761px) and (min-height:700px){html body .ground>.card{--cw:min(calc(var(--W) * .2),19cqh)!important}}
-@media (min-width:761px) and (orientation:landscape) and (min-height:560px){html body .ground>.card{--cw:min(calc(var(--SW,var(--W)) * .14),19cqh)!important}}
+@media (min-width:761px) and (min-height:700px){html body .ground>.card{--cw:min(calc(var(--W) * .2),calc(19 * var(--q1,1cqh)))!important}}
+@media (min-width:761px) and (orientation:landscape) and (min-height:560px){html body .ground>.card{--cw:min(calc(var(--SW,var(--W)) * .14),calc(19 * var(--q1,1cqh)))!important}}
 @media (orientation:portrait){html body .wsofa{display:none!important}}`;document.head.appendChild(st);
 addEventListener('resize',()=>{try{fitGround()}catch(e){}});setTimeout(()=>{try{fitGround()}catch(e){}},800)})();
 // the score box sits exactly in the middle of the top bar (2 buttons on one side, 3 on the other)
@@ -7622,7 +7639,15 @@ const SU={'♠':'M50 4C40 22 8 36 8 60c0 17 19 25 33 13-1 10-6 17-14 21h46c-8-4-
 let H=213,MY=H/2;const W=150,RED='#c8102e',BLK='#15161a',BLUE='#1d3f8f',YEL='#f2b51d',SKIN='#f7dcb6';
 const isRed=s=>s==='♥'||s==='♦';
 let SK={};const INK=()=>SK.ink||BLK,REDC=()=>SK.red||RED;
-const suit=(s,x,y,sz,c,flip)=>`<path transform="translate(${x} ${y})${flip?' rotate(180)':''} translate(${-sz/2} ${-sz/2}) scale(${sz/100})" d="${SU[s]}" fill="${c}"/>`;
+// round 235: quality level of the classic face (0 = as before; 1 = richer: shaded pips with a crisp edge and a soft shadow, linen paper, an inner frame, a lighter gloss;
+// 2 = the same plus a small shine on each pip and a double frame). Chosen once in window.__hdQ; card skins from the shop keep their own colours.
+const Q=()=>window.__hdQ==null?1:window.__hdQ|0; /* round 239: level 1 (the richer face) is the game's face now; window.__hdQ=0 gives the old one back */
+/* the richer drawing is for the classic face only: a card design from the shop (it has an id) keeps its own look exactly */const QS=()=>SK&&SK.id?0:Q();
+const GR=c=>QS()&&c===RED?'url(#hdRedG)':QS()&&c===BLK?'url(#hdBlkG)':c;
+const suit=(s,x,y,sz,c,flip)=>{const q=QS(),tf=`translate(${x} ${y})${flip?' rotate(180)':''} translate(${-sz/2} ${-sz/2}) scale(${sz/100})`;if(!q)return `<path transform="${tf}" d="${SU[s]}" fill="${c}"/>`;
+  const sh=`<path transform="translate(${flip?-.7:.7} ${flip?-1.1:1.1}) ${tf}" d="${SU[s]}" fill="rgba(40,20,10,.2)"/>`,edge=c===RED?'#8f0b1d':c===BLK?'#000':c;
+  const shine=q>=2&&sz>=20?`<ellipse transform="${tf}" cx="${s==='♦'?40:34}" cy="${s==='♠'||s==='♣'?40:26}" rx="9" ry="6" fill="#fff" opacity=".3"/>`:'';
+  return sh+`<path transform="${tf}" d="${SU[s]}" fill="${GR(c)}" stroke="${edge}" stroke-width="2.4" stroke-linejoin="round"/>`+shine};
 // shared gradients/patterns live once in the page (Safari and Chrome both resolve them from inline card SVGs)
 function defsOnce(){if(document.getElementById('hdDefs'))return;const d=document.createElement('div');d.id='hdDefs';d.style.cssText='position:absolute;width:0;height:0;overflow:hidden';
   d.innerHTML=`<svg width="0" height="0" aria-hidden="true"><defs>
@@ -7630,13 +7655,17 @@ function defsOnce(){if(document.getElementById('hdDefs'))return;const d=document
   <linearGradient id="hdGloss" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".455" stop-color="#fff" stop-opacity="0"/><stop offset=".49" stop-color="#fff" stop-opacity=".42"/><stop offset=".5" stop-color="#fff" stop-opacity=".5"/><stop offset=".515" stop-color="#fff" stop-opacity="0"/><stop offset=".545" stop-color="#fff" stop-opacity="0"/><stop offset=".555" stop-color="#fff" stop-opacity=".22"/><stop offset=".565" stop-color="#fff" stop-opacity="0"/></linearGradient>
   <pattern id="hdLinen" width="4" height="4" patternUnits="userSpaceOnUse"><path d="M0 .5H4M.5 0V4" stroke="rgba(120,100,70,.07)" stroke-width="1"/><path d="M0 2.5H4M2.5 0V4" stroke="rgba(255,255,255,.35)" stroke-width=".6"/></pattern>
   <linearGradient id="hdSheen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".12" stop-color="#fff" stop-opacity="0"/><stop offset=".9" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".06"/></linearGradient>
+  <linearGradient id="hdRedG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ea2a43"/><stop offset=".55" stop-color="#c8102e"/><stop offset="1" stop-color="#9c0b22"/></linearGradient>
+  <linearGradient id="hdBlkG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3c3e4a"/><stop offset=".5" stop-color="#17181d"/><stop offset="1" stop-color="#050506"/></linearGradient>
+  <linearGradient id="hdPaper2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffefb"/><stop offset=".6" stop-color="#faf5ea"/><stop offset="1" stop-color="#efe6d4"/></linearGradient>
+  <linearGradient id="hdGloss2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".46" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".2"/><stop offset=".53" stop-color="#fff" stop-opacity="0"/></linearGradient>
   <pattern id="hdDiam" width="6" height="6" patternUnits="userSpaceOnUse"><path d="M3 0L6 3 3 6 0 3z" fill="${YEL}"/></pattern>
   <clipPath id="hdTop213"><rect x="36" y="38" width="${W-72}" height="${213/2-38}"/></clipPath><clipPath id="hdTop236"><rect x="36" y="38" width="${W-72}" height="${236/2-38}"/></clipPath></defs></svg>`;document.body.appendChild(d)}
-const svgWrap=inner=>{const gid='hdp'+(SK.id||'');const paper=SK.p1?`<defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${SK.p1}"/><stop offset="1" stop-color="${SK.p2||SK.p1}"/></linearGradient></defs><rect x="0" y="0" width="${W}" height="${H}" rx="12" fill="url(#${gid})"/>`:`<rect x="0" y="0" width="${W}" height="${H}" rx="12" fill="url(#hdPaper)"/>`;
+const svgWrap=inner=>{const q=QS(),plain=!SK.p1&&!SK.frame&&!SK.toon;if(q&&plain){const f2=q>=2?`<rect x="8.5" y="8.5" width="${W-17}" height="${H-17}" rx="6.5" fill="none" stroke="rgba(150,116,58,.38)" stroke-width=".7"/>`:'';return `<svg class="hdsvg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><rect x="0" y="0" width="${W}" height="${H}" rx="12" fill="url(#hdPaper2)"/>${q>=2?`<rect x="0" y="0" width="${W}" height="${H}" rx="12" fill="url(#hdLinen)" opacity=".3"/>`:''}<rect x="5" y="5" width="${W-10}" height="${H-10}" rx="9" fill="none" stroke="rgba(150,116,58,.5)" stroke-width="1.1"/>${f2}${inner}<rect x="0" y="0" width="${W}" height="${H}" rx="12" fill="url(#hdGloss2)"/><rect x=".8" y=".8" width="${W-1.6}" height="${H-1.6}" rx="11.4" fill="none" stroke="rgba(60,45,25,.3)" stroke-width="1"/></svg>`}const gid='hdp'+(SK.id||'');const paper=SK.p1?`<defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${SK.p1}"/><stop offset="1" stop-color="${SK.p2||SK.p1}"/></linearGradient></defs><rect x="0" y="0" width="${W}" height="${H}" rx="12" fill="url(#${gid})"/>`:`<rect x="0" y="0" width="${W}" height="${H}" rx="12" fill="url(#hdPaper)"/>`;
   const fr=SK.frame?`<rect x="6" y="6" width="${W-12}" height="${H-12}" rx="8" fill="none" stroke="${SK.frame}" stroke-width="1.4"/>`:'';const toon=SK.toon?`<rect x="2" y="2" width="${W-4}" height="${H-4}" rx="11" fill="none" stroke="#22223a" stroke-width="4"/>`:'';
-  return `<svg class="hdsvg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${paper}${fr}${inner}${toon}<rect x="0" y="0" width="${W}" height="${H}" rx="12" fill="url(#hdGloss)"/><rect x=".8" y=".8" width="${W-1.6}" height="${H-1.6}" rx="11.4" fill="none" stroke="rgba(60,45,25,.22)" stroke-width="1"/></svg>`};
+  return `<svg class="hdsvg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${paper}${fr}${inner}${toon}<rect x="0" y="0" width="${W}" height="${H}" rx="12" fill="url(#${window.__skGloss===0?'hdGloss':'hdGloss2'})"/><rect x=".8" y=".8" width="${W-1.6}" height="${H-1.6}" rx="11.4" fill="none" stroke="rgba(60,45,25,.22)" stroke-width="1"/></svg>`};
 // big corner index so the cards read well while fanned in the hand
-const index=(r,s,c)=>{const ten=r==='10';const one=rot=>`<g${rot?` transform="rotate(180 ${W/2} ${MY})"`:''}><text x="${ten?19:18}" y="37" text-anchor="middle" font-family="${(SK.font||"Georgia,'Times New Roman',serif").replace(/"/g,"'")}" font-weight="${SK.w||700}"${SK.it?' font-style="italic"':''} font-size="${ten?30:38}" letter-spacing="${ten?-3:0}" fill="${c}">${r}</text>${suit(s,18,55,22,c)}</g>`;return one()+one(1)};
+const index=(r,s,c)=>{const ten=r==='10';const one=rot=>`<g${rot?` transform="rotate(180 ${W/2} ${MY})"`:''}><text x="${ten?19:18}" y="37" text-anchor="middle" font-family="${(SK.font||"Georgia,'Times New Roman',serif").replace(/"/g,"'")}" font-weight="${SK.w||700}"${SK.it?' font-style="italic"':''} font-size="${ten?30:38}" letter-spacing="${ten?-3:0}" fill="${GR(c)}"${QS()?` stroke="${c===RED?'#8f0b1d':c}" stroke-width=".5" paint-order="stroke"`:''}>${r}</text>${suit(s,18,55,22,c)}</g>`;return one()+one(1)};
 const L=55,C=75,R=95;let T,B,M,LAY;
 function setH(h){H=h;MY=h/2;T=50;B=H-50;M=MY;LAY={2:[[C,T],[C,B]],3:[[C,T],[C,M],[C,B]],4:[[L,T],[R,T],[L,B],[R,B]],5:[[L,T],[R,T],[C,M],[L,B],[R,B]],
 6:[[L,T],[R,T],[L,M],[R,M],[L,B],[R,B]],7:[[L,T],[R,T],[C,(T+M)/2],[L,M],[R,M],[L,B],[R,B]],
@@ -7646,7 +7675,7 @@ function setH(h){H=h;MY=h/2;T=50;B=H-50;M=MY;LAY={2:[[C,T],[C,B]],3:[[C,T],[C,M]
 setH(213);
 function pips(r,s){const c=isRed(s)?REDC():INK();let g=index(r,s,c);
   if(r==='A')g+=s==='♠'?`<circle cx="75" cy="${MY}" r="40" fill="none" stroke="${BLK}" stroke-width=".8"/><circle cx="75" cy="${MY}" r="36" fill="none" stroke="${BLK}" stroke-width=".4" stroke-dasharray="1.5 2.5"/>`+suit(s,75,MY-2,58,c):suit(s,75,MY,46,c);
-  else (LAY[r]||[]).forEach(([x,y])=>g+=suit(s,x,y,24,c,y>MY+1));
+  else (LAY[r]||[]).forEach(([x,y])=>g+=suit(s,x,y,QS()?27:24,c,y>MY+1));
   return svgWrap(g)}
 function figure(r,s){const red=isRed(s),main=r==='Q'?(red?BLUE:RED):(red?RED:BLUE),alt=main===RED?BLUE:RED,o=BLK;
   let f=`<path d="M36 105V92c4-9 16-14 30-16h18c14 2 26 7 30 16v13z" fill="${main}" stroke="${o}" stroke-width="1"/>`;
@@ -7698,7 +7727,7 @@ function joker(){if(SK.jart){
    <g transform="translate(34 46) rotate(20)"><path d="M0 0v32" stroke="#7a4a1e" stroke-width="2.4"/><circle r="7" fill="${SKIN}"/><path d="M-7-2c-2-8 16-8 14 0z" fill="${BLUE}"/><circle cx="0" cy="-8" r="2" fill="${YEL}"/></g></g>`;
   return svgWrap(lt+`<g transform="rotate(180 75 ${MY})">${lt}</g>`+fig)}
 const CACHE={};
-function hdSVG(c,tall,skin){SK=skin||{};const k=(SK.id||'')+c.r+c.s+(tall?'T':'');if(CACHE[k])return CACHE[k];setH(tall?236:213);const v=c.r==='JK'?joker():['K','Q','J'].includes(c.r)?court(c.r,c.s):pips(c.r,c.s);setH(213);SK={};return CACHE[k]=v}
+function hdSVG(c,tall,skin){SK=skin||{};const k=(SK.id||'')+c.r+c.s+(tall?'T':'')+'q'+Q()+(window.__skGloss===0?'o':''); /* round 245: the shop card designs use the lighter gloss too (window.__skGloss=0 gives the old one back) */if(CACHE[k])return CACHE[k];setH(tall?236:213);const v=c.r==='JK'?joker():['K','Q','J'].includes(c.r)?court(c.r,c.s):pips(c.r,c.s);setH(213);SK={};return CACHE[k]=v}
 window.hdCardSVG=hdSVG;
 const OLD=['fclassic','fbig','fcream','fvint','fmod','ftoon','fwar','fneo','fmed'];
 const curId=()=>window.__forceFace||([...document.documentElement.classList].find(c=>/^cf-/.test(c))||'').slice(3);
@@ -7963,7 +7992,10 @@ function clash(sa,ida,sb,idb){if(busy||document.hidden)return;busy=true;const c=
   const crA=A.kind==='crack'?jag(pa,m,14,26):null,crB=B.kind==='crack'?jag(pb,m,14,26):null;
   const parts=[],rings=[];const T0=performance.now(),TRAVEL=520,PUSH=420,END=1900;let hit=false;
   if(typeof fxSound==='function')try{fxSound(idb,2)}catch(e){}
-  function frame(now){const t=now-T0;c.clearRect(0,0,innerWidth,innerHeight);
+  // round 273: this effect cleared only the part of its canvas that fits the window of the moment. If the window got narrower while it played (seen on a Mac), the right strip was never cleared:
+  // every frame piled up there and stayed until the next clash. It now wipes its whole canvas, and a failed frame can no longer leave it stuck
+  function frame(now){try{frame0(now)}catch(e){try{c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,cv.width,cv.height)}catch(_){}busy=false}}
+  function frame0(now){const t=now-T0;c.save();c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,cv.width,cv.height);c.restore();
     if(t<TRAVEL+PUSH){
       // both streams race in; then they push against each other — the meeting point wobbles between them
       const u=Math.min(1,t/TRAVEL),wob=t>TRAVEL?Math.sin((t-TRAVEL)/38)*14:0,dx=pb.x-pa.x,dy=pb.y-pa.y,L0=Math.hypot(dx,dy)||1,mm={x:m.x+dx/L0*wob,y:m.y+dy/L0*wob};
@@ -7984,7 +8016,7 @@ function clash(sa,ida,sb,idb){if(busy||document.hidden)return;busy=true;const c=
       if(p.shape==='shard'){c.translate(p.x,p.y);c.rotate(p.vx);c.fillRect(-p.r,-p.r*2.4,p.r*2,p.r*4.8)}
       else if(p.shape==='coin'){c.beginPath();c.ellipse(p.x,p.y,p.r*1.6,p.r*1.1,p.vx,0,7);c.fill()}
       else{c.beginPath();c.arc(p.x,p.y,p.r,0,7);c.fill()}c.restore()}
-    if(t<END||parts.length)requestAnimationFrame(frame);else{c.clearRect(0,0,innerWidth,innerHeight);busy=false}}
+    if(t<END||parts.length)requestAnimationFrame(frame);else{c.save();c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,cv.width,cv.height);c.restore();busy=false}}
   requestAnimationFrame(frame)}
 window.effectClash=clash;
 // remember who fired last during this war; a rival answering within a few seconds starts the clash
@@ -9133,10 +9165,27 @@ const st=document.createElement('style');st.textContent=`body>.bubble.mybub{z-in
 (function(){
 const vis=e=>{if(!e||e.hidden)return null;const r=e.getBoundingClientRect();return r.width&&r.height?r:null};
 const gb=window.__groundBottom;window.__groundBottom=()=>{let b=gb?gb():1e9;try{const w=document.getElementById('war'),r=vis(w);if(r&&w.dataset.lift)b=Math.min(b,r.top-6)}catch(e){}return b};
-render=(function(p){return function(){const r=p.apply(this,arguments);try{const w=document.getElementById('war');if(!w)return r;if(!(S&&S.war)&&!w.dataset.lift&&!w.style.translate)return r;const was=w.dataset.lift||'';
-  w.style.translate='';delete w.dataset.lift;const bt=document.querySelector('#actions button.fire[data-int]');if(bt)bt.style.translate='';const wr=vis(w),br=vis(bt);
+// round 273, asked by the user: sideways on big screens the "throw" button sat on my raised card. It stands on the bottom edge of the table, just right of my cards (toward the thumb).
+function throwAt273(){const A=document.getElementById('actions'),t=A&&A.querySelector('#throwBtn');if(!t||innerWidth<=innerHeight||document.documentElement.classList.contains('short205'))return;
+  A.style.translate='';const r=vis(t),tb=vis(document.querySelector('.table')),hc=[...document.querySelectorAll('#myrow .card')].map(vis).filter(Boolean);if(!r||!tb||!hc.length)return;
+  const hr=Math.max(...hc.map(k=>k.right)),rl=[...document.querySelectorAll('#rail205 .gbtn')].map(vis).filter(k=>k&&k.left>innerWidth/2),lim=(rl.length?Math.min(...rl.map(k=>k.left)):innerWidth)-8;
+  let x=hr+16;if(x+r.width>lim)x=lim-r.width;const y=tb.bottom-r.height/2;A.style.translate=`${Math.round(x-r.left)}px ${Math.round(y-r.top)}px`}
+render=(function(p){return function(){const r=p.apply(this,arguments);try{{const A0=document.getElementById('actions');if(A0&&(A0.style.translate||A0.classList.contains('col273'))&&!A0.querySelector('button.fire[data-int]')){A0.style.translate='';A0.classList.remove('col273')}}try{throwAt273();requestAnimationFrame(()=>requestAnimationFrame(throwAt273))}catch(e){}const w=document.getElementById('war');if(!w)return r;if(!(S&&S.war)&&!w.dataset.lift&&!w.style.translate&&!w.dataset.side273){w.__k277='';return r}/* round 277: this pass cleared and re-measured the war panel and the buttons on every redraw. When nothing it depends on has changed since the last pass (same war, same cut, same buttons, same hand, same window), its result is still right and it is skipped; a phone held sideways keeps the old way, because there the button itself is moved and it is drawn again each time */{const A1=document.getElementById('actions'),k277=innerWidth+'x'+innerHeight+(S&&S.war?S.war.rank+':'+S.war.pot.length+':'+S.war.leader+':'+(S.war.deadline?1:0):'-')+(A1?A1.children.length+':'+A1.textContent.length:'')+':'+(S&&S.players&&S.players[0]?S.players[0].hand.length:0)+':'+w.textContent.length;const shortLand=innerWidth>innerHeight&&document.documentElement.classList.contains('short205');if(!shortLand&&k277===w.__k277&&(w.__n277=(w.__n277||0)+1)>2)return r;if(k277!==w.__k277)w.__n277=0;w.__k277=k277}const was=w.dataset.lift||'';
+  w.style.translate='';w.style.removeProperty('--wly273');w.style.removeProperty('--wlx273');delete w.dataset.lift;delete w.dataset.side273;const bt=document.querySelector('#actions button.fire[data-int]');if(bt)bt.style.translate='';const wr=vis(w),br=vis(bt);
+  // round 273: on wide screens that are not a phone the cut buttons stay together under the war panel (the fire button used to slide alone to the far right, over the lower right player,
+  // and "cut with the joker" stayed behind in the middle). They sit on the middle of the table; on a screen the size of the opened Duo a little to the right, where the thumb is.
+  const A=document.getElementById('actions'),wide=innerWidth>innerHeight&&!document.documentElement.classList.contains('short205');if(A){A.style.translate='';A.classList.remove('col273')}
+  // a wide screen that is not tall (the opened Duo sideways): no room to lift the panel, so the panel and the fire button stand side by side on one line (panel left, button right of the middle);
+  // "cut with the joker" goes under the fire button
+  if(wide&&A&&br&&wr&&innerHeight<=720&&window.__duoCut273!=='lift'){const gap=12,sh=Math.round((br.width+gap)/2);w.style.setProperty('--wlx273',-sh+'px');w.dataset.side273='1';if(A.children.length>1)A.classList.add('col273');
+    const f=vis(bt),kids=[...A.children].map(vis).filter(Boolean),hc=[...document.querySelectorAll('#myrow .card')].map(vis).filter(Boolean),ht=hc.length?Math.min(...hc.map(k=>k.top)):1e9;
+    const dx=wr.right-sh+gap-f.left;let dy=wr.top+wr.height/2-(f.top+f.height/2);const bb=Math.max(...kids.map(k=>k.bottom))+dy;if(bb>ht-6)dy-=bb-(ht-6);A.style.translate=`${Math.round(dx)}px ${Math.round(dy)}px`;return r}
+  if(wide&&A&&br){const tb=vis(document.querySelector('.table')),kids=[...A.children].map(vis).filter(Boolean);if(tb&&kids.length){const l=Math.min(...kids.map(k=>k.left)),r2=Math.max(...kids.map(k=>k.right));
+    let dx=tb.left+tb.width/2-(l+r2)/2+(innerHeight<=720?innerWidth*.09:0);dx=Math.max(-l+8,Math.min(dx,innerWidth-8-r2));const hc=[...document.querySelectorAll('#myrow .card')].map(vis).filter(Boolean),ht=hc.length?Math.min(...hc.map(k=>k.top)):1e9,bb=Math.max(...kids.map(k=>k.bottom)),dy=Math.max(-60,Math.min(0,ht-6-bb));A.style.translate=`${Math.round(dx)}px ${Math.round(dy)}px`}}
+  const br2=wide?vis(bt):br;
+  if(wide){if(wr&&br2){const ov=Math.ceil(wr.bottom+4-br2.top);if(ov>0&&br2.left<wr.right&&br2.right>wr.left){w.style.setProperty('--wly273',-ov+'px');w.dataset.lift=ov}}if((w.dataset.lift||'')!==was)try{fitGround()}catch(e){}return r}
   if(wr&&br&&innerWidth>innerHeight&&br.top<wr.bottom+4){const dx=Math.min(innerWidth-8-br.right,wr.right+12-br.left);if(dx>0){bt.style.translate=`${dx}px 0`;return r}}
-  if(wr&&br){const ov=Math.ceil(wr.bottom+4-br.top);if(ov>0&&br.left<wr.right&&br.right>wr.left){w.style.translate=`0 ${-ov}px`;w.dataset.lift=ov}}
+  if(wr&&br){const ov=Math.ceil(wr.bottom+4-br.top);if(ov>0&&br.left<wr.right&&br.right>wr.left){w.style.setProperty('--wly273',-ov+'px');w.dataset.lift=ov}}
   if((w.dataset.lift||'')!==was)try{fitGround()}catch(e){}}catch(e){}return r}})(render);
 })();
 
@@ -9210,7 +9259,11 @@ const st=document.createElement('style');st.textContent=`.bubble.chatsay{white-s
 const SEL='.table .seat .who .tilewrap,.table .seat .who .name,.table .seat .pilebox .card,.table .seat .handfan .cardback,.table .seat .tags .tag,.table .seat .seatgift,.table .seat .doneplate,#war,#ground>.card,#actions button,#myrow .card,.bottombar button,.bottombar .badge,.topbar button,.topbar .score,.drawrow .stack,#exitBtn,body>.toast';
 const EXT={pow:[40,24],boom:[54,36],zap:[46,32],shout:[38,26],cloud:[0,26],comic:[0,16],scroll:[14,8]};window.__bubExt=EXT;
 const ext=b=>{if(b.classList.contains('bcompact'))return /bub-(boom|zap|shout|pow)/.test(b.className)&&!b.classList.contains('bflat')?[22,14]:[0,0];for(const k in EXT)if(b.classList.contains('bub-'+k))return EXT[k];return [0,0]};
-function place(b){const q=b.getBoundingClientRect(),cx=(q.left+q.right)/2,cy=(q.top+q.bottom)/2,[ex,ey]=ext(b),W=b.offsetWidth+ex,H=b.offsetHeight+ey;if(!b.offsetWidth)return;
+// round 255: the later "keep it inside the game" correction (bubfit219) used to run a moment after this placing, and this placing ran again every 450ms when two bubbles touched: the two fought and the bubble jumped back and forth (the top-left player's phrase "stuttered"). The correction now runs inside the placing itself, in the same step, so a bubble is drawn once in its final place.
+// round 273: the tail of a cloud or comic bubble was always drawn at the bubble's left end; when the speaker is on the right of his bubble the tail goes to the right end, so it points at him
+function tail273(b){const i=b.dataset.seat;if(!i)return;const t=document.querySelector(`.seat[data-seat="${i}"] .tilewrap`);if(!t)return;const a=t.getBoundingClientRect(),c=b.getBoundingClientRect();if(a.width&&c.width)b.classList.toggle('tr273',a.left+a.width/2>c.left+c.width/2)}
+function place(b){const r=place0(b);try{window.__bubFit&&window.__bubFit(b)}catch(e){}try{tail273(b)}catch(e){}return r}
+function place0(b){const q=b.getBoundingClientRect(),cx=(q.left+q.right)/2,cy=(q.top+q.bottom)/2,[ex,ey]=ext(b),W=b.offsetWidth+ex,H=b.offsetHeight+ey;if(!b.offsetWidth)return;
   const obs=[...document.querySelectorAll(SEL+',.bubble:not(.bwait)')].filter(e=>e!==b&&!b.contains(e)).map(e=>{const o0=e.getBoundingClientRect(),isB=e.classList.contains('bubble'),[x2,y2]=isB?ext(e):[0,0],o={left:o0.left-x2/2,right:o0.right+x2/2,top:o0.top-y2/2,bottom:o0.bottom+y2/2,width:o0.width},p=isB?10:3;return o.width?{l:o.left-p,r:o.right+p,t:o.top-p,b:o.bottom+p}:null}).filter(Boolean);
   const M=6,cost=(x,y)=>{const l=x-W/2,r=x+W/2,t=y-H/2,bb=y+H/2;if(l<M||r>innerWidth-M||t<M||bb>innerHeight-M)return Infinity;let a=0;for(const o of obs){const w=Math.min(r,o.r)-Math.max(l,o.l),h=Math.min(bb,o.b)-Math.max(t,o.t);if(w>0&&h>0)a+=w*h}return a};
   // fixed spots (agreed with the players): top player -> on his right; upper side players -> above them; lower side players -> below them (outside the table is fine).
@@ -9218,7 +9271,7 @@ function place(b){const q=b.getBoundingClientRect(),cx=(q.left+q.right)/2,cy=(q.
   if(b.dataset.anchor){const se=document.querySelector(`.seat[data-seat="${b.dataset.seat}"] .who`);if(se){const w=se.getBoundingClientRect(),A=b.dataset.anchor;let x,y;
     if(!b.dataset.fitted){b.dataset.fitted=1;const tw=document.querySelector('.seat.s-top .who'),tr=tw?tw.getBoundingClientRect():null;let lim=0;
       if(A==='right')lim=innerWidth-w.right-18;else if(tr&&A==='up'){const mid=w.left+w.width/2;lim=mid<innerWidth/2?tr.left-14:innerWidth-tr.right-14}else lim=innerWidth*.46;
-      if(lim>0&&b.offsetWidth>lim){b.style.setProperty('max-width',Math.max(84,Math.floor(lim-(b.offsetWidth-b.clientWidth)-parseFloat(getComputedStyle(b).paddingLeft)-parseFloat(getComputedStyle(b).paddingRight)))+'px','important');b.style.setProperty('box-sizing','content-box');b.style.setProperty('white-space','normal','important');if(lim<150)b.style.setProperty('font-size','12px','important');return place(b)}}
+      if(lim>0&&b.offsetWidth>lim){b.style.setProperty('max-width',Math.max(84,Math.floor(lim-(b.offsetWidth-b.clientWidth)-parseFloat(getComputedStyle(b).paddingLeft)-parseFloat(getComputedStyle(b).paddingRight)))+'px','important');b.style.setProperty('box-sizing','content-box');b.style.setProperty('white-space','normal','important');if(lim<150)b.style.setProperty('font-size','12px','important');return place0(b)}}
     if(A==='right'){x=w.right+10+W/2;y=w.top+w.height*.45}else if(A==='down'){x=w.left+w.width/2;y=w.bottom+10+H/2}else{x=w.left+w.width/2;y=w.top-12-H/2}
     x=Math.max(M+W/2,Math.min(innerWidth-M-W/2,x));y=Math.max(M+H/2,Math.min(innerHeight-M-H/2,y));
     const obs2=[...document.querySelectorAll(SEL.replace('.table .seat .handfan .cardback,','')+',.bubble:not(.bwait)')].filter(e=>e!==b&&!b.contains(e)).map(e=>{const o=e.getBoundingClientRect();return o.width?{l:o.left-3,r:o.right+3,t:o.top-3,b:o.bottom+3}:null}).filter(Boolean);
@@ -9235,9 +9288,9 @@ function place(b){const q=b.getBoundingClientRect(),cx=(q.left+q.right)/2,cy=(q.
   let best=null;const scan=(RX,RY)=>{for(let dy=-RY;dy<=RY;dy+=8)for(let dx=-RX;dx<=RX;dx+=10){const d=Math.hypot(dx,dy*1.25);if(best&&best.a===0&&d>=best.d)continue;const a=cost(cx+dx,cy+dy);if(a===Infinity)continue;
     if(!best||a<best.a||(a===best.a&&d<best.d))best={dx,dy,a,d}}};const TOP=b.dataset.top==='1';scan(TOP?56:150,TOP?130:110);if(!best||best.a>0)scan(TOP?80:260,TOP?200:180);
   if(!best)return;b.style.left=(parseFloat(b.style.left)||0)+best.dx+'px';b.style.top=(parseFloat(b.style.top)||0)+best.dy+'px';
-  if(best.a>0&&/bub-(boom|zap|shout|pow)/.test(b.className)&&!b.classList.contains('bcompact')){b.classList.add('bcompact');return place(b)}
-  if(best.a>0&&b.classList.contains('chatsay')&&!(b.dataset.narrow>=2)){b.dataset.narrow=(+b.dataset.narrow||0)+1;b.style.setProperty('max-width',(b.dataset.narrow==1?150:118)+'px','important');b.style.setProperty('font-size','12px','important');place(b)}
-  else if(best.a>0&&!b.classList.contains('bcompact')){b.classList.add('bcompact');place(b)}}
+  if(best.a>0&&/bub-(boom|zap|shout|pow)/.test(b.className)&&!b.classList.contains('bcompact')){b.classList.add('bcompact');return place0(b)}
+  if(best.a>0&&b.classList.contains('chatsay')&&!(b.dataset.narrow>=2)){b.dataset.narrow=(+b.dataset.narrow||0)+1;b.style.setProperty('max-width',(b.dataset.narrow==1?150:118)+'px','important');b.style.setProperty('font-size','12px','important');place0(b)}
+  else if(best.a>0&&!b.classList.contains('bcompact')){b.classList.add('bcompact');place0(b)}}
 window.__placeBubble=place;
 // two messages at once: if there is no free spot, the newer one waits (hidden) until the other has gone, then pops up
 const box=b=>{const q=b.getBoundingClientRect(),cx=(q.left+q.right)/2,cy=(q.top+q.bottom)/2,[ex,ey]=ext(b),W=b.offsetWidth+ex,H=b.offsetHeight+ey;return {l:cx-W/2,r:cx+W/2,t:cy-H/2,b:cy+H/2}};
@@ -10000,7 +10053,7 @@ const later3=()=>[80,350,800,1500].forEach(t=>setTimeout(refit,t));
 addEventListener('orientationchange',later3);addEventListener('resize',later3);try{visualViewport&&visualViewport.addEventListener('resize',later3)}catch(e){}
 })();
 // the "computer / away" chip under a side player never leaves the screen
-(function(){const fix=()=>{const els=[...document.querySelectorAll('#seats .botchip,#seats .seat .who .name,#seats .seat .tags')];els.forEach(c=>{if(c.style.translate)c.style.translate=''});const rs=els.map(c=>c.getBoundingClientRect());els.forEach((c,k)=>{const r=rs[k];let d=0;if(r.left<4)d=4-r.left;else if(r.right>innerWidth-4)d=innerWidth-4-r.right;if(d)c.style.translate=d+'px 0'})};window.__nameFix=fix; // round 147: also run after the seats are placed (see fitSeats)
+(function(){let sig277='',left277=0;const fix=()=>{{const k277=(()=>{try{let k=innerWidth+'x'+innerHeight+document.documentElement.className.length;document.querySelectorAll('#seats .seat').forEach(s=>{const n=s.querySelector('.who .name'),t=s.querySelector('.tags'),c=s.querySelector('.pilebox .card');k+='|'+s.className+(n?n.textContent.length:0)+(t?t.textContent:'')+(c?1:0)});const d=document.querySelector('.drawrow .dcnt');return k+(d?d.textContent.length:0)}catch(e){return ''+Math.random()}})();const n277=performance.now();if(k277===sig277&&n277-(fix.t277||0)<3000){if(left277<=0)return;left277--}else{if(k277!==sig277)left277=2;sig277=k277}fix.t277=n277;}const els=[...document.querySelectorAll('#seats .botchip,#seats .seat .who .name,#seats .seat .tags')];els.forEach(c=>{if(c.style.translate)c.style.translate=''});const rs=els.map(c=>c.getBoundingClientRect());els.forEach((c,k)=>{const r=rs[k];let d=0;if(r.left<4)d=4-r.left;else if(r.right>innerWidth-4)d=innerWidth-4-r.right;if(d)c.style.translate=d+'px 0'})};window.__nameFix=fix; // round 147: also run after the seats are placed (see fitSeats)
 render=(function(p){return function(){const r=p.apply(this,arguments);try{fix()}catch(e){}return r}})(render);
 const st=document.createElement('style');st.textContent='#seats .botchip{white-space:nowrap;max-width:46vw;overflow:hidden;text-overflow:ellipsis}';document.head.appendChild(st)})();
 (function(){const st=document.createElement('style');st.textContent=`html body #seats .seat .who .name{display:block!important;direction:rtl;unicode-bidi:plaintext;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:min(104px,30vw)!important;width:auto!important}
@@ -10008,17 +10061,19 @@ html body #seats .seat .who .name .flag{display:inline-block;vertical-align:-2px
 // the hint bubble: smaller, and it picks the free spot (above your cards, under the top bar, or beside your cards) so it does not sit on the ground cards or players
 (function(){const st=document.createElement('style');st.textContent=`#hintPop{max-width:min(78vw,380px)!important;font-size:12.5px!important;padding:7px 12px!important;line-height:1.5!important}`;document.head.appendChild(st);
 const SEL='#ground>.card,#seats .seat .who,#seats .seat .pilebox .card,#seats .seat .tags .tag,#war,#actions button,.drawrow .stack,#myrow .card,#seats .seat .handfan>.cardback,.topbar,.bottombar>*,.bottombar .gbtn,.bottombar .mine';
-window.__placeHint=()=>placeHint();function placeHint(){const d=document.getElementById('hintPop');if(!d||!d.classList.contains('on'))return;
-  d.style.transform='none';const W=d.offsetWidth,H=d.offsetHeight;
-  const obs=[...document.querySelectorAll(SEL)].map(e=>e.getBoundingClientRect()).filter(r=>r.width);
+// round 273, asked by the user: the tip jumped left, right and into corners looking for a free spot. It now always stands on the middle line (of the screen upright, of the table sideways)
+// and only moves up or down: just above my cards when that is free, otherwise the nearest height where it covers the least. The beginner tip (#beg157) is placed the same way.
+const WT=[['#actions button',8],['#myrow .card',8],['.topbar',8],['#seats .seat .who',4],['#seats .seat .pilebox .card',4],['#seats .seat .tags .tag',3],['#war',3],['.drawrow .stack',2],['#ground>.card',.12],['#seats .seat .handfan>.cardback',.12],['.bottombar>*',6],['.bottombar .gbtn',6],['.bottombar .mine',6]];
+window.__placeHint=()=>placeHint();function placeAt(d){const H5=document.documentElement.classList,land=H5.contains('land205');if(land&&H5.contains('short205'))return;
+  d.style.setProperty('transform','none','important');d.style.setProperty('right','auto','important');d.style.setProperty('bottom','auto','important');const W=d.offsetWidth,H=d.offsetHeight;if(!W)return;
+  const obs=[];for(const [q,wt] of WT)document.querySelectorAll(q).forEach(e=>{const r=e.getBoundingClientRect();if(r.width)obs.push([r,wt])});
   const hand=[...document.querySelectorAll('#myrow .card')].map(e=>e.getBoundingClientRect());const ht=hand.length?Math.min(...hand.map(r=>r.top)):innerHeight*.7;
-  const hl=hand.length?Math.min(...hand.map(r=>r.left)):innerWidth/2,hr=hand.length?Math.max(...hand.map(r=>r.right)):innerWidth/2;
-  const tb=document.querySelector('.topbar'),tbb=tb?tb.getBoundingClientRect().bottom:50;
-  const C=[[innerWidth/2-W/2,ht-H-8],[innerWidth/2-W/2,tbb+6],[hr+10,ht],[hl-10-W,ht],[innerWidth/2-W/2,(tbb+ht)/2-H/2]];
-  const cost=([x,y])=>{if(x<4||y<4||x+W>innerWidth-4||y+H>innerHeight-4)return Infinity;let a=0;for(const o of obs){const w=Math.min(x+W,o.right)-Math.max(x,o.left),h=Math.min(y+H,o.bottom)-Math.max(y,o.top);if(w>0&&h>0)a+=w*h}return a};
-  let best=C[0],bc=Infinity;for(const c of C){const v=cost(c);if(v<bc){bc=v;best=c}}
-  if(bc>0){const cx=innerWidth/2-W/2,cy=ht-H-8;let bd=Infinity;for(let y=tbb+4;y+H<=innerHeight-4;y+=8)for(let x=4;x+W<=innerWidth-4;x+=12){const v=cost([x,y]);if(v>bc)continue;const dd=Math.abs(x-cx)+Math.abs(y-cy);if(v<bc||dd<bd){bc=v;bd=dd;best=[x,y]}}}if(bc===Infinity)best=[Math.max(4,innerWidth/2-W/2),Math.max(4,ht-H-8)];
-  d.style.left=best[0]+'px';d.style.top=best[1]+'px'}
+  const tb=document.querySelector('.topbar'),tbr=tb&&tb.getBoundingClientRect(),tbb=!land&&tbr&&tbr.height?tbr.bottom:0,tbl=document.querySelector('.table'),tr=tbl&&tbl.getBoundingClientRect();
+  const cx=land&&tr&&tr.width?tr.left+tr.width/2:innerWidth/2,x=Math.max(4,Math.min(innerWidth-4-W,cx-W/2));
+  const cost=y=>{let a=0;for(const [o,wt] of obs){const w=Math.min(x+W,o.right)-Math.max(x,o.left),h=Math.min(y+H,o.bottom)-Math.max(y,o.top);if(w>0&&h>0)a+=w*h*wt}return a};
+  const y0=Math.max(tbb+4,ht-H-8);/* staying near my cards counts too: a far-away tip is not read */let best=y0,bc=d.classList.contains('atk275')?0:cost(y0);if(bc>0)for(let y=y0-6;y>=tbb+4;y-=6){const v=cost(y)+(y0-y)*W*.1;if(v<bc-1){bc=v;best=y}}
+  d.style.setProperty('left',x+'px','important');d.style.setProperty('top',best+'px','important')}
+function placeHint(){const d=document.getElementById('hintPop');/* round 275c: "your pile is under attack" is a warning, not a tip: it keeps its solid look and always stands right above my cards */if(d)d.classList.toggle('atk275',/تحت الهجوم|under attack/i.test(d.textContent));if(d&&d.classList.contains('on'))placeAt(d);const g=document.getElementById('beg157');if(g)placeAt(g)}
 new MutationObserver(()=>{try{placeHint()}catch(e){}}).observe(document.body,{subtree:false,childList:true});
 const iv=setInterval(()=>{const d=document.getElementById('hintPop');if(!d)return;clearInterval(iv);new MutationObserver(()=>{try{if(d.classList.contains('on'))placeHint()}catch(e){}}).observe(d,{attributes:true,attributeFilter:['class'],childList:true})},300);
 const st2=document.createElement('style');st2.textContent=`#hintPop.on{transform:none!important}#hintPop{transform:scale(.9)!important}`;document.head.appendChild(st2);
@@ -10071,7 +10126,7 @@ html body #hintPop{max-width:min(37vw,310px)!important;width:max-content!importa
 html body .bottombar{padding-top:2px!important;padding-bottom:max(2px,env(safe-area-inset-bottom))!important;min-height:0!important}
 }`;document.head.appendChild(st)})();
 // the hint re-checks its spot while it is showing: if cards landed under it after it appeared, it moves to a free spot
-(function(){const SEL='#ground>.card,#seats .seat .who,#seats .seat .handfan>.cardback,#seats .seat .tags .tag,#myrow .card,.drawrow .stack,#war';
+(function(){const SEL='#ground>.card,#seats .seat .who,#seats .seat .handfan>.cardback,#seats .seat .tags .tag,#myrow .card,.drawrow .stack,#war,#actions button';
 setInterval(()=>{try{const d=document.getElementById('hintPop');if(!d||!d.classList.contains('on')||document.hidden)return;const a=d.getBoundingClientRect();
   for(const e of document.querySelectorAll(SEL)){const o=e.getBoundingClientRect();if(Math.min(a.right,o.right)-Math.max(a.left,o.left)>4&&Math.min(a.bottom,o.bottom)-Math.max(a.top,o.top)>4){window.__placeHint&&window.__placeHint();return}}}catch(e){}},600)})();
 }catch(e){try{console.error('extras99.js',e)}catch(_){}}
@@ -10344,7 +10399,8 @@ FS.glow=function(t,k){tone(t,659.25,659.25,.7,{gain:.08*k});tone(t+.05,987.77,98
 
 // ---------- into the shop ----------
 const NEWE=[['firering','Fire ring','حلقة نار',2500,2],['halo','Halo','وهج الحلقات',1500,1],['glow','Soft glow','وهج',800,0]];
-const NEWS=[['firering','Fire ring','حلقة نار',4000,2],['halo','Halo','وهج الحلقات',2500,1],['glow','Soft glow','وهج',1500,0],['missile','Missiles','صواريخ',8000,4],['tank','Tank shell','قذيفة دبابة',9000,4],['flip','Card flip slam','قلبة الورقة',6000,3]];
+/* round 278, asked by the user: "fire ring" is no longer sold as a fire-button effect. Its drawing stays in the code (the inferno effect uses it, and a player who still has it selected online is still drawn right); a player who had it selected goes back to the default */try{if(typeof MYPROF!=='undefined'&&MYPROF.sfx==='firering'){MYPROF.sfx='blaze';try{saveProf()}catch(e){}}}catch(e){}
+const NEWS=[['halo','Halo','وهج الحلقات',2500,1],['glow','Soft glow','وهج',1500,0],['missile','Missiles','صواريخ',8000,4],['tank','Tank shell','قذيفة دبابة',9000,4],['flip','Card flip slam','قلبة الورقة',6000,3]];
 NEWE.forEach(([id,en,ar,cost,tier])=>{if(!EFX.some(x=>x.id===id))EFX.push({id,en,ar,cost,tier})});
 if(typeof SFX!=='undefined')NEWS.forEach(([id,en,ar,cost,tier])=>{if(!SFX.some(x=>x.id===id))SFX.push({id,en,ar,cost,tier})});
 try{const fi=fxIcon;fxIcon=function(id){const m={firering:'⭕',halo:'🌟',glow:'✨',missile:'🚀',tank:'💣',gunfire:'🔫',flip:'🃏'};return m[id]?`<b>${m[id]}</b>`:fi(id)}}catch(e){}
@@ -10674,7 +10730,7 @@ function show(W,gain){try{if(!S||!S.players||!S.players[W])return;const now=Date
   document.querySelectorAll('.warwin104').forEach(e=>e.remove());const d=document.createElement('div');d.className='warwin104 '+(mine?'us':'them');d.dir=LANG==='ar'?'rtl':'ltr';
   const av=document.querySelector(`.seat[data-seat="${W}"] .avatar`)||document.querySelector('.bottombar .mine .avatar');
   d.innerHTML=`<span class="wwav">${av?av.innerHTML:''}</span><span class="wwtx"><small>${me?L('You took the war','الحرب لك'):L('The war goes to','الحرب راحت لـ')}</small><b><i style="background:${col}"></i>${esc(nm)}</b></span>${gain>0?`<span class="wwpt">+${gain}</span>`:''}`;
-  document.body.appendChild(d);setTimeout(()=>d.classList.add('out'),2100);setTimeout(()=>d.remove(),2500);
+  document.body.appendChild(d);/* round 274: it leaves sooner */setTimeout(()=>d.classList.add('out'),1150);setTimeout(()=>d.remove(),1500);
   const tw=document.querySelector(`.seat[data-seat="${W}"] .tilewrap`)||document.querySelector('.bottombar .mine');if(tw){tw.classList.remove('wwglow');void tw.offsetWidth;tw.classList.add('wwglow');setTimeout(()=>tw.classList.remove('wwglow'),2500)}}catch(e){}}
 const on=()=>typeof NET!=='undefined'&&NET.on;
 declareEat=(function(p){return function(){if(!on())cuts=0;return p.apply(this,arguments)}})(declareEat);
@@ -12171,8 +12227,9 @@ let cv=null,cx=null,tv=null,tx=null,TW=0,TH=0,top=[],W=0,H=0,D=1,drops=[],glass=
 function ensureTop(){if(!tv||!tv.isConnected){tv=document.createElement('canvas');tv.id='rainTop';document.body.appendChild(tv);tx=tv.getContext('2d')}
   if(innerWidth!==TW||innerHeight!==TH){TW=innerWidth;TH=innerHeight;tv.width=TW*D;tv.height=TH*D;top=[];for(let k=0;k<Math.round(Math.min(110,TW*TH/7500));k++)top.push(nt(true));glass=[];for(let k=0;k<Math.round(TW*TH/40000)+8;k++)glass.push(ng(true));tdrips=[]}}
 function nt(any){return {x:R(-40,TW+40),y:any?R(-TH,TH):R(-80,-10),v:R(900,1300),l:R(14,26),a:R(.05,.12)}}
-function ensure(){const app=document.getElementById('app');if(!app)return false;if(!cv||!cv.isConnected){cv=document.createElement('canvas');cv.id='rainCv';app.prepend(cv);cx=cv.getContext('2d')}
-  const r=app.getBoundingClientRect(),d=Math.min(window.__roomDPR||1.5,devicePixelRatio||1);if(Math.round(r.width)!==W||Math.round(r.height)!==H||d!==D){W=Math.round(r.width);H=Math.round(r.height);D=d;cv.width=W*D;cv.height=H*D;seed()}return true}
+/* round 277: this ran on every frame and measured the page each time (a forced layout 30 times a second while it rains). The size is now read again only after the window changed or once a second */let szT277=0,szK277='',szR277=null;
+function ensure(){const app=document.getElementById('app');if(!app)return false;if(!cv||!cv.isConnected){cv=document.createElement('canvas');cv.id='rainCv';app.prepend(cv);cx=cv.getContext('2d');szR277=null}
+  const nw277=performance.now(),k277=innerWidth+'x'+innerHeight;if(!szR277||k277!==szK277||nw277-szT277>1000){szR277=app.getBoundingClientRect();szK277=k277;szT277=nw277}const r=szR277,d=Math.min(window.__roomDPR||1.5,devicePixelRatio||1);if(Math.round(r.width)!==W||Math.round(r.height)!==H||d!==D){W=Math.round(r.width);H=Math.round(r.height);D=d;cv.width=W*D;cv.height=H*D;seed()}return true}
 function seed(){const n=Math.round(Math.min(340,W*H/4000));drops=[];for(let k=0;k<n;k++)drops.push(nd(true))}
 function nd(any){const z=Math.random();return {x:R(-40,W+40),y:any?R(-H,H):R(-80,-10),v:R(650,1050)*(.6+z*.6),l:R(10,22)*(.6+z*.7),a:R(.10,.28)*(.5+z*.7),w:z>.75?1.4:1}}
 function ng(any){return {x:R(0,TW),y:any?R(0,TH):R(-30,0),r:R(1.4,3.4),v:0,wait:R(0,4),run:Math.random()}}
@@ -12581,7 +12638,16 @@ try{SND.buf=function(){if(!this.nb||this.nb.__c!==this.ctx){const c=this.ctx,b=c
 // tiers: 3 = high (sharp canvases up to 3x, rich particles), 2 = normal, 1 = light. Starts from what the phone says it has, then watches the real frame rate and steps down if needed.
 const cores=navigator.hardwareConcurrency||4,mem=navigator.deviceMemory||4,dpr=window.devicePixelRatio||1;
 let Q=(cores>=8&&mem>=6)?3:(cores>=6&&mem>=4)?2:1;
-function apply(){window.__Q=Q;window.__fxTgt=Q===3?Math.min(1.6,dpr):Q===2?1.4:1.1;window.__fxCap=Q===3?380:Q===2?300:200;window.__roomDPR=Q===3?Math.min(1.25,dpr):1;document.documentElement.dataset.q=Q;
+// round 236: Safari never tells the page how much memory the device has (and reports few cores), so every iPhone, iPad and Mac was taken for a weak phone and got the
+// LIGHT tier: effects drawn at about half the sharpness, half the sparks, the table's shadow off. Apple devices now start from what they are:
+// iPad and Mac = high, iPhone (the Duo too) = normal. The watcher below still steps a device down by itself if its frames drop.
+try{const ua=navigator.userAgent,apple=navigator.deviceMemory==null&&/AppleWebKit/.test(ua)&&!/Chrome|CriOS|Chromium|Edg|Android|FxiOS/.test(ua);
+  if(apple){const pad=/iPad/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1),mac=/Macintosh/.test(ua)&&!pad;Q=3;window.__Qapple=Q /* round 254: iPhones start high too. Measured on the user's iPhone Duo: the high tier was no slower than the normal or the light one (13.6% slow frames against 19.6% and 17.9% in the same run). The watcher below still steps a weak phone down. */}}catch(e){}
+// round 266: on the iPad, at the high tier, the effects and the room are drawn at the screen's full sharpness (they were at 80% and 62% of it).
+// Chosen by the user after comparing the two on his own iPad with a live frame counter (119 frames a second either way; 93 in the heaviest war).
+// If an iPad cannot keep up, the watcher below steps it down a tier and the old sizes come back by themselves.
+let PAD=false;try{const ua=navigator.userAgent;PAD=/iPad/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1)}catch(e){}
+function apply(){window.__Q=Q;window.__fxTgt=Q===3?Math.min(1.6,dpr):Q===2?1.4:1.1;window.__fxCap=Q===3?380:Q===2?300:200;window.__roomDPR=Q===3?Math.min(1.25,dpr):1;if(PAD&&Q===3){window.__fxTgt=window.__roomDPR=Math.min(3,dpr)}document.documentElement.dataset.q=Q;
   try{window.dispatchEvent(new Event('resize'))}catch(e){}}
 apply();
 // watch real frames while something is moving: two bad seconds in a row = one step lighter (never goes back up in the same session)
@@ -12755,8 +12821,9 @@ html.t-${id} body .table .field::after{content:'';position:absolute;left:50%;top
 const atT181=()=>{try{if(typeof S==='undefined'||!S)return false;for(const id of ['home','setup','lobby','rooms']){const e=document.getElementById(id);if(e&&!e.hidden)return false}return true}catch(e){return true}}; /* the rain, the snow and their sound belong to the table: off on the home, settings and room pages */
 const cur=()=>{if(!atT181())return null;const c=[...document.documentElement.classList].find(c=>c.startsWith('t-')&&BY[c.slice(2)]);return c?BY[c.slice(2)]:null};
 let cv=null,cx=null,W=0,H=0,P=[],raf=0,last=0;
-function ensure(){const app=document.getElementById('app');if(!app)return false;if(!cv||!cv.isConnected){cv=document.createElement('canvas');cv.id='impDust';app.prepend(cv);cx=cv.getContext('2d')}
-  const r=app.getBoundingClientRect();if((r.width|0)!==W||(r.height|0)!==H){W=r.width|0;H=r.height|0;cv.width=W*(window.__roomDPR||1);cv.height=H*(window.__roomDPR||1);cx.setTransform(window.__roomDPR||1,0,0,window.__roomDPR||1,0,0);P=[];for(let k=0;k<Math.min(70,W*H/9000);k++)P.push(np(true))}return true}
+let szT277=0,szK277='',szR277=null;
+function ensure(){const app=document.getElementById('app');if(!app)return false;if(!cv||!cv.isConnected){cv=document.createElement('canvas');cv.id='impDust';app.prepend(cv);cx=cv.getContext('2d');szR277=null}
+  const nw277=performance.now(),k277=innerWidth+'x'+innerHeight;if(!szR277||k277!==szK277||nw277-szT277>1000){szR277=app.getBoundingClientRect();szK277=k277;szT277=nw277}const r=szR277;if((r.width|0)!==W||(r.height|0)!==H){W=r.width|0;H=r.height|0;cv.width=W*(window.__roomDPR||1);cv.height=H*(window.__roomDPR||1);cx.setTransform(window.__roomDPR||1,0,0,window.__roomDPR||1,0,0);P=[];for(let k=0;k<Math.min(70,W*H/9000);k++)P.push(np(true))}return true}
 const R=(a,b)=>a+Math.random()*(b-a);const CC=['#c8102e','#f2b51d','#1d3f8f','#fff3c4'];function np(any){return {x:R(0,W),y:any?R(0,H):H+5,v:R(6,18),r:R(.6,2),ph:R(0,6.3),tw:R(1,3),c:CC[Math.floor(Math.random()*4)],rot:R(0,6.3)}}
 let lastDraw=0;const busyNow=now=>(typeof S!=='undefined'&&S&&S.war)||(now-(window.__fxBusyT||-1e9)<1500);function frame(now){raf=0;const bz=busyNow(now);if(now-lastDraw<(bz?83:(window.__eco132?66:41))){raf=requestAnimationFrame(frame);return}lastDraw=now;window.__roomBusy=bz;const T=cur();if(!T||document.hidden){cx&&cx.clearRect(0,0,W,H);return}if(!ensure())return;const dt=Math.min(.05,(now-last)/1000||.016);last=now;cx.clearRect(0,0,W,H);
   const br=.75+.25*Math.sin(now/1300);const g=cx.createRadialGradient(W/2,0,0,W/2,0,Math.max(W,H)*.6);g.addColorStop(0,`rgba(${T.dust},${.18*br})`);g.addColorStop(1,`rgba(${T.dust},0)`);cx.fillStyle=g;cx.fillRect(0,0,W,H);
@@ -14577,15 +14644,65 @@ function zap(x,y,p){
   if(O.zapSky){[0,110,240].slice(0,1+p).forEach((t,i)=>setTimeout(()=>{try{const sx=x+R(-70,70);FXE.add({type:'bolt',x:sx,y:-6,col:'rgba(215,235,255,1)',ang:Math.atan2(y+6,x-sx),len:Math.hypot(x-sx,y+6),size:1,life:R(.28,.42)});FXE.flash('rgba(200,225,255,0.34)',1,.16);FXB.sparks(x,y,'rgba(190,225,255,1)',10,260,300)}catch(e){}},t))} // the bolt comes down from the sky onto the cards
   if(O.zapChain){seats().forEach((s,i)=>setTimeout(()=>{try{FXE.add({type:'bolt',x,y,col:'rgba(170,210,255,1)',ang:Math.atan2(s.y-y,s.x-x),len:Math.hypot(s.x-x,s.y-y)*.94,size:1,life:R(.3,.45)});FXB.sparks(s.x,s.y,'rgba(190,225,255,1)',8,160,280);FXE.add({type:'ring',x:s.x,y:s.y,col:'rgba(170,215,255,0.8)',size:8,size2:44,w:2,life:.4,fade:1})}catch(e){}},180+i*70))} // it jumps from the cards to every player
   if(O.zapStatic){for(let k=0;k<8+p*3;k++)setTimeout(()=>{try{FXE.add({type:'bolt',x:x+R(-60,60),y:y+R(-50,50),col:'rgba(200,230,255,1)',ang:R(0,6.283),len:R(14,34),size:1,life:R(.14,.24)})}catch(e){}},500+k*110)}} // small arcs keep crawling over the cards for a second
+// ---------- round 233: the meetings of fire, ice and lightning: several shows for each pair, the game takes a different one each time ----------
+// U: how much bigger than a phone's the table is (the shows keep their share of the table on a Duo or an iPad).  W/H: the screen.
+const U=()=>{try{const r=document.querySelector('.rug');return Math.max(1,Math.min(2.4,(r?r.getBoundingClientRect().width:384)/384))}catch(e){return 1}};
+const later=(ms,fn)=>setTimeout(()=>{try{fn()}catch(e){}},ms);
+const FI=['rgba(255,150,50,1)','rgba(255,220,130,1)'],IC=['rgba(190,230,255,1)','rgba(240,250,255,1)'],ZP=['rgba(170,215,255,1)','rgba(235,245,255,1)'];
+const steamAt=(x,y,n,u,up)=>{for(let i=0;i<n;i++){const ang=R(0,6.283),v=R(40,150)*u;FXE.add({type:'smoke',add:false,x:x+R(-30,30)*u,y:y+R(-20,20)*u,col:i%2?'rgba(245,248,252,0.6)':'rgba(215,225,235,0.5)',size:R(14,24),size2:R(90,150),vx:Math.cos(ang)*v,vy:Math.sin(ang)*v*.5-R(60,140)*(up||1),drag:.972,life:R(1.4,2.3),fadeIn:.12,delay:R(0,.25),fade:1})}};
+const shardsAt=(x,y,n,u,c1,c2)=>{for(let i=0;i<n;i++){const ang=R(0,6.283),v=R(220,600)*u;FXE.add({type:'shard',add:false,x:x+R(-16,16),y:y+R(-12,12),col:(i%3?c1:c2).replace(',1)',',0.95)'),size:R(5,10),vx:Math.cos(ang)*v,vy:Math.sin(ang)*v-R(60,220),ay:880,drag:.985,vr:R(-13,13),life:R(.9,1.5),fade:1.6})}};
+const CLASHV={
+ 'fire+ice':[
+  // 1) the first one: a burst of steam
+  (x,y,k,u)=>{for(let i=0;i<26;i++){const ang=R(0,6.283),v=R(40,150);FXE.add({type:'smoke',add:false,x:x+R(-30,30),y:y+R(-20,20),col:i%2?'rgba(245,248,252,0.6)':'rgba(215,225,235,0.5)',size:R(14,24),size2:R(90,150),vx:Math.cos(ang)*v,vy:Math.sin(ang)*v*.5-R(60,140),drag:.972,life:R(1.4,2.3),fadeIn:.12,delay:R(0,.25),fade:1})}FXE.flash('rgba(240,246,255,0.26)',1,.3)},
+  // 2) the whirl: fire and ice circle each other into the middle, then a pillar of steam, embers and ice goes up the screen
+  (x,y,k,u)=>{const n=30+k*8;for(let i=0;i<n;i++){const a=i/n*6.283*2,r=(150+k*16)*u,c=i%2?FI[0]:IC[0],sx=x+Math.cos(a)*r,sy=y+Math.sin(a)*r*.8,T2=.46;FXE.add({type:'glow',x:sx,y:sy,col:c,size:R(7,12),size2:2,vx:(x-sx)/T2-Math.sin(a)*130*u,vy:(y-sy)/T2+Math.cos(a)*130*u,drag:.985,life:T2,delay:i*.008,fade:.8})}
+   later(470,()=>{FXE.flash('rgba(245,248,255,0.34)',1,.28);FXE.shake&&FXE.shake(6+k*3,300);FXE.add({type:'ring',x,y,col:'rgba(255,225,170,0.85)',size:24,size2:(220+k*40)*u,w:5,life:.55,fade:1});FXE.add({type:'ring',x,y,col:'rgba(200,236,255,0.85)',size:16,size2:(160+k*30)*u,w:4,life:.6,delay:.08,fade:1});
+    for(let i=0;i<46+k*12;i++){const hot=i%2;FXE.add({type:'glow',x:x+R(-26,26)*u,y:y+R(-10,10),col:hot?FI[i%4?0:1]:IC[i%4?0:1],size:R(5,11),size2:2,vx:R(-70,70)*u,vy:-R(420,980)*u,ay:260,drag:.985,life:R(.8,1.5),delay:R(0,.22),fade:1.1})}
+    steamAt(x,y-20*u,24+k*6,u,3.4);shardsAt(x,y,10+k*4,u,IC[0],IC[1])})},
+  // 3) the two walls: flame runs in from one side, frost from the other; they hit in the middle and both break
+  (x,y,k,u)=>{const d=Math.random()<.5?1:-1,span=(190+k*14)*u;[0,1,2,3,4].forEach(i=>later(i*70,()=>{const px=x-d*span*(1-i/5);FXB.flames(px,y+12*u,10+k*3,26,34*u);FXB.embers(px,y,4+k,220*u)}));
+   [0,1,2,3,4].forEach(i=>later(i*70,()=>{const px=x+d*span*(1-i/5);for(let j=0;j<3;j++)FXE.add({type:'bolt',x:px,y:y+R(-30,30)*u,col:'rgba(228,246,255,1)',ang:(d>0?Math.PI:0)+R(-.5,.5),len:R(50,90)*u,size:1,life:R(.7,1.1)});FXE.add({type:'glow',x:px,y,col:IC[0],size:14,size2:40*u,life:.5,fade:1})}));
+   later(390,()=>{FXE.flash('rgba(255,255,255,0.4)',1,.22);FXE.shake&&FXE.shake(7+k*3,320);steamAt(x,y,30+k*8,u,1.6);shardsAt(x,y,20+k*8,u,IC[0],IC[1]);FXB.sparks(x,y,FI[1],26+k*8,300*u,620*u);
+    [-1,1].forEach(sd=>{for(let i=0;i<16+k*4;i++)FXE.add({type:'glow',x,y:y+R(-40,40)*u,col:sd*d<0?FI[0]:IC[0],size:R(5,10),size2:2,vx:sd*R(260,680)*u,vy:R(-160,60)*u,ay:300,drag:.98,life:R(.6,1.1),fade:1.1})});
+    FXE.add({type:'ring',x,y,col:'rgba(245,248,255,0.9)',size:20,size2:(250+k*40)*u,w:5+k,life:.55,fade:1})})}],
+ 'ice+zap':[
+  // 1) the first one: arcs run round the frozen patch
+  (x,y,k,u)=>{for(let i=0;i<14;i++)setTimeout(()=>{try{const a0=R(0,6.283),r0=R(40,120);FXE.add({type:'bolt',x:x+Math.cos(a0)*r0,y:y+Math.sin(a0)*r0*.7,col:'rgba(190,235,255,1)',ang:a0+R(1.2,1.9),len:R(40,90),size:1,life:R(.18,.3)})}catch(e){}},i*60);FXE.add({type:'ring',x,y,col:'rgba(180,230,255,0.85)',size:30,size2:240,w:4,life:.6,fade:1})},
+  // 2) the shatter: long ice spikes grow out, one bolt from the sky hits them and everything breaks into falling ice
+  (x,y,k,u)=>{const m=12+k*2;for(let j=0;j<m;j++)FXE.add({type:'bolt',x,y,col:'rgba(228,246,255,1)',ang:j/m*6.283+R(-.15,.15),len:R(110,190)*u+k*14,size:1,life:R(.75,.95),delay:j*.018});
+   later(460,()=>{const sx=x+R(-60,60)*u;FXE.add({type:'bolt',x:sx,y:-6,col:'rgba(235,245,255,1)',ang:Math.atan2(y+6,x-sx),len:Math.hypot(x-sx,y+6),size:1,life:.34});FXE.flash('rgba(210,232,255,0.5)',1,.2);FXE.shake&&FXE.shake(8+k*3,340);
+    shardsAt(x,y,38+k*12,u,IC[0],IC[1]);FXB.sparks(x,y,ZP[1],24+k*8,320*u,640*u);FXE.add({type:'ring',x,y,col:'rgba(200,236,255,0.9)',size:22,size2:(260+k*40)*u,w:5+k,life:.55,fade:1});
+    for(let i=0;i<34+k*10;i++)FXE.add({type:'shard',add:false,x:x+R(-230,230)*u,y:y-R(150,300)*u,col:'rgba(240,250,255,0.95)',size:R(3,7),vx:R(-30,30),vy:R(120,320)*u,ay:420,drag:.985,vr:R(-8,8),life:R(1,1.7),delay:R(.05,.5),fade:1.5})})},
+  // 3) the ice storm: sleet blows across the whole table while small bolts jump between the flakes
+  (x,y,k,u)=>{const d=Math.random()<.5?1:-1;FXE.flash('rgba(200,228,255,0.3)',1,.3);
+   for(let i=0;i<70+k*16;i++)FXE.add({type:i%4?'glow':'shard',add:i%4?undefined:false,x:x-d*R(240,420)*u,y:y+R(-170,170)*u,col:i%3?IC[1]:IC[0],size:R(3,8),size2:2,vx:d*R(520,980)*u,vy:R(-60,120)*u,drag:.992,vr:R(-10,10),life:R(.7,1.2),delay:R(0,.7),fade:1.2});
+   for(let i=0;i<18+k*5;i++)later(120+i*55,()=>{const a0=R(0,6.283),r0=R(30,190)*u,px=x+Math.cos(a0)*r0,py=y+Math.sin(a0)*r0*.7;FXE.add({type:'bolt',x:px,y:py,col:'rgba(200,235,255,1)',ang:a0+R(1.2,1.9),len:R(50,120)*u,size:1,life:R(.16,.3)});if(i%4===0){FXE.flash('rgba(215,235,255,0.2)',1,.12);FXB.sparks(px,py,ZP[1],8,160*u,300*u)}});
+   later(820,()=>{FXE.add({type:'ring',x,y,col:'rgba(190,232,255,0.85)',size:26,size2:(240+k*36)*u,w:4+k,life:.6,fade:1});FXE.shake&&FXE.shake(5+k*2,260)})}],
+ 'fire+zap':[
+  // 1) the first one: a white blast and a storm of sparks
+  (x,y,k,u)=>{FXE.flash('rgba(255,245,225,0.42)',1,.22);for(let i=0;i<70;i++){const ang=R(0,6.283),v=R(260,760);FXE.add({type:'spark',x,y,col:i%3?'rgba(255,200,110,1)':'rgba(215,235,255,1)',size:R(1.8,3.4),vx:Math.cos(ang)*v,vy:Math.sin(ang)*v,ay:300,drag:.93,trail:.06,life:R(.5,1.1),fade:1.4})}FXE.add({type:'ring',x,y,col:'rgba(255,240,210,0.85)',size:24,size2:280,w:5,life:.5,fade:1})},
+  // 2) fire from the sky: three bolts come down one after the other and each lights a pillar of flame
+  (x,y,k,u)=>{[0,170,340].forEach((t,i)=>later(t,()=>{const tx=x+(i-1)*70*u,sx=tx+R(-90,90)*u;FXE.add({type:'bolt',x:sx,y:-6,col:'rgba(235,242,255,1)',ang:Math.atan2(y+6,tx-sx),len:Math.hypot(tx-sx,y+6),size:1,life:R(.28,.4)});FXE.flash('rgba(255,236,200,0.34)',1,.16);FXE.shake&&FXE.shake(4+k*2,180);
+    FXB.flames(tx,y+10*u,16+k*5,30,22*u);FXB.embers(tx,y,10+k*4,420*u);for(let j=0;j<12+k*3;j++)FXE.add({type:'glow',x:tx+R(-12,12)*u,y,col:j%3?FI[0]:FI[1],size:R(6,12),size2:2,vx:R(-40,40)*u,vy:-R(360,820)*u,ay:320,drag:.985,life:R(.6,1.1),delay:R(0,.12),fade:1.1});
+    FXE.add({type:'ring',x:tx,y,col:'rgba(255,230,190,0.85)',size:12,size2:(110+k*20)*u,w:3,life:.45,fade:1})}));
+   later(520,()=>{FXE.decal&&FXE.decal(x,y,(110+k*18)*u,'rgba(18,7,2,0.5)',3.5)})},
+  // 3) the burning net: lightning jumps from the pile to every player and a ball of fire bursts where each bolt lands
+  (x,y,k,u)=>{FXE.flash('rgba(255,245,225,0.4)',1,.2);FXE.shake&&FXE.shake(7+k*3,320);const pts=seats();const all=pts.length?pts:[{x:x-200*u,y},{x:x+200*u,y},{x,y:y-180*u}];
+   all.forEach((s2,i)=>later(i*90,()=>{FXE.add({type:'bolt',x,y,col:'rgba(225,238,255,1)',ang:Math.atan2(s2.y-y,s2.x-x),len:Math.hypot(s2.x-x,s2.y-y)*.92,size:1,life:R(.32,.46)});
+    later(110,()=>{const n=18+k*4;for(let j=0;j<n;j++){const a=j/n*6.283,v=R(200,340)*u;FXE.add({type:'spark',x:s2.x,y:s2.y,col:j%2?FI[0]:FI[1],size:R(2,3.6),vx:Math.cos(a)*v,vy:Math.sin(a)*v,ay:240,drag:.94,trail:.07,life:R(.5,.9),fade:1.4})}FXE.add({type:'glow',x:s2.x,y:s2.y,col:FI[0],size:16,size2:70*u,life:.4,fade:1});FXB.flames(s2.x,s2.y+8,8+k*2,22,18*u)})}));
+   [0,120,240].forEach((t,i)=>later(t,()=>FXE.add({type:'ring',x,y,col:(i%2?'rgba(215,235,255,0.85)':'rgba(255,190,110,0.9)'),size:20,size2:(170+i*60+k*30)*u,w:5,life:.55,fade:1})));FXB.sparks(x,y,FI[1],30+k*10,320*u,700*u)}]
+};
+// the game takes the shows of a pair in turn, starting anywhere, so the same one never comes twice in a row
+const clashAt={};
+function clashV(pair,x,y,n){const L=CLASHV[pair];if(!L)return;const k=Math.min(4,Math.max(1,(n||1)-1));/* decided: the game keeps the first show of each pair only (the other two stay here unused, reachable from the test list) */let i=0;if(window.__clashPick!=null)i=+window.__clashPick%L.length;clashAt[pair]=i;window.__clashLast=pair+'#'+(i+1);try{L[i](x,y,k,U())}catch(e){}}
+window.__clashV=clashV;
 // ---------- the war itself ----------
 function war(id,x,y,p,f){const w=typeof S!=='undefined'&&S&&S.war;const n=w&&w.pot?w.pot.length:1,prev=w?w.__el156:'';if(w&&f)w.__el156=f;
   if(O.warEscalate&&n>=3){const k=Math.min(4,n-2);FXE.flash('rgba(255,235,190,'+(.1+k*.05)+')',1,.3);const a=document.getElementById('app');try{a&&a.animate([{transform:'translate(0,0)'},{transform:'translate('+(-3-k*2)+'px,'+(2+k)+'px)'},{transform:'translate('+(3+k*2)+'px,'+(-2-k)+'px)'},{transform:'translate('+(-2-k)+'px,'+(1+k)+'px)'},{transform:'translate(0,0)'}],{duration:260+k*40})}catch(e){}
     for(let i=0;i<k*14;i++){const ang=R(0,6.283);FXE.add({type:'spark',x:x+Math.cos(ang)*R(120,170),y:y+Math.sin(ang)*R(90,130),col:'rgba(255,225,150,1)',size:R(1.6,3),vx:Math.cos(ang)*R(120,320),vy:Math.sin(ang)*R(120,320),drag:.93,trail:.05,life:R(.4,.8),fade:1.4})}
     FXE.add({type:'ring',x,y,col:'rgba(255,225,150,0.7)',size:30,size2:200+k*50,w:3+k,life:.55,fade:1})} // every further cut hits harder: more shake, a wider ring, sparks off the rim
-  if(O.warClash&&prev&&f&&prev!==f){const pair=[prev,f].sort().join('+');
-    if(pair==='fire+ice'){for(let i=0;i<26;i++){const ang=R(0,6.283),v=R(40,150);FXE.add({type:'smoke',add:false,x:x+R(-30,30),y:y+R(-20,20),col:i%2?'rgba(245,248,252,0.6)':'rgba(215,225,235,0.5)',size:R(14,24),size2:R(90,150),vx:Math.cos(ang)*v,vy:Math.sin(ang)*v*.5-R(60,140),drag:.972,life:R(1.4,2.3),fadeIn:.12,delay:R(0,.25),fade:1})}FXE.flash('rgba(240,246,255,0.26)',1,.3)} // fire on ice (or ice on fire): a burst of steam
-    else if(pair==='ice+zap'){for(let i=0;i<14;i++)setTimeout(()=>{try{const a0=R(0,6.283),r0=R(40,120);FXE.add({type:'bolt',x:x+Math.cos(a0)*r0,y:y+Math.sin(a0)*r0*.7,col:'rgba(190,235,255,1)',ang:a0+R(1.2,1.9),len:R(40,90),size:1,life:R(.18,.3)})}catch(e){}},i*60);FXE.add({type:'ring',x,y,col:'rgba(180,230,255,0.85)',size:30,size2:240,w:4,life:.6,fade:1})} // lightning on ice: arcs run round the frozen patch
-    else if(pair==='fire+zap'){FXE.flash('rgba(255,245,225,0.42)',1,.22);for(let i=0;i<70;i++){const ang=R(0,6.283),v=R(260,760);FXE.add({type:'spark',x,y,col:i%3?'rgba(255,200,110,1)':'rgba(215,235,255,1)',size:R(1.8,3.4),vx:Math.cos(ang)*v,vy:Math.sin(ang)*v,ay:300,drag:.93,trail:.06,life:R(.5,1.1),fade:1.4})}FXE.add({type:'ring',x,y,col:'rgba(255,240,210,0.85)',size:24,size2:280,w:5,life:.5,fade:1})}}} // lightning on fire: a white blast and a storm of sparks
+  if(O.warClash&&prev&&f&&prev!==f){const pair=[prev,f].sort().join('+');clashV(pair,x,y,n)}} // fire, ice and lightning meeting: each pair has several shows, see clashV
 const COL={fire:['rgba(255,150,50,1)','rgba(255,220,130,1)'],ice:['rgba(190,230,255,1)','rgba(240,250,255,1)'],zap:['rgba(170,215,255,1)','rgba(235,245,255,1)'],'':['rgba(255,215,120,1)','rgba(255,244,210,1)']};
 function finish(seatEl,f,from){if(!O.warFinish||!ok()||!seatEl)return;const r=seatEl.getBoundingClientRect(),tx=r.left+r.width/2,ty=r.top+r.height/2,x=from.x,y=from.y,T=.55,c=COL[f||''];
   for(let i=0;i<46;i++){const d=R(0,.3),jx=R(-26,26),jy=R(-26,26);FXE.add({type:'glow',x:x+jx,y:y+jy,col:c[i%2],size:R(7,13),size2:2,vx:(tx-x-jx)/T,vy:(ty-y-jy)/T,life:T,delay:d,fade:.7})}
@@ -14753,9 +14870,9 @@ document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.tar
    pile:['The top of your pile is open and anyone can take it. Eat a small card over it to bury it.','أعلى كومتك مكشوف وأي أحد ياخذه. كُل ورقة صغيرة فوقه وادفنه.']};
   const hide=()=>{if(el){el.remove();el=null}clearTimeout(hideT)};
   const show=id=>{hide();seen[id]=1;lastShow=Date.now();el=document.createElement('div');el.id='beg157';el.dir=AR()?'rtl':'ltr';el.setAttribute('role','status');el.innerHTML='💡 '+esc(T(HINT[id][0],HINT[id][1]))+'<small>'+T('Tap to hide','اضغط عشان تختفي')+'</small>';el.addEventListener('click',hide);document.body.appendChild(el);hideT=setTimeout(hide,7500)};
-  setInterval(()=>{try{if(games>3)return;const s=typeof S!=='undefined'?S:null;if(!s||!s.players||s.over){if(el)hide();return}
+  setInterval(()=>{try{if(games>1||(window.__tipsOn274&&!window.__tipsOn274()))return;const s=typeof S!=='undefined'?S:null;if(!s||!s.players||s.over){if(el)hide();return}
     const home=document.getElementById('home');if(home&&!home.hidden){if(el)hide();lastS=null;return}
-    const dn=(s.draw&&s.draw.length)||s.drawN||0;if(lastS===null||dn>lastS+10){seen={};games++;LS.set(KEY,String(games))}lastS=dn;if(games>3)return;
+    const dn=(s.draw&&s.draw.length)||s.drawN||0;if(lastS===null||dn>lastS+10){seen={};games++;LS.set(KEY,String(games))}lastS=dn;if(games>1||(window.__tipsOn274&&!window.__tipsOn274()))return;
     if(el||Date.now()-lastShow<12000)return;if(document.querySelector('.ov157:not([hidden]),#tips148,.overlay:not([hidden])'))return;
     const me=s.players[0];if(!me||!me.hand)return;const hand=me.hand,w=s.war;
     if(w&&!seen.war&&w.leader!==0&&hand.some(c=>c&&(c.r===w.rank||c.r==='JK')))return show('war');
@@ -14790,7 +14907,7 @@ document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.tar
     if(step===-1)h=`<h3>${T('Welcome to Eat & Bury','هلا فيك في حفر ودفن')}</h3><p>${T('Have a saved account? Sign in with Google and your level and things come back. Or carry on as a guest; you can save it later from "Me".','عندك حساب محفوظ؟ ادخل بقوقل ويرجع لك مستواك وأغراضك. أو كمّل كضيف، وتقدر تحفظه بعدين من «ملفي».')}</p><div class="gbtn185" style="margin:6px 0 12px"></div><div class="row"><button type="button" class="go" data-s="guest">${T('Continue as a guest','كمّل كضيف')}</button></div>`;
     else if(step===0)h=`<h3>${T('Welcome! What do we call you?','هلا! شنو نسميك؟')}</h3><p>${T('This is the name the others see at the table.','هذا الاسم اللي يشوفونه الباجين على الطاولة.')}</p><input id="nm157" maxlength="16" placeholder="${T('Your name','اسمك')}" value="${esc(MYPROF.name||'')}" autocomplete="off"><div class="pic"><span class="hx-av">${typeof avInner==='function'&&typeof profPublic==='function'?avInner(profPublic()):''}</span><button type="button" data-s="pic">${CAM.replace('<svg','<svg style="width:18px;height:18px;vertical-align:-3px"')} ${T('Use my photo','حط صورتي')}</button></div><div class="row"><button type="button" class="go" data-s="next">${T('Next','التالي')}</button><button type="button" class="sk" data-s="skip">${T('Skip','طوّف')}</button></div>`;
     else if(step===1)h=`<h3>${T('Where everything is','وين كل شي')}</h3><ul><li><span>🛍️</span><div><b>${T('Shop','المتجر')}</b>${T('Themes, eating effects, fire button, cards and jokers. In the bar at the bottom.','ثيمات، تأثيرات الأكل، زر النار، الورق والجوكر. بالشريط تحت.')}</div></li><li><span>👤</span><div><b>${T('Me','ملفي')}</b>${T('Your picture, name and replies. Also in the bar at the bottom.','صورتك واسمك وردودك. بعد بالشريط تحت.')}</div></li><li><span>❓</span><div><b>${T('How to play?','شلون ألعب؟')}</b>${T('Short tips, on the home page under the green button.','نصايح قصيرة، بالصفحة الرئيسية تحت الزر الأخضر.')}</div></li></ul><div class="row"><button type="button" class="go" data-s="next">${T('Next','التالي')}</button><button type="button" class="sk" data-s="skip">${T('Skip','طوّف')}</button></div>`;
-    else h=`<h3>${T('Try a quick game','جرب قيم سريع')}</h3><p>${T('A quick game against the computer, with hints, so you learn by playing. Nothing is counted.','قيم سريع ضد الكمبيوتر ومعاه تلميحات، تتعلم واهو يمشي. ما ينحسب عليك.')}</p><div class="row"><button type="button" class="go" data-s="play">${T('Start','يلا نبدأ')}</button><button type="button" class="sk" data-s="skip">${T('Later','بعدين')}</button></div>`;
+    else h=`<h3>${T('Trial game','قيم تجريبي')}</h3><p>${T('A game against the computer so you learn by playing. Nothing is counted.','قيم ضد الكمبيوتر تتعلم فيه واهو يمشي. ما ينحسب عليك.')}</p><div class="row"><button type="button" class="go" data-s="play">${T('Start','يلا نبدأ')}</button><button type="button" class="sk" data-s="skip">${T('Later','بعدين')}</button></div>`;
     ov.innerHTML='<div class="sh157 st157" dir="'+(AR()?'rtl':'ltr')+'" role="dialog" aria-label="'+T('Getting started','البداية')+'">'+(step<0?'':dots())+h+'</div>'}
   const keep=()=>{try{const i=document.getElementById('nm157');if(i){const v=i.value.trim().slice(0,16);if(v&&v!==MYPROF.name){MYPROF.name=v;saveProf()}}}catch(e){}};
   function open(){try{if(typeof S!=='undefined'&&S)return;const home=document.getElementById('home');if(!home||home.hidden)return;ov=document.createElement('div');ov.className='ov157';ov.id='first157';document.body.appendChild(ov);draw();
@@ -15935,6 +16052,7 @@ html.eco132.t-jkjail body .table .rug::before,html.eco132.t-jkjail body .table .
 (function(){let cv=null,g=null,W=0,H=0,raf=0,last=0,rings=[],bolt=null,seenBolt=0;
 const on=()=>document.documentElement.classList.contains('t-storm')&&!document.documentElement.classList.contains('homeopen135')&&typeof S!=='undefined'&&S&&!document.hidden;
 function ensure(){const f=document.querySelector('.table .field');if(!f)return false;if(!cv||cv.parentElement!==f){if(cv)cv.remove();cv=document.createElement('canvas');cv.id='storm172';cv.style.cssText='position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none';f.prepend(cv);g=cv.getContext('2d');W=0}
+  /* round 277: measured on every frame before; now only when the window changed, the canvas is new, or once a second */const n277=performance.now(),k277=innerWidth+'x'+innerHeight;if(W>0&&k277===ensure.k&&n277-(ensure.t||0)<1000)return true;ensure.k=k277;ensure.t=n277;
   const r=f.getBoundingClientRect(),w=Math.round(r.width),h=Math.round(r.height);if(w!==W||h!==H){W=w;H=h;cv.width=W;cv.height=H}return W>0}
 function frame(now){raf=0;if(!on()){if(cv){cv.remove();cv=null}rings=[];return}
   if(now-last<(window.__eco132?66:40)){raf=requestAnimationFrame(frame);return}const dt=Math.min(.08,(now-last)/1000||.04);last=now;if(!ensure()){raf=requestAnimationFrame(frame);return}
@@ -16168,19 +16286,24 @@ const st=document.createElement('style');st.textContent=`html body #seats .seat 
 html body #seats .seat .tile .flg174.L{left:-8%}html body #seats .seat .tile .flg174.R{right:-8%}
 html body #seats .seat .who .name.nm174{white-space:nowrap}`;document.head.appendChild(st);
 let busy=false;
-function fix(){busy=false;const seats=document.querySelectorAll('#seats .seat');seats.forEach(s=>{const n=s.querySelector('.who .name'),t=s.querySelector('.tile');if(!n||!t)return;
+/* round 277: this pass wrote and measured seat by seat (a forced layout per seat, on every redraw: the largest single cost found in a game). It now does all its writing first, then measures everything once, then moves what has to move; and it no longer clears and re-sets a name's shift every time */
+function fix(){busy=false;const seats=document.querySelectorAll('#seats .seat'),todo=[];seats.forEach(s=>{const n=s.querySelector('.who .name'),t=s.querySelector('.tile');if(!n||!t)return;let b=null;
   const f=n.querySelector('.flag');
   let pf='';try{const pr=profOf(+s.dataset.seat);pf=pr&&pr.flag?String(pr.flag):''}catch(e){}
   if(!f&&!pf){const old=t.querySelector('.flg174');if(old)old.remove()}   // a player with no flag gets no badge
-  if(f){const fl=f.textContent;f.remove();let b=t.querySelector('.flg174');if(!b){b=document.createElement('span');b.className='flg174';t.appendChild(b)}if(b.dataset.f!==fl){b.dataset.f=fl;if(fl.startsWith('b:')&&window.EBI&&EBI.flagHTML){b.innerHTML=EBI.flagHTML(fl);b.classList.add('hasb')}else{b.textContent=fl;b.classList.remove('hasb')}}
+  if(f){const fl=f.textContent;f.remove();b=t.querySelector('.flg174');if(!b){b=document.createElement('span');b.className='flg174';t.appendChild(b)}if(b.dataset.f!==fl){b.dataset.f=fl;if(fl.startsWith('b:')&&window.EBI&&EBI.flagHTML){b.innerHTML=EBI.flagHTML(fl);b.classList.add('hasb')}else{b.textContent=fl;b.classList.remove('hasb')}}
     // the side the level badge is not on
-    const lv=t.querySelector('.lvl');let side='L';if(lv){const a=lv.getBoundingClientRect(),c=t.getBoundingClientRect();if(a.width&&a.left+a.width/2<c.left+c.width/2)side='R'}b.classList.toggle('L',side==='L');b.classList.toggle('R',side==='R')}
+    }
   // the plate has room now: give back the whole name where the game had shortened it
   try{const pl=typeof S!=='undefined'&&S&&S.players&&S.players[+s.dataset.seat],full=pl&&pl.name?String(pl.name).trim():'';const tn=[...n.childNodes].filter(x=>x.nodeType===3&&x.nodeValue.trim()).pop();
     if(tn&&full){const cur=tn.nodeValue.trim();if(cur!==full&&/…$/.test(cur)&&full.indexOf(cur.slice(0,-1).trim())===0)tn.nodeValue=[...full].slice(0,18).join('')}}catch(e){}
   const txt=(n.textContent||'').trim(),len=[...txt].length,fs=len>16?8.5:len>13?9.2:len>10?10:0;const want=fs?fs+'px':'';if(n.style.fontSize!==want)n.style.fontSize=want;n.classList.toggle('nm174',!!fs);if(fs){let z=fs;while(z>8&&n.scrollWidth>n.clientWidth+1){z-=.4;n.style.fontSize=z+'px'}}
   // keep the plate inside the screen
-  if(n.style.translate)n.style.translate='';const r=n.getBoundingClientRect();if(r.width){const W=document.documentElement.clientWidth;const dx=r.left<3?3-r.left:r.right>W-3?W-3-r.right:0;if(dx)n.style.translate=Math.round(dx)+'px 0'}})}
+  todo.push([n,t,f?b:null])});
+  const W=document.documentElement.clientWidth,M=todo.map(([n,t,b])=>{const lv=b&&t.querySelector('.lvl');return [lv?lv.getBoundingClientRect():null,b?t.getBoundingClientRect():null,n.getBoundingClientRect(),parseFloat(n.style.translate)||0]});
+  todo.forEach(([n,t,b],k)=>{const [a,c,r,cur]=M[k];if(b){let side='L';if(a&&a.width&&a.left+a.width/2<c.left+c.width/2)side='R';if(!b.classList.contains(side)){b.classList.toggle('L',side==='L');b.classList.toggle('R',side==='R')}}
+    if(r.width){const l=r.left-cur,rt=r.right-cur,dx=Math.round(l<3?3-l:rt>W-3?W-3-rt:0),want=dx?dx+'px 0':'';if((n.style.translate||'')!==want)n.style.translate=want}})}
+
 const kick=()=>{if(busy)return;busy=true;requestAnimationFrame(fix)};
 try{const _r=render;render=function(){const x=_r.apply(this,arguments);kick();return x}}catch(e){}
 const hook=()=>{const el=document.getElementById('seats');if(!el)return setTimeout(hook,800);new MutationObserver(m=>{if(document.querySelector('#seats .name .flag'))kick()}).observe(el,{childList:true,subtree:true});kick()};hook();addEventListener('resize',kick);try{const ro=new ResizeObserver(kick);const w=()=>{const t=document.getElementById('table');if(!t)return setTimeout(w,900);ro.observe(t)};w()}catch(e){}
@@ -16450,7 +16573,10 @@ html body #roomsSheet .rm-card{padding:16px!important;margin:12px 0!important;bo
 html body #roomsSheet .rm-code input{padding:13px 14px!important;font-size:16px!important}html body #roomsSheet .rm-code button{padding:0 18px!important}
 @media (min-width:760px) and (min-height:700px){html body #roomsSheet #roomsBox{zoom:1.3}}
 /* a hint bubble from the table never floats over the home, room or settings pages */
-body:has(#chatBar:not([hidden])) #hintPop,body:has(#lobby:not([hidden])) #hintPop,body:has(#setup:not([hidden])) #hintPop,body:has(#home:not([hidden])) #hintPop,body:has(#roomsSheet:not([hidden])) #hintPop{display:none!important}
+html.nohint277 body #hintPop{display:none!important}
+html body #hintPop:not(.atk275),html body #beg157{display:none!important}
+html body #setupForm .psw-row:has([data-s168="hints"]),html body .gs167 .gr:has([data-gs167="hints"]){display:none!important}
+html body .hintcard{animation:none!important;outline:none!important}
 /* small phones (360 wide and less): the top bar of the table and the top of the home page fit inside the screen */
 @media (max-width:379px){html body .topbar{zoom:.93}}@media (max-width:345px){html body .topbar{zoom:.84}html body #h2Page .hx-top{zoom:.84}}@media (max-width:300px){html body .topbar{zoom:.72}html body #h2Page .hx-top{zoom:.7}}
 /* tablets: the room page is as large as the other pages */
@@ -17861,7 +17987,7 @@ html.land205 body #seats .seat.s-left .flg174{translate:-18px -6px!important}
 html.land205 body #seats .seat .name,html.land205 body .table .s-left .name,html.land205 body .table .s-right .name{font-size:calc(11px * var(--sk,1))!important;max-width:calc(80px * var(--sk,1))!important;padding:calc(2px * var(--sk,1)) calc(8px * var(--sk,1))!important}
 /* the "done" tags on players and the speech bubbles (eat, cut, phrases) grow with the pictures too */
 html.land205 body #seats .seat .tags{zoom:var(--sk,1)}
-html.land205 body #fx .bubble{scale:min(var(--sk,1),1.45)}
+html.land205 body{--bsc:min(var(--sk,1),1.45)}
 /* the attack swords on a pile under attack: bigger and above the count badge */
 html.land205 body .atk137f .pilebox .card::before,html.land205 body .atk137m .pilebox .card::before{z-index:9!important}
 html.land205 body .atk137f .pilebox .count,html.land205 body .atk137m .pilebox .count{z-index:8}
@@ -17958,7 +18084,8 @@ html.land205 body #app .topbar .score:has(.col:nth-child(4)){padding-left:6px!im
 // round 215: the eat / fire effects were drawn at phone size, so on an iPad (13 inch) the bats, rings and sparks looked tiny next to the big table.
 // Every particle now grows with the table: size, speed and gravity times k (1 on phones, up to 1.8 on the biggest iPad).
 try{(function(){if(typeof FXE==='undefined'||!FXE.add)return;const A=FXE.add.bind(FXE);
- const K=()=>{try{const r=document.querySelector('.rug');const w=r?Math.min(r.getBoundingClientRect().width,r.getBoundingClientRect().height*1.6):0;/* round 230: upright on a big screen (iPad) the table is very wide and not tall, and the effects covered only its middle; there they now follow the table's width (up to 2.4). Sideways and phones are unchanged */if(r&&innerHeight>innerWidth&&innerWidth>=700){const b=r.getBoundingClientRect();return Math.max(1,Math.min(2.4,Math.min(b.width,b.height*2.2)/400))}return Math.max(1,Math.min(1.8,w/440))}catch(e){return 1}};
+ const K=()=>{try{const r=document.querySelector('.rug');const w=r?Math.min(r.getBoundingClientRect().width,r.getBoundingClientRect().height*1.6):0;/* round 230: upright on a big screen (iPad) the table is very wide and not tall, and the effects covered only its middle; there they follow the table's width (up to 2.4).
+    round 231: the iPhone Duo too (open, upright and sideways): its table is wider than a phone's but the effects were barely bigger. Phones (1) and the iPad sideways (1.8) are unchanged *//* round 252: on the Duo the effects reach past the table's edge (liked); big screens now get the same share: the size follows the table's width AND height */if(r&&innerHeight>innerWidth&&innerWidth>=600){const b=r.getBoundingClientRect();return Math.max(1,Math.min(2.8,Math.min(b.width/350,b.height/190)))}if(r&&innerWidth>innerHeight&&innerHeight<700)return Math.max(1,Math.min(2,w/385));if(r){const b=r.getBoundingClientRect();return Math.max(1,Math.min(2.7,Math.min(b.width/420,b.height/200)))}return 1}catch(e){return 1}};
  let k=1,t=0;FXE.add=function(o){try{const n=performance.now();if(n-t>500){k=K();t=n}if(k>1.02&&o){for(const f of ['size','size2','w','vx','vy','ay'])if(typeof o[f]==='number')o[f]*=k}}catch(e){}return A(o)}})();
 }catch(e){try{console.error('fxscale215.js',e)}catch(_){}}
 
@@ -17986,7 +18113,7 @@ try{(function(){const de=document.documentElement;
  const upd=()=>{try{const t=document.querySelector('#seats .seat .tile');const w=t?t.getBoundingClientRect().width:0;const k=w?Math.max(1,Math.min(1.7,w/67*.85)):1;const v=String(+k.toFixed(3));if(de.style.getPropertyValue('--bk')!==v)de.style.setProperty('--bk',v)}catch(e){}};
  addEventListener('resize',()=>setTimeout(upd,120));setInterval(upd,1500);try{render=(function(p){return function(){const r=p.apply(this,arguments);upd();return r}})(render)}catch(e){}
  const st=document.createElement('style');st.textContent=`
-html body #war{scale:var(--bk,1);transform-origin:50% 50%}
+html body #war{scale:var(--bk,1);transform-origin:50% 50%;/* round 231: growing a piece that is centred with translateX(-50%) also grew that shift, so the war counter sat left of the middle on big screens; this puts it back */translate:calc((var(--bk,1) - 1) * 50% + var(--wlx273,0px)) var(--wly273,0px)}
 html body .drawrow .dcnt{zoom:var(--bk,1)}
 html body #fx .shock{scale:var(--bk,1)}
 html.land205 body #rail205 .gbtn .slamcost,html.land205 body #rail205 .gbtn #coinBadge,html.land205 body #rail205 .gbtn .badge,html.land205 body #rail205 .gbtn .fbx{zoom:var(--u,1)!important}
@@ -18040,10 +18167,29 @@ html.land205:not(.short205) body #app .topbar .score:has(.col:nth-child(4)){zoom
 
 // round 219: a speech bubble that grew with the pictures could run off the side of the game (the right player's "cut!" was cut off):
 // each new bubble is nudged back inside the game frame.
-try{(function(){const fit=b=>{try{const app=document.getElementById('app');if(!app||!b.isConnected)return;const a=app.getBoundingClientRect(),r=b.getBoundingClientRect();if(!r.width)return;let dx=0,dy=0;
-  if(r.right>a.right-8)dx=a.right-8-r.right;else if(r.left<a.left+8)dx=a.left+8-r.left;if(r.top<a.top+6)dy=a.top+6-r.top;else if(r.bottom>a.bottom-6)dy=a.bottom-6-r.bottom;
-  if(dx||dy){b.style.translate=Math.round(dx)+'px '+Math.round(dy)+'px'}}catch(e){}};
- const start=()=>{const fx=document.getElementById('fx');if(!fx)return;new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedNodes)if(n.nodeType===1&&n.classList&&n.classList.contains('bubble')){requestAnimationFrame(()=>fit(n));setTimeout(()=>fit(n),260)}}).observe(fx,{childList:true})};
+try{(function(){
+ // round 274, asked by the user: phrase bubbles were sized by one number per screen, so a plain bubble and a decorated one (comic burst, ribbon, cloud) came out very different, and all of them were big on the iPad.
+ // Each bubble is now sized by itself, once, before it is drawn: its whole drawing (decorations included) must fit a box tied to the player's picture
+ // (height about half the picture for one line, width about two pictures), and never grows past a base that rises slowly with the screen. Lower side players' bubbles are a step smaller.
+ const size=b=>{try{if(b.dataset.sz274||!b.isConnected)return;const seat=b.dataset.seat,se=seat&&document.querySelector(`.seat[data-seat="${seat}"]`),tw=(se&&se.querySelector('.tilewrap'))||document.querySelector('#seats .tilewrap'),tile=tw?tw.getBoundingClientRect().width:71;if(!tile)return;
+   let w=b.offsetWidth,h=b.offsetHeight;if(!w||!h)return;const cs=getComputedStyle(b),fs=parseFloat(cs.fontSize)||16,lh=parseFloat(cs.lineHeight)||fs*1.4,inner=h-(parseFloat(cs.paddingTop)||0)-(parseFloat(cs.paddingBottom)||0),lines=Math.max(1,Math.min(3,Math.round(inner/lh)));
+   /* decorations that stick out (a burst, a tail, a ribbon end) count for half, and only the widest on each side */{const ex={left:0,right:0,top:0,bottom:0};for(const ps of ['::before','::after']){const c=getComputedStyle(b,ps);if(c.content==='none'||c.position!=='absolute')continue;for(const k in ex){const v=parseFloat(c[k]);if(isFinite(v)&&v<0)ex[k]=Math.max(ex[k],-v)}}w+=(ex.left+ex.right)*.5;h+=(ex.top+ex.bottom)*.5}
+   const lo=!!(se&&se.classList.contains('lo')),k=lo?.86:1,/* round 276: a step bigger on the Duo and the iPad (asked by the user) */base=.82*Math.pow(tile/71,.76)*k,Hm=tile*.54*(1+.75*(lines-1))*k,Wm=tile*2.15;
+   b.style.setProperty('--bsc',Math.max(.5,Math.min(base,Hm/h,Wm/w)).toFixed(3));b.dataset.sz274=1}catch(e){}};
+ const fit=b=>{if(window.__t276&&window.__t276.nofit)return;size(b);try{const app=document.getElementById('app');if(!app||!b.isConnected)return;const a=app.getBoundingClientRect(),r0=b.getBoundingClientRect();if(!r0.width)return;let dx=0,dy=0;
+  /* measured at the bubble's full size, even while it is still popping in (it grows from its middle) */let k=1;try{k=parseFloat(getComputedStyle(b).scale)||1}catch(e){}const W=b.offsetWidth*k,H=b.offsetHeight*k,mx=(r0.left+r0.right)/2,my=(r0.top+r0.bottom)/2,r={left:mx-W/2,right:mx+W/2,top:my-H/2,bottom:my+H/2,width:W,height:H};
+  /* round 254: sideways, another player's bubble also stays over the table: not on the side buttons, not down on the fire button */let L=a.left+8,B=a.bottom-6;try{if(document.documentElement.classList.contains('land205')&&!b.classList.contains('mybub')){const t=document.getElementById('table').getBoundingClientRect();if(t.width){L=Math.max(L,t.left+8);B=Math.min(B,t.bottom-6)}}}catch(e){}
+  if(r.right>a.right-8)dx=a.right-8-r.right;else if(r.left<L)dx=L-r.left;if(r.top<a.top+6)dy=a.top+6-r.top;else if(r.bottom>B)dy=B-r.bottom;
+  // a lower side player's bubble (six players, sideways) goes beside his picture, towards the middle, so it covers neither his name nor the fire button
+  // round 275b, asked by the user: a side player's bubble always comes out of him: it stands above his picture, at his outer side (left players: left, right players: right; mirrors), on every screen
+  try{if(!b.classList.contains('mybub')){const se=b.dataset.seat&&document.querySelector(`#seats .seat[data-seat="${b.dataset.seat}"]`);
+    if(se&&(se.classList.contains('s-left')||se.classList.contains('s-right'))){const tw=se.querySelector('.tilewrap'),q=tw&&tw.getBoundingClientRect();if(q&&q.width){const left=se.classList.contains('s-left');/* round 276: with room to breathe: clear above the picture and a little toward the table */dx=(left?q.left-r.left:q.right-r.right)+(left?1:-1)*q.width*.22;dy=q.top-q.height*.06-r.bottom;
+      if(r.left+dx<a.left+4)dx=a.left+4-r.left;if(r.right+dx>a.right-4)dx=a.right-4-r.right}}}}catch(e){}
+  if(dx||dy){const fx=(parseFloat(b.dataset.fx)||0)+Math.round(dx),fy=(parseFloat(b.dataset.fy)||0)+Math.round(dy);b.dataset.fx=fx;b.dataset.fy=fy;b.style.setProperty('--fx',fx+'px');b.style.setProperty('--fy',fy+'px')}}catch(e){}};window.__bubFit=fit;
+ const start=()=>{const fx=document.getElementById('fx');if(!fx)return;new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedNodes)if(n.nodeType===1&&n.classList&&n.classList.contains('bubble')){
+   /* round 255: the bubble used to appear at its first place and then jump to the corrected one a moment later (seen on the top-left player: his phrase "stuttered").
+      It is now measured at its full size and put in its final place at once, before it is ever drawn, and never moved again. */
+   fit(n)}}).observe(fx,{childList:true})};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start()})();
 }catch(e){try{console.error('bubfit219.js',e)}catch(_){}}
 
@@ -18106,6 +18252,7 @@ html body.n4x160 #seats .seat.s-right .pilebox>.card .count{left:-19px!important
 /* round 230: a highlighted pile card ("you can play on this") clipped everything that sticks out of it: the right player's count and anyone's joker mark were cut.
    The clipping was only there for the moving shine; the shine now stays inside the card by itself, so the card no longer clips, and the count keeps its normal place. */
 html body #seats .seat .pilebox>.card.target,html body #mebox .pilebox>.card.target,html body .bottombar .pilebox>.card.target{overflow:visible!important}
+/* round 232: the moving shine is back on these cards (it was taken off in 231); it stays inside the card by itself, so the card still does not clip its count or joker mark */
 html body #seats .seat .pilebox>.card.target::before,html body #mebox .pilebox>.card.target::before,html body .bottombar .pilebox>.card.target::before{inset:0!important;border-radius:inherit!important;background-size:280% 100%!important;background-repeat:no-repeat!important;transform:none!important;will-change:auto!important;animation:tgPile230 2.4s ease-in-out infinite!important}
 @keyframes tgPile230{0%{background-position:89% 0}60%,100%{background-position:11% 0}}
 html body #seats .seat .pilebox>.card.target .count{top:-7px!important;right:-7px!important}
@@ -18113,9 +18260,19 @@ html body.n4x160 #seats .seat.s-right .pilebox>.card.target .count{right:auto!im
 html body .drawrow .dcnt{position:relative;z-index:9}
 /* round 230: on a big upright screen (iPad) the spoken phrases, the "your turn" pill and the top message stayed phone-sized while everything around them grew.
    They now grow with the player pictures there (--bk: 1 on phones, so phones do not change; sideways already had its own rule for the phrases). */
-html:not(.land205) body #fx .bubble,html:not(.land205) body>.bubble{scale:var(--bk,1)}
-html body .turnpill134{scale:var(--bk,1)}
-html body .toast{scale:var(--bk,1)}
+html:not(.land205) body{--bsc:var(--bk,1)}
+/* round 231: these pieces are centred with a -50% shift; growing them also grew the shift, so they sat left (and up) of where they belong on big screens. The extra shift is taken back */
+html body #fx .bubble,html body>.bubble{scale:var(--bsc,1);translate:calc((var(--bsc,1) - 1) * 50% + var(--fx,0px)) calc((var(--bsc,1) - 1) * 50% + var(--fy,0px))}
+html body .turnpill134{scale:var(--bk,1);translate:calc((var(--bk,1) - 1) * 50%) calc((var(--bk,1) - 1) * 100%)}
+html body .toast{scale:var(--bk,1);translate:calc((var(--bk,1) - 1) * 50%) 0}
+/* round 231: upright on a big screen the fire button and the "throw" button stayed small next to the big cards: they grow with the pictures (iPad about a third bigger than its neighbours, Duo open a little; phones unchanged). The throw button grows sideways too */
+html:not(.land205) body .bottombar #slamBtn{zoom:calc(1 + (var(--bk,1) - 1) * .8)}
+html body #actions #throwBtn{zoom:calc(1 + (var(--bk,1) - 1) * .4)}
+/* round 251: the cut button in a war stayed phone-sized on big screens (76 on a Mac beside 130-wide cards): it grows with the pictures */
+html body #actions button.fire{zoom:calc(1 + (var(--bk,1) - 1) * .75)}
+/* round 251: the "throw" button in the look of the other pieces (black, gold rim, gold letters) instead of the solid gold slab, and smaller on big screens (it had grown too much) */
+html body #actions #throwBtn{background:linear-gradient(180deg,#2e1912,#120806)!important;color:#f6d98a!important;-webkit-text-fill-color:#f6d98a!important;box-shadow:0 0 0 1.5px #d4a640,0 0 0 3px rgba(0,0,0,.45),0 5px 12px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,220,150,.25)!important;text-shadow:none!important}
+@media (orientation:portrait) and (min-width:700px){html:not(.land205) body .bottombar #slamBtn{zoom:1.82}}
 /* round 228b: back to how it always was: when a card comes or goes, the other cards take their new places AT ONCE. Since round 205 (cards keep their place across a redraw) an old CSS transition woke up and made them slide; on Safari, upright, that slide started late, so the old cards stood still under the new card and then jumped */
 html body .ground>.card{transition:none!important}
 `;document.head.appendChild(st)})();
@@ -18125,13 +18282,14 @@ html body .ground>.card{transition:none!important}
 // 1) on a short sideways screen (iPhone Duo in Safari) his pile card sits beside his picture and his name lay on top of it: the card moves just past the name.
 // 2) his "friend" tag lay on the deck's card count: the tag moves up just enough.
 try{(function(){const hit=(a,b)=>a.width&&b.width&&a.left<b.right-1&&a.right>b.left+1&&a.top<b.bottom-1&&a.bottom>b.top+1;
- function fix(){try{const t=document.querySelector('#seats .seat.s-top');if(!t)return;
+ /* round 277: this pass measured and moved things on every redraw and every 1.5 seconds (the biggest single source of forced layout in a game). It is skipped when nothing it looks at has changed; a real change still gets two passes */let sig277='',left277=0;
+ function fix(){try{const k277=(()=>{try{let k=innerWidth+'x'+innerHeight+document.documentElement.className.length;document.querySelectorAll('#seats .seat').forEach(s=>{const n=s.querySelector('.who .name'),t=s.querySelector('.tags'),c=s.querySelector('.pilebox .card');k+='|'+s.className+(n?n.textContent.length:0)+(t?t.textContent:'')+(c?1:0)});const d=document.querySelector('.drawrow .dcnt');return k+(d?d.textContent.length:0)}catch(e){return ''+Math.random()}})();const n277=performance.now();if(k277===sig277&&n277-(fix.t277||0)<3000){if(left277<=0)return;left277--}else{if(k277!==sig277)left277=2;sig277=k277}fix.t277=n277;const t=document.querySelector('#seats .seat.s-top');if(!t)return;
   const pb=t.querySelector('.pilebox'),nm=t.querySelector('.name');
   if(pb){const cd=pb.querySelector('.card');if(cd&&nm){const had=parseFloat(pb.dataset.dx223)||0;const n=nm.getBoundingClientRect(),c=cd.getBoundingClientRect();const c0={left:c.left-had,right:c.right-had,top:c.top,bottom:c.bottom,width:c.width};let dx=0;if(hit(n,c0))dx=Math.ceil(n.right+8-c0.left);if(dx!==had){pb.dataset.dx223=dx;const cs=getComputedStyle(pb);pb.style.translate='';const base=(getComputedStyle(pb).translate||'none');const parts=base==='none'?['0px','0px']:base.split(' ');pb.style.setProperty('translate',dx?(parseFloat(parts[0])+dx)+'px '+(parts[1]||'0px'):'')}}}
   /* round 225: a side player's name with extra badges (VIP, rank, fire streak) ran off the edge of the screen: it is pulled back inside */
   try{const A0=(document.getElementById('app')||document.body).getBoundingClientRect(),stg=document.querySelector('.stage'),clip=stg&&getComputedStyle(stg).overflow!=='visible'?stg.getBoundingClientRect():A0,A={left:Math.max(A0.left,clip.left),right:Math.min(A0.right,clip.right)};document.querySelectorAll('#seats .seat.s-right .name,#seats .seat.s-left .name').forEach(n=>{const had=parseFloat(n.dataset.dx225)||0;const r=n.getBoundingClientRect();if(!r.width)return;const L=r.left-had,R=r.right-had;let dx=0;if(R>A.right-4)dx=Math.floor(A.right-4-R);else if(L<A.left+4)dx=Math.ceil(A.left+4-L);if(dx!==had){n.dataset.dx225=dx;n.style.position='relative';n.style.left=dx?dx+'px':''}})}catch(e){}
   const tg=t.querySelector('.tags .tag'),dc=document.querySelector('.drawrow .dcnt');
-  if(tg){if(tg.style.top){tg.style.top=''}if(dc){const a=tg.getBoundingClientRect(),b=dc.getBoundingClientRect();if(hit(a,b)){let z=1;for(let x=tg;x&&x!==document.body;x=x.parentElement){const v=parseFloat(getComputedStyle(x).zoom);if(v)z*=v}tg.style.position='relative';tg.style.top=-Math.ceil((a.bottom-b.top+3)/z)+'px'}}}}catch(e){}}
+  if(tg&&!tg.dataset.f273/* round 273: the top player's labels are placed by topFr now; this old lift fought it every 1.5s */){if(tg.style.top){tg.style.top=''}if(dc){const a=tg.getBoundingClientRect(),b=dc.getBoundingClientRect();if(hit(a,b)){let z=1;for(let x=tg;x&&x!==document.body;x=x.parentElement){const v=parseFloat(getComputedStyle(x).zoom);if(v)z*=v}tg.style.position='relative';tg.style.top=-Math.ceil((a.bottom-b.top+3)/z)+'px'}}}}catch(e){}}
  let q=0;const ask=()=>{if(!q)q=requestAnimationFrame(()=>{q=0;fix()})};
  try{render=(function(p){return function(){const r=p.apply(this,arguments);ask();return r}})(render)}catch(e){}
  addEventListener('resize',()=>{setTimeout(fix,250);setTimeout(fix,1000)});setInterval(fix,1500)})();
@@ -18147,9 +18305,486 @@ try{(function(){let since=0;setInterval(()=>{try{if(typeof S==='undefined'||!S||
   const ws2=cs.map(c=>c.offsetWidth);if(Math.max(...ws2)-Math.min(...ws2)>4){const cw=Math.max(...ws2);cs.forEach(c=>c.style.setProperty('--cw',cw+'px','important'))}}catch(e){}},250)})();
 }catch(e){try{console.error('even226.js',e)}catch(_){}}
 
+// round 231: the game measures the table's height itself and writes one hundredth of it on the table (--q1). Every size that used the "cqh" unit reads this number
+// (see build.py), so all pieces always agree, on Safari too.
+try{(function(){let last='';let lastH=0,back=0,seenW=0;
+ /* round 232: coming back to the game from another app, the phone reports a shorter screen for a moment, so the table (and every card on it) shrank and grew back over a few seconds.
+    For 3 seconds after coming back, with the screen the same width as before, a SMALLER table height is not taken; if it really is smaller it is taken after that. */
+ const upd=()=>{try{const t=document.querySelector('.table');if(!t)return;const h=t.clientHeight;if(h<40)return;if(lastH&&h<lastH*.985&&performance.now()-back<3000&&innerWidth===seenW)return;lastH=h;seenW=innerWidth;const v=(h/100).toFixed(3)+'px';if(v!==last||t.style.getPropertyValue('--q1')!==v){last=v;t.style.setProperty('--q1',v)}}catch(e){}};
+ const start=()=>{upd();try{const t=document.querySelector('.table');if(t&&window.ResizeObserver)new ResizeObserver(upd).observe(t)}catch(e){}};
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
+ const came=()=>{back=performance.now();setTimeout(upd,3100)};addEventListener('resize',upd);addEventListener('pageshow',came);document.addEventListener('visibilitychange',()=>{if(!document.hidden)came()});setInterval(upd,1500);
+ try{render=(function(p){return function(){upd();return p.apply(this,arguments)}})(render)}catch(e){}})();
+}catch(e){try{console.error('q1table231.js',e)}catch(_){}}
+
+// round 231: sideways the game table is not in the middle of the screen (the buttons take the left side), but the top message was centred on the screen,
+// so it looked pushed to the left of the table. In a game it is now centred on the table.
+try{if(typeof toast==='function')toast=(function(p){return function(){const r=p.apply(this,arguments);try{if(typeof S!=='undefined'&&S&&document.documentElement.classList.contains('land205')){const t=[...document.querySelectorAll('body>.toast')].pop(),g=document.querySelector('.rug');const h=document.getElementById('home');if(t&&g&&!(h&&!h.hidden)){const q=g.getBoundingClientRect();if(q.width)t.style.left=Math.round(q.left+q.width/2)+'px'}}}catch(e){}return r}})(toast)}catch(e){try{console.error('toastmid231.js',e)}catch(_){}}
+
+// round 231: iPhone Duo open, upright (about 669 wide): the home page stayed phone-sized in the middle of the screen (the bigger size started at 761 wide).
+// It now grows there too. Phones, the iPad and sideways are unchanged.
+try{(function(){const st=document.createElement('style');st.textContent=`
+@media (min-width:600px) and (max-width:760px) and (min-height:860px) and (orientation:portrait){
+  html body .h2-page>*{zoom:1.22}
+  html body .h2-tabs{zoom:1.18}
+}`;document.head.appendChild(st)})();
+}catch(e){try{console.error('duohome231.js',e)}catch(_){}}
+
+// round 237: the card counter on a pile (x3), final choice: a small round black badge with a gold rim and gold digits, the same family as the points
+// chip beside each pile. (Before: a flat yellow pill.) Two digits (x12) make it a short oval, it never clips.
+try{(function(){const st=document.createElement('style');st.textContent=`
+html body #seats .pilebox .count,html body #mebox .pilebox .count,html body .bottombar .pilebox .count,html body .pilebox>.card .count{background:linear-gradient(180deg,#2e1912,#120806)!important;color:#f6d98a!important;-webkit-text-fill-color:#f6d98a!important;box-shadow:0 0 0 1.3px #d4a640,0 0 0 2.4px rgba(0,0,0,.45),0 2px 3px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,220,150,.25)!important;box-sizing:border-box!important;min-width:17px!important;height:17px!important;line-height:17px!important;padding:0 3px!important;border-radius:999px!important;font-size:9.5px!important;letter-spacing:-.2px;text-align:center!important;text-shadow:none!important}
+html body.n4x160 #seats .seat.s-right .pilebox>.card .count,html body.n4x160 #seats .seat.s-right .pilebox>.card.target .count{left:-15px!important}`;document.head.appendChild(st)})();
+}catch(e){try{console.error('countC237.js',e)}catch(_){}}
+
+// round 238: the war counter names the card by its symbol again ("war on the A / K / Q / J / 10") instead of its spoken name (ace, king, girl, boy, ten).
+// Only this line changes; hints and messages keep the spoken names.
+try{if(typeof renderWar==='function'){const RW=renderWar;renderWar=function(){const r=RW.apply(this,arguments);try{const w=typeof S!=='undefined'&&S&&S.war;if(w&&typeof LANG!=='undefined'&&LANG==='ar'&&w.rank&&w.rank!=='JK'){const t=document.querySelector('#war .wt');if(t){for(const n of t.childNodes){if(n.nodeType===3&&n.nodeValue.trim()){n.nodeValue='حرب على الـ'+w.rank;break}}}}}catch(e){}return r}}}catch(e){try{console.error('warsym238.js',e)}catch(_){}}
+
+// round 239: the gold frame on a card you can play on, and on the card being eaten, was a thin line of fixed size: on the big cards of a Duo or an iPad it looked like a hair.
+// It is now a real bevelled gold frame (light edge, gold body, dark edge, soft outer light) whose thickness follows the card's size.
+// Plain speech bubbles also get a thin gold rim and a deeper shadow, like the other pieces of the game.
+try{(function(){const st=document.createElement('style');st.textContent=`
+html body .card.target,html body .card.eating{--fw:max(1.2px,calc(var(--cw,70px) * .017));
+  box-shadow:0 0 0 var(--fw) #fff6d6,0 0 0 calc(var(--fw) * 2.2) #f6dc92,0 0 0 calc(var(--fw) * 3.6) #d9a441,0 0 0 calc(var(--fw) * 4.3) #7a5212,0 0 0 calc(var(--fw) * 4.9) rgba(255,236,170,.5),0 0 calc(var(--fw) * 14) calc(var(--fw) * 5) rgba(255,200,80,.6),0 calc(var(--fw) * 5) calc(var(--fw) * 9) rgba(0,0,0,.42)!important}
+html body #fx .bubble:not(.bshape):not([class*="bub-"]),html body>.bubble:not(.bshape):not([class*="bub-"]){box-shadow:0 0 0 1.5px #d4a640,0 0 0 3px rgba(0,0,0,.5),0 6px 14px rgba(0,0,0,.55)!important}`;document.head.appendChild(st)})();
+}catch(e){try{console.error('frames239.js',e)}catch(_){}}
+
+// round 242: the "your turn!" pill in the colours of the counters (black, gold rim, gold letters) instead of the yellow pill. Chosen in round 243.
+try{(function(){const st=document.createElement('style');st.textContent=`html body .turnpill134{background:linear-gradient(180deg,#2e1912,#120806)!important;color:#f6d98a!important;-webkit-text-fill-color:#f6d98a!important;box-shadow:0 0 0 1.5px #d4a640,0 0 0 3px rgba(0,0,0,.45),0 4px 10px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,220,150,.25)!important;text-shadow:none!important}`;document.head.appendChild(st)})();
+}catch(e){try{console.error('turnpill242.js',e)}catch(_){}}
+
+// (round 251: the selectors are doubled (.target.target) because an older rule for the HD cards was stronger and removed the halo in the real game)
+// round 246: the gold highlight on a card you can play on (on the table and on a player's pile), chosen look: the gold frame and the moving shine stay,
+// and a soft gold halo around the card breathes in and out (a pulse), so the eye finds the card at once. The halo is its own layer and only its
+// opacity and size move, so it costs almost nothing. The card no longer clips (the shine keeps inside the card by itself).
+try{(function(){const st=document.createElement('style');st.textContent=`
+html body .card.target.target{overflow:visible!important}
+html body .card.target.target::before{inset:0!important;border-radius:inherit!important;background-size:280% 100%!important;background-repeat:no-repeat!important;transform:none!important;will-change:auto!important;animation:tgPile230 2.4s ease-in-out infinite!important}
+html body .card.target.target::after{content:""!important;display:block!important;position:absolute!important;pointer-events:none;background:none!important;z-index:2;inset:calc(var(--fw) * -5)!important;border-radius:calc(var(--cw,70px) * .11)!important;box-shadow:0 0 0 calc(var(--fw) * 1.2) rgba(255,226,140,.95),0 0 calc(var(--fw) * 16) calc(var(--fw) * 6) rgba(255,190,60,.75)!important;animation:hlPulse246 3.4s ease-in-out infinite;will-change:opacity,transform}
+/* chosen in round 248: two beats like a heart, then a rest; medium strength, calm speed */
+/* round 259: lighter and calmer, asked by the user: the halo rises to 60% instead of 100%, grows less, and one cycle takes 3.4s instead of 2.75s */
+@keyframes hlPulse246{0%,100%{opacity:.2;transform:scale(.99)}12%{opacity:.6;transform:scale(1.018)}24%{opacity:.22;transform:scale(.993)}36%{opacity:.6;transform:scale(1.018)}55%{opacity:.2;transform:scale(.99)}}
+@media (prefers-reduced-motion:reduce){html body .card.target.target::after{animation:none;opacity:.7}}`;document.head.appendChild(st)})();
+}catch(e){try{console.error('hlpulse246.js',e)}catch(_){}}
+
+// round 247: the crossed-swords mark on a pile under attack was a letter of the font (a thin sign 13px high): on the screen it read as a plain "x".
+// It is now a drawing: two swords with white blades, gold guards and brown grips, in a bigger badge (28 instead of 22) with a white and a dark rim.
+// Same place, same colours (red for the other side, blue for yours), and it still grows with the pictures on big screens.
+try{(function(){const st=document.createElement('style');st.textContent=`
+html body .atk137f .pilebox .card::before,html body .atk137m .pilebox .card::before{content:''!important;width:28px!important;height:28px!important;top:-16px;font-size:0!important;background:var(--atk) url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 48 48%22%3E%3Cg transform=%22rotate%2838 24 25%29%22%3E%3Cpath d=%22M22.3 8.5 24 4l1.7 4.5V28h-3.4z%22 fill=%22%23fff%22 stroke=%22%2315161a%22 stroke-width=%221%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M24 7v20%22 stroke=%22%23b9c2d0%22 stroke-width=%22.9%22/%3E%3Crect x=%2216.5%22 y=%2227.5%22 width=%2215%22 height=%223.4%22 rx=%221.7%22 fill=%22%23ffd35a%22 stroke=%22%235c3d08%22 stroke-width=%22.9%22/%3E%3Crect x=%2222.3%22 y=%2230.9%22 width=%223.4%22 height=%227.6%22 rx=%221%22 fill=%22%237a431c%22 stroke=%22%233a1c08%22 stroke-width=%22.8%22/%3E%3Ccircle cx=%2224%22 cy=%2240.4%22 r=%222.5%22 fill=%22%23ffd35a%22 stroke=%22%235c3d08%22 stroke-width=%22.9%22/%3E%3C/g%3E%3Cg transform=%22rotate%28-38 24 25%29%22%3E%3Cpath d=%22M22.3 8.5 24 4l1.7 4.5V28h-3.4z%22 fill=%22%23fff%22 stroke=%22%2315161a%22 stroke-width=%221%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M24 7v20%22 stroke=%22%23b9c2d0%22 stroke-width=%22.9%22/%3E%3Crect x=%2216.5%22 y=%2227.5%22 width=%2215%22 height=%223.4%22 rx=%221.7%22 fill=%22%23ffd35a%22 stroke=%22%235c3d08%22 stroke-width=%22.9%22/%3E%3Crect x=%2222.3%22 y=%2230.9%22 width=%223.4%22 height=%227.6%22 rx=%221%22 fill=%22%237a431c%22 stroke=%22%233a1c08%22 stroke-width=%22.8%22/%3E%3Ccircle cx=%2224%22 cy=%2240.4%22 r=%222.5%22 fill=%22%23ffd35a%22 stroke=%22%235c3d08%22 stroke-width=%22.9%22/%3E%3C/g%3E%3C/svg%3E") center/92% no-repeat!important;box-shadow:0 0 0 2px #fff,0 0 0 3.3px rgba(0,0,0,.5),0 3px 7px rgba(0,0,0,.55)!important}
+html body #seats .seat.s-top.atk137f .pilebox .card::before,html body #seats .seat.s-top.atk137m .pilebox .card::before{left:-23px!important}`;document.head.appendChild(st)})();
+}catch(e){try{console.error('swords247.js',e)}catch(_){}}
+
+// round 248: the frame on the war card (blue when your side cut last, red when the other side did), chosen look: a bevelled frame in the side's colour
+// (white edge, light band, the colour, a dark edge, a soft light around) whose thickness follows the card, instead of one flat line. When it shows and on
+// which card is unchanged. The gold light on that card no longer pulses during a war (it stays on, steady).
+try{(function(){const W=x=>['wcm134','wcf134'].map(c=>'html.'+c+' body #ground>.card.eating'+x+',html.'+c+' body #ground>.card.wc116c'+x).join(',');const st=document.createElement('style');st.textContent=`
+html.wcm134{--wc:#3aa0ff;--wd:#0b3f8a;--wl:#d6ebff}html.wcf134{--wc:#ff4a3a;--wd:#8a120b;--wl:#ffdcd8}
+${W('')}{--fw:max(1.2px,calc(var(--cw,70px) * .017));box-shadow:0 0 0 var(--fw) #fff,0 0 0 calc(var(--fw) * 2.2) var(--wl),0 0 0 calc(var(--fw) * 4) var(--wc),0 0 0 calc(var(--fw) * 4.8) var(--wd),0 0 calc(var(--fw) * 16) calc(var(--fw) * 5) var(--wc),0 calc(var(--fw) * 5) calc(var(--fw) * 9) rgba(0,0,0,.45)!important}
+${W('::after')}{animation:none!important;opacity:.6!important}
+html body .slapcard.sc-m{--wc:#3aa0ff;--wd:#0b3f8a;--wl:#d6ebff}html body .slapcard.sc-f{--wc:#ff4a3a;--wd:#8a120b;--wl:#ffdcd8}
+html body .slapcard.sc-m>.card,html body .slapcard.sc-f>.card{--fw:max(1.2px,calc(var(--cw,70px) * .017));box-shadow:0 0 0 var(--fw) #fff,0 0 0 calc(var(--fw) * 2.2) var(--wl),0 0 0 calc(var(--fw) * 4) var(--wc),0 0 0 calc(var(--fw) * 4.8) var(--wd),0 0 calc(var(--fw) * 16) calc(var(--fw) * 5) var(--wc),0 calc(var(--fw) * 5) calc(var(--fw) * 9) rgba(0,0,0,.45)!important}`;document.head.appendChild(st)})();
+}catch(e){try{console.error('warframe248.js',e)}catch(_){}}
+
+// round 249: the home page and its sections on a screen held sideways (iPad, Mac, iPhone Duo open, phones turned): they used to be the phone's single column
+// in the middle of a wide screen, cut off at the bottom. Chosen layout (A):
+//  - the five sections (home, diwaniyas, top players, shop, me) are a rail on the side, like the game's own button rail;
+//  - home: the logo and the rank on one side, the play buttons on the other, everything on one screen without scrolling;
+//  - the other sections use the width: their blocks flow in two columns; the shop's stalls sit in two (or three) columns.
+// Upright screens are not touched at all (the class lh249 is only set sideways).
+try{(function(){const de=document.documentElement,mq=matchMedia('(orientation:landscape) and (min-width:640px) and (min-height:300px)');
+ const st=document.createElement('style');st.textContent=`
+html.lh249 body #homeIn.hm{flex-direction:row!important;align-items:stretch!important;max-width:none!important;width:100%!important;padding:0!important;margin:0!important}
+html.lh249 body .h2-tabs{order:2;flex-direction:column!important;width:auto!important;height:auto!important;align-self:stretch;justify-content:center!important;gap:6px;padding:10px 12px!important;padding-left:calc(12px + env(safe-area-inset-left,0px))!important;margin:0!important;max-width:none!important;border-inline-start:1px solid rgba(242,210,122,.22);border-top:0!important;background:linear-gradient(180deg,rgba(20,10,7,.9),rgba(10,5,4,.95))!important;zoom:var(--hz,1)!important;position:relative!important;inset:auto!important;transform:none!important;border-radius:0!important}
+html.lh249 body .h2-tabs button{width:86px!important;flex:none!important}
+html.lh249 body #h2Page{order:1;flex:1 1 auto!important;width:auto!important;max-width:none!important;margin:0!important;height:100%!important;box-sizing:border-box}
+html.lh249 body #h2Page>*{margin-left:0!important;margin-right:0!important;max-width:none!important;min-width:0}
+/* home */
+/* home, chosen design 1 "the stage": everything centred. The logo on top, one line of play buttons with the big gold one in the middle, the rank under it */
+html.lh249.lh249home body #h2Page{display:grid!important;overflow:hidden!important;align-items:center;justify-items:center;row-gap:calc(6px * var(--hz,1));padding:calc(12px * var(--hz,1)) calc(28px * var(--hz,1))!important;padding-right:calc(28px * var(--hz,1) + env(safe-area-inset-right,0px))!important;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr) auto auto auto;grid-template-areas:"top" "hero" "hub" "rank" "how" "foot"}
+html.lh249.lh249home body #h2Page>*{zoom:var(--hz,1)!important;margin:0!important;width:auto!important}
+html.lh249.lh249home body #h2Page>.hx-top{grid-area:top;justify-self:stretch}
+html.lh249.lh249home body #h2Page>.h2-hero{grid-area:hero;flex-direction:row!important;gap:18px;align-items:center!important;zoom:calc(var(--hz,1) * .8)!important}
+html.lh249.lh249home body #h2Page>.h2-hero .hx-fan{transform:scale(.8);margin:0!important}
+html.lh249.lh249home body #h2Page>.hub145{grid-area:hub;width:min(100%,720px)!important;display:flex!important;align-items:center;justify-content:center;gap:12px;height:auto!important;position:relative}
+html.lh249.lh249home body #h2Page>.hub145>*{position:relative!important;inset:auto!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;transform:none!important;flex:none}
+html.lh249.lh249home body #h2Page>.hub145>.orb145{display:none!important}
+html.lh249.lh249home body #h2Page>.hub145>.go{order:3;width:200px!important;height:200px!important;margin:0 6px!important}
+html.lh249.lh249home body #h2Page>.hub145>.sq148{width:116px!important;height:116px!important;max-width:none!important}
+html.lh249.lh249home body #h2Page>.hub145>.sq148.r.t{order:1}html.lh249.lh249home body #h2Page>.hub145>.sq148.r.b{order:2}html.lh249.lh249home body #h2Page>.hub145>.sq148.l.t{order:4}html.lh249.lh249home body #h2Page>.hub145>.sq148.l.b{order:5}
+html.lh249.lh249home body #h2Page>.h2-rank{grid-area:rank;width:min(100%,620px)!important}
+html.lh249.lh249home body #h2Page>.how157,html.lh249.lh249home body #h2Page>.mode145{grid-area:how}
+html.lh249.lh249home body #h2Page>.how157{justify-self:center;translate:150px 0}html.lh249.lh249home body #h2Page>.mode145{justify-self:center;translate:-150px 0}
+html.lh249.lh249home body #h2Page>.h2-foot{grid-area:foot}
+html.lh249.lh249home body #h2Page>.h2-ver{position:absolute;left:calc(8px + env(safe-area-inset-left,0px));bottom:4px;zoom:1!important;opacity:.6}
+@media (max-height:480px){html.lh249.lh249home body #h2Page>.hub145>.sq148{zoom:1.25}html.lh249.lh249home body #h2Page>.h2-hero{zoom:calc(var(--hz,1) * .66)!important}}
+/* the other sections: two columns that scroll together */
+html.lh249:not(.lh249home) body #h2Page{display:block!important;overflow-y:auto!important;overflow-x:hidden!important;columns:2;column-gap:calc(26px * var(--hs,1));padding:calc(14px * var(--hs,1)) calc(30px * var(--hs,1)) calc(24px * var(--hs,1))!important;padding-right:calc(30px * var(--hs,1) + env(safe-area-inset-right,0px))!important}
+html.lh249:not(.lh249home) body #h2Page>*{zoom:var(--hs,1)!important;break-inside:avoid;width:auto!important;margin-top:0!important;margin-bottom:calc(12px)!important}
+html.lh249:not(.lh249home) body #h2Page>.h2-head,html.lh249:not(.lh249home) body #h2Page>.h2-soon,html.lh249:not(.lh249home) body #h2Page>.dw-tabs{column-span:all}
+html.lh249:not(.lh249home) body #h2Page>#myStuff{break-inside:auto}
+html.lh249:not(.lh249home) body #h2Page>#myStuff>*{break-inside:avoid}
+/* "me": three tabs (my account / my things / more), so one thing shows at a time instead of everything at once */
+html.lh249.lh249me body #h2Page{columns:auto!important;display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);column-gap:calc(44px * var(--hs,1));row-gap:0;align-content:start;padding:calc(16px * var(--hs,1)) calc(56px * var(--hs,1)) calc(26px * var(--hs,1))!important;padding-right:calc(56px * var(--hs,1) + env(safe-area-inset-right,0px))!important}
+html.lh249.lh249me body #h2Page>*{grid-column:1/-1;margin:0 0 16px!important;width:auto!important;float:none!important}
+#meTabs249{display:none}
+html.lh249.lh249me body #h2Page>#meTabs249{display:flex;gap:8px;justify-content:center;margin:0 0 20px!important}
+#meTabs249 button{border:0;border-radius:999px;padding:9px 26px;font:900 15px Cairo,Tahoma,sans-serif;background:#1a0f0b;color:#f2d27a;box-shadow:inset 0 0 0 1px rgba(242,210,122,.4);cursor:pointer}
+#meTabs249 button.on{background:linear-gradient(180deg,#f8e09a,#d2aa52 60%,#b98f3c);color:#2a1a05;box-shadow:none}
+html.lh249.lh249me[data-me="a"] body #h2Page>#myStuff,html.lh249.lh249me[data-me="a"] body #h2Page>#myStuff~*{display:none!important}
+html.lh249.lh249me[data-me="a"] body #h2Page>.me-top{grid-column:1;grid-row:3 / span 3;align-self:start;padding:22px 14px;border-radius:22px;background:linear-gradient(180deg,rgba(40,22,14,.55),rgba(16,8,6,.6));box-shadow:inset 0 0 0 1px rgba(242,210,122,.22)}
+html.lh249.lh249me[data-me="a"] body #h2Page>.h2-rank,html.lh249.lh249me[data-me="a"] body #h2Page>.me-stats,html.lh249.lh249me[data-me="a"] body #h2Page>.mylog199{grid-column:2}
+html.lh249.lh249me[data-me="s"] body #h2Page>.me-top,html.lh249.lh249me[data-me="s"] body #h2Page>.h2-rank,html.lh249.lh249me[data-me="s"] body #h2Page>.me-stats,html.lh249.lh249me[data-me="s"] body #h2Page>.mylog199,html.lh249.lh249me[data-me="s"] body #h2Page>#myStuff~*{display:none!important}
+html.lh249.lh249me[data-me="s"] body #h2Page>#myStuff{max-width:1040px;width:100%!important;justify-self:center}
+html.lh249.lh249me[data-me="m"] body #h2Page>.me-top,html.lh249.lh249me[data-me="m"] body #h2Page>.h2-rank,html.lh249.lh249me[data-me="m"] body #h2Page>.me-stats,html.lh249.lh249me[data-me="m"] body #h2Page>.mylog199,html.lh249.lh249me[data-me="m"] body #h2Page>#myStuff{display:none!important}
+html.lh249.lh249me[data-me="m"] body #h2Page>#myStuff~*{grid-column:auto;align-self:start}
+/* the game set-up page (against the computer, a room): two columns on one screen instead of a long phone column */
+html.lh249 body #setupForm.su168{max-width:min(980px,calc(92vw / var(--hu,1)))!important;width:min(980px,calc(92vw / var(--hu,1)))!important;margin-left:auto!important;margin-right:auto!important;zoom:var(--hu,1)!important;columns:2;column-gap:28px;padding-bottom:18px!important}
+html.lh249 body #setupForm.su168>*{break-inside:avoid}
+html.lh249 body #setupForm.su168>h2{column-span:all;margin:0 0 6px!important}
+html.lh249 body #setupForm.su168>.box168{display:contents!important}
+html.lh249 body #setupForm.su168 .box168>*{break-inside:avoid;margin-bottom:12px!important}
+html.lh249 body #setupForm.su168 .box168>.pcard{break-before:column}
+html.lh249 body #setupForm.su168>#startBtn{margin-top:10px!important}
+/* the "how to play" card: wider, its text in two columns */
+html.lh249 body #tips148 .bx{width:min(1040px,calc(92vw / var(--hs,1)))!important;max-width:none!important;max-height:88vh!important;columns:2;column-gap:30px;zoom:var(--hs,1)}
+html.lh249 body #tips148 .bx>h3{column-span:all}html.lh249 body #tips148 .bx>*{break-inside:avoid}
+/* a room before the game (seats, settings, chat, invite): two columns; the start bar stays at the bottom of the screen */
+html.lh249 body #lobbySheet.lb160{display:block!important;zoom:var(--hs,1)!important;padding:14px calc(4vw / var(--hs,1)) 150px!important;box-sizing:border-box}
+html.lh249 body #lobbySheet.lb160>*{width:auto!important;max-width:none!important;margin-top:0!important;margin-bottom:12px!important;box-sizing:border-box}
+html.lh249 body #lobbySheet.lb160>.fr196,html.lh249 body #lobbySheet.lb160>.code160,html.lh249 body #lobbySheet.lb160>.szbar167,html.lh249 body #lobbySheet.lb160>.lbseats{float:right;clear:right;width:46%!important;margin-left:0!important;margin-right:0!important}
+html.lh249 body #lobbySheet.lb160>.code160{justify-content:center}
+html.lh249 body #lobbySheet.lb160>.lbseats{max-width:none!important}
+html.lh249 body #lobbySheet.lb160>*:not(.lbh160):not(.fr196):not(.code160):not(.szbar167):not(.lbseats):not(.go160){margin-right:50%!important;margin-left:0!important}
+html.lh249 body #lobbySheet.lb160::after{content:'';display:block;clear:both}
+html.lh249 body #lobbySheet.lb160>.go160{position:fixed!important;left:calc(4vw / var(--hs,1))!important;right:auto!important;bottom:0!important;transform:none!important;width:calc(46vw / var(--hs,1))!important;margin:0!important;z-index:5} /* the start bar sits under the settings side, so the seats stay clear */
+/* my profile card, the end-of-game page and the rooms page: wide, two columns */
+html.lh249 body #profBox.sheet{display:block!important;width:min(1000px,calc(92vw / var(--hs,1)))!important;max-width:none!important;max-height:calc(94vh / var(--hs,1))!important;columns:2;column-gap:26px;zoom:var(--hs,1)!important}
+html.lh249 body #profBox.sheet>*{break-inside:avoid;margin-bottom:10px!important}
+html.lh249 body #profBox.sheet>.x158w{column-span:all}
+html.lh249 body #profBox.sheet>.achbox{break-inside:auto}
+html.lh249 body #overSheet.sheet{display:block!important;width:min(980px,calc(92vw / var(--hs,1)))!important;max-width:none!important;columns:2;column-gap:26px;zoom:var(--hs,1)!important}
+html.lh249 body #overSheet.sheet>*{break-inside:avoid;margin-bottom:10px!important}
+html.lh249 body #overSheet.sheet>.hello,html.lh249 body #overSheet.sheet>h2{column-span:all}
+html.lh249 body #overSheet.sheet>.sum120{break-before:column}
+html.lh249 body #roomsBox.sheet{max-width:min(1000px,calc(94vw / var(--hs,1)))!important;width:min(1000px,calc(94vw / var(--hs,1)))!important;zoom:var(--hs,1)!important;columns:2;column-gap:22px;margin-left:auto!important;margin-right:auto!important}
+html.lh249 body #roomsBox.sheet>*{break-inside:avoid}html.lh249 body #roomsBox.sheet>.rm-head,html.lh249 body #roomsBox.sheet>.rm-note{column-span:all}
+/* the "kind of game" menu on the home page opens upward (below it was the edge of the screen) */
+html.lh249 body .mode145 .menu{top:auto!important;bottom:calc(100% + 6px)!important}
+/* the background drawing sits in the middle of the page area (it was centred on the whole screen, so beside the rail it looked pushed to one side) */
+html.lh249 body #home .hm-bg::after{left:var(--rw,0px)!important}
+/* the shop's first page: two columns of big stalls that fill the screen */
+html.lh249 body #shop .front159{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-content:start;zoom:calc(var(--hs,1) * 1.3)}
+html.lh249 body #shop .front159>*{margin:0!important}
+html.lh249 body #shop .front159>.bal159,html.lh249 body #shop .front159>:not(button){grid-column:1/-1}
+/* end of game: the buttons in one tidy column */
+html.lh249 body #overSheet.sheet>button{display:block!important;width:100%!important;margin:0 0 10px!important;box-sizing:border-box}`;document.head.appendChild(st);
+ let last='';function upd(){try{const h=document.getElementById('home'),pg=document.getElementById('h2Page');const on=mq.matches&&!!h&&!h.hidden&&!!pg;const isHome=on&&!!pg.querySelector(':scope>.hub145');const isMe=on&&!!pg.querySelector(':scope>.me-top');
+   const hz=Math.max(.62,Math.min(1.7,innerHeight/600)).toFixed(3),hs=Math.max(.85,Math.min(1.3,innerHeight/720)).toFixed(3),hu=Math.max(.6,Math.min(1.4,innerHeight/650)).toFixed(3),k=on+'|'+isHome+'|'+isMe+'|'+hz+'|'+hs+'|'+mq.matches;if(k===last)return;last=k;
+   de.classList.toggle('lh249',mq.matches);de.classList.toggle('lh249home',isHome);try{const t=document.querySelector('.h2-tabs');de.style.setProperty('--rw',(on&&t?Math.round(t.getBoundingClientRect().width):0)+'px')}catch(e){}de.classList.toggle('lh249me',isMe);de.style.setProperty('--hu',hu);try{if(isMe&&!document.getElementById('meTabs249')){const t=document.createElement('div');t.id='meTabs249';t.innerHTML='<button data-m="a">حسابي</button><button data-m="s">أغراضي</button><button data-m="m">المزيد</button>';const hd=pg.querySelector(':scope>.h2-head');pg.insertBefore(t,hd?hd.nextSibling:pg.firstChild);t.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;de.dataset.me=b.dataset.m;try{sessionStorage.setItem('eb-me249',b.dataset.m)}catch(_){}t.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));pg.scrollTop=0})}
+    if(isMe){let m=de.dataset.me;if(!m){try{m=sessionStorage.getItem('eb-me249')}catch(_){}m=m||'a';de.dataset.me=m}const t=document.getElementById('meTabs249');t&&t.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.m===m))}}catch(e){}de.style.setProperty('--hz',hz);de.style.setProperty('--hs',hs)}catch(e){}}
+ ['renderHome','showHome'].forEach(n=>{try{const f=window[n]||eval(n);if(typeof f==='function'){const w=function(){const r=f.apply(this,arguments);upd();return r};if(n==='renderHome')renderHome=w;else showHome=w}}catch(e){}});
+ try{if(typeof window.h2Tab==='function'){const t=window.h2Tab;window.h2Tab=function(){const r=t.apply(this,arguments);last='';upd();return r}}}catch(e){}
+ addEventListener('resize',()=>{last='';upd()});try{mq.addEventListener('change',()=>{last='';upd()})}catch(e){}
+ try{new MutationObserver(()=>{last='';upd()}).observe(document.getElementById('h2Page')||document.body,{childList:true})}catch(e){}
+ setInterval(()=>{last='';upd()},700);upd()})();
+}catch(e){try{console.error('landhome249.js',e)}catch(_){}}
+
+// round 252: the tip for "throw this card" always said "because it is your least valuable card", also when the real reason was the card you KEEP
+// (the one matching your own pile, a joker, a card worth points). The tip now names the card to keep and says why.
+try{window.__throwWhy=function(c){try{if(typeof LANG!=='undefined'&&LANG!=='ar')return '';const me=S.players[0],h=me.hand.filter(x=>x!==c&&x.r!==c.r);if(!h.length)return '';
+  const nm=r=>r==='JK'?'الجوكر':(/^\d+$/.test(r)?'الـ'+r:((typeof rankAr==='function'&&rankAr(r))||r)),val=pl=>{try{return sum(pl)}catch(e){return 0}},thr='ارمِ <b>'+cardName(c)+'</b>',how=' اضغطها مرتين أو اسحبها للأرض.';
+  const mine=exposed(me.pile);let k=mine&&h.find(x=>x.r===mine.rank);
+  if(k){const v=val(me.pile);return thr+' وامسك <b>'+nm(k.r)+'</b>: كومتك عليها '+nm(k.r)+(v?' وفيها <b>'+v+'</b> نقطة':'')+'، وإذا أحد هجم عليها تقطع فيه وتحميها.'+how}
+  for(const q of S.players){if(q===me||q.team!==me.team)continue;const e=exposed(q.pile);k=e&&h.find(x=>x.r===e.rank);if(k){const v=val(q.pile);return thr+' وامسك <b>'+nm(k.r)+'</b>: كومة صاحبك '+q.name+' عليها '+nm(k.r)+(v?' ('+v+' نقطة)':'')+'، تفزع له فيه إذا انهجم عليها.'+how}}
+  k=h.find(x=>x.r==='JK');if(k)return thr+' وامسك <b>الجوكر</b>: يقطع أي حرب، خله لأكلة تستاهل.'+how;
+  k=h.find(x=>{try{return pts(x)>0}catch(e){return false}});if(k&&!(function(){try{return pts(c)>0}catch(e){return false}})())return 'ما في أكلة تستاهل. '+thr+' وامسك <b>'+nm(k.r)+'</b> لأنه ورقة بنقاط.'+how;
+  return ''}catch(e){return ''}}}catch(e){try{console.error('hintwhy252.js',e)}catch(_){}}
+
+// round 253: a hidden recorder for freezes. A player reported the game stopping for half a second, and a week of tests could not catch it on demand
+// (measured on the real devices: smooth without screen recording, heavy stalls with it). So the game now notices by itself when it stops for more than
+// 0.4s while it is on screen, and sends one short line (how long, what was happening, the screen, the sound engine) like the other diagnostic lines.
+// It is a slow timer, not a frame loop, so it costs nothing. At most 3 lines per visit. Nothing is shown to the player.
+try{(function(){let last=performance.now(),born=last,quiet=last+8000,sent=0,tap=0,n=0;
+  const hush=ms=>{quiet=Math.max(quiet,performance.now()+ms)};
+  document.addEventListener('visibilitychange',()=>hush(3000));addEventListener('pageshow',()=>hush(3000));addEventListener('resize',()=>hush(1500));
+  ['touchstart','pointerdown'].forEach(ev=>addEventListener(ev,()=>{tap=performance.now()},{capture:true,passive:true}));
+  setInterval(()=>{const now=performance.now(),late=now-last-200;last=now;if(late<400||document.hidden||now<quiet)return;n++;if(sent>=3)return;sent++;
+    try{const de=document.documentElement,c=de.className,th=(c.match(/\bt-[\w-]+/)||['-'])[0];let au='-',pl=0,v='';try{au=SND&&SND.ctx?SND.ctx.state:'none'}catch(e){}try{pl=S&&S.players?S.players.length:0}catch(e){}try{v=EB_VERSION}catch(e){}
+      fetch('/api/err',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msg:'FREEZE '+Math.round(late)+'ms',where:innerWidth+'x'+innerHeight+' dpr'+(devicePixelRatio||1)+' '+th+(/land205/.test(c)?' side':' up')+(/inwar131/.test(c)?' war':'')+(/fxdim132/.test(c)?' fire':'')+' p'+pl+' fx'+document.querySelectorAll('#fx *').length+' snd:'+au+(now-tap<1500?' tap':'')+' q'+(window.__Q||'-')+' t'+Math.round((now-born)/1000)+'s n'+n,ver:v,dev:'diag'})}).catch(()=>{})}catch(e){}},200)})();
+}catch(e){try{console.error('freezelog253.js',e)}catch(_){}}
+
+// round 253: on the iPad the table (its rug with the big soft shadows) is now its own drawing layer, and so are the middle and the seats. Safari was
+// redrawing the table's shadows every time a card moved over it. Measured on the user's iPad, switching every 6 seconds between the two:
+// slow frames 11.8% -> 6.7%, 54 -> 65 frames a second. Nothing looks different. iPad only: on the iPhone Duo the gain was not clear, and the Galaxy
+// and the Mac were already smooth.
+// round 256: ONLY the rug. Making the middle and the seats layers too put the middle (with the ground) above the seats, so a tap on a player's pile
+// never reached it: on the iPad you could not eat from the players' piles. Found by the user on his iPad.
+try{(function(){const st=document.createElement('style');st.textContent='html.ipad228 body .table .rug{will-change:transform}';document.head.appendChild(st)})();
+}catch(e){try{console.error('ipadlayers253.js',e)}catch(_){}}
+
+
+// round 255: sideways on big screens, a side player with no pile yet showed his points number half hidden behind his own picture
+// (the number sits where the pile's edge would be). With no pile it now steps out beside the picture, whole. Upright and phones sideways are unchanged.
+try{(function(){const st=document.createElement('style');st.textContent='html.land205:not(.short205) body #seats .seat.s-right .pilebox.nocard135>span{translate:-62% 0}html.land205:not(.short205) body #seats .seat.s-left .pilebox.nocard135>span{translate:62% 0}';document.head.appendChild(st)})();
+}catch(e){try{console.error('nopile255.js',e)}catch(_){}}
+
+// round 255: sideways on big screens the beginner's tip sat over the top player's name and the right player's number (seen on the iPhone Duo in Safari).
+// It now sits higher, in the empty corner above the right player, and is never wide enough to reach the top player's name.
+try{(function(){const st=document.createElement('style');st.textContent='html.land205:not(.short205) body #beg157{top:calc(env(safe-area-inset-top,0px) + var(--AT,0px) + var(--u) * 8px)!important;max-width:min(calc(var(--u) * 330px),calc(var(--AW) / 2 - var(--u) * 215px))!important}';document.head.appendChild(st)})();
+}catch(e){try{console.error('tiptop255.js',e)}catch(_){}}
+
+
+// round 264 (big screens sideways only; upright and phones are unchanged), decided with the user after trying three places:
+// 1) the upper side players' labels ("friend", "on one card") sit UNDER their pile card, below the points number, in line with the card.
+//    (They used to be printed over the pile card. Above the card, on the table's edge, they crowded the card counter and the player's round badge.)
+// 2) on the two right players the pile's card counter (x3) sat under the player's round badge (lantern, owl) and could not be read:
+//    it is at the card's inner top corner, the mirror of the left players.
+try{(function(){const L='html.land205:not(.short205) body .table #seats .seat',st=document.createElement('style');st.textContent=`
+${L}.s-left.hi .tags{left:98%!important;right:auto!important;top:var(--tgy264,106%)!important;bottom:auto!important;transform:none!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:4px!important}
+${L}.s-right.hi .tags{right:98%!important;left:auto!important;top:var(--tgy264,106%)!important;bottom:auto!important;transform:none!important;flex-direction:row-reverse!important;align-items:center!important;justify-content:flex-start!important;gap:4px!important}
+/* no pile yet: the label sits level with the name, right beside it, instead of floating lower */
+${L}.s-left.hi:has(.pilebox.nocard135) .tags,${L}.s-right.hi:has(.pilebox.nocard135) .tags{top:88%!important}
+/* round 265: at the TOP inner corner, the mirror of the left players (it was at the bottom corner: one up and one down did not look right) */
+${L}.s-right .pilebox>.card .count,${L}.s-right .pilebox>.card.target .count{top:-10px!important;bottom:auto!important;right:auto!important;left:-15px!important}
+/* round 266: the players' points number was much bigger than the card counter beside it: its digits are now the same size as the counter's (asked by the user) */
+/* round 267: the points number and the card counter are one size, and both follow the screen (the points number had a fixed size: too big on the iPhone Duo, too small on the iPad). Never smaller than 23px high */
+/* round 270, decided with the user: the points number's DIGITS are the size of the card counter's digits, on every screen (the chip itself is then a little lower than the round counter). Equal chips were crowded */
+${L} .pilebox>span:not(.count):not(.jk135):not(.jk133){zoom:calc(max(1.35,var(--sk,1)) * .86)!important}
+${L} .pilebox .count{zoom:max(1.35,var(--sk,1))!important}
+/* round 266: the left players' counter moved out by the same distance, so the two sides are exact mirrors (asked by the user) */
+${L}.s-left .pilebox>.card .count,${L}.s-left .pilebox>.card.target .count{top:-10px!important;bottom:auto!important;left:auto!important;right:-15px!important} /* a little further out than on the left: this corner of the card carries its number, which must stay readable */`;document.head.appendChild(st)})();
+}catch(e){try{console.error('tagsbelow264.js',e)}catch(_){}}
+
+// round 266: in a war on a player's PILE there is no card on the ground to carry the blue/red frame, so the cut card in the middle (a joker, or any card)
+// showed no colour at all. The top card of the middle stack now carries the same bevelled frame, in the colour of the side that cut last.
+// A war on the ground is unchanged (its frame stays on the ground card).
+try{(function(){const st=document.createElement('style');const S=c=>'html.'+c+':not(.gwc277) body #fx .slapstack>.slapcard:last-child>.card';st.textContent=`
+/* round 267: a joker that cuts lands on top of the war card and hid its frame: the joker itself carries the frame, in any war */
+html.wcm134 body #fx .slapstack>.slapcard:last-child>.card[class*="joker"],html.wcf134 body #fx .slapstack>.slapcard:last-child>.card[class*="joker"],html.wcm134 body #fx .slapstack>.slapcard:last-child>.card:has(.jk135),html.wcf134 body #fx .slapstack>.slapcard:last-child>.card:has(.jk135),
+${S('wcm134')},${S('wcf134')}{--fw:max(1.2px,calc(var(--cw,70px) * .017));box-shadow:0 0 0 var(--fw) #fff,0 0 0 calc(var(--fw) * 2.2) var(--wl),0 0 0 calc(var(--fw) * 4) var(--wc),0 0 0 calc(var(--fw) * 4.8) var(--wd),0 0 calc(var(--fw) * 16) calc(var(--fw) * 5) var(--wc),0 calc(var(--fw) * 5) calc(var(--fw) * 9) rgba(0,0,0,.45)!important}`;document.head.appendChild(st)})();
+}catch(e){try{console.error('warstack266.js',e)}catch(_){}}
+
+// round 267, from the user's notes on his iPad, iPhone Duo and Galaxy:
+// 1) "friend" turned gold: when a teammate went down to one card, the game reused his blue "friend" label for "on one card" and the two got mixed
+//    (a gold "friend", or "on one card" with no "friend"). After every draw the labels are put right: "friend" is always blue and always there for a teammate.
+// 2) upright, six players: the card counter of the two right players sat under their round badge. It now sits where it does with four players.
+// 3) upright: the card counter is a little bigger on phones, and bigger on the opened iPhone Duo (its cards are bigger). The iPad is unchanged.
+// 4) sideways, light rooms (white, greek, west...): the gifts / chat / mic buttons stayed dark with dark icons. They take the look of the side buttons.
+// 5) sideways on the iPhone Duo: the home page's words were small. The words inside the tiles and the links under them are bigger.
+// 6) upright on phones: the players' phrases are a little smaller.
+try{(function(){const st=document.createElement('style');st.textContent=`
+html:not(.land205) body #seats .seat.s-right .pilebox>.card .count,html:not(.land205) body #seats .seat.s-right .pilebox>.card.target .count{right:auto!important;left:-15px!important}
+/* 6) upright on phones the players' phrases were very big (seen on the Galaxy): a little smaller */
+@media (orientation:portrait) and (max-width:599px){html:not(.land205) body{--bsc:calc(var(--bk,1) * .82)}}
+@media (orientation:landscape) and (min-height:481px) and (max-height:720px){
+html.lh249.lh249home body #h2Page>.hub145>.sq148>*{zoom:1.5}
+html.lh249.lh249home body #h2Page>.h2-foot{zoom:calc(var(--hz,1) * 1.3)!important}
+html.lh249.lh249home body #h2Page>.how157,html.lh249.lh249home body #h2Page>.mode145{zoom:calc(var(--hz,1) * 1.15)!important}
+html.lh249 body .h2-tabs>*{zoom:1.22}
+html.lh249.lh249home body #h2Page>.hub145>.go>*{zoom:1.3}
+html.lh249.lh249home body #h2Page>.h2-rank{zoom:calc(var(--hz,1) * 1.2)!important;width:min(100%,540px)!important}}`;document.head.appendChild(st);
+ // 1) labels
+ const FR=()=>{try{return L('Friend','صديق')}catch(e){return 'صديق'}};
+ // round 275, decided by the user: the "friend" label is gone on every screen (it took room). The side shows on the picture instead: a blue ring for your side, a red ring for the other side (team games only).
+ const ocPing=()=>{try{if(typeof SND==='undefined'||!SND.on||document.hidden)return;SND.init();const c=SND.ctx;if(!c)return;const t=c.currentTime+.02,out=SND.master||c.destination;[[880,0],[1318.5,.09]].forEach(([f,d])=>{const o=c.createOscillator(),g=c.createGain();o.frequency.value=f;g.gain.setValueAtTime(.0001,t+d);g.gain.linearRampToValueAtTime(.14,t+d+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d+.34);o.connect(g);g.connect(out);o.start(t+d);o.stop(t+d+.4)})}catch(e){}};
+ const fixTags=()=>{try{if(!S||!S.players||(window.__t276&&window.__t276.notags))return;const me=S.players[0],fr=FR(),teams=!!(S.teams&&S.teams.length===2);document.querySelectorAll('#seats .seat[data-seat]').forEach(se=>{const i=+se.dataset.seat,pl=S.players[i],mate=!!(i&&pl&&me&&pl.team===me.team);
+   se.classList.toggle('tmf275',teams&&mate);se.classList.toggle('tme275',teams&&!mate&&!!i);
+   /* round 276, design 5 chosen by the user: a player down to ONE card: his card jumps once with a short sound, then keeps a soft glow and a small red "1" */
+   {const n=se.querySelectorAll('.handfan .cardback').length,one=n===1&&!!i;if(one&&!se.classList.contains('oc276')){se.classList.add('oc276','ocgo276');setTimeout(()=>se.classList.remove('ocgo276'),950);ocPing()}else if(!one&&se.classList.contains('oc276'))se.classList.remove('oc276','ocgo276')}const tg=se.querySelector('.tags');if(!tg)return;
+   tg.querySelectorAll('.tag').forEach(t=>{const x=t.textContent.trim();if(x===fr||x==='صديق'||x==='Friend'||t.classList.contains('friend')||/* round 275b: "on one card" goes too: the player says it, and his single card shows above him */t.classList.contains('onecard')||x==='على كرت'||x==='On 1 card')t.remove()})})}catch(e){}};
+ if(typeof render==='function')render=(function(p){return function(){const r=p.apply(this,arguments);fixTags();return r}})(render);
+ setInterval(()=>{try{if(document.documentElement.classList.contains('ingame'))fixTags()}catch(e){}},700); // safety net: some redraws do not pass through render
+ // 4) light rooms: the three buttons copy the side buttons' look
+ const st2=document.createElement('style');document.head.appendChild(st2);let last='';const lum=c=>{const m=(c||'').match(/[\d.]+/g);if(!m||m.length<3||(m.length>3&&+m[3]<.5))return -1;return .3*m[0]+.59*m[1]+.11*m[2]};
+ setInterval(()=>{try{const de=document.documentElement,k=(de.className.match(/\bt-[\w-]+/)||[''])[0]+'|'+de.classList.contains('land205')+'|'+de.classList.contains('ingame');if(k===last)return;const a=document.querySelector('.topbar .gbtn:not(#exitBtn)'),g=document.querySelector('#rail205 .gbtn:not(#slamBtn)');if(!de.classList.contains('land205')||!a||!g||!g.offsetWidth){st2.textContent='';if(!de.classList.contains('land205'))last=k;return}
+   last=k;st2.textContent='';const ca=getComputedStyle(a),cg=getComputedStyle(g);if(cg.backgroundImage==='none'&&lum(cg.backgroundColor)>=0&&lum(cg.backgroundColor)<80&&lum(cg.color)<120&&(ca.backgroundImage!=='none'||lum(ca.backgroundColor)>150))
+     st2.textContent='html.land205 body #rail205 .gbtn:not(#slamBtn){background:'+(ca.backgroundImage!=='none'?ca.backgroundImage+',':'')+ca.backgroundColor+'!important;box-shadow:'+ca.boxShadow+'!important;border-color:'+ca.borderTopColor+'!important}'}catch(e){}},700)})();
+}catch(e){try{console.error('fixes267.js',e)}catch(_){}}
+
+// round 268: one sizing scheme for the small things around a player, asked by the user after he found them "not tidy" from screen to screen.
+// Measured on six screens: sideways every item was already the same share of the player's picture (gift 36%, badge 32%, name 32%, counter and points 24%,
+// level 22%, labels 21%). Upright it was not: on the opened iPhone Duo the picture grew and everything around it stayed phone-sized, and the points
+// number was the smallest thing on every upright screen. Upright now follows the sideways shares. Nothing moves; only sizes change.
+//   phone upright: points number = card counter (19px).   Duo opened upright: everything around the player +28%, counter = points (23px).
+//   iPad upright: counter and points a little bigger and equal (31px).
+// Also: the crossed-swords mark is 30% of the picture (it was a fixed 28px: big on a phone, small on an iPad); the tip's words are 16% of the picture
+// (they were as small as 10% on the Duo and iPad); the gifts/chat/mic words sideways match the side buttons; phrases on the iPad sideways were capped small.
+try{(function(){const P='html:not(.land205) body',PT=':not(.count):not(.jk135):not(.jk133)',st=document.createElement('style');st.textContent=`
+@media (orientation:portrait) and (max-width:599px){${P} #seats .pilebox .count,${P} #mebox .pilebox .count{zoom:1.12}}
+/* round 269: the first try (+28% around the player on the opened Duo, points as big as the counter) was crowded on the real device: labels ran into the points number. Toned down: +12% for level/badge/gift/name, labels at their old size, points a step under the counter */
+@media (orientation:portrait) and (min-width:600px) and (max-width:699px){${P} #seats .seat .lvl,${P} #seats .seat .flg174,${P} #seats .seat .seatgift,${P} #seats .seat .who>.name{zoom:1.12!important}
+${P} #seats .pilebox .count,${P} #mebox .pilebox .count{zoom:1.2}${P} #seats .pilebox>span${PT},${P} #mebox .pilebox>span${PT}{zoom:1.05!important}/* round 273: the tip grew with zoom, and zoom also multiplies the place the script gives it, so it dropped onto my hand cards. It now grows by its letters, and stays where it was */${P} #hintPop{font-size:18.6px!important;padding:.55em .95em!important}}
+@media (orientation:portrait) and (min-width:700px){${P} #seats .pilebox>span${PT}{zoom:1.38!important}${P} #hintPop{font-size:20px!important;padding:.55em .95em!important}}
+/* upright: a side player with no pile yet had his points number half behind his picture (seen on the iPad) */
+html:not(.land205) body #seats .seat.s-right .pilebox.nocard135>span{translate:-70% 0}html:not(.land205) body #seats .seat.s-left .pilebox.nocard135>span{translate:70% 0}
+/* two labels on an upper side player ("friend" + "on one card") stand one over the other under the name, so the row never reaches the points number or the ground */
+html:not(.land205) body .table #seats .seat.s-left.hi .tags:has(.tag+.tag){top:calc(100% + 2px)!important;bottom:auto!important;flex-direction:column!important;align-items:flex-start!important;gap:2px!important}
+html:not(.land205) body .table #seats .seat.s-right.hi .tags:has(.tag+.tag){top:calc(100% + 2px)!important;bottom:auto!important;flex-direction:column!important;align-items:flex-end!important;gap:2px!important}
+/* upright: the left players' round badge covered the number in the corner of their pile card: their pile steps a little toward the middle */
+html:not(.land205) body .table #seats .seat.s-left .pilebox{translate:calc(var(--tile,70px) * .13) 0}
+/* round 272: the swords mark is back to its own size (it already grows with the pictures on big screens; sizing it again made it twice too big on the iPad). Only on phones upright it is a little smaller */
+@media (orientation:portrait) and (max-width:599px){html:not(.land205) body .atk137f .pilebox .card::before,html:not(.land205) body .atk137m .pilebox .card::before{width:24px!important;height:24px!important}}
+html.land205:not(.short205) body #hintPop{zoom:1.45}html.land205.short205 body #hintPop{zoom:1.15}
+html.land205 body #rail205 .gbtn>span:not(.fbx){font-size:1.2em}
+html.land205:not(.short205) body{--bsc:min(var(--sk,1),1.75)}`;document.head.appendChild(st)})();
+}catch(e){try{console.error('sizes268.js',e)}catch(_){}}
+
+// round 271, chosen by the user from five looks tried inside the game on every room: the players' points number is plain gold digits with a dark outline
+// (no chip behind it: less crowding), and the card counter (x3) is a gold badge with dark digits, the family of the level number beside each picture.
+// (Before: both were black chips with a gold rim, heavy on light and blue rooms.)
+try{(function(){const st=document.createElement('style');st.textContent=`
+html body .table .pilebox>span:not(.count):not(.jk135):not(.jk133),html body #mebox .pilebox>span:not(.count):not(.jk135):not(.jk133){background:none!important;box-shadow:none!important;color:#ffe08a!important;-webkit-text-fill-color:#ffe08a!important;font-weight:900!important;text-shadow:0 0 2px #000,0 0 2px #000,0 1px 3px #000,0 0 5px rgba(0,0,0,.9)!important}
+html body #seats .pilebox .count,html body #mebox .pilebox .count,html body .bottombar .pilebox .count,html body .pilebox>.card .count{background:linear-gradient(180deg,#fbe9b0,#d9b25c 55%,#b98f3c)!important;color:#2a1a05!important;-webkit-text-fill-color:#2a1a05!important;box-shadow:0 0 0 1.3px #fff6d8,0 0 0 2.3px rgba(0,0,0,.4),0 2px 3px rgba(0,0,0,.55)!important}`;document.head.appendChild(st)})();
+}catch(e){try{console.error('chips271.js',e)}catch(_){}}
+
+// round 272, asked by the user: on the iPad and sideways, the round badge of the LEFT players sits on the top edge of their picture, but on the RIGHT
+// players it stuck out to the side, over their pile card. The right players now mirror the left ones exactly.
+try{(function(){const st=document.createElement('style');st.textContent=`@media (orientation:portrait) and (min-width:700px){html:not(.land205) body #seats .seat.s-right .flg174{translate:22px -8px!important}}
+html.land205 body #seats .seat.s-right .flg174{translate:18px -6px!important}`;document.head.appendChild(st)})();
+}catch(e){try{console.error('badgemirror272.js',e)}catch(_){}}
+// round 273, asked by the user after trying build 1126.0915 on the Mac (as the iPad), the Galaxy and the Duo:
+// 1. card counter of the RIGHT players reads "3×" (mirror of the left players' "×3"), on every screen
+// 2. sideways on big screens: the top player's labels ("friend", "on one card") covered the number of the draw pile: they stand under his name instead
+// 3. "cut with the joker" grows with the fire button on big screens (it was a small grey pill next to a big button)
+// 4. the swords mark on my own pile sideways was bigger than on the other players; upright on phones and the opened Duo it is a little smaller everywhere
+// 5. upright on phones and the opened Duo: my pile's counter was half under my hand cards: a little smaller and lower
+// 6. opened Duo sideways: phrases a little smaller; the gifts balance sits on the same line as the fire price
+try{(function(){
+ const flip=()=>{try{document.querySelectorAll('#seats .seat.s-right .pilebox .count').forEach(e=>{const m=/^×\s*(\d+)$/.exec(e.textContent.trim());if(m)e.textContent=m[1]+'×'})}catch(e){}};
+ // upright: the top player's "friend" label stands right beside his name, on the same line (asked by the user; it used to share a column with "on one card" on the other side of the picture)
+ // the "continue the saved game" button says which game is saved, and steps aside when another number of players is chosen (the user picked 3 v 3, pressed it, and landed in the saved 2 v 2 game)
+ const svFix=()=>{try{const b=document.getElementById('resumeBtn');if(!b)return;const d=loadSave(),m=d&&d.S&&d.S.cfg&&d.S.cfg.mode;if(!m)return;const f=document.getElementById('setupForm'),c=f&&f.querySelector('input[name="mode"]:checked'),cur=c&&c.value;
+   const N={'2v2':['2 v 2','٢ ضد ٢'],'3v3':['3 v 3','٣ ضد ٣'],solo:['all against all','كل واحد بروحه'],'1v1':['1 v 1','١ ضد ١']}[m];const lab=L('Continue saved game','كمّل اللعبة المحفوظة')+(N?' · '+L(N[0],N[1]):'');if(b.textContent!==lab)b.textContent=lab;
+   const hide=!!cur&&cur!==m;if((b.style.display==='none')!==hide)b.style.setProperty('display',hide?'none':'','important')}catch(e){}};
+ document.addEventListener('change',()=>setTimeout(svFix,0));document.addEventListener('click',()=>setTimeout(svFix,60));setInterval(()=>{try{const su=document.getElementById('setup');if(su&&!su.hidden)svFix()}catch(e){}},700);
+ // puts a label at a spot of the screen whatever its container is: it looks where the label really landed and corrects the difference (the labels are drawn with zoom on big screens, so lengths are divided by it)
+ // round 274, decided with the user: tips only for a beginner, in his first game. After that they show only if the player switches them on himself (the "hints" switch of the game settings).
+ const HK='eb-hints274',LSg=()=>{try{return localStorage.getItem(HK)}catch(e){return null}},firstGame=()=>{try{return ((typeof MYPROF!=='undefined'&&MYPROF.games)||0)<1}catch(e){return false}};
+ /* round 278, decided by the user: tips are gone for everyone (they still showed in online games to old players). Only the warning "your pile is under attack" stays */const tipsOn=()=>false;window.__tipsOn274=tipsOn;
+ document.addEventListener('click',e=>{try{if(!e.isTrusted)return;const t=e.target.closest&&e.target.closest('[data-s168="hints"]');if(t)localStorage.setItem(HK,t.dataset.v==='on'?'1':'0')}catch(x){}},true);
+ if(typeof render==='function')render=(function(p){return function(){try{if(typeof S!=='undefined'&&S&&S.cfg)S.cfg.hints=tipsOn()}catch(e){}return p.apply(this,arguments)}})(render);
+ try{renderSetup=(function(p){return function(){const r=p.apply(this,arguments);try{const f=document.getElementById('setupForm'),want=tipsOn()?'on':'off',i=f&&f.querySelector('input[name="hints"][value="'+want+'"]'),sw=f&&f.querySelector('[data-s168="hints"]');if(i&&!i.checked){if(sw&&sw.dataset.v===want)sw.click();else i.click()}}catch(e){}return r}})(renderSetup)}catch(e){}
+ const putAt=(t,x,y)=>{const P=(k,v)=>t.style.setProperty(k,v,'important');if(!t.dataset.f273){P('position','absolute');P('right','auto');P('bottom','auto');P('translate','none');P('white-space','nowrap');P('left','0px');P('top','0px');t.dataset.f273='1'}
+   const r=t.getBoundingClientRect();if(!r.width||(Math.abs(r.left-x)<3&&Math.abs(r.top-y)<3))return;const z=(t.offsetWidth&&r.width/t.offsetWidth)||1;P('left',((parseFloat(t.style.left)||0)+(x-r.left)/z).toFixed(1)+'px');P('top',((parseFloat(t.style.top)||0)+(y-r.top)/z).toFixed(1)+'px')};
+ const free=t=>{if(t&&t.dataset.f273){['position','left','top','right','bottom','translate','white-space'].forEach(k=>t.style.removeProperty(k));delete t.dataset.f273}};
+ // third pass, asked by the user: the top player's labels ("friend", "on one card") go INSIDE the table, in a column on the left of his pile card (under his gift button), on every screen but a phone held sideways.
+ // With no pile card yet they take the same spot, measured from where the card will be.
+ const topFr=()=>{try{const se=document.querySelector('#seats .seat.s-top');if(!se)return;const H=document.documentElement.classList,tags=[se.querySelector('.tags .tag.friend'),se.querySelector('.tags .tag.onecard')].filter(Boolean);
+   if(H.contains('land205')&&H.contains('short205')){tags.forEach(free);return}if(!tags.length)return;
+   const tw=se.querySelector('.tilewrap'),pc=se.querySelector('.pilebox .card'),tb=document.querySelector('.table');if(!tw||!tb)return;const a=tw.getBoundingClientRect(),t=tb.getBoundingClientRect();if(!a.width)return;
+   let right,top;if(pc&&pc.getBoundingClientRect().width){const c=pc.getBoundingClientRect();right=c.left-8;top=c.top+c.height*.1}else{right=a.left+a.width*.5-a.width*.36-8;top=a.bottom+6}
+   top=Math.max(top,t.top+8);let y=top;tags.forEach(g=>{const o=g.getBoundingClientRect();if(!o.width)return;putAt(g,right-o.width,y);y+=o.height+3})}catch(e){}};
+ if(typeof render==='function')render=(function(p){return function(){const r=p.apply(this,arguments);flip();topFr();try{requestAnimationFrame(()=>{topFr();requestAnimationFrame(topFr)})}catch(e){}return r}})(render);
+ setInterval(()=>{try{if(document.documentElement.classList.contains('ingame')){flip();topFr()}}catch(e){}},700);addEventListener('resize',()=>setTimeout(topFr,300));
+ const st=document.createElement('style');st.textContent=`
+html body #seats .seat.s-right .pilebox .count{direction:ltr;unicode-bidi:isolate}
+html.land205:not(.short205) body .table #seats .seat.s-top .tags{left:calc(100% + var(--tgx273,4px))!important;right:auto!important;top:83%!important;bottom:auto!important;transform:none!important;display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:3px!important}
+html.land205:not(.short205) body #actions button.pill[data-int]{zoom:calc(1 + (var(--bk,1) - 1) * .75)}
+html body #actions.col273{flex-direction:column!important;gap:21px!important}html body #actions.col273 button.pill[data-int]{zoom:1!important}
+@media (orientation:portrait) and (max-width:599px){html:not(.land205) body #mebox .pilebox .count{zoom:.95!important;translate:0 3px}}
+@media (orientation:portrait) and (min-width:600px) and (max-width:699px){html:not(.land205) body #mebox .pilebox .count{zoom:1!important;translate:0 3px}}
+@media (orientation:landscape) and (min-height:481px) and (max-height:720px){html.land205:not(.short205) body{--bsc:calc(min(var(--sk,1),1.75) * .82)}}
+html.land205 body #rail205 #giftBtn .badge{top:-8px!important}
+/* second pass of round 273: sideways the tip grows by its letters, not by zoom (zoom also multiplies the place the script gives it); it is see-through a little so it does not hide the play;
+   while the beginner tip shows, the small tip waits (two tips at once covered the players); the throw button takes the light see-through look of "cut with the joker" */
+html.land205:not(.short205) body #hintPop#hintPop{zoom:1!important;font-size:calc(var(--u) * 21px)!important;padding:calc(var(--u) * 10px) calc(var(--u) * 17px)!important;max-width:calc(var(--u) * 464px)!important}
+html body #hintPop#hintPop{background:rgba(14,7,5,var(--tipA273,.74))!important}
+html body #beg157#beg157{background:linear-gradient(180deg,rgba(44,27,18,var(--tipA273,.74)),rgba(21,12,8,var(--tipA273,.74)))!important}
+html.beg277 body #hintPop:not(.atk275){display:none!important}
+.bubble.bub-cloud.tr273::before{left:auto!important;right:10px}.bubble.bub-cloud.tr273::after{left:auto!important;right:2px}
+.bubble.bub-comic.tr273::before{left:auto!important;right:16px;border-width:15px 0 0 13px!important}.bubble.bub-comic.tr273::after{left:auto!important;right:19px;border-width:10px 0 0 8px!important}
+/* sideways, big screens: the LOWER side players' labels were under their name, cut by the edge of the screen: they stand above their pile card, on the table side of the player */
+html.land205:not(.short205) body .table #seats .seat.s-left.lo .tags{left:98%!important;right:auto!important;top:auto!important;bottom:calc(100% + var(--tgb273,6px))!important;transform:none!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:4px!important}
+html.land205:not(.short205) body .table #seats .seat.s-right.lo .tags{right:98%!important;left:auto!important;top:auto!important;bottom:calc(100% + var(--tgb273,6px))!important;transform:none!important;flex-direction:row-reverse!important;align-items:center!important;justify-content:flex-start!important;gap:4px!important}
+/* sideways, big screens: the TOP player's "friend" stays under his name; "on one card" goes to the other side, under his gift button (placed by the script above) */
+/* round 274: the tip takes the light see-through look of the throw button (the user found the dark box heavy); the "war goes to" banner is see-through too; phrase bubbles stand straight;
+   the "foe · name" pill of a card hit is smaller on phones */
+html body #hintPop#hintPop#hintPop{background:rgba(24,12,7,var(--tipA274,.58))!important;border:0!important;box-shadow:inset 0 0 0 1px rgba(242,210,122,.5)!important;color:#f6e3ad!important;text-shadow:0 1px 3px #000,0 0 7px #000,0 0 2px #000!important}
+html body #hintPop#hintPop#hintPop.atk275{background:#0e0705!important;box-shadow:inset 0 0 0 1.5px #d9b25c,0 6px 16px rgba(0,0,0,.55)!important;color:#f6e7c3!important;text-shadow:none!important;z-index:64}
+html body #beg157#beg157#beg157{background:rgba(24,12,7,var(--tipA274,.46))!important;border:0!important;box-shadow:inset 0 0 0 1px rgba(242,210,122,.5)!important;text-shadow:0 1px 3px #000,0 0 7px #000!important}
+html body .warwin104{background:rgba(20,10,6,.62)!important;box-shadow:inset 0 0 0 1.5px rgba(242,210,122,.55),0 8px 18px rgba(0,0,0,.35)!important}
+html body #fx .bubble.bubble{rotate:none!important}
+html.land205:not(.short205) body{--lvf275:8.4px}@media (orientation:portrait) and (min-width:700px){html:not(.land205) body{--lvf275:8.4px}}
+/* round 276: one card left. The glow is a separate layer that only fades in and out (cheap to draw); the jump uses scale, so the card keeps its own tilt */
+html body #seats .seat.oc276 .handfan .cardback{overflow:visible!important}
+html body #seats .seat.oc276 .handfan .cardback::before{content:""!important;position:absolute;inset:-3px;border-radius:inherit;box-shadow:0 0 0 2px #fff3c4,0 0 10px 4px rgba(255,210,90,.9);pointer-events:none;animation:ocglow276 1.8s ease-in-out infinite alternate}
+@keyframes ocglow276{from{opacity:.35}to{opacity:1}}
+html body #seats .seat.oc276 .handfan .cardback::after{content:"1"!important;position:absolute;right:-.5em;top:-.5em;width:1.5em;height:1.5em;border-radius:50%;background:linear-gradient(180deg,#ff6a5a,#c8102e);color:#fff;font:900 calc(var(--tile,70px) * .15)/1.5em Tahoma,sans-serif;text-align:center;box-shadow:0 0 0 1.5px #fff,0 2px 4px rgba(0,0,0,.5);pointer-events:none;rotate:0deg}
+html body #seats .seat.ocgo276 .handfan .cardback{animation:ocgo276 .9s cubic-bezier(.2,1.5,.4,1)!important;z-index:5}
+@keyframes ocgo276{0%{scale:1}35%{scale:2}60%{scale:1.8}100%{scale:1}}
+html.eco132 body #seats .seat.oc276 .handfan .cardback::before{animation:none}
+/* round 275b: the level badge is a small round coin on every screen (it was a wide pill that covered the hand cards) */
+html body #seats .seat .lvl.lvl,html body #mebox .lvl.lvl{min-width:1.75em!important;width:auto!important;height:1.75em!important;padding:0 .3em!important;border-radius:999px!important;display:grid!important;place-items:center!important;line-height:1!important;font-size:calc(var(--lvf275,10.5px))!important;box-sizing:border-box!important}
+@media (max-width:599px){html:not(.land205) body .wc116lab{font-size:10.5px!important;padding:2px 9px!important}}
+html body #actions #throwBtn#throwBtn{background:rgba(24,12,7,var(--thrA273,.5))!important;color:#f2d27a!important;-webkit-text-fill-color:#f2d27a!important;box-shadow:inset 0 0 0 1px rgba(242,210,122,.5),0 3px 8px rgba(0,0,0,.35)!important;border:0!important}
+/* chosen by the user (design 3 of six): the war mark is the two swords alone, no disc, with a glow in the colour of the attack (red: the other side, blue: your side).
+   Second pass of round 273: the mark was placed with zoom + left:50% + a shift of half its width, which browsers do not all resolve the same way (it sat left of the middle on the devices).
+   It is now sized in plain pixels and centred by margins, so it stands on the middle of the card edge everywhere. --sw273 is its base size. */
+html body{--sw273:28px}html.land205 body #mebox{--sw273:20.7px}
+@media (orientation:portrait) and (max-width:599px){html:not(.land205) body{--sw273:20px}}
+@media (orientation:portrait) and (min-width:600px) and (max-width:699px){html:not(.land205) body{--sw273:23px}}
+html body .atk137f .pilebox .card.card::before,html body .atk137m .pilebox .card.card::before{zoom:1!important;scale:none!important;width:calc(var(--sw273) * var(--bk,1) * 1.45)!important;height:calc(var(--sw273) * var(--bk,1) * 1.45)!important;left:0!important;right:0!important;margin:0 auto!important;transform:none!important;top:calc(var(--bk,1) * (-2px - var(--sw273) * .725))!important;bottom:auto!important;background-color:transparent!important;background-size:100%!important;box-shadow:none!important;border-radius:0!important;filter:drop-shadow(0 0 1px #000) drop-shadow(0 0 4px var(--atk)) drop-shadow(0 0 4px var(--atk))}
+html body #seats .seat.s-top.atk137f .pilebox .card.card::before,html body #seats .seat.s-top.atk137m .pilebox .card.card::before{left:calc(var(--bk,1) * (-9px - var(--sw273) * .725))!important;right:auto!important;top:0!important;bottom:0!important;margin:auto 0!important;transform:none!important}
+/* round 274: the top player's labels stand on the left of his pile card and the ground cards come right under it, so his mark stands in the middle of his card (like on my own pile), where nothing covers it */
+html body #seats .seat.s-top.atk137f .pilebox .card.card.card::before,html body #seats .seat.s-top.atk137m .pilebox .card.card.card::before{left:0!important;right:0!important;top:0!important;bottom:0!important;margin:auto!important}
+/* sideways, big screens: a lower side player under attack: while his label ("on one card") shows, it stands where the mark goes, so the mark moves to the middle of his card; with no label the mark is back on the top edge */
+/* round 275: the side ring around a player's picture (outside his own frame, which he may have bought) */
+html body #seats .seat.tmf275 .tilewrap,html body #seats .seat.tme275 .tilewrap{border-radius:50%}
+html body #seats .seat.tmf275 .tilewrap{box-shadow:0 0 0 calc(var(--tile,70px) * .055) #2f8cff,0 0 calc(var(--tile,70px) * .16) rgba(47,140,255,.75)}
+html body #seats .seat.tme275 .tilewrap{box-shadow:0 0 0 calc(var(--tile,70px) * .055) #ff3b30,0 0 calc(var(--tile,70px) * .16) rgba(255,59,48,.7)}
+/* upright on phones and the opened Duo: the upper left player sits under the draw pile, and his mark covered the number of the draw pile: it sits lower, mostly on his card */
+@media (orientation:portrait) and (max-width:699px){html:not(.land205) body #seats .seat.s-left.hi.atk137f .pilebox .card.card.card::before,html:not(.land205) body #seats .seat.s-left.hi.atk137m .pilebox .card.card.card::before{top:calc(var(--sw273) * -.2)!important}}
+/* the frame of a card under attack takes the attack colour again (red: the other side, blue: your side): it had faded to a faint glow, so on the devices the card looked unframed */
+html body .atk137f .pilebox .card.card,html body .atk137m .pilebox .card.card,html body .table #seats .seat.atk137f .pilebox .card.card.card,html body .table #seats .seat.atk137m .pilebox .card.card.card,html body #mebox.atk137f .pilebox .card.card.card,html body #mebox.atk137m .pilebox .card.card.card{box-shadow:0 0 0 2px #fff,0 0 0 5.5px var(--atk),0 0 20px 3px var(--atk)!important}
+/* my own pile: upright the mark stands in the middle of the card (at the top edge it is under my hand cards); sideways on big screens there is room, so it stands on the top edge like the other players */
+html:not(.land205) body #mebox.atk137f .pilebox .card.card::before,html:not(.land205) body #mebox.atk137m .pilebox .card.card::before{top:0!important;bottom:0!important;left:0!important;right:0!important;margin:auto!important}
+html.land205.short205 body #mebox.atk137f .pilebox .card.card::before,html.land205.short205 body #mebox.atk137m .pilebox .card.card::before{top:0!important;bottom:0!important;margin:auto!important}
+/* upright on phones and the opened Duo: the round badge stands on the top edge of the picture, toward its middle, the same on both sides (as on the iPad and sideways). On the right players it used to sit on their pile card */
+@media (orientation:portrait) and (max-width:699px){html:not(.land205) body #seats .seat.s-left .flg174{translate:calc(var(--tile,70px) * -.25) -7px!important}html:not(.land205) body #seats .seat.s-right .flg174{translate:calc(var(--tile,70px) * .25) -7px!important}}`;document.head.appendChild(st)})();
+}catch(e){try{console.error('round273.js',e)}catch(_){}}
+
+// round 277 (speed, no change to how anything looks): three style rules asked the whole page a question with :has() ("is the chat open anywhere?", "is the beginner tip up?",
+// "does any ground card carry the war frame?"). The browser has to think about such a rule again on almost every change anywhere in the page; measured, they cost about
+// 40% of all the style work in a busy game. The same three facts are now kept as plain classes on the page, updated only when the fact itself changes.
+try{(function(){const H=document.documentElement,set=(c,on)=>{if(H.classList.contains(c)!==on)H.classList.toggle(c,on)};
+ const open=id=>{const e=document.getElementById(id);return !!(e&&!e.hidden)};
+ const a=()=>{try{set('nohint277',open('chatBar')||open('lobby')||open('setup')||open('home')||open('roomsSheet'));set('beg277',!!document.getElementById('beg157'))}catch(e){}};
+ const g=()=>{try{set('gwc277',!!document.querySelector('#ground>.card.eating,#ground>.card.wc116c'))}catch(e){}};
+ let gEl=null,gOb=null;const watch=()=>{try{const e=document.getElementById('ground');if(e&&e!==gEl){gEl=e;if(gOb)gOb.disconnect();gOb=new MutationObserver(g);gOb.observe(e,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});g()}}catch(x){}};
+ const start=()=>{try{new MutationObserver(a).observe(document.body,{childList:true});['chatBar','lobby','setup','home','roomsSheet'].forEach(id=>{const e=document.getElementById(id);if(e)new MutationObserver(a).observe(e,{attributes:true,attributeFilter:['hidden']})})}catch(x){}a();watch()};
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
+ if(typeof render==='function')render=(function(p){return function(){const r=p.apply(this,arguments);a();watch();g();return r}})(render);
+ setInterval(()=>{a();watch();g()},500)})();
+}catch(e){try{console.error('has277.js',e)}catch(_){}}
+
+// round 278, asked by the user: the "inferno" fire-button effect leaves the shop too (it is built on the fire ring he found annoying). It is taken off the list, so nobody can buy or pick it
+// and the computer players no longer wear it; a player who had it selected goes back to the default flame.
+try{(function(){const OUT=['inferno','firering'];if(typeof SFX!=='undefined')for(let i=SFX.length-1;i>=0;i--)if(OUT.includes(SFX[i].id))SFX.splice(i,1);
+ const fix=()=>{try{if(typeof MYPROF!=='undefined'&&OUT.includes(MYPROF.sfx)){MYPROF.sfx='blaze';try{saveProf()}catch(e){}}}catch(e){}};fix();setTimeout(fix,3000);
+ try{if(typeof applyMe==='function')applyMe=(function(p){return function(){const r=p.apply(this,arguments);fix();return r}})(applyMe)}catch(e){}})();
+}catch(e){try{console.error('nofx278.js',e)}catch(_){}}
+
+
+// round 278, asked by the user: the free fire-button effect ("flame", ids plain and blaze) keeps its picture but loses its recorded fire sound. It sounds like the game's own card slap,
+// as strong as the FIFTH cut of a war: the plain slap plus the layers the game adds at that level (a short lift of the volume, a sharp tap, a low boom).
+// (A first try was made by mistake on the "fire ring" eating effect; that one is back to its own sound.)
+try{(function(){if(typeof SND==='undefined'||typeof SND.slap!=='function')return;const MINE=['plain','blaze','fire'];let hot=0,last=0;
+ const idOf=i=>{try{if(window.fxOff&&window.fxOff())return 'blaze';return (typeof sfxOf==='function'&&sfxOf(i))||'blaze'}catch(e){return 'blaze'}};
+ const inner=SND.slap;
+ const strong=()=>{try{const now=performance.now();if(now-last<450)return;last=now;if(!SND.ok())return;inner.call(SND,2);const t=SND.ctx.currentTime,n=5,q=(n+1.3)*.7;
+   try{const o=SND.out&&SND.out();if(o&&o.gain){const base=window.__mBase||(window.__mBase=o.gain.value||2.6);o.gain.cancelScheduledValues(t);o.gain.setValueAtTime(base*(1.5+n*.34),t);o.gain.setTargetAtTime(base,t+.3,.15)}}catch(e){}
+   SND.hit(t+.006,{f:900,q:1.2,gain:.4*q,decay:.07});SND.tone(t,70,38,.35+n*.05,{gain:.3*q});SND.hit(t+.02,{type:'lowpass',f:90,gain:.6*q,decay:.5})}catch(e){}};
+ if(typeof fireSlam==='function')fireSlam=(function(p){return function(i){try{hot=MINE.includes(idOf(i))?performance.now():0}catch(e){}return p.apply(this,arguments)}})(fireSlam);
+ if(typeof slapFx==='function')slapFx=(function(p){return function(card,from,power){try{if(power===3&&window.__efSeat!=null)hot=MINE.includes(idOf(window.__efSeat))?performance.now():0}catch(e){}return p.apply(this,arguments)}})(slapFx);
+ SND.slap=function(pw){if(pw===3&&performance.now()-hot<1600){strong();return}return inner.apply(this,arguments)};
+ const pv=window.fxSound;window.fxSound=function(id,p){if(MINE.includes(id)){if(p===3)strong();else try{inner.call(SND,p)}catch(e){}return}return pv&&pv.apply(this,arguments)};try{fxSound=window.fxSound}catch(e){}})();
+}catch(e){try{console.error('blazesnd278.js',e)}catch(_){}}
+
 </script><script>
 // ===================== Round 30: always open on the main screen; show the version =====================
-const EB_VERSION='v1124.2136';
+const EB_VERSION='v1126.2329';
 // a saved online session no longer skips the main screen; only a room link or a real comeback does
 (function(){let room=false;try{room=new URLSearchParams(location.search).has('room')}catch(e){}
   if(!room&&$('home')&&$('home').hidden&&!(typeof S!=='undefined'&&S&&S.players)){showHome(false)}})();
