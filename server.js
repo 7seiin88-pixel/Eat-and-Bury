@@ -18,6 +18,7 @@ const PUBLIC = path.join(__dirname, 'public');
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.json': 'application/json' };
 
 const GZ = new Map(), RATE = new Map();
+const TAGS = new Map(); // file -> { k: size:date, t: mark made from the content }
 setInterval(() => RATE.clear(), 10 * 60e3).unref();
 const server = http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
@@ -56,7 +57,9 @@ const server = http.createServer((req, res) => {
   // The game page can also sit next to server.js (easier to upload from a phone or iPad)
   if ((url === '/' || url === '/index.html') && !fs.existsSync(file)) file = path.join(__dirname, 'index.html');
   // a file that did not change is not sent again: the phone asks "still the same?" and gets a short yes (the game page is big, so this is most of the wait on a second visit)
-  let tag = ''; try { const st0 = fs.statSync(file); tag = '"' + st0.size + '-' + Math.round(st0.mtimeMs) + '"'; if (String(req.headers['if-none-match'] || '') === tag) { res.writeHead(304, { 'ETag': tag, 'Cache-Control': 'no-cache', 'Vary': 'Accept-Encoding' }); res.end(); return } } catch (e) {}
+  // The mark of a file is made from its CONTENT (it used to be its size and date). A new upload gives every file a new date, so every phone downloaded the sounds and
+  // the theme pictures again after each update although they had not changed; now only a file that really changed is sent again.
+  let tag = ''; try { const st0 = fs.statSync(file), k0 = st0.size + ':' + st0.mtimeMs; let h0 = TAGS.get(file); if (!h0 || h0.k !== k0) { h0 = { k: k0, t: '"' + require('crypto').createHash('sha1').update(fs.readFileSync(file)).digest('hex').slice(0, 20) + '"' }; TAGS.set(file, h0) } tag = h0.t; if (String(req.headers['if-none-match'] || '') === tag) { res.writeHead(304, { 'ETag': tag, 'Cache-Control': 'no-cache', 'Vary': 'Accept-Encoding' }); res.end(); return } } catch (e) {}
   fs.readFile(file, (err, data) => {
     if (err) { res.writeHead(404); res.end('Not found'); return; }
     const type = TYPES[path.extname(file)] || 'application/octet-stream', head = { 'Content-Type': type, 'Cache-Control': 'no-cache' }; if (tag) head['ETag'] = tag;
